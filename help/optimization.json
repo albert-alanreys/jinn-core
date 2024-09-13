@@ -1,0 +1,38 @@
+[
+  {
+    "exchange": "bybit",
+    "symbol": "ETHUSDT",
+    "interval": 60,
+    "date/time #1": "2021/01/01 00:00",
+    "date/time #2": "2023/01/01 00:00",
+    "date/time #3": "2024/01/01 00:00",
+    "date/time #4": "2024/06/01 00:00"
+  },
+  {
+    "exchange": "binance",
+    "symbol": "BTCUSDT",
+    "interval": 60,
+    "date/time #1": "2021/01/01 00:00",
+    "date/time #2": "2023/01/01 00:00",
+    "date/time #3": "2024/01/01 00:00",
+    "date/time #4": "2024/06/01 00:00"
+  },
+  {
+    "exchange": "bybit",
+    "symbol": "ADAUSDT",
+    "interval": 60,
+    "date/time #1": "2021/01/01 00:00",
+    "date/time #2": "2023/01/01 00:00",
+    "date/time #3": "2024/01/01 00:00",
+    "date/time #4": "2024/06/01 00:00"
+  },
+  {
+    "exchange": "bybit",
+    "symbol": "SOLUSDT",
+    "interval": 60,
+    "date/time #1": "2021/01/01 00:00",
+    "date/time #2": "2023/01/01 00:00",
+    "date/time #3": "2024/01/01 00:00",
+    "date/time #4": "2024/06/01 00:00"
+  }
+]

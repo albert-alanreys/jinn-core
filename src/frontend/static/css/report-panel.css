@@ -1,0 +1,291 @@
+#report-panel {
+  display: flex;
+
+  flex-direction: column;
+
+  min-height: auto;
+  max-height: 70%;
+}
+
+#report-panel-handle {
+  min-height: 4px;
+
+  cursor: ns-resize;
+  pointer-events: none;
+}
+
+#report-buttons {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 38px;
+  border-bottom: 1px solid #e0e3eb;
+  border-radius: 6px 6px 0 0;
+
+  background-color: #fff;
+}
+
+#report-tab-buttons,
+#report-size-buttons {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+}
+
+#report-tab-buttons button {
+  height: 34px;
+  margin-left: 2px;
+  padding: 0 8px;
+  border-radius: 6px;
+
+  color: #212529;
+  font-size: 14px;
+}
+
+#report-tab-buttons button[data-status="active"] {
+  color: #2962ff;
+}
+
+#report-size-buttons button {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+  margin-right: 2px;
+  border-radius: 6px;
+}
+
+#hide-button[data-status="opened"] div {
+  content: url(../images/report-panel-opened.svg);
+}
+
+#hide-button[data-status="closed"] div {
+  content: url(../images/report-panel-closed.svg);
+}
+
+#stretch-button[data-status="packed"] div {
+  content: url(../images/report-panel-packed.svg);
+}
+
+#stretch-button[data-status="stretched"] div {
+  content: url(../images/report-panel-stretched.svg);
+}
+
+#report-wrapper {
+  display: none;
+
+  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
+
+  height: 0px;
+
+  background-color: #fff;
+}
+
+#overview-report,
+#performance-report,
+#trades-report {
+  display: flex;
+
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+
+  height: 100%;
+  width: 100%;
+}
+
+#metrics-container {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  height: 60px;
+  padding: 0 16px;
+
+  font-size: 14px;
+}
+
+#chart-container {
+  flex-grow: 1;
+
+  width: 100%;
+  height: 0px;
+  padding: 0 16px 10px;
+}
+
+#metrics-container div :first-child {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#metrics-container div :last-child {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+#performance-report,
+#trades-report {
+  display: none;
+}
+
+html[data-status="automation"] #overview-report,
+html[data-status="automation"] #performance-report,
+html[data-status="automation"] #trades-report {
+  display: none;
+}
+
+.table {
+  display: flex;
+  overflow-y: auto;
+
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+
+  width: 100%;
+
+  font-size: 14px;
+}
+
+.thead,
+.tbody {
+  width: 100%;
+}
+
+.thead {
+  position: sticky;
+  top: 0px;
+
+  background-color: #fff;
+}
+
+.th {
+  display: flex;
+
+  flex-direction: column;
+
+  padding: 10px 16px 6px 16px;
+
+  color: #6a6d78;
+  font-weight: 400;
+  text-align: start;
+}
+
+#performance-report .th,
+#performance-report .td {
+  width: 20%;
+}
+
+#trades-report .thead .tr :first-child {
+  display: flex;
+
+  flex-direction: row;
+  align-items: center;
+  justify-content: start;
+}
+
+#report-arrow {
+  margin-left: 3px;
+}
+
+#report-arrow[data-status="arrow-up"] {
+  content: url(../images/arrow-up.svg);
+}
+
+#report-arrow[data-status="arrow-down"] {
+  content: url(../images/arrow-down.svg);
+}
+
+.tr {
+  display: flex;
+}
+
+#performance-report .tbody .tr {
+  border-bottom: 1px solid #e9e6e6;
+}
+
+#trades-report .tbody .tr {
+  border-bottom: 1px solid #d1d4dc;
+}
+
+.w-10 {
+  width: 10%;
+}
+
+.w-12 {
+  width: 12%;
+}
+
+.w-14 {
+  width: 14%;
+}
+
+.w-18 {
+  width: 18%;
+}
+
+.td div {
+  display: flex;
+
+  flex-direction: column;
+  justify-content: center;
+}
+
+.td div :last-child {
+  font-size: 12px;
+}
+
+.h-100 {
+  height: 100px;
+  padding: 16px;
+}
+
+.h-50 {
+  height: 50px;
+  padding: 16px;
+}
+
+.border {
+  height: 49px;
+  padding: 16px;
+  border-bottom: 1px solid #e9e6e6;
+}
+
+.tbody .tr:hover {
+  background-color: #f5f5f5;
+}
+
+#report-wrapper .placeholder {
+  display: none;
+
+  margin: auto;
+}
+
+html[data-status="automation"] #placeholder-1 {
+  display: flex;
+}
+
+#placeholder-2 img,
+#placeholder-3 img {
+  margin-bottom: 10px;
+}
+
+#report-panel ::-webkit-scrollbar {
+  width: 6px;
+}
+
+#report-panel ::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+
+  background-color: #d3cdcd;
+}

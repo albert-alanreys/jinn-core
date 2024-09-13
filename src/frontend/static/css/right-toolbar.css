@@ -1,0 +1,279 @@
+#right-toolbar {
+  display: flex;
+
+  flex: 1 1 0%;
+  flex-direction: row;
+
+  min-width: 350px;
+  max-width: 450px;
+}
+
+#right-toolbar-handle {
+  min-width: 4px;
+
+  cursor: ew-resize;
+}
+
+#info-wrapper {
+  width: 100%;
+  border-right: 1px solid #e0e3eb;
+
+  background-color: #fff;
+}
+
+#strategies-list,
+#strategy-description,
+#alerts-list {
+  display: flex;
+
+  flex-direction: column;
+  align-items: start;
+  justify-content: start;
+
+  height: 100%;
+}
+
+#strategy-description,
+#alerts-list {
+  display: none;
+}
+
+#info-wrapper .header {
+  width: 100%;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e0e3eb;
+
+  font-weight: 600;
+  line-height: 22px;
+}
+
+#info-wrapper .body {
+  display: flex;
+  overflow-y: auto;
+
+  flex-direction: column;
+  align-items: start;
+
+  height: 100%;
+  width: 100%;
+}
+
+#placeholder-4 {
+  margin: auto;
+
+  text-align: center;
+}
+
+#strategies-list button {
+  width: 100%;
+  padding: 8px 16px;
+  border-bottom: 1px solid #edf0f7;
+
+  color: #212529;
+  font-size: 16px;
+  text-align: start;
+  line-height: 22px;
+}
+
+#strategies-list button[data-status="active"] {
+  color: #2962ff;
+}
+
+#strategy-description section {
+  width: 100%;
+}
+
+#strategy-description .title {
+  width: 100%;
+  padding: 8px 16px;
+  border-bottom: 1px solid #edf0f7;
+
+  color: #6a6d78;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: start;
+}
+
+#strategy-description .info {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  padding: 8px 16px;
+
+  font-size: 14px;
+}
+
+#general-info .info {
+  border-bottom: 1px solid #edf0f7;
+}
+
+#general-info .info:hover {
+  background-color: #f5f5f5;
+}
+
+#parameter-values input {
+  width: 70px;
+  height: 29px;
+  padding: 4px 6px;
+
+  border: 1px solid #d1d4dc;
+  border-radius: 4px;
+
+  color: #212529;
+  font-size: 14px;
+}
+
+#parameter-values input:focus {
+  padding-left: 5px;
+  border: 2px solid #2962ff;
+
+  outline: none;
+}
+
+@keyframes borderAnimation {
+  0% {
+    border-color: #d1d4dc;
+  }
+  50% {
+    border-color: #f23645;
+  }
+  100% {
+    border-color: #d1d4dc;
+  }
+}
+
+.animate-border {
+  animation: borderAnimation 1s;
+}
+
+#alerts-list .alert {
+  width: 100%;
+}
+
+#alerts-list .body .header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  padding: 5px 16px;
+  border-bottom: 1px solid #edf0f7;
+
+  font-size: 16px;
+  font-weight: 400;
+}
+
+#alerts-list .target {
+  border-radius: 6px;
+
+  content: url(../images/target-strategy.svg);
+}
+
+#alerts-list .body .header:hover {
+  background-color: #f5f5f5;
+}
+
+#alerts-list .target:hover {
+  background-color: #fff;
+}
+
+#alerts-list .hidden-content {
+  display: none;
+
+  flex-direction: column;
+  align-items: start;
+
+  width: 100%;
+  border-bottom: 1px solid #edf0f7;
+
+  font-size: 14px;
+}
+
+#alerts-list .tr {
+  display: flex;
+
+  justify-content: space-between;
+
+  width: 100%;
+  padding: 8px 16px;
+
+  border-bottom: 1px solid #edf0f7;
+}
+
+#alerts-list .tr:last-child {
+  border-bottom: none;
+}
+
+#alerts-list .tr:hover {
+  background-color: #f5f5f5;
+}
+
+#toolbar-buttons {
+  display: flex;
+
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+
+  min-width: 46px;
+
+  background-color: #fff;
+}
+
+#toolbar-buttons button {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 38px;
+  height: 38px;
+  margin-top: 4px;
+  border-radius: 6px;
+}
+
+#strategies-button[data-status="opened"] div {
+  content: url(../images/strategies-opened.svg);
+}
+
+#strategies-button[data-status="closed"] div {
+  content: url(../images/strategies-closed.svg);
+}
+
+#description-button[data-status="opened"] div {
+  content: url(../images/info-opened.svg);
+}
+
+#description-button[data-status="closed"] div {
+  content: url(../images/info-closed.svg);
+}
+
+#alerts-button[data-status="opened"] div {
+  content: url(../images/alerts-opened.svg);
+}
+
+#alerts-button[data-status="closed"] div {
+  content: url(../images/alerts-closed.svg);
+}
+
+html[data-status="testing"] #placeholder-4 {
+  display: flex;
+}
+
+html[data-status="automation"] #placeholder-4 {
+  display: none;
+}
+
+#right-toolbar ::-webkit-scrollbar {
+  width: 4px;
+}
+
+#right-toolbar ::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+
+  background-color: #d3cdcd;
+}

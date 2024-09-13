@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <title>TV Lite</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../static/css/main.css" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../static/images/favicon-32x32.png"
+    />
+  </head>
+
+  <body>
+    <div id="top-toolbar"></div>
+    <div id="horizontal-container">
+      <div id="left-toolbar">
+        <button id="screenshot-button" title="Сделать снимок экрана">
+          <div unselectable="on"></div>
+        </button>
+        <button id="full-screen-button" title="Полноэкранный режим">
+          <div unselectable="on"></div>
+        </button>
+        <hr />
+        <button id="line-button" data-status="inactive" title="Линия">
+          <div unselectable="on"></div>
+        </button>
+        <button id="ruler-button" data-status="inactive" title="Линейка">
+          <div unselectable="on"></div>
+        </button>
+        <hr />
+        <button
+          id="hider-button"
+          data-status="inactive"
+          title="Скрыть объекты рисования"
+        >
+          <div unselectable="on"></div>
+        </button>
+        <button id="basket-button" title="Удалить объекты рисования">
+          <div unselectable="on"></div>
+        </button>
+      </div>
+      <div id="vertical-container">
+        <div id="chart-panel">
+          <!-- <div id="ruler" data-direction="down">
+            <div id="ruler-label">
+              11,76 (12.45%), 1700.56
+              <br />
+              Бары: 12
+            </div>
+            <div id="arrow-horizontal">
+              <div></div>
+            </div>
+            <div id="arrow-vertical">
+              <div></div>
+            </div>
+          </div> -->
+        </div>
+        <div id="report-panel">
+          <div id="report-panel-handle"></div>
+          <div id="report-buttons">
+            <div id="report-tab-buttons">
+              <button id="overview-button" data-status="active">
+                <div unselectable="on">Обзор</div>
+              </button>
+              <button id="performance-button" data-status="inactive">
+                <div unselectable="on">Сводка показателей</div>
+              </button>
+              <button id="trades-button" data-status="inactive">
+                <div unselectable="on">Список сделок</div>
+              </button>
+            </div>
+            <div id="report-size-buttons">
+              <button
+                id="hide-button"
+                data-status="closed"
+                title="Свернуть панель"
+              >
+                <div unselectable="on"></div>
+              </button>
+              <button
+                id="stretch-button"
+                data-status="packed"
+                title="Развернуть панель"
+              >
+                <div unselectable="on"></div>
+              </button>
+            </div>
+          </div>
+          <div id="report-wrapper">
+            <div id="placeholder-1" class="placeholder">
+              <img src="../static/images/report.svg" />
+              <h2>Тестер стратегий</h2>
+              <p>
+                Чтобы протестировать стратегию, запустите TVLite в режиме
+                "testing".
+              </p>
+            </div>
+            <div id="overview-report">
+              <div id="placeholder-2" class="placeholder">
+                <img src="../static/images/no-report.svg" />
+                <p>Нет данных</p>
+              </div>
+            </div>
+            <div id="performance-report"></div>
+            <div id="trades-report">
+              <div id="placeholder-3" class="placeholder">
+                <img src="../static/images/no-report.svg" />
+                <p>Нет данных</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="right-toolbar">
+        <div id="right-toolbar-handle"></div>
+        <div id="info-wrapper">
+          <div id="strategies-list">
+            <div class="header">
+              <p>Стратегии</p>
+            </div>
+            <div class="body"></div>
+          </div>
+          <div id="strategy-description">
+            <div class="header">
+              <p>Окно данных</p>
+            </div>
+            <div class="body"></div>
+          </div>
+          <div id="alerts-list">
+            <div class="header">
+              <p>Оповещения</p>
+            </div>
+            <div class="body">
+              <div id="placeholder-4" class="placeholder">
+                <img src="../static/images/alerts.svg" />
+                <p>
+                  Чтобы генерировались оповещения, запустите TVLite в режиме
+                  "automation".
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="toolbar-buttons">
+          <button id="strategies-button" data-status="opened" title="Стратегии">
+            <div unselectable="on"></div>
+          </button>
+          <button
+            id="description-button"
+            data-status="closed"
+            title="Окно данных"
+          >
+            <div unselectable="on"></div>
+          </button>
+          <button id="alerts-button" data-status="closed" title="Оповещения">
+            <div unselectable="on"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+    <script src="../static/js/lightweight-charts.js"></script>
+    <script type="module" src="../static/js/main.js"></script>
+  </body>
+</html>

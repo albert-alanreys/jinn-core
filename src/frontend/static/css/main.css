@@ -1,0 +1,85 @@
+@import url(left-toolbar.css);
+@import url(chart-panel.css);
+@import url(report-panel.css);
+@import url(right-toolbar.css);
+
+* {
+  box-sizing: border-box;
+
+  font-family: system-ui, "Segoe UI", "Helvetica Neue";
+
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+
+  background-color: #e7e2e2;
+
+  color: #212529;
+}
+
+h2 {
+  margin: 0 0 0.5rem 0;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  padding: 0;
+  border: 0;
+
+  background-color: transparent;
+}
+
+button:hover {
+  background-color: #f5f5f5 !important;
+}
+
+button:focus-visible {
+  background-color: #f5f5f5;
+
+  outline: none;
+}
+
+button div {
+  pointer-events: none;
+}
+
+#horizontal-container {
+  display: flex;
+
+  flex-direction: row;
+
+  height: 100vh;
+}
+
+#vertical-container {
+  display: flex;
+
+  flex: 1 1 100%;
+  flex-direction: column;
+
+  width: 70vw;
+}
+
+.placeholder {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px;
+}
+
+.align-start {
+  text-align: start;
+}
+
+.align-end {
+  text-align: end;
+}

@@ -1,0 +1,39 @@
+#chart-panel {
+  display: block;
+  position: relative;
+  overflow: hidden;
+
+  flex: 1 1 100%;
+
+  min-height: 30%;
+  padding: 0 2px 2px;
+  border-radius: 0 0 6px 6px;
+
+  background-color: #fff;
+
+  cursor: crosshair;
+}
+
+#scroll-button {
+  display: flex;
+  position: absolute;
+  right: 80px;
+  bottom: 60px;
+  z-index: 3;
+  box-shadow: 0 0 5px 1px #0000002f;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+
+  background-color: #fff;
+
+  cursor: default;
+}
+
+#scroll-button div {
+  content: url(../images/scroll-time-scale.svg);
+}

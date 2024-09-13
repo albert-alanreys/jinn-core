@@ -1,0 +1,880 @@
+import numpy as np
+import numba as nb
+
+from ... import ta
+
+
+class DickeyFullerV1():
+    # Strategy parameters
+    # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
+    margin_type = 0
+    # direction: 0 - 'all', 1 — 'longs', 2 — 'shorts'
+    direction = 0
+    initial_capital = 10000.0
+    commission = 0.05
+    leverage_p1 = 1
+    order_size_p1 = 100.0
+    leverage_p2 = 1
+    order_size_p2 = 50.0
+    stop_loss_p1 = 11.9
+    ema_length_p1 = 77
+    adf_length_1_p1 = 26
+    adf_length_2_p1 = 7
+    n_lag_1_p1 = 1
+    n_lag_2_p1 = 2
+    adf_level_1_p1 = 0.7
+    adf_level_2_p1 = -1.0
+    stop_loss_p2 = 7.5
+    take_profit_p2 = 11.8
+    entry_bar_p2 = 1
+    ema_length_p2 = 148
+    bb_length_p2 = 11
+    bb_mult_p2 = 1.3
+    adf_length_1_p2 = 25
+    adf_length_2_p2 = 53
+    n_lag_1_p2 = 2
+    n_lag_2_p2 = 0
+    adf_level_1_p2 = 1.5
+    adf_level_2_p2 = 1.1
+
+    # Parameters to be optimized and their possible values
+    opt_parameters = {
+        'stop_loss_p1': [i / 10 for i in range(10, 151)],
+        'ema_length_p1': [i for i in range(15, 201)],
+        'adf_length_1_p1': [i for i in range(7, 201)],
+        'adf_length_2_p1': [i for i in range(7, 201)],
+        'n_lag_1_p1': [i for i in range(0, 3)],
+        'n_lag_2_p1': [i for i in range(0, 3)],
+        'adf_level_1_p1': [i / 10 for i in range(0, 21)],
+        'adf_level_2_p1': [i / 10 for i in range(-10, 21)],
+        'stop_loss_p2': [i / 10 for i in range(10, 101)],
+        'take_profit_p2': [i / 10 for i in range(30, 301, 2)],
+        'entry_bar_p2': [i for i in range(0, 2)],
+        'ema_length_p2': [i for i in range(15, 201)],
+        'bb_length_p2': [i for i in range(10, 31)],
+        'bb_mult_p2': [i / 10 for i in range(5, 51)],
+        'adf_length_1_p2': [i for i in range(7, 201)],
+        'adf_length_2_p2': [i for i in range(7, 201)],
+        'n_lag_1_p2': [i for i in range(0, 3)],
+        'n_lag_2_p2': [i for i in range(0, 3)],
+        'adf_level_1_p2': [i / 10 for i in range(0, 21)],
+        'adf_level_2_p2': [i / 10 for i in range(-10, 21)]
+    }
+
+    indicator_options = {
+        'Stop-loss': {'color': '#FF0000'},
+        'Take-profit': {'color': '#008000'}
+    }
+
+    def __init__(self, http_client, opt_parameters=None, all_parameters=None):
+        self.http_client = http_client
+
+        if opt_parameters is not None:
+            self.margin_type = self.margin_type
+            self.direction = self.direction
+            self.initial_capital = self.initial_capital
+            self.commission = self.commission
+            self.leverage_p1 = self.leverage_p1
+            self.order_size_p1 = self.order_size_p1
+            self.leverage_p2 = self.leverage_p2
+            self.order_size_p2 = self.order_size_p2
+            
+            self.stop_loss_p1 = opt_parameters[0]
+            self.ema_length_p1 = opt_parameters[1]
+            self.adf_length_1_p1 = opt_parameters[2]
+            self.adf_length_2_p1 = opt_parameters[3]
+            self.n_lag_1_p1 = opt_parameters[4]
+            self.n_lag_2_p1 = opt_parameters[5]
+            self.adf_level_1_p1 = opt_parameters[6]
+            self.adf_level_2_p1 = opt_parameters[7]
+            self.stop_loss_p2 = opt_parameters[8]
+            self.take_profit_p2 = opt_parameters[9]
+            self.entry_bar_p2 = opt_parameters[10]
+            self.ema_length_p2 = opt_parameters[11]
+            self.bb_length_p2 = opt_parameters[12]
+            self.bb_mult_p2 = opt_parameters[13]
+            self.adf_length_1_p2 = opt_parameters[14]
+            self.adf_length_2_p2 = opt_parameters[15]
+            self.n_lag_1_p2 = opt_parameters[16]
+            self.n_lag_2_p2 = opt_parameters[17]
+            self.adf_level_1_p2 = opt_parameters[18]
+            self.adf_level_2_p2 = opt_parameters[19]
+
+        if all_parameters is not None:
+            self.margin_type = all_parameters[0]
+            self.direction = all_parameters[1]
+            self.initial_capital = all_parameters[2]
+            self.commission = all_parameters[3]
+            self.leverage_p1 = all_parameters[4]
+            self.order_size_p1 = all_parameters[5]
+            self.leverage_p2 = all_parameters[6]
+            self.order_size_p2 = all_parameters[7]
+            self.stop_loss_p1 = all_parameters[8]
+            self.ema_length_p1 = all_parameters[9]
+            self.adf_length_1_p1 = all_parameters[10]
+            self.adf_length_2_p1 = all_parameters[11]
+            self.n_lag_1_p1 = all_parameters[12]
+            self.n_lag_2_p1 = all_parameters[13]
+            self.adf_level_1_p1 = all_parameters[14]
+            self.adf_level_2_p1 = all_parameters[15]
+            self.stop_loss_p2 = all_parameters[16]
+            self.take_profit_p2 = all_parameters[17]
+            self.entry_bar_p2 = all_parameters[18]
+            self.ema_length_p2 = all_parameters[19]
+            self.bb_length_p2 = all_parameters[20]
+            self.bb_mult_p2 = all_parameters[21]
+            self.adf_length_1_p2 = all_parameters[22]
+            self.adf_length_2_p2 = all_parameters[23]
+            self.n_lag_1_p2 = all_parameters[24]
+            self.n_lag_2_p2 = all_parameters[25]
+            self.adf_level_1_p2 = all_parameters[26]
+            self.adf_level_2_p2 = all_parameters[27]
+
+    def start(self):
+        self.price_precision = self.http_client.price_precision
+        self.qty_precision = self.http_client.qty_precision
+        self.time = self.http_client.price_data[:, 0]
+        self.open = self.http_client.price_data[:, 1]
+        self.high = self.http_client.price_data[:, 2]
+        self.low = self.http_client.price_data[:, 3]
+        self.close = self.http_client.price_data[:, 4]
+        self.equity = self.initial_capital
+        self.completed_deals_log = np.array([])
+        self.open_deals_log = np.full(5, np.nan)
+        self.deal_type = np.nan
+        self.entry_signal = np.nan
+        self.entry_date = np.nan
+        self.entry_price = np.nan
+        self.liquidation_price = np.nan
+        self.take_price = np.full(self.time.shape[0], np.nan)
+        self.stop_price = np.full(self.time.shape[0], np.nan)
+        self.position_size = np.nan
+        self.entry_short_stage_p2 = np.nan
+
+        self.adf_1_p1 = ta.adftest(
+            self.close, self.adf_length_1_p1, self.n_lag_1_p1
+        )
+        self.adf_2_p1 = ta.adftest(
+            self.close, self.adf_length_2_p1, self.n_lag_2_p1
+        )
+        self.adf_1_p2 = ta.adftest(
+            self.close, self.adf_length_1_p2, self.n_lag_1_p2
+        )
+        self.adf_2_p2 = ta.adftest(
+            self.close, self.adf_length_2_p2, self.n_lag_2_p2
+        )
+        self.ema_p1 = ta.ema(self.close, self.ema_length_p1)
+        self.ema_p2 = ta.ema(self.close, self.ema_length_p2)
+        self.bb = ta.bb(
+            self.close, self.bb_length_p2, self.bb_mult_p2
+        )
+        self.bb_upper_p2 = self.bb[1]
+        self.bb_lower_p2 = self.bb[2]
+
+        self.alert_entry_long = False
+        self.alert_exit_long = False
+        self.alert_entry_short = False
+        self.alert_exit_short = False
+        self.alert_cancel = False
+
+        (
+            self.completed_deals_log,
+            self.open_deals_log,
+            self.take_price,
+            self.stop_price,
+            self.alert_entry_long,
+            self.alert_exit_long,
+            self.alert_entry_short,
+            self.alert_exit_short,
+            self.alert_cancel
+        ) = self.calculate(
+                self.direction,
+                self.initial_capital,
+                self.commission,
+                self.leverage_p1,
+                self.order_size_p1,
+                self.leverage_p2,
+                self.order_size_p2,
+                self.stop_loss_p1,
+                self.adf_level_1_p1,
+                self.adf_level_2_p1,
+                self.stop_loss_p2,
+                self.take_profit_p2,
+                self.entry_bar_p2,
+                self.adf_level_1_p2,
+                self.adf_level_2_p2,
+                self.price_precision,
+                self.qty_precision,
+                self.time,
+                self.open,
+                self.high,
+                self.low,
+                self.close,
+                self.equity,
+                self.completed_deals_log,
+                self.open_deals_log,
+                self.deal_type,
+                self.entry_signal,
+                self.entry_date,
+                self.entry_price,
+                self.take_price,
+                self.stop_price,
+                self.liquidation_price,
+                self.position_size,
+                self.entry_short_stage_p2,
+                self.adf_1_p1,
+                self.adf_2_p1,
+                self.adf_1_p2,
+                self.adf_2_p2,
+                self.ema_p1,
+                self.ema_p2,
+                self.bb_upper_p2,
+                self.bb_lower_p2,
+                self.alert_entry_long,
+                self.alert_exit_long,
+                self.alert_entry_short,
+                self.alert_exit_short,
+                self.alert_cancel
+        )
+
+        self.indicators = {
+            'Stop-loss': {
+                'options': self.indicator_options['Stop-loss'],
+                'values': self.stop_price
+            },
+            'Take-profit': {
+                'options': self.indicator_options['Take-profit'],
+                'values': self.take_price
+            }
+        }
+
+    @staticmethod
+    @nb.jit(
+        (
+            nb.int8,
+            nb.float64,
+            nb.float64,
+            nb.int8,
+            nb.float64,
+            nb.int8,
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.int8,
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64,
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64,
+            nb.float64,
+            nb.float64,
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.boolean,
+            nb.boolean,
+            nb.boolean,
+            nb.boolean,
+            nb.boolean
+        ),
+        nopython=True,
+        nogil=True,
+        cache=True
+    )
+    def calculate(
+        direction,
+        initial_capital,
+        commission,
+        leverage_p1,
+        order_size_p1,
+        leverage_p2,
+        order_size_p2,
+        stop_loss_p1,
+        adf_level_1_p1,
+        adf_level_2_p1,
+        stop_loss_p2,
+        take_profit_p2,
+        entry_bar_p2,
+        adf_level_1_p2,
+        adf_level_2_p2,
+        price_precision,
+        qty_precision,
+        time,
+        open,
+        high,
+        low,
+        close,
+        equity,
+        completed_deals_log,
+        open_deals_log,
+        deal_type,
+        entry_signal,
+        entry_date,
+        entry_price,
+        take_price,
+        stop_price,
+        liquidation_price,
+        position_size,
+        entry_short_stage_p2,
+        adf_1_p1,
+        adf_2_p1,
+        adf_1_p2,
+        adf_2_p2,
+        ema_p1,
+        ema_p2,
+        bb_upper_p2,
+        bb_lower_p2,
+        alert_entry_long,
+        alert_exit_long,
+        alert_entry_short,
+        alert_exit_short,
+        alert_cancel
+    ):
+        def round_to_minqty_or_mintick(number, precision):
+            return round(round(number / precision) * precision, 8)
+
+        def update_log(log, equity, commission, deal_type, entry_signal,
+                       exit_signal, entry_date, exit_date, entry_price,
+                       exit_price, position_size, initial_capital):
+            total_commission = round(
+                (position_size * entry_price
+                    * commission / 100) + (position_size
+                    * exit_price * commission / 100),
+                2
+            )
+
+            if deal_type == 0:
+                pnl = round(
+                    (exit_price - entry_price) * position_size
+                        - total_commission,
+                    2
+                )
+            else:
+                pnl = round(
+                    (entry_price - exit_price) * position_size
+                        - total_commission,
+                    2
+                )
+
+            if position_size == 0:
+                return log, equity
+
+            pnl_per = round(
+                (((position_size * entry_price) + pnl)
+                    / (position_size * entry_price) - 1) * 100,
+                2
+            )
+
+            if log.shape[0] == 0:
+                cum_pnl = round(pnl, 2)
+                cum_pnl_per = round(
+                    pnl / (initial_capital + pnl) * 100,
+                    2
+                )
+            else:
+                cum_pnl = round(pnl + log[-3], 2)
+                cum_pnl_per = round(
+                    pnl / (initial_capital + log[-3]) * 100,
+                    2
+                )
+
+            log_row = np.array(
+                [
+                    deal_type, entry_signal, exit_signal, entry_date,
+                    exit_date, entry_price, exit_price, position_size,
+                    pnl, pnl_per, cum_pnl, cum_pnl_per, total_commission
+                ]
+            )
+            log = np.concatenate((log, log_row))
+            equity += pnl
+            return log, equity
+
+        for i in range(time.shape[0]):
+            alert_entry_long = False
+            alert_exit_long = False
+            alert_entry_short = False
+            alert_exit_short = False
+            alert_cancel = False
+
+            if i > 0:
+                stop_price[i] = stop_price[i - 1]
+                take_price[i] = take_price[i - 1]
+
+            # Check of liquidation
+            if (deal_type == 0 and low[i] <= liquidation_price):
+                completed_deals_log, equity = update_log(
+                    completed_deals_log,
+                    equity,
+                    commission,
+                    deal_type,
+                    entry_signal,
+                    0,
+                    entry_date,
+                    time[i],
+                    entry_price,
+                    liquidation_price,
+                    position_size,
+                    initial_capital
+                )
+                
+                open_deals_log = np.full(5, np.nan)
+                deal_type = np.nan
+                entry_signal = np.nan
+                entry_date = np.nan
+                entry_price = np.nan
+                liquidation_price = np.nan
+                take_price[i] = np.nan
+                stop_price[i] = np.nan
+                position_size = np.nan
+                alert_cancel = True
+
+            if (deal_type == 1 and high[i] >= liquidation_price):
+                completed_deals_log, equity = update_log(
+                    completed_deals_log,
+                    equity,
+                    commission,
+                    deal_type,
+                    entry_signal,
+                    0,
+                    entry_date,
+                    time[i],
+                    entry_price,
+                    liquidation_price,
+                    position_size,
+                    initial_capital
+                )
+
+                open_deals_log = np.full(5, np.nan)
+                deal_type = np.nan
+                entry_signal = np.nan
+                entry_date = np.nan
+                entry_price = np.nan
+                liquidation_price = np.nan
+                take_price[i] = np.nan
+                stop_price[i] = np.nan
+                position_size = np.nan
+                entry_short_stage_p2 = np.nan
+                alert_cancel = True
+
+            # Exit long
+            if deal_type == 0:
+                if low[i] <= stop_price[i]:
+                    completed_deals_log, equity = update_log(
+                        completed_deals_log,
+                        equity,
+                        commission,
+                        deal_type,
+                        entry_signal,
+                        1,
+                        entry_date,
+                        time[i],
+                        entry_price,
+                        stop_price[i],
+                        position_size,
+                        initial_capital
+                    )
+
+                    open_deals_log = np.full(5, np.nan)
+                    deal_type = np.nan
+                    entry_signal = np.nan
+                    entry_date = np.nan
+                    entry_price = np.nan
+                    liquidation_price = np.nan
+                    take_price[i] = np.nan
+                    stop_price[i] = np.nan
+                    position_size = np.nan
+                    alert_cancel = True
+
+            exit_long = (
+                close[i] < ema_p1[i] and
+                close[i] < open[i] and
+                adf_2_p1[i] > adf_level_2_p1 and
+                deal_type == 0
+            )
+
+            if exit_long:
+                completed_deals_log, equity = update_log(
+                    completed_deals_log,
+                    equity,
+                    commission,
+                    deal_type,
+                    entry_signal,
+                    13,
+                    entry_date,
+                    time[i],
+                    entry_price,
+                    close[i],
+                    position_size,
+                    initial_capital
+                )
+
+                open_deals_log = np.full(5, np.nan)
+                deal_type = np.nan
+                entry_signal = np.nan
+                entry_date = np.nan
+                entry_price = np.nan
+                liquidation_price = np.nan
+                take_price[i] = np.nan
+                stop_price[i] = np.nan
+                position_size = np.nan
+                alert_exit_long = True
+                alert_cancel = True
+
+            # Exit short
+            if deal_type == 1:
+                if high[i] - open[i] >= open[i] - low[i]:
+                    if low[i] <= take_price[i]:
+                        completed_deals_log, equity = update_log(
+                            completed_deals_log,
+                            equity,
+                            commission,
+                            deal_type,
+                            entry_signal,
+                            12,
+                            entry_date,
+                            time[i],
+                            entry_price,
+                            take_price[i],
+                            position_size,
+                            initial_capital
+                        )
+
+                        open_deals_log = np.full(5, np.nan)
+                        deal_type = np.nan
+                        entry_signal = np.nan
+                        entry_date = np.nan
+                        entry_price = np.nan
+                        liquidation_price = np.nan
+                        take_price[i] = np.nan
+                        stop_price[i] = np.nan
+                        position_size = np.nan
+                        entry_short_stage_p2 = np.nan
+                        alert_cancel = True
+                    elif high[i] >= stop_price[i]:
+                        completed_deals_log, equity = update_log(
+                            completed_deals_log,
+                            equity,
+                            commission,
+                            deal_type,
+                            entry_signal,
+                            1,
+                            entry_date,
+                            time[i],
+                            entry_price,
+                            stop_price[i],
+                            position_size,
+                            initial_capital
+                        )
+
+                        open_deals_log = np.full(5, np.nan)
+                        deal_type = np.nan
+                        entry_signal = np.nan
+                        entry_date = np.nan
+                        entry_price = np.nan
+                        liquidation_price = np.nan
+                        take_price[i] = np.nan
+                        stop_price[i] = np.nan
+                        position_size = np.nan
+                        entry_short_stage_p2 = np.nan
+                        alert_cancel = True
+                else:
+                    if high[i] >= stop_price[i]:
+                        completed_deals_log, equity = update_log(
+                            completed_deals_log,
+                            equity,
+                            commission,
+                            deal_type,
+                            entry_signal,
+                            1,
+                            entry_date,
+                            time[i],
+                            entry_price,
+                            stop_price[i],
+                            position_size,
+                            initial_capital
+                        )
+
+                        open_deals_log = np.full(5, np.nan)
+                        deal_type = np.nan
+                        entry_signal = np.nan
+                        entry_date = np.nan
+                        entry_price = np.nan
+                        liquidation_price = np.nan
+                        take_price[i] = np.nan
+                        stop_price[i] = np.nan
+                        position_size = np.nan
+                        entry_short_stage_p2 = np.nan
+                        alert_cancel = True
+                    elif low[i] <= take_price[i]:
+                        completed_deals_log, equity = update_log(
+                            completed_deals_log,
+                            equity,
+                            commission,
+                            deal_type,
+                            entry_signal,
+                            12,
+                            entry_date,
+                            time[i],
+                            entry_price,
+                            take_price[i],
+                            position_size,
+                            initial_capital
+                        )
+
+                        open_deals_log = np.full(5, np.nan)
+                        deal_type = np.nan
+                        entry_signal = np.nan
+                        entry_date = np.nan
+                        entry_price = np.nan
+                        liquidation_price = np.nan
+                        take_price[i] = np.nan
+                        stop_price[i] = np.nan
+                        position_size = np.nan
+                        entry_short_stage_p2 = np.nan
+                        alert_cancel = True
+
+            exit_short = (
+                close[i] > ema_p2[i] and
+                close[i] > open[i] and
+                adf_2_p2[i] > adf_level_2_p2 and
+                deal_type == 1
+            )
+
+            if exit_short:
+                completed_deals_log, equity = update_log(
+                    completed_deals_log,
+                    equity,
+                    commission,
+                    deal_type,
+                    entry_signal,
+                    14,
+                    entry_date,
+                    time[i],
+                    entry_price,
+                    close[i],
+                    position_size,
+                    initial_capital
+                )
+
+                open_deals_log = np.full(5, np.nan)
+                deal_type = np.nan
+                entry_signal = np.nan
+                entry_date = np.nan
+                entry_price = np.nan
+                liquidation_price = np.nan
+                take_price[i] = np.nan
+                stop_price[i] = np.nan
+                position_size = np.nan
+                entry_short_stage_p2 = np.nan
+                alert_exit_short = True
+                alert_cancel = True
+
+            # Entry long
+            entry_long = (
+                close[i] > open[i] and
+                close[i] > ema_p1[i] and
+                adf_1_p1[i] > adf_level_1_p1 and
+                (direction == 0 or direction == 1) and
+                deal_type != 0
+            )
+
+            if entry_long:
+                if deal_type == 1:
+                    completed_deals_log, equity = update_log(
+                        completed_deals_log,
+                        equity,
+                        commission,
+                        deal_type,
+                        entry_signal,
+                        14,
+                        entry_date,
+                        time[i],
+                        entry_price,
+                        close[i],
+                        position_size,
+                        initial_capital
+                    )
+
+                    open_deals_log = np.full(5, np.nan)
+                    deal_type = np.nan
+                    entry_signal = np.nan
+                    entry_date = np.nan
+                    entry_price = np.nan
+                    liquidation_price = np.nan
+                    take_price[i] = np.nan
+                    stop_price[i] = np.nan
+                    position_size = np.nan
+                    entry_short_stage_p2 = np.nan
+                    alert_exit_short = True
+                    alert_cancel = True
+
+                deal_type = 0
+                entry_signal = 0
+                entry_price = close[i]
+                initial_position =  (
+                    equity * leverage_p1 * (order_size_p1 / 100.0)
+                )
+                position_size = round_to_minqty_or_mintick(
+                    initial_position * (1 - commission / 100) / entry_price,
+                    qty_precision
+                )
+                entry_date = time[i]
+                liquidation_price = round_to_minqty_or_mintick(
+                    entry_price * (1 - 1 / leverage_p1),
+                    price_precision
+                )
+                stop_price[i] = round_to_minqty_or_mintick(
+                    close[i] * (100 - stop_loss_p1) / 100,
+                    price_precision
+                )
+                open_deals_log = np.array(
+                    [
+                        deal_type, entry_signal, entry_date,
+                        entry_price, position_size
+                    ]
+                )
+                alert_entry_long = True
+
+            # Entry short
+            if np.isnan(entry_short_stage_p2) and close[i] > ema_p2[i]:
+                entry_short_stage_p2 = 1
+
+            if (entry_short_stage_p2 == 1 and
+                    close[i] < ema_p2[i] and
+                    adf_1_p2[i] > adf_level_1_p2 and
+                    (direction == 0 or direction == 2) and
+                    np.isnan(deal_type)):
+                entry_short_stage_p2 = 2
+
+            if (np.isnan(deal_type) and
+                    entry_short_stage_p2 == 2 and
+                    close[i] < bb_upper_p2[i] and
+                    close[i] > bb_lower_p2[i] and
+                    (True if entry_bar_p2 == 0 else close[i] > open[i])):
+                entry_short_stage_p2 = 3
+
+            if entry_short_stage_p2 == 3:
+                deal_type = 1
+                entry_signal = 1
+                entry_price = close[i]
+                initial_position =  (
+                    equity * leverage_p2 * (order_size_p2 / 100.0)
+                )
+                position_size = round_to_minqty_or_mintick(
+                    initial_position * (1 - commission / 100) / entry_price,
+                    qty_precision
+                )
+                entry_date = time[i]
+                liquidation_price = round_to_minqty_or_mintick(
+                    entry_price * (1 + 1 / leverage_p2),
+                    price_precision
+                )
+                stop_price[i] = round_to_minqty_or_mintick(
+                    close[i] * (100 + stop_loss_p2) / 100,
+                    price_precision
+                )
+                take_price[i] = round_to_minqty_or_mintick(
+                    close[i] * (100 - take_profit_p2) / 100,
+                    price_precision
+                )
+                entry_short_stage_p2 = np.nan
+                open_deals_log = np.array(
+                    [
+                        deal_type, entry_signal, entry_date,
+                        entry_price, position_size
+                    ]
+                )
+                alert_entry_short = True
+
+        return (
+            completed_deals_log,
+            open_deals_log,
+            take_price,
+            stop_price,
+            alert_entry_long,
+            alert_exit_long,
+            alert_entry_short,
+            alert_exit_short,
+            alert_cancel
+        )
+    
+    def trade(self):
+        if self.alert_cancel:
+            self.http_client.futures_cancel_all_orders(
+                symbol=self.http_client.symbol
+            )
+
+        self.http_client.check_stop_status(self.http_client.symbol)
+        self.http_client.check_limit_status(self.http_client.symbol)
+
+        if self.alert_exit_long:
+            self.http_client.futures_market_close_sell(
+                symbol=self.http_client.symbol,
+                size='100%',
+                hedge='false'
+            )
+
+        if self.alert_exit_short:
+            self.http_client.futures_market_close_buy(
+                symbol=self.http_client.symbol,
+                size='100%',
+                hedge='false'
+            )
+
+        if self.alert_entry_long:
+            self.http_client.futures_market_open_buy(
+                symbol=self.http_client.symbol,
+                size='{}%'.format(self.order_size_p1),
+                margin=('isolated' if self.margin_type == 0 else 'cross'),
+                leverage=str(self.leverage_p1),
+                hedge='false'
+            )
+            self.http_client.futures_market_stop_sell(
+                symbol=self.http_client.symbol, 
+                size='100%', 
+                price=self.stop_price[-1], 
+                hedge='false'
+            )
+
+        if self.alert_entry_short:
+            self.http_client.futures_market_open_sell(
+                symbol=self.http_client.symbol,
+                size='{}%'.format(self.order_size_p2),
+                margin=('isolated' if self.margin_type == 0 else 'cross'),
+                leverage=str(self.leverage_p2),
+                hedge='false'
+            )
+            self.http_client.futures_market_stop_buy(
+                symbol=self.http_client.symbol, 
+                size='100%',
+                price=self.stop_price[-1], 
+                hedge='false'
+            )
+            self.http_client.futures_limit_take_buy(
+                symbol=self.http_client.symbol,
+                size='100%',
+                price=self.take_price[-1],
+                hedge='false'
+            )

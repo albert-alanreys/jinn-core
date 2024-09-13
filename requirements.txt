@@ -1,0 +1,6 @@
+numpy
+numba
+scipy
+python-binance
+pybit
+flask
