@@ -3,6 +3,7 @@ from src import NuggetV2
 from src import NuggetV4
 from src import NuggetV5
 from src import DickeyFullerV1
+from src import DevourerV3
 
 
 # mode: 'optimization', 'testing', 'automation'
@@ -11,9 +12,9 @@ mode = 'testing'
 # Use these settings for single optimization/testing/automation
 optimization = {
     # 'exchange': 'binance', 'bybit'
-    'exchange': 'bybit',
-    'symbol': 'XRPUSDT',
-    'interval': 60,
+    'exchange': 'binance',
+    'symbol': 'BTCUSDT',
+    'interval': '1d',
     'date/time #1': '2022/01/01 00:00',
     'date/time #2': '2023/06/01 00:00',
     'date/time #3': '2024/01/01 00:00',
@@ -22,12 +23,12 @@ optimization = {
 }
 testing = {
     # 'exchange': 'binance', 'bybit'
-    'exchange': 'bybit',
-    'symbol': 'ADAUSDT',
-    'interval': '1h',
-    'date/time #1': '2022/01/01 00:00',
-    'date/time #2': '2024/06/01 00:00',
-    'strategy': 3
+    'exchange': 'binance',
+    'symbol': 'BTCUSDT',
+    'interval': '1d',
+    'date/time #1': '2017/01/01 00:00',
+    'date/time #2': '2025/01/01 00:00',
+    'strategy': 5
 }
 automation = {
     # 'exchange': 'binance', 'bybit'
@@ -43,7 +44,8 @@ def main():
         1: {'name': 'nugget_v2', 'class': NuggetV2},
         2: {'name': 'nugget_v4', 'class': NuggetV4},
         3: {'name': 'nugget_v5', 'class': NuggetV5},
-        4: {'name': 'dickey_fuller_v1', 'class': DickeyFullerV1}
+        4: {'name': 'dickey_fuller_v1', 'class': DickeyFullerV1},
+        5: {'name': 'devourer_v3', 'class': DevourerV3}
     }
     Delegator.manage(mode, optimization, testing, automation, strategies)
  
