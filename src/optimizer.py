@@ -1,6 +1,6 @@
 from functools import partial
 import multiprocessing as mp
-import random as r
+import random
 import json
 import os
 
@@ -27,22 +27,19 @@ class Optimizer:
                     data = json.load(file)
                     
                     for i in data:
-                        exchange = i['exchange']
+                        exchange = i['exchange'].lower()
                         symbol = i['symbol']
                         interval = i['interval']
                         datetime1 = i['date/time #1']
                         datetime2 = i['date/time #2']
                         datetime3 = i['date/time #3']
-                        datetime4 = i['date/time #4']
 
-                        if exchange.lower() == 'binance':
+                        if exchange == 'binance':
                             http_client1 = http_clients[0]()
                             http_client2 = http_clients[0]()
-                            http_client3 = http_clients[0]()
-                        elif exchange.lower() == 'bybit':
+                        elif exchange == 'bybit':
                             http_client1 = http_clients[1]()
                             http_client2 = http_clients[1]()
-                            http_client3 = http_clients[1]()
 
                         http_client1.get_data(
                             symbol, interval, datetime1, datetime2
@@ -50,70 +47,64 @@ class Optimizer:
                         http_client2.get_data(
                             symbol, interval, datetime2, datetime3
                         )
-                        http_client3.get_data(
-                            symbol, interval, datetime3, datetime4
-                        )
-
                         self.http_clients_and_strategies[
-                            '{}_{}_{}_{} T{} - {}'.format(
-                                strategy['name'], exchange.lower(),
-                                symbol, interval, datetime1, datetime4
-                            )
+                            f'{strategy['name']}_'
+                            f'{exchange}_'
+                            f'{symbol}_'
+                            f'{interval} '
+                            f'T{datetime1} - {datetime3}'
                         ] = {
                             'http_client1': http_client1,
                             'http_client2': http_client2,
-                            'http_client3': http_client3,
                             'strategy': strategy['class']
                         }
-            except:
+            except Exception:
                 pass
 
         if len(self.http_clients_and_strategies) == 0:
-            exchange = optimization['exchange']
+            strategy_name = strategies[optimization['strategy']]['name']
+            strategy_class = strategies[optimization['strategy']]['class']
+            exchange = optimization['exchange'].lower()
             symbol = optimization['symbol']
             interval = optimization['interval']
             datetime1 = optimization['date/time #1']
             datetime2 = optimization['date/time #2']
             datetime3 = optimization['date/time #3']
-            datetime4 = optimization['date/time #4']
 
             if exchange == 'binance':
                 http_client1 = http_clients[0]()
                 http_client2 = http_clients[0]()
-                http_client3 = http_clients[0]()
             elif exchange == 'bybit':
                 http_client1 = http_clients[1]()
                 http_client2 = http_clients[1]()
-                http_client3 = http_clients[1]()
 
             http_client1.get_data(symbol, interval, datetime1, datetime2)
             http_client2.get_data(symbol, interval, datetime2, datetime3)
-            http_client3.get_data(symbol, interval, datetime3, datetime4)
-
             self.http_clients_and_strategies[
-                '{}_{}_{}_{} T{} - {}'.format(
-                    strategies[optimization['strategy']]['name'],
-                    exchange.lower(), symbol, interval, datetime1, datetime4
-                )
+                f'{strategy_name}_'
+                f'{exchange}_'
+                f'{symbol}_'
+                f'{interval} '
+                f'T{datetime1} - {datetime3}'
             ] = {
                 'http_client1': http_client1,
                 'http_client2': http_client2,
-                'http_client3': http_client3,
-                'strategy': strategies[optimization['strategy']]['class']
+                'strategy': strategy_class
             }
 
     def create(self):
         samples = [
             [               
-                r.choice(j) 
+                random.choice(j) 
                     for j in self.strategy.opt_parameters.values()
             ]
-            for i in range(self.population_size)
+            for _ in range(self.population_size)
         ]
         self.population = {
             k: v for k, v in zip(
                 map(
-                    partial(self.fit, http_client=self.http_client1), samples
+                    partial(self.fit, http_client=self.http_client1),
+                    samples
                 ),
                 samples
             )
@@ -131,42 +122,42 @@ class Optimizer:
         return score
 
     def select(self):
-        if r.randint(0, 1) == 0:
+        if random.randint(0, 1) == 0:
             score = max(self.population)
             parent_1 = self.population[score]
             population_copy = self.population.copy()
-            del population_copy[score]
-            parent_2 = r.choice(list(population_copy.values()))
+            population_copy.pop(score)
+            parent_2 = random.choice(list(population_copy.values()))
             self.parents = [parent_1, parent_2]
         else:
-            parents = r.sample(list(self.population.values()), 2)
+            parents = random.sample(list(self.population.values()), 2)
             self.parents = [parents[0], parents[1]]
 
     def recombine(self):
-        r_number = r.randint(0, 1)
+        r_number = random.randint(0, 1)
 
         if r_number == 0:
-            delimiter = r.randint(1, self.sample_length - 1)
+            delimiter = random.randint(1, self.sample_length - 1)
             self.child = (self.parents[0][:delimiter] 
                         + self.parents[1][delimiter:])
         else:
-            delimiter_1 = r.randint(1, self.sample_length // 2 - 1)
-            delimiter_2 = r.randint(
+            delimiter_1 = random.randint(1, self.sample_length // 2 - 1)
+            delimiter_2 = random.randint(
                 self.sample_length // 2 + 1, self.sample_length - 1)
             self.child = (self.parents[0][:delimiter_1]
                         + self.parents[1][delimiter_1:delimiter_2]
                         + self.parents[0][delimiter_2:])
 
     def mutate(self):
-        if r.randint(1, 100) <= 95:
-            gene_num = r.randint(0, self.sample_length - 1)
-            gene_value = r.choice(
+        if random.randint(1, 100) <= 95:
+            gene_num = random.randint(0, self.sample_length - 1)
+            gene_value = random.choice(
                 list(self.strategy.opt_parameters.values())[gene_num]
             )
             self.child[gene_num] = gene_value
         else:
             for i in range(len(self.child)):
-                self.child[i] = r.choice(
+                self.child[i] = random.choice(
                     list(self.strategy.opt_parameters.values())[i]
                 )
 
@@ -175,31 +166,26 @@ class Optimizer:
 
     def kill(self):
         while len(self.population) > self.max_population_size:
-            del self.population[min(self.population)]
+            self.population.pop(min(self.population))
 
     def elect(self):
         best_samples = dict()
 
-        for i in range(self.output_results):
+        for _ in range(self.output_results):
             try:
                 best_score = max(self.population)
                 best_samples[best_score] = self.population[best_score]
-                del self.population[best_score]
-            except:
+                self.population.pop(best_score)
+            except Exception:
                 break
 
         return best_samples
 
-    def validate(self, mode):
-        if mode == 'intermediate':
-            http_client = self.http_client2
-        elif mode == 'final':
-            http_client = self.http_client3
-
+    def validate(self):
         validation_population = {
             k: v for k, v in zip(
                 map(
-                    partial(self.fit, http_client=http_client),
+                    partial(self.fit, http_client=self.http_client2),
                     self.population.values()
                 ),
                 self.population.items()
@@ -208,14 +194,14 @@ class Optimizer:
         population_size = int(len(self.population) * 0.25)
         self.population.clear()
 
-        for i in range(population_size):
+        for _ in range(population_size):
             try:
                 best_score = max(validation_population)
                 old_score = validation_population[best_score][0]
                 sample = validation_population[best_score][1]
                 self.population[old_score] = sample
-                del validation_population[best_score]
-            except:
+                validation_population.pop(best_score)
+            except Exception:
                 break
 
     def write(self, strategy, best_samples):
@@ -261,7 +247,6 @@ class Optimizer:
         for i in range(self.number_of_starts):
             self.http_client1 = http_client_and_strategy[1]['http_client1']
             self.http_client2 = http_client_and_strategy[1]['http_client2']
-            self.http_client3 = http_client_and_strategy[1]['http_client3']
             self.strategy = http_client_and_strategy[1]['strategy']
             self.create()
 
@@ -273,17 +258,13 @@ class Optimizer:
                 self.kill()
 
                 if j % 1000 == 0:
-                    self.validate('intermediate')
+                    self.validate()
 
-            self.validate('final')
             best_samples.update(self.elect())
-            print(
-                'Оптимизация #{} для {} завершена.'.format(
-                    i + 1, http_client_and_strategy[0][
-                        : http_client_and_strategy[0].find(' ')
-                    ]
-                )
-            )
+            strategy_name = http_client_and_strategy[0][
+                : http_client_and_strategy[0].find(' ')
+            ]
+            print(f'Оптимизация #{i + 1} для {strategy_name} завершена.')
 
         return best_samples
 

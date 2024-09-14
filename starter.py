@@ -14,12 +14,11 @@ optimization = {
     # 'exchange': 'binance', 'bybit'
     'exchange': 'binance',
     'symbol': 'BTCUSDT',
-    'interval': '1d',
+    'interval': '1h',
     'date/time #1': '2022/01/01 00:00',
     'date/time #2': '2023/06/01 00:00',
     'date/time #3': '2024/01/01 00:00',
-    'date/time #4': '2024/06/01 00:00',
-    'strategy': 3
+    'strategy': 1
 }
 testing = {
     # 'exchange': 'binance', 'bybit'
