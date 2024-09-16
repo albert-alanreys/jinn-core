@@ -5,17 +5,20 @@ import os
 import numpy as np
 
 from src.flask_app import FlaskApp
-import src.deal_keywords as dk
-import src.preprocessor as pp
+from src import BinanceClient
+from src import BybitClient
+from src import Strategies
+from src import DealKeywords
+from src import Preprocessor
 
 
 class Tester():
-    def __init__(self, testing, http_clients, strategies):
+    def __init__(self, testing):
         self.strategies = dict()
 
-        for strategy in strategies.values():
+        for strategy in Strategies.registry.values():
             folder_path = os.path.abspath(
-                'src/strategies/' + strategy['name'] + '/backtesting/'
+                f'src/strategies/{strategy[0]}/backtesting/'
             )
             file_names = os.listdir(folder_path)
 
@@ -33,13 +36,12 @@ class Tester():
                 ]
 
                 if exchange.lower() == 'binance':
-                    http_client = http_clients[0]()
+                    client = BinanceClient()
                 elif exchange.lower() == 'bybit':
-                    http_client = http_clients[1]()
+                    client = BybitClient()
 
                 file_path = os.path.abspath(
-                    'src/strategies/' + strategy['name'] +
-                    '/backtesting/' + name
+                    f'src/strategies/{strategy[0]}/backtesting/{name}'
                 )
                 target_line = False
                 opt_parameters = []
@@ -70,19 +72,18 @@ class Tester():
                             target_line = True
 
                 for parameters in opt_parameters:
-                    http_client.get_data(symbol, interval, start, end)
-                    strategy_obj = strategy['class'](
-                        http_client, opt_parameters=parameters
+                    client.get_data(symbol, interval, start, end)
+                    strategy_obj = strategy[1](
+                        client, opt_parameters=parameters
                     )
                     all_parameters = strategy_obj.__dict__.copy()
-                    del all_parameters['http_client']
-
+                    all_parameters.pop('client')
                     strategy_data = {
-                        'name': strategy['name'],
+                        'name': strategy[0],
                         'exchange': exchange.lower(),
                         'symbol': symbol,
                         'interval': interval,
-                        'mintick': http_client.price_precision,
+                        'mintick': client.price_precision,
                         'strategy': strategy_obj,
                         'parameters': all_parameters
                     }
@@ -96,23 +97,22 @@ class Tester():
             end = testing['date/time #2']
 
             if exchange == 'binance':
-                http_client =  http_clients[0]()
+                client =  BinanceClient()
             elif exchange == 'bybit':
-                http_client = http_clients[1]()
+                client = BybitClient()
 
-            http_client.get_data(symbol, interval, start, end)
-            strategy_obj = strategies[
+            client.get_data(symbol, interval, start, end)
+            strategy_obj = Strategies.registry[
                 testing['strategy']
-            ]['class'](http_client)
+            ][1](client)
             all_parameters = strategy_obj.__dict__.copy()
-            del all_parameters['http_client']
-            
+            all_parameters.pop('client')
             strategy_data = {
-                'name': strategies[testing['strategy']]['name'],
+                'name': Strategies.registry[testing['strategy']][0],
                 'exchange': exchange.lower(),
                 'symbol': symbol,
                 'interval': interval,
-                'mintick': http_client.price_precision,
+                'mintick': client.price_precision,
                 'strategy': strategy_obj,
                 'parameters': all_parameters
             }
@@ -143,7 +143,7 @@ class Tester():
 
             self.strategies[strategy]['parameters'][name] = new_value
             strategy_obj = self.strategies[strategy]['strategy'].__class__(
-                self.strategies[strategy]['strategy'].http_client,
+                self.strategies[strategy]['strategy'].client,
                 all_parameters=list(
                     self.strategies[strategy]['parameters'].values()
                 )
@@ -152,13 +152,13 @@ class Tester():
             frontend_data = self.get_frontend_data(self.strategies[strategy])
             self.frontend_main_data[strategy] = frontend_data[0]
             self.frontend_lite_data[strategy] = frontend_data[1]
-        except:
+        except Exception:
             raise
 
     def get_frontend_data(self, data):
         result = []
-
-        data['strategy'].start()
+        strategy_obj = data['strategy']
+        strategy_obj.start()
         completed_deals_log = data['strategy'] \
             .completed_deals_log.reshape((-1, 13))
         open_deals_log = data['strategy'].open_deals_log
@@ -181,34 +181,34 @@ class Tester():
                 'symbol': data['symbol'],
                 'interval': data['interval'],
                 'mintick': data['mintick'],
-                'klines': pp.preprocess_klines(
-                    data['strategy'].http_client.price_data
+                'klines': Preprocessor.get_klines(
+                    data['strategy'].client.price_data
                 ),
-                'indicators': pp.preprocess_indicators(
-                    data['strategy'].http_client.price_data,
+                'indicators': Preprocessor.get_indicators(
+                    data['strategy'].client.price_data,
                     data['strategy'].indicators
                 ),
-                'markers': pp.preprocess_deals(
+                'markers': Preprocessor.get_deals(
                     completed_deals_log,
                     open_deals_log,
-                    dk.entry_signal_keywords,
-                    dk.exit_signal_keywords,
+                    DealKeywords.entry_signals,
+                    DealKeywords.exit_signals,
                     data['strategy'].qty_precision
                 ),
             },
             'reportData': {
-                'equity': pp.preprocess_equity(equity),
+                'equity': Preprocessor.get_equity(equity),
                 'metrics': metrics,
-                'completedDealsLog': pp.preprocess_completed_deals_log(
+                'completedDealsLog': Preprocessor.get_completed_deals_log(
                     completed_deals_log,
-                    dk.deal_type_keywords,
-                    dk.entry_signal_keywords,
-                    dk.exit_signal_keywords,
+                    DealKeywords.deal_types,
+                    DealKeywords.entry_signals,
+                    DealKeywords.exit_signals,
                 ),
-                'openDealsLog': pp.preprocess_open_deals_log(
+                'openDealsLog': Preprocessor.get_open_deals_log(
                     open_deals_log,
-                    dk.deal_type_keywords,
-                    dk.entry_signal_keywords
+                    DealKeywords.deal_types,
+                    DealKeywords.entry_signals
                 )
             }
         })
@@ -337,7 +337,7 @@ class Tester():
                     all_total_closed_trades * 100,
                 2
             )
-        except:
+        except Exception:
             all_percent_profitable = np.nan
 
         try:
@@ -346,7 +346,7 @@ class Tester():
                     long_total_closed_trades * 100,
                 2
             )
-        except:
+        except Exception:
             long_percent_profitable = np.nan
 
         try:
@@ -355,7 +355,7 @@ class Tester():
                     short_total_closed_trades * 100,
                 2
             )
-        except:
+        except Exception:
             short_percent_profitable = np.nan
 
         # Avg trade
@@ -428,7 +428,7 @@ class Tester():
         try:
             all_largest_winning_trade = round(log[:, 8].max(), 2)
             all_largest_winning_trade_per = round(log[:, 9].max(), 2)
-        except:
+        except Exception:
             pass
 
         long_largest_winning_trade = np.nan
@@ -441,7 +441,7 @@ class Tester():
             long_largest_winning_trade_per = round(
                 log[:, 9][log[:, 0] == 0].max(), 2
             )
-        except:
+        except Exception:
             pass
 
         short_largest_winning_trade = np.nan
@@ -454,7 +454,7 @@ class Tester():
             short_largest_winning_trade_per = round(
                 log[:, 9][log[:, 0] == 1].max(), 2
             )
-        except:
+        except Exception:
             pass
 
         # Largest losing trade
@@ -464,7 +464,7 @@ class Tester():
         try:
             all_largest_losing_trade = round(abs(log[:, 8].min()), 2)
             all_largest_losing_trade_per = round(abs(log[:, 9].min()), 2)
-        except:
+        except Exception:
             pass
 
         long_largest_losing_trade = np.nan
@@ -477,7 +477,7 @@ class Tester():
             long_largest_losing_trade_per = round(
                abs(log[:, 9][log[:, 0] == 0].min()), 2
             )
-        except:
+        except Exception:
             pass
 
         short_largest_losing_trade = np.nan
@@ -490,7 +490,7 @@ class Tester():
             short_largest_losing_trade_per = round(
                 abs(log[:, 9][log[:, 0] == 1].min()), 2
             )
-        except:
+        except Exception:
             pass
 
         # Max drawdown
@@ -516,7 +516,7 @@ class Tester():
 
                     if drawdown_per > all_max_drawdown_per:
                         all_max_drawdown_per = round(drawdown_per, 2)
-        except:
+        except Exception:
             all_max_drawdown = 0.0
             all_max_drawdown_per = 0.0
 

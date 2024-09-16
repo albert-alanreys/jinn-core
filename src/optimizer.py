@@ -4,22 +4,26 @@ import random
 import json
 import os
 
+from src import BinanceClient
+from src import BybitClient
+from src import Strategies
+
 
 class Optimizer:
-    iterations = 25000
+    iterations = 500
     population_size = 50
     max_population_size = 300
 
     number_of_starts = 1
     output_results = 2
 
-    def __init__(self, optimization, http_clients, strategies):
-        self.http_clients_and_strategies = dict()
+    def __init__(self, optimization):
+        self.strategies = dict()
 
-        for strategy in strategies.values():
+        for strategy in Strategies.registry.values():
             file_path = os.path.abspath(
-                'src/strategies/' + strategy['name'] +
-                '/optimization/optimization.json'
+                f'src/strategies/{strategy[0]}'
+                f'/optimization/optimization.json'
             )
 
             try:
@@ -35,35 +39,35 @@ class Optimizer:
                         datetime3 = i['date/time #3']
 
                         if exchange == 'binance':
-                            http_client1 = http_clients[0]()
-                            http_client2 = http_clients[0]()
+                            client1 = BinanceClient()
+                            client2 = BinanceClient()
                         elif exchange == 'bybit':
-                            http_client1 = http_clients[1]()
-                            http_client2 = http_clients[1]()
+                            client1 = BybitClient()
+                            client2 = BybitClient()
 
-                        http_client1.get_data(
+                        client1.get_data(
                             symbol, interval, datetime1, datetime2
                         )
-                        http_client2.get_data(
+                        client2.get_data(
                             symbol, interval, datetime2, datetime3
                         )
-                        self.http_clients_and_strategies[
-                            f'{strategy['name']}_'
+                        self.strategies[
+                            f'{strategy[0]}_'
                             f'{exchange}_'
                             f'{symbol}_'
                             f'{interval} '
                             f'T{datetime1} - {datetime3}'
                         ] = {
-                            'http_client1': http_client1,
-                            'http_client2': http_client2,
-                            'strategy': strategy['class']
+                            'client1': client1,
+                            'client2': client2,
+                            'strategy': strategy[1]
                         }
             except Exception:
                 pass
 
-        if len(self.http_clients_and_strategies) == 0:
-            strategy_name = strategies[optimization['strategy']]['name']
-            strategy_class = strategies[optimization['strategy']]['class']
+        if len(self.strategies) == 0:
+            strategy_name = Strategies.registry[optimization['strategy']][0]
+            strategy_type = Strategies.registry[optimization['strategy']][1]
             exchange = optimization['exchange'].lower()
             symbol = optimization['symbol']
             interval = optimization['interval']
@@ -72,24 +76,24 @@ class Optimizer:
             datetime3 = optimization['date/time #3']
 
             if exchange == 'binance':
-                http_client1 = http_clients[0]()
-                http_client2 = http_clients[0]()
+                client1 = BinanceClient()
+                client2 = BinanceClient()
             elif exchange == 'bybit':
-                http_client1 = http_clients[1]()
-                http_client2 = http_clients[1]()
+                client1 = BybitClient()
+                client2 = BybitClient()
 
-            http_client1.get_data(symbol, interval, datetime1, datetime2)
-            http_client2.get_data(symbol, interval, datetime2, datetime3)
-            self.http_clients_and_strategies[
+            client1.get_data(symbol, interval, datetime1, datetime2)
+            client2.get_data(symbol, interval, datetime2, datetime3)
+            self.strategies[
                 f'{strategy_name}_'
                 f'{exchange}_'
                 f'{symbol}_'
                 f'{interval} '
                 f'T{datetime1} - {datetime3}'
             ] = {
-                'http_client1': http_client1,
-                'http_client2': http_client2,
-                'strategy': strategy_class
+                'client1': client1,
+                'client2': client2,
+                'strategy': strategy_type
             }
 
     def create(self):
@@ -103,7 +107,7 @@ class Optimizer:
         self.population = {
             k: v for k, v in zip(
                 map(
-                    partial(self.fit, http_client=self.http_client1),
+                    partial(self.fit, client=self.client1),
                     samples
                 ),
                 samples
@@ -111,8 +115,8 @@ class Optimizer:
         }
         self.sample_length = len(self.strategy.opt_parameters)
 
-    def fit(self, sample, http_client):
-        strategy = self.strategy(http_client, opt_parameters=sample)
+    def fit(self, sample, client):
+        strategy = self.strategy(client, opt_parameters=sample)
         strategy.start()
         score = round(
             strategy.completed_deals_log[8::13].sum() /
@@ -162,7 +166,7 @@ class Optimizer:
                 )
 
     def expand(self):
-        self.population[self.fit(self.child, self.http_client1)] = self.child
+        self.population[self.fit(self.child, self.client1)] = self.child
 
     def kill(self):
         while len(self.population) > self.max_population_size:
@@ -185,7 +189,7 @@ class Optimizer:
         validation_population = {
             k: v for k, v in zip(
                 map(
-                    partial(self.fit, http_client=self.http_client2),
+                    partial(self.fit, client=self.client2),
                     self.population.values()
                 ),
                 self.population.items()
@@ -217,20 +221,18 @@ class Optimizer:
         ].lstrip(strategy_name)
         time = strategy[0][strategy[0].rfind('T') + 1 : ]
         file_path = os.path.abspath(
-            'src/strategies/{}/optimization/{}.txt'.format(
-                strategy_name, file_name
-            )
+            f'src/strategies/{strategy_name}'
+            f'/optimization/{file_name}.txt'
         )
 
         for score, sample in best_samples.items():
             file_text = (
-                'Period: ' + time + '\nNet profit, %: ' +
-                str(score) + '\n' + ('=' * 50) + '\n'
+                f'Period: {time}\nNet profit, %: {score}\n{'=' * 50}\n'
             )
             file_text += ''.join(
                 [
-                    value + ' = ' + str(sample[count]) + '\n'
-                        for count, value in enumerate(
+                    f'{value} = {sample[index]}\n'
+                        for index, value in enumerate(
                             strategy[1]['strategy'].opt_parameters.keys()
                         )
                 ]
@@ -241,13 +243,13 @@ class Optimizer:
             with open(file_path, 'a') as file:
                 print(file_text, file=file)
 
-    def optimize(self, http_client_and_strategy):
+    def optimize(self, strategy):
         best_samples = {}
 
         for i in range(self.number_of_starts):
-            self.http_client1 = http_client_and_strategy[1]['http_client1']
-            self.http_client2 = http_client_and_strategy[1]['http_client2']
-            self.strategy = http_client_and_strategy[1]['strategy']
+            self.client1 = strategy[1]['client1']
+            self.client2 = strategy[1]['client2']
+            self.strategy = strategy[1]['strategy']
             self.create()
 
             for j in range(1, self.iterations + 1):
@@ -261,8 +263,8 @@ class Optimizer:
                     self.validate()
 
             best_samples.update(self.elect())
-            strategy_name = http_client_and_strategy[0][
-                : http_client_and_strategy[0].find(' ')
+            strategy_name = strategy[0][
+                : strategy[0].find(' ')
             ]
             print(f'Оптимизация #{i + 1} для {strategy_name} завершена.')
 
@@ -270,12 +272,12 @@ class Optimizer:
 
     def start(self):
         with mp.Pool(mp.cpu_count()) as pool:
-            strategies_and_best_samples = zip(
-                self.http_clients_and_strategies.items(),
+            result = zip(
+                self.strategies.items(),
                 pool.map(
-                    self.optimize, self.http_clients_and_strategies.items()
+                    self.optimize, self.strategies.items()
                 )
             )
 
-        for strategy, best_samples in strategies_and_best_samples:
+        for strategy, best_samples in result:
             self.write(strategy, best_samples)

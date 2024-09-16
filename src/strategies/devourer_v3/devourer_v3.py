@@ -60,22 +60,31 @@ class DevourerV3():
         'close_under_ema_p3': [i for i in range(1, 5)]
     }
 
+    # For frontend
     indicator_options = {
         'Stop-loss': {'color': '#FF0000'},
         'Take-profit': {'color': '#008000'}
     }
 
-    def __init__(self, http_client, opt_parameters=None, all_parameters=None):
-        self.http_client = http_client
+    # Class attributes
+    class_attributes = (
+        'opt_parameters',
+        'indicator_options',
+        'class_attributes',
+        'start',
+        'calculate',
+        'trade'
+    )
+
+    def __init__(self, client, opt_parameters=None, all_parameters=None):
+        self.client = client
+
+        for key, value in DevourerV3.__dict__.items():
+            if (not key.startswith('__') and
+                    key not in DevourerV3.class_attributes):
+                self.__dict__[key] = value
 
         if opt_parameters is not None:
-            self.margin_type = self.margin_type
-            self.direction = self.direction
-            self.initial_capital = self.initial_capital
-            self.commission = self.commission
-            self.order_size_type = self.order_size_type
-            self.order_size = self.order_size
-            self.leverage = self.leverage
             self.stop_atr_p2 = opt_parameters[0]
             self.stop_atr_p3 = opt_parameters[1]
             self.take_atr_p3 = opt_parameters[2]
@@ -127,13 +136,13 @@ class DevourerV3():
             self.close_under_ema_p3 = all_parameters[26]
 
     def start(self):
-        self.price_precision = self.http_client.price_precision
-        self.qty_precision = self.http_client.qty_precision
-        self.time = self.http_client.price_data[:, 0]
-        self.open = self.http_client.price_data[:, 1]
-        self.high = self.http_client.price_data[:, 2]
-        self.low = self.http_client.price_data[:, 3]
-        self.close = self.http_client.price_data[:, 4]
+        self.price_precision = self.client.price_precision
+        self.qty_precision = self.client.qty_precision
+        self.time = self.client.price_data[:, 0]
+        self.open = self.client.price_data[:, 1]
+        self.high = self.client.price_data[:, 2]
+        self.low = self.client.price_data[:, 3]
+        self.close = self.client.price_data[:, 4]
         self.equity = self.initial_capital
         self.completed_deals_log = np.array([])
         self.open_deals_log = np.full(5, np.nan)
@@ -332,9 +341,9 @@ class DevourerV3():
             nb.boolean,
             nb.boolean
         ),
+        cache=True,
         nopython=True,
-        nogil=True,
-        cache=True
+        nogil=True
     )
     def calculate(
         direction,
@@ -938,33 +947,33 @@ class DevourerV3():
             alert_exit_short,
             alert_cancel
         )
-    
+
     def trade(self):
         if self.alert_cancel:
-            self.http_client.futures_cancel_all_orders(
-                symbol=self.http_client.symbol
+            self.client.futures_cancel_all_orders(
+                symbol=self.client.symbol
             )
 
-        self.http_client.check_stop_status(self.http_client.symbol)
-        self.http_client.check_limit_status(self.http_client.symbol)
+        self.client.check_stop_status(self.client.symbol)
+        self.client.check_limit_status(self.client.symbol)
 
         if self.alert_exit_long:
-            self.http_client.futures_market_close_sell(
-                symbol=self.http_client.symbol,
+            self.client.futures_market_close_sell(
+                symbol=self.client.symbol,
                 size='100%',
                 hedge='false'
             )
 
         if self.alert_exit_short:
-            self.http_client.futures_market_close_buy(
-                symbol=self.http_client.symbol,
+            self.client.futures_market_close_buy(
+                symbol=self.client.symbol,
                 size='100%',
                 hedge='false'
             )
 
         if self.alert_entry_long:
-            self.http_client.futures_market_open_buy(
-                symbol=self.http_client.symbol,
+            self.client.futures_market_open_buy(
+                symbol=self.client.symbol,
                 size=f'{self.order_size}%',
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=str(self.leverage),
@@ -972,29 +981,29 @@ class DevourerV3():
             )
 
             if not np.isnan(self.stop_price[-1]):
-                self.http_client.futures_market_stop_sell(
-                    symbol=self.http_client.symbol, 
+                self.client.futures_market_stop_sell(
+                    symbol=self.client.symbol, 
                     size='100%', 
                     price=self.stop_price[-1], 
                     hedge='false'
                 )
 
         if self.alert_entry_short:
-            self.http_client.futures_market_open_sell(
-                symbol=self.http_client.symbol,
+            self.client.futures_market_open_sell(
+                symbol=self.client.symbol,
                 size=f'{self.order_size}%',
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=str(self.leverage),
                 hedge='false'
             )
-            self.http_client.futures_market_stop_buy(
-                symbol=self.http_client.symbol, 
+            self.client.futures_market_stop_buy(
+                symbol=self.client.symbol, 
                 size='100%',
                 price=self.stop_price[-1], 
                 hedge='false'
             )
-            self.http_client.futures_limit_take_buy(
-                symbol=self.http_client.symbol,
+            self.client.futures_limit_take_buy(
+                symbol=self.client.symbol,
                 size='100%',
                 price=self.take_price[-1],
                 hedge='false'

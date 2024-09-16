@@ -4,7 +4,7 @@ import numba as nb
 
 @nb.jit(
     (nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def atr(high, low, close, length):
     # tr
@@ -34,7 +34,7 @@ def atr(high, low, close, length):
 
 @nb.jit(
     (nb.float64[:], nb.int16, nb.float32), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def bb(source, length, mult):
     # sma
@@ -64,7 +64,7 @@ def bb(source, length, mult):
 
 @nb.jit(
     (nb.float64[:], nb.int16, nb.float32), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def bbw(source, length, mult):
     # sma
@@ -90,7 +90,10 @@ def bbw(source, length, mult):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def change(source, length):
     values = (
         source - np.concatenate(
@@ -102,7 +105,7 @@ def change(source, length):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:]), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def cross(source1, source2):
     data1 = source1 - source2
@@ -113,7 +116,7 @@ def cross(source1, source2):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:]), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def crossover(source1, source2):
     data1 = source1 - source2
@@ -124,7 +127,7 @@ def crossover(source1, source2):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:]), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def crossunder(source1, source2):
     data1 = source1 - source2
@@ -133,7 +136,10 @@ def crossunder(source1, source2):
     return values
 
 
-@nb.jit((nb.float64[:],), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:],),
+    cache=True, nopython=True, nogil=True
+)
 def cum(source):
     values = source.cumsum()
     return values
@@ -141,7 +147,7 @@ def cum(source):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:], nb.int16), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def dd(source1, source2, length):
     # upper
@@ -190,7 +196,7 @@ def dd(source1, source2, length):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:], nb.float64[:], nb.int16, nb.int16),
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def dmi(high, low, close, di_length, adx_length):
     # change_high
@@ -295,7 +301,7 @@ def dmi(high, low, close, di_length, adx_length):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:], nb.int16), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def donchian(source1, source2, length):
     # upper
@@ -332,7 +338,7 @@ def donchian(source1, source2, length):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:], nb.float64[:], nb.float32, nb.int16),
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def ds(high, low, close, factor, atr_length):
     # tr
@@ -387,7 +393,10 @@ def ds(high, low, close, factor, atr_length):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def ema(source, length):
     values = source.copy()
     alpha = 2 / (length + 1)
@@ -401,7 +410,10 @@ def ema(source, length):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def highest(source, length):
     source = source.copy()
     source[np.isnan(source)] = -np.inf
@@ -416,7 +428,10 @@ def highest(source, length):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def hma(source, length):
     # wma1
     wma1_length = length // 2
@@ -471,7 +486,10 @@ def hma(source, length):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def lowest(source, length):
     source = source.copy()
     source[np.isnan(source)] = np.inf
@@ -488,7 +506,7 @@ def lowest(source, length):
 
 @nb.jit(
     (nb.float64[:], nb.int16, nb.int16), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def pivothigh(source, leftbars, rightbars):
     source = source.copy()
@@ -512,7 +530,7 @@ def pivothigh(source, leftbars, rightbars):
 
 @nb.jit(
     (nb.float64[:], nb.int16, nb.int16), 
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def pivotlow(source, leftbars, rightbars):
     source = source.copy()
@@ -534,7 +552,10 @@ def pivotlow(source, leftbars, rightbars):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def rma(source, length):
     values = source.copy()
     alpha = 1 / length
@@ -548,7 +569,10 @@ def rma(source, length):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def rsi(source, length):
     u = source - np.concatenate((np.full(1, np.nan), source[: -1]))
     d = np.concatenate((np.full(1, np.nan), source[: -1])) - source
@@ -581,7 +605,10 @@ def rsi(source, length):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def sma(source, length):
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
@@ -593,7 +620,10 @@ def sma(source, length):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def stdev(source, length):
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
@@ -607,7 +637,7 @@ def stdev(source, length):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:], nb.float64[:], nb.float32, nb.int16),
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def supertrend(high, low, close, factor, atr_length):
     # tr
@@ -684,7 +714,7 @@ def supertrend(high, low, close, factor, atr_length):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def stoch(source, high, low, length):
     # highest
@@ -718,7 +748,7 @@ def stoch(source, high, low, length):
 
 @nb.jit(
     (nb.float64[:], nb.float64[:], nb.float64[:], nb.int8),
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def tr(high, low, close, handle_na):
     hl = high - low
@@ -741,7 +771,10 @@ def tr(high, low, close, handle_na):
     return values
 
 
-@nb.jit((nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def wma(source, length):
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
@@ -759,7 +792,10 @@ def wma(source, length):
     return values
 
 
-@nb.jit((nb.float64[:], nb.float64[:], nb.float64[:], nb.int16), nopython=True, nogil=True, cache=True)
+@nb.jit(
+    (nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
+    cache=True, nopython=True, nogil=True
+)
 def wpr(source1, source2, source3, length):
     # highest
     source1 = source1.copy()
@@ -792,7 +828,7 @@ def wpr(source1, source2, source3, length):
 
 @nb.jit(
     (nb.float64[:], nb.int16, nb.int16),
-    nopython=True, nogil=True, cache=True
+    cache=True, nopython=True, nogil=True
 )
 def adftest(source, length, lags):
     if lags >= length / 2 - 2:

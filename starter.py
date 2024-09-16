@@ -1,52 +1,53 @@
 from src.delegator import Delegator
-from src import NuggetV2
-from src import NuggetV4
-from src import NuggetV5
-from src import DickeyFullerV1
-from src import DevourerV3
 
+# mode:
+#   'optimization'
+#   'testing'
+#   'automation'
 
-# mode: 'optimization', 'testing', 'automation'
+# exchange:
+#   'binance'
+#   'bybit'
+
+# interval:
+#   https://python-binance.readthedocs.io/en/latest/constants.html
+#   https://bybit-exchange.github.io/docs/v5/market/kline
+
+# strategy:
+#   'devourer_v3'
+#   'dickey_fuller_v1'
+#   'nugget_v2'
+#   'nugget_v4'
+#   'nugget_v5'
+
 mode = 'testing'
-
-# Use these settings for single optimization/testing/automation
 optimization = {
-    # 'exchange': 'binance', 'bybit'
-    'exchange': 'binance',
-    'symbol': 'BTCUSDT',
+    'exchange': 'bybit',
+    'symbol': 'ETHUSDT',
     'interval': '1h',
     'date/time #1': '2022/01/01 00:00',
     'date/time #2': '2023/06/01 00:00',
     'date/time #3': '2024/01/01 00:00',
-    'strategy': 1
+    'strategy': 'nugget_v2'
 }
 testing = {
-    # 'exchange': 'binance', 'bybit'
     'exchange': 'binance',
-    'symbol': 'BTCUSDT',
-    'interval': '1d',
-    'date/time #1': '2017/01/01 00:00',
+    'symbol': 'ETHUSDT',
+    'interval': '1h',
+    'date/time #1': '2019/01/01 00:00',
     'date/time #2': '2025/01/01 00:00',
-    'strategy': 5
+    'strategy': 'nugget_v2'
 }
 automation = {
-    # 'exchange': 'binance', 'bybit'
     'exchange': 'bybit',
     'symbol': 'ETHUSDT',
-    'interval': '1',
-    'strategy': 1
+    'interval': 1,
+    'strategy': 'nugget_v2'
 }
 
 
 def main():
-    strategies = {
-        1: {'name': 'nugget_v2', 'class': NuggetV2},
-        2: {'name': 'nugget_v4', 'class': NuggetV4},
-        3: {'name': 'nugget_v5', 'class': NuggetV5},
-        4: {'name': 'dickey_fuller_v1', 'class': DickeyFullerV1},
-        5: {'name': 'devourer_v3', 'class': DevourerV3}
-    }
-    Delegator.manage(mode, optimization, testing, automation, strategies)
+    Delegator.manage(mode, optimization, testing, automation)
  
 
 if __name__ == '__main__':

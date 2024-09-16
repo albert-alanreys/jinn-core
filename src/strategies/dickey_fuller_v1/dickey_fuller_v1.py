@@ -61,24 +61,31 @@ class DickeyFullerV1():
         'adf_level_2_p2': [i / 10 for i in range(-10, 21)]
     }
 
+    # For frontend
     indicator_options = {
         'Stop-loss': {'color': '#FF0000'},
         'Take-profit': {'color': '#008000'}
     }
 
-    def __init__(self, http_client, opt_parameters=None, all_parameters=None):
-        self.http_client = http_client
+    # Class attributes
+    class_attributes = (
+        'opt_parameters',
+        'indicator_options',
+        'class_attributes',
+        'start',
+        'calculate',
+        'trade'
+    )
+
+    def __init__(self, client, opt_parameters=None, all_parameters=None):
+        self.client = client
+
+        for key, value in DickeyFullerV1.__dict__.items():
+            if (not key.startswith('__') and
+                    key not in DickeyFullerV1.class_attributes):
+                self.__dict__[key] = value
 
         if opt_parameters is not None:
-            self.margin_type = self.margin_type
-            self.direction = self.direction
-            self.initial_capital = self.initial_capital
-            self.commission = self.commission
-            self.leverage_p1 = self.leverage_p1
-            self.order_size_p1 = self.order_size_p1
-            self.leverage_p2 = self.leverage_p2
-            self.order_size_p2 = self.order_size_p2
-            
             self.stop_loss_p1 = opt_parameters[0]
             self.ema_length_p1 = opt_parameters[1]
             self.adf_length_1_p1 = opt_parameters[2]
@@ -131,13 +138,13 @@ class DickeyFullerV1():
             self.adf_level_2_p2 = all_parameters[27]
 
     def start(self):
-        self.price_precision = self.http_client.price_precision
-        self.qty_precision = self.http_client.qty_precision
-        self.time = self.http_client.price_data[:, 0]
-        self.open = self.http_client.price_data[:, 1]
-        self.high = self.http_client.price_data[:, 2]
-        self.low = self.http_client.price_data[:, 3]
-        self.close = self.http_client.price_data[:, 4]
+        self.price_precision = self.client.price_precision
+        self.qty_precision = self.client.qty_precision
+        self.time = self.client.price_data[:, 0]
+        self.open = self.client.price_data[:, 1]
+        self.high = self.client.price_data[:, 2]
+        self.low = self.client.price_data[:, 3]
+        self.close = self.client.price_data[:, 4]
         self.equity = self.initial_capital
         self.completed_deals_log = np.array([])
         self.open_deals_log = np.full(5, np.nan)
@@ -299,9 +306,9 @@ class DickeyFullerV1():
             nb.boolean,
             nb.boolean
         ),
+        cache=True,
         nopython=True,
-        nogil=True,
-        cache=True
+        nogil=True
     )
     def calculate(
         direction,
@@ -822,58 +829,58 @@ class DickeyFullerV1():
     
     def trade(self):
         if self.alert_cancel:
-            self.http_client.futures_cancel_all_orders(
-                symbol=self.http_client.symbol
+            self.client.futures_cancel_all_orders(
+                symbol=self.client.symbol
             )
 
-        self.http_client.check_stop_status(self.http_client.symbol)
-        self.http_client.check_limit_status(self.http_client.symbol)
+        self.client.check_stop_status(self.client.symbol)
+        self.client.check_limit_status(self.client.symbol)
 
         if self.alert_exit_long:
-            self.http_client.futures_market_close_sell(
-                symbol=self.http_client.symbol,
+            self.client.futures_market_close_sell(
+                symbol=self.client.symbol,
                 size='100%',
                 hedge='false'
             )
 
         if self.alert_exit_short:
-            self.http_client.futures_market_close_buy(
-                symbol=self.http_client.symbol,
+            self.client.futures_market_close_buy(
+                symbol=self.client.symbol,
                 size='100%',
                 hedge='false'
             )
 
         if self.alert_entry_long:
-            self.http_client.futures_market_open_buy(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.order_size_p1),
+            self.client.futures_market_open_buy(
+                symbol=self.client.symbol,
+                size=f'{self.order_size_p1}%',
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=str(self.leverage_p1),
                 hedge='false'
             )
-            self.http_client.futures_market_stop_sell(
-                symbol=self.http_client.symbol, 
+            self.client.futures_market_stop_sell(
+                symbol=self.client.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
 
         if self.alert_entry_short:
-            self.http_client.futures_market_open_sell(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.order_size_p2),
+            self.client.futures_market_open_sell(
+                symbol=self.client.symbol,
+                size=f'{self.order_size_p2}%',
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=str(self.leverage_p2),
                 hedge='false'
             )
-            self.http_client.futures_market_stop_buy(
-                symbol=self.http_client.symbol, 
+            self.client.futures_market_stop_buy(
+                symbol=self.client.symbol, 
                 size='100%',
                 price=self.stop_price[-1], 
                 hedge='false'
             )
-            self.http_client.futures_limit_take_buy(
-                symbol=self.http_client.symbol,
+            self.client.futures_limit_take_buy(
+                symbol=self.client.symbol,
                 size='100%',
                 price=self.take_price[-1],
                 hedge='false'

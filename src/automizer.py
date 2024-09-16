@@ -3,17 +3,20 @@ import ast
 import os
 
 from src.flask_app import FlaskApp
-import src.deal_keywords as dk
-import src.preprocessor as pp
+from src import BinanceClient
+from src import BybitClient
+from src import Strategies
+from src import DealKeywords
+from src import Preprocessor
 
 
 class Automizer():
-    def __init__(self, automation, http_clients, strategies):
+    def __init__(self, automation):
         self.strategies = dict()
 
-        for strategy in strategies.values():
+        for strategy in Strategies.registry.values():
             folder_path = os.path.abspath(
-                'src/strategies/' + strategy['name'] + '/automation/'
+                f'src/strategies/{strategy[0]}/automation/'
             )
             file_names = os.listdir(folder_path)
 
@@ -31,13 +34,12 @@ class Automizer():
                 ]
 
                 if exchange.lower() == 'binance':
-                    http_client = http_clients[0]()
+                    client = BinanceClient()
                 elif exchange.lower() == 'bybit':
-                    http_client = http_clients[1]()
+                    client = BybitClient()
 
                 file_path = os.path.abspath(
-                    'src/strategies/' + strategy['name'] +
-                    '/automation/' + name
+                    f'src/strategies/{strategy[0]}/automation/{name}'
                 )
 
                 with open(file_path, 'r') as file:
@@ -53,22 +55,21 @@ class Automizer():
                             )
                         )
 
-                http_client.get_data(symbol, interval)
-                strategy_obj = strategy['class'](
-                    http_client, all_parameters=parameters
+                client.get_data(symbol, interval)
+                strategy_obj = strategy[1](
+                    client, all_parameters=parameters
                 )
                 all_parameters = strategy_obj.__dict__.copy()
-                del all_parameters['http_client']
-
+                all_parameters.pop('client')
                 strategy_data = {
-                    'name': strategy['name'],
+                    'name': strategy[0],
                     'exchange': exchange.lower(),
                     'symbol': symbol,
                     'interval': interval,
-                    'mintick': http_client.price_precision,
+                    'mintick': client.price_precision,
                     'strategy': strategy_obj,
                     'parameters': all_parameters,
-                    'http_client': http_client
+                    'client': client
                 }
                 self.strategies[str(id(strategy_data))] = strategy_data
         
@@ -78,26 +79,25 @@ class Automizer():
             interval = automation['interval']
 
             if exchange.lower() == 'binance':
-                http_client = http_clients[0]()
+                client = BinanceClient()
             elif exchange.lower() == 'bybit':
-                http_client = http_clients[1]()
+                client = BybitClient()
 
-            http_client.get_data(symbol, interval)
-            strategy_obj = strategies[
+            client.get_data(symbol, interval)
+            strategy_obj = Strategies.registry[
                 automation['strategy']
-            ]['class'](http_client)
+            ][1](client)
             all_parameters = strategy_obj.__dict__.copy()
-            del all_parameters['http_client']
-
+            all_parameters.pop('client')
             strategy_data = {
-                'name': strategies[automation['strategy']]['name'],
+                'name': Strategies.registry[automation['strategy']][0],
                 'exchange': exchange.lower(),
                 'symbol': symbol,
                 'interval': interval,
-                'mintick': http_client.price_precision,
+                'mintick': client.price_precision,
                 'strategy': strategy_obj,
                 'parameters': all_parameters,
-                'http_client': http_client
+                'client': client
             }
             self.strategies[str(id(strategy_data))] = strategy_data
 
@@ -116,7 +116,7 @@ class Automizer():
                 continue
 
             for key, data in self.strategies.items():
-                if data['http_client'].update_data():
+                if data['client'].update_data():
                     frontend_data = self.get_frontend_data(data)
                     self.frontend_main_data[key] = frontend_data[0]
                     self.frontend_lite_data[key] = frontend_data[1]
@@ -125,13 +125,13 @@ class Automizer():
                     self.app.set_data_updates(key)
                     data['strategy'].trade()
 
-                    if len(data['http_client'].alerts) > 0:
-                        for alert in data['http_client'].alerts:
+                    if len(data['client'].alerts) > 0:
+                        for alert in data['client'].alerts:
                             alert['strategy'] = key
                             self.alerts.append(alert)
 
                         self.app.set_alert_updates(self.alerts)
-                        data['http_client'].alerts.clear()
+                        data['client'].alerts.clear()
                         self.alerts.clear()
 
     def update_strategy(self, strategy, name, new_value):
@@ -153,7 +153,7 @@ class Automizer():
             
             self.strategies[strategy]['parameters'][name] = new_value
             strategy_obj = self.strategies[strategy]['strategy'].__class__(
-                self.strategies[strategy]['strategy'].http_client,
+                self.strategies[strategy]['strategy'].client,
                 all_parameters=list(
                     self.strategies[strategy]['parameters'].values()
                 )
@@ -162,19 +162,18 @@ class Automizer():
             frontend_data = self.get_frontend_data(self.strategies[strategy])
             self.frontend_main_data[strategy] = frontend_data[0]
             self.frontend_lite_data[strategy] = frontend_data[1]
-        except:
+        except Exception:
             raise
 
         self.thread.do_run = True
 
     def get_frontend_data(self, data):
         result = []
-
         data['strategy'].start()
-        completed_deals_log = data['strategy'] \
-            .completed_deals_log.reshape((-1, 13))
+        completed_deals_log = (
+            data['strategy'].completed_deals_log.reshape((-1, 13))
+        )
         open_deals_log = data['strategy'].open_deals_log
-
         result.append({
             'chartData': {
                 'name': data['name'].capitalize().replace('_', '-'),
@@ -182,18 +181,18 @@ class Automizer():
                 'symbol': data['symbol'],
                 'interval': data['interval'],
                 'mintick': data['mintick'],
-                'klines': pp.preprocess_klines(
-                    data['strategy'].http_client.price_data
+                'klines': Preprocessor.get_klines(
+                    data['strategy'].client.price_data
                 ),
-                'indicators': pp.preprocess_indicators(
-                    data['strategy'].http_client.price_data,
+                'indicators': Preprocessor.get_indicators(
+                    data['strategy'].client.price_data,
                     data['strategy'].indicators
                 ),
-                'markers': pp.preprocess_deals(
+                'markers': Preprocessor.get_deals(
                     completed_deals_log,
                     open_deals_log,
-                    dk.entry_signal_keywords,
-                    dk.exit_signal_keywords,
+                    DealKeywords.entry_signals,
+                    DealKeywords.exit_signals,
                     data['strategy'].qty_precision
                 ),
             }

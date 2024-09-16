@@ -90,6 +90,7 @@ class NuggetV2():
         'adx_short_lower_bound': [float(i) for i in range(1, 69)]
     }
 
+    # For frontend
     indicator_options = {
         'Stop-loss': {'color': '#FF0000'},
         'Take-profit #1': {'color': '#008000'},
@@ -99,19 +100,25 @@ class NuggetV2():
         'Take-profit #5': {'color': '#008000'}
     }
 
-    def __init__(self, http_client, opt_parameters=None, all_parameters=None):
-        self.http_client = http_client
+    # Class attributes
+    class_attributes = (
+        'opt_parameters',
+        'indicator_options',
+        'class_attributes',
+        'start',
+        'calculate',
+        'trade'
+    )
+
+    def __init__(self, client, opt_parameters=None, all_parameters=None):
+        self.client = client
+
+        for key, value in NuggetV2.__dict__.items():
+            if (not key.startswith('__') and
+                    key not in NuggetV2.class_attributes):
+                self.__dict__[key] = value
 
         if opt_parameters is not None:
-            self.margin_type = self.margin_type
-            self.direction = self.direction
-            self.initial_capital = self.initial_capital
-            self.min_capital = self.min_capital
-            self.commission = self.commission
-            self.order_size_type = self.order_size_type
-            self.order_size = self.order_size
-            self.leverage = self.leverage
-            
             self.stop_type = opt_parameters[0]
             self.stop = opt_parameters[1]
             self.trail_stop = opt_parameters[2]
@@ -178,12 +185,12 @@ class NuggetV2():
             self.adx_short_lower_bound = all_parameters[34]
 
     def start(self):
-        self.price_precision = self.http_client.price_precision
-        self.qty_precision = self.http_client.qty_precision
-        self.time = self.http_client.price_data[:, 0]
-        self.high = self.http_client.price_data[:, 2]
-        self.low = self.http_client.price_data[:, 3]
-        self.close = self.http_client.price_data[:, 4]
+        self.price_precision = self.client.price_precision
+        self.qty_precision = self.client.qty_precision
+        self.time = self.client.price_data[:, 0]
+        self.high = self.client.price_data[:, 2]
+        self.low = self.client.price_data[:, 3]
+        self.close = self.client.price_data[:, 4]
         self.equity = self.initial_capital
         self.completed_deals_log = np.array([])
         self.open_deals_log = np.full(5, np.nan)
@@ -392,9 +399,9 @@ class NuggetV2():
             nb.boolean,
             nb.boolean
         ),
+        cache=True,
         nopython=True,
-        nogil=True,
-        cache=True
+        nogil=True
     )
     def calculate(
         direction,
@@ -1124,128 +1131,130 @@ class NuggetV2():
     
     def trade(self):
         if self.alert_cancel:
-            self.http_client.futures_cancel_all_orders(
-                symbol=self.http_client.symbol
+            self.client.futures_cancel_all_orders(
+                symbol=self.client.symbol
             )
 
-        self.http_client.check_stop_status(self.http_client.symbol)
-        self.http_client.check_limit_status(self.http_client.symbol)
+        self.client.check_stop_status(self.client.symbol)
+        self.client.check_limit_status(self.client.symbol)
 
         if self.alert_long_new_stop:
-            self.http_client.futures_cancel_stop(
-                symbol=self.http_client.symbol, 
+            self.client.futures_cancel_stop(
+                symbol=self.client.symbol, 
                 side='Sell'
             )
-            self.http_client.check_stop_status(self.http_client.symbol)
-            self.http_client.futures_market_stop_sell(
-                symbol=self.http_client.symbol, 
+            self.client.check_stop_status(self.client.symbol)
+            self.client.futures_market_stop_sell(
+                symbol=self.client.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
         
         if self.alert_short_new_stop:
-            self.http_client.futures_cancel_stop(
-                symbol=self.http_client.symbol, 
+            self.client.futures_cancel_stop(
+                symbol=self.client.symbol, 
                 side='Buy'
             )
-            self.http_client.check_stop_status(self.http_client.symbol)
-            self.http_client.futures_market_stop_buy(
-                symbol=self.http_client.symbol, 
+            self.client.check_stop_status(self.client.symbol)
+            self.client.futures_market_stop_buy(
+                symbol=self.client.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
 
         if self.alert_long:
-            self.http_client.futures_market_open_buy(
-                symbol=self.http_client.symbol,
-                size='{}{}'.format(
-                    self.order_size, '%' if self.order_size_type == 0 else 'u'
+            self.client.futures_market_open_buy(
+                symbol=self.client.symbol,
+                size=(
+                    f'{self.order_size}'
+                    f'{'%' if self.order_size_type == 0 else 'u'}'
                 ),
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=str(self.leverage),
                 hedge='false'
             )
-            self.http_client.futures_market_stop_sell(
-                symbol=self.http_client.symbol, 
+            self.client.futures_market_stop_sell(
+                symbol=self.client.symbol, 
                 size='100%', 
                 price=self.stop_price[-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_sell(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.take_volume[0]),
+            self.client.futures_limit_take_sell(
+                symbol=self.client.symbol,
+                size=f'{self.take_volume[0]}%',
                 price=self.take_price[0][-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_sell(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.take_volume[1]),
+            self.client.futures_limit_take_sell(
+                symbol=self.client.symbol,
+                size=f'{self.take_volume[1]}%',
                 price=self.take_price[1][-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_sell(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.take_volume[2]),
+            self.client.futures_limit_take_sell(
+                symbol=self.client.symbol,
+                size=f'{self.take_volume[2]}%',
                 price=self.take_price[2][-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_sell(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.take_volume[3]),
+            self.client.futures_limit_take_sell(
+                symbol=self.client.symbol,
+                size=f'{self.take_volume[3]}%',
                 price=self.take_price[3][-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_sell(
-                symbol=self.http_client.symbol,
+            self.client.futures_limit_take_sell(
+                symbol=self.client.symbol,
                 size='100%',
                 price=self.take_price[4][-1],
                 hedge='false'
             )
         
         if self.alert_short:
-            self.http_client.futures_market_open_sell(
-                symbol=self.http_client.symbol,
-                size='{}{}'.format(
-                    self.order_size, '%' if self.order_size_type == 0 else 'u'
+            self.client.futures_market_open_sell(
+                symbol=self.client.symbol,
+                size=(
+                    f'{self.order_size}'
+                    f'{'%' if self.order_size_type == 0 else 'u'}'
                 ),
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=str(self.leverage),
                 hedge='false'
             )
-            self.http_client.futures_market_stop_buy(
-                symbol=self.http_client.symbol, 
+            self.client.futures_market_stop_buy(
+                symbol=self.client.symbol, 
                 size='100%', 
                 price=self.stop_price[-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_buy(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.take_volume[0]),
+            self.client.futures_limit_take_buy(
+                symbol=self.client.symbol,
+                size=f'{self.take_volume[0]}%',
                 price=self.take_price[0][-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_buy(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.take_volume[1]),
+            self.client.futures_limit_take_buy(
+                symbol=self.client.symbol,
+                size=f'{self.take_volume[1]}%',
                 price=self.take_price[1][-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_buy(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.take_volume[2]),
+            self.client.futures_limit_take_buy(
+                symbol=self.client.symbol,
+                size=f'{self.take_volume[2]}%',
                 price=self.take_price[2][-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_buy(
-                symbol=self.http_client.symbol,
-                size='{}%'.format(self.take_volume[3]),
+            self.client.futures_limit_take_buy(
+                symbol=self.client.symbol,
+                size=f'{self.take_volume[3]}%',
                 price=self.take_price[3][-1],
                 hedge='false'
             )
-            self.http_client.futures_limit_take_buy(
-                symbol=self.http_client.symbol,
+            self.client.futures_limit_take_buy(
+                symbol=self.client.symbol,
                 size='100%',
                 price=self.take_price[4][-1],
                 hedge='false'

@@ -6,7 +6,23 @@ import binance as bn
 import numpy as np
 
 
-class BinanceHTTPClient():
+class BinanceClient():
+    kline_intervals = {
+        '1m': '1m', 1: '1m', '1': '1m',
+        '3m': '3m', 3: '3m', '3': '3m',
+        '5m': '5m', 5: '5m', '5': '5m',
+        '15m': '15m', 15: '15m', '15': '15m',
+        '30m': '30m', 30: '30m', '30': '30m',
+        '1h': '1h', 60: '1h', '60': '1h',
+        '2h': '2h', 120: '2h', '120': '2h',
+        '4h': '4h', 240: '4h', '240': '4h',
+        '6h': '6h', 360: '6h', '360': '6h',
+        '12h': '12h', 720: '12h', '720': '12h',
+        '1d': '1d', 'D': '1d',
+        '1w': '1w', 'W': '1w',
+        '1M': '1M', 'M': '1M'   
+    }
+
     def __init__(self):
         with open(os.path.abspath('.env'), 'r') as file:
             data = file.read()
@@ -32,35 +48,23 @@ class BinanceHTTPClient():
             api_key=self.api_key,
             api_secret=self.api_secret
         )
-        self.kline_intervals = {
-            '1m': '1m', 1: '1m', '1': '1m',
-            '3m': '3m', 3: '3m', '3': '3m',
-            '5m': '5m', 5: '5m', '5': '5m',
-            '15m': '15m', 15: '15m', '15': '15m',
-            '30m': '30m', 30: '30m', '30': '30m',
-            '1h': '1h', 60: '1h', '60': '1h',
-            '2h': '2h', 120: '2h', '120': '2h',
-            '4h': '4h', 240: '4h', '240': '4h',
-            '6h': '6h', 360: '6h', '360': '6h',
-            '12h': '12h', 720: '12h', '720': '12h',
-            '1d': '1d', 'D': '1d',
-            '1w': '1w', 'W': '1w',
-            '1M': '1M', 'M': '1M'   
-        }
+        self.telegram_url = (
+            f'https://api.telegram.org/bot{self.bot_token}/sendMessage'
+        )
         self.limit_orders = []
         self.stop_orders = []
         self.alerts = []
 
     def get_historical_klines(self, symbol, interval, start_time, end_time):
         file = (
-            os.path.abspath('src/database') +
-            '/binance_' + symbol + '_' + self.interval +
-            '_' + str(start_time) + '_' + str(end_time) + '.npy'
+            f'{os.path.abspath('src/database')}'
+            f'/binance_{symbol}_{interval}_'
+            f'{start_time}_{end_time}.npy'
         )
 
         try:
             self.price_data = np.load(file)
-        except:
+        except Exception:
             datetime1 = dt.datetime.fromtimestamp(
                 start_time / 1000, tz=dt.timezone.utc
             ).strftime('%Y/%m/%d %H:%M')
@@ -68,9 +72,8 @@ class BinanceHTTPClient():
                 end_time / 1000, tz=dt.timezone.utc
             ).strftime('%Y/%m/%d %H:%M')
             print(
-                'Запрос данных: BINANCE • {} • {} • {} - {}.'.format(
-                    symbol, interval, datetime1, datetime2
-                )
+                f'Запрос данных: BINANCE • {symbol} '
+                f'• {interval} • {datetime1} - {datetime2}.'
             )
             self.price_data = np.array(
                 self.client.get_historical_klines(
@@ -85,9 +88,7 @@ class BinanceHTTPClient():
             print('Данные получены.')
 
     def get_last_klines(self, symbol, interval):
-        print(
-            'Запрос данных: BINANCE • {} • {}.'.format(symbol, interval)
-        )
+        print(f'Запрос данных: BINANCE • {symbol} • {interval}.')
         self.price_data = np.array(
             self.client.get_historical_klines(
                 symbol=symbol,
@@ -142,7 +143,7 @@ class BinanceHTTPClient():
                         klines_type=bn.enums.HistoricalKlinesType(2)
                     )
                 )[:-1, :6].astype(float)
-            except:
+            except Exception:
                 pass
             else:
                 break
@@ -160,7 +161,7 @@ class BinanceHTTPClient():
                 self.client.futures_change_position_mode(
                     dualSidePosition=False
                 )
-            except:
+            except Exception:
                 pass
         elif hedge == 'true':
             hedge_mode = 'LONG'
@@ -169,7 +170,7 @@ class BinanceHTTPClient():
                 self.client.futures_change_position_mode(
                     dualSidePosition=True
                 )
-            except:
+            except Exception:
                 pass
 
         try:
@@ -181,14 +182,14 @@ class BinanceHTTPClient():
                 self.client.futures_change_margin_type(
                     symbol=symbol, marginType='ISOLATED'
                 )
-        except:
+        except Exception:
             pass
 
         try:
             self.client.futures_change_leverage(
                 symbol=symbol, leverage=leverage
             )
-        except:
+        except Exception:
             pass
 
         try:
@@ -228,7 +229,7 @@ class BinanceHTTPClient():
                         symbol=symbol,
                         orderId=order['orderId']
                     )
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -249,26 +250,17 @@ class BinanceHTTPClient():
             })
 
             message = (
-                'Исполнен рыночный ордер на Binance:' +
-                '\n• направление — покупка' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['executedQty'] +
-                '\n• цена — ' + order_info['avgPrice']
+                f'Исполнен рыночный ордер на Binance:'
+                f'\n• направление — покупка'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['executedQty']}'
+                f'\n• цена — {order_info['avgPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot' +
-                self.bot_token + '/sendMessage'
-            )
+            url = f'https://api.telegram.org/bot{self.bot_token}/sendMessage'
             data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(url, data=data)
         except Exception as exception:
             self.send_exception(exception)
 
@@ -280,7 +272,7 @@ class BinanceHTTPClient():
                 self.client.futures_change_position_mode(
                     dualSidePosition=False
                 )
-            except: 
+            except Exception: 
                 pass
         elif hedge == 'true':
             hedge_mode = 'SHORT'
@@ -289,7 +281,7 @@ class BinanceHTTPClient():
                 self.client.futures_change_position_mode(
                     dualSidePosition=True
                 )
-            except: 
+            except Exception: 
                 pass
 
         try:
@@ -301,14 +293,14 @@ class BinanceHTTPClient():
                 self.client.futures_change_margin_type(
                     symbol=symbol, marginType='ISOLATED'
                 )
-        except: 
+        except Exception: 
             pass
 
         try:
             self.client.futures_change_leverage(
                 symbol=symbol, leverage=leverage
             )
-        except: 
+        except Exception: 
             pass
 
         try:
@@ -348,7 +340,7 @@ class BinanceHTTPClient():
                         symbol=symbol,
                         orderId=order['orderId']
                     )
-                except: 
+                except Exception: 
                     pass
                 else: 
                     break
@@ -367,28 +359,19 @@ class BinanceHTTPClient():
                     order_info['updateTime'] / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Исполнен рыночный ордер на Binance:' +
-                '\n• направление — продажа' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['executedQty'] +
-                '\n• цена — ' + order_info['avgPrice']
+                f'Исполнен рыночный ордер на Binance:'
+                f'\n• направление — продажа'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['executedQty']}'
+                f'\n• цена — {order_info['avgPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot' +
-                self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
-            
+
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -441,7 +424,7 @@ class BinanceHTTPClient():
                         symbol=symbol,
                         orderId=order['orderId']
                     )
-                except: 
+                except Exception: 
                     pass
                 else: 
                     break
@@ -460,28 +443,19 @@ class BinanceHTTPClient():
                     order_info['updateTime'] / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Исполнен рыночный ордер на Binance:' +
-                '\n• направление — покупка' +
-                '\n• символ — #' +  order_info['symbol'] +
-                '\n• количество — ' + order_info['executedQty'] +
-                '\n• цена — ' + order_info['avgPrice']
+                f'Исполнен рыночный ордер на Binance:'
+                f'\n• направление — покупка'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['executedQty']}'
+                f'\n• цена — {order_info['avgPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot' +
-                self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -534,7 +508,7 @@ class BinanceHTTPClient():
                         symbol=symbol,
                         orderId=order['orderId']
                     )
-                except: 
+                except Exception: 
                     pass
                 else: 
                     break
@@ -553,28 +527,19 @@ class BinanceHTTPClient():
                     order_info['updateTime'] / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Исполнен рыночный ордер на Binance:' +
-                '\n• направление — продажа' +
-                '\n• символ — #' +  order_info['symbol'] +
-                '\n• количество — ' + order_info['executedQty'] +
-                '\n• цена — ' + order_info['avgPrice']
+                f'Исполнен рыночный ордер на Binance:'
+                f'\n• направление — продажа'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['executedQty']}'
+                f'\n• цена — {order_info['avgPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot' +
-                self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -643,28 +608,19 @@ class BinanceHTTPClient():
                     order['updateTime'] / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Выставлен рыночный стоп на Binance:' +
-                '\n• направление — покупка' +
-                '\n• символ — #' + order['symbol'] +
-                '\n• количество — ' + order['origQty'] +
-                '\n• цена — ' + order['stopPrice']
+                f'Выставлен рыночный стоп на Binance:'
+                f'\n• направление — покупка'
+                f'\n• символ — #{order['symbol']}'
+                f'\n• количество — {order['origQty']}'
+                f'\n• цена — {order['stopPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot' +
-                self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -734,28 +690,19 @@ class BinanceHTTPClient():
                     tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Выставлен рыночный стоп на Binance:' +
-                '\n• направление — продажа' +
-                '\n• символ — #' + order['symbol'] +
-                '\n• количество — ' + order['origQty'] +
-                '\n• цена — ' + order['stopPrice']
+                f'Выставлен рыночный стоп на Binance:'
+                f'\n• направление — продажа'
+                f'\n• символ — #{order['symbol']}'
+                f'\n• количество — {order['origQty']}'
+                f'\n• цена — {order['stopPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot' +
-                self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
 
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -826,28 +773,19 @@ class BinanceHTTPClient():
                     tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Выставлен лимитный ордер на Binance:' +
-                '\n• направление — покупка' +
-                '\n• символ — #' + order['symbol'] +
-                '\n• количество — ' + order['origQty'] +
-                '\n• цена — ' + order['price']
+                f'Выставлен лимитный ордер на Binance:'
+                f'\n• направление — покупка'
+                f'\n• символ — #{order['symbol']}' 
+                f'\n• количество — {order['origQty']}'
+                f'\n• цена — {order['price']}'
             )
-            url = (
-                'https://api.telegram.org/bot' +
-                self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -918,28 +856,19 @@ class BinanceHTTPClient():
                     tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Выставлен лимитный ордер на Binance:' +
-                '\n• направление — продажа' +
-                '\n• символ — #' + order['symbol'] +
-                '\n• количество — ' + order['origQty'] +
-                '\n• цена — ' + order['price']
+                f'Выставлен лимитный ордер на Binance:'
+                f'\n• направление — продажа'
+                f'\n• символ — #{order['symbol']}'
+                f'\n• количество — {order['origQty']}'
+                f'\n• цена — {order['price']}'
             )
-            url = (
-                'https://api.telegram.org/bot' +
-                self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -989,36 +918,6 @@ class BinanceHTTPClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def send_exception(self, exception):
-        if str(exception) != '':
-            self.alerts.append({
-                'message': {
-                    'exchange': 'BINANCE',
-                    'error': str(exception)
-                },
-                'time': dt.datetime.now(
-                    dt.timezone.utc
-                ).strftime('%Y-%m-%d %H:%M:%S')
-            })
-
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {
-                'chat_id': self.chat_id,
-                'text': f'❗️Binance:\n{exception}'
-            }
-
-            if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
-
     def check_stop_status(self, symbol):
         try:
             for orderId in self.stop_orders.copy():
@@ -1057,28 +956,19 @@ class BinanceHTTPClient():
                             order['updateTime'] / 1000, tz=dt.timezone.utc
                         ).strftime('%Y/%m/%d %H:%M:%S')
                     })
-
                     message = (
-                        status.capitalize() + ' рыночный стоп на Binance:' +
-                        '\n• направление — ' + side +
-                        '\n• символ — #' + order['symbol'] +
-                        '\n• количество — ' + qty +
-                        '\n• цена — ' + price
+                        f'{status.capitalize()} рыночный стоп на Binance:'
+                        f'\n• направление — {side}'
+                        f'\n• символ — #{order['symbol']}'
+                        f'\n• количество — {qty}'
+                        f'\n• цена — {price}'
                     )
-                    url = (
-                        'https://api.telegram.org/bot'
-                        + self.bot_token + '/sendMessage'
-                    )
-                    data = {'chat_id': self.chat_id, 'text': message}
                     
                     if self.bot_token:
-                        while True:
-                            try: 
-                                rq.post(url, data=data)
-                            except: 
-                                pass
-                            else: 
-                                break
+                        rq.post(
+                            self.telegram_url,
+                            {'chat_id': self.chat_id, 'text': message}
+                        )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -1116,27 +1006,40 @@ class BinanceHTTPClient():
                             order['updateTime'] / 1000, tz=dt.timezone.utc
                         ).strftime('%Y/%m/%d %H:%M:%S')
                     })
-
                     message = (
-                        status.capitalize() + ' лимитный ордер на Bybit:' +
-                        '\n• направление — ' + side +
-                        '\n• символ — #' + order['symbol'] +
-                        '\n• количество — ' + order['origQty'] +
-                        '\n• цена — ' + order['price']
+                        f'{status.capitalize()} лимитный ордер на Binance:'
+                        f'\n• направление — {side}'
+                        f'\n• символ — #{order['symbol']}'
+                        f'\n• количество — {order['origQty']}'
+                        f'\n• цена — {order['price']}'
                     )
-                    url = (
-                        'https://api.telegram.org/bot'
-                        + self.bot_token + '/sendMessage'
-                    )
-                    data = {'chat_id': self.chat_id, 'text': message}
                     
                     if self.bot_token:
-                        while True:
-                            try: 
-                                rq.post(url, data=data)
-                            except: 
-                                pass
-                            else: 
-                                break
+                        rq.post(
+                            self.telegram_url,
+                            {'chat_id': self.chat_id, 'text': message}
+                        )
         except Exception as exception:
             self.send_exception(exception)
+
+    def send_exception(self, exception):
+        try:
+            if str(exception) != '':
+                self.alerts.append({
+                    'message': {
+                        'exchange': 'BINANCE',
+                        'error': str(exception)
+                    },
+                    'time': dt.datetime.now(
+                        dt.timezone.utc
+                    ).strftime('%Y-%m-%d %H:%M:%S')
+                })
+                message = f'❗️Binance:\n{exception}'
+
+                if self.bot_token:
+                    rq.post(
+                        self.telegram_url,
+                        {'chat_id': self.chat_id, 'text': message}
+                    )
+        except Exception:
+            pass

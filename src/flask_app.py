@@ -3,6 +3,7 @@ import os
 
 from flask import Flask, render_template
 
+
 class FlaskApp(Flask):
     def __init__(self, mode, update_strategy, **args):
         self.mode = mode

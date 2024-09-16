@@ -6,7 +6,23 @@ from pybit.unified_trading import HTTP
 import numpy as np
 
 
-class BybitHTTPClient():
+class BybitClient():
+    kline_intervals = {
+        1: 1, '1m': 1, '1': 1,
+        3: 3, '3m': 3, '3': 3,
+        5: 5, '5m': 5, '5': 5,
+        15: 15, '15m': 15, '15': 15,
+        30: 30, '30m': 30, '30': 30,
+        60: 60, '1h': 60, '60': 60,
+        120: 120, '2h': 120, '120': 120,
+        240: 240, '4h': 240, '240': 240,
+        360: 360, '6h': 360, '360': 360,
+        720: 720, '12h': 720, '720': 720,
+        'D': 'D', '1d': 'D',
+        'W': 'W', '1w': 'W',
+        'M': 'M', '1M': 'M'
+    }
+
     def __init__(self):
         with open(os.path.abspath('.env'), 'r') as file:
             data = file.read()
@@ -32,35 +48,23 @@ class BybitHTTPClient():
             api_key=self.api_key,
             api_secret=self.api_secret
         )
-        self.kline_intervals = {
-            1: 1, '1m': 1, '1': 1,
-            3: 3, '3m': 3, '3': 3,
-            5: 5, '5m': 5, '5': 5,
-            15: 15, '15m': 15, '15': 15,
-            30: 30, '30m': 30, '30': 30,
-            60: 60, '1h': 60, '60': 60,
-            120: 120, '2h': 120, '120': 120,
-            240: 240, '4h': 240, '240': 240,
-            360: 360, '6h': 360, '360': 360,
-            720: 720, '12h': 720, '720': 720,
-            'D': 'D', '1d': 'D',
-            'W': 'W', '1w': 'W',
-            'M': 'M', '1M': 'M'
-        }
+        self.telegram_url = (
+            f'https://api.telegram.org/bot{self.bot_token}/sendMessage'
+        )
         self.limit_orders = []
         self.stop_orders = []
         self.alerts = []
 
     def get_historical_klines(self, symbol, interval, start_time, end_time):
         file = (
-            os.path.abspath('src/database') +
-            '/bybit_' + symbol + '_' + str(interval) +
-            '_' + str(start_time) + '_' + str(end_time) + '.npy'
+            f'{os.path.abspath('src/database')}'
+            f'/bybit_{symbol}_{interval}_'
+            f'{start_time}_{end_time}.npy'
         )
 
         try:
             self.price_data = np.load(file)
-        except:
+        except Exception:
             datetime1 = dt.datetime.fromtimestamp(
                 start_time / 1000, tz=dt.timezone.utc
             ).strftime('%Y/%m/%d %H:%M')
@@ -68,9 +72,8 @@ class BybitHTTPClient():
                 end_time / 1000, tz=dt.timezone.utc
             ).strftime('%Y/%m/%d %H:%M')
             print(
-                'Запрос данных: BYBIT • {} • {} • {} - {}.'.format(
-                    symbol, interval, datetime1, datetime2
-                )
+                f'Запрос данных: BYBIT • {symbol} '
+                f'• {interval} • {datetime1} - {datetime2}.'
             )
             price_data = np.array(
                 self.client.get_kline(
@@ -111,9 +114,7 @@ class BybitHTTPClient():
             print('Данные получены.')
 
     def get_last_klines(self, symbol, interval):
-        print(
-            'Запрос данных: BYBIT • {} • {}.'.format(symbol, interval)
-        )
+        print(f'Запрос данных: BYBIT • {symbol} • {interval}.')
         self.price_data = np.array(
             self.client.get_kline(
                 category='linear',
@@ -171,7 +172,7 @@ class BybitHTTPClient():
                         limit=2
                     )['result']['list']
                 )[:0:-1, :6].astype(float)
-            except:
+            except Exception:
                 pass
             else:
                 break
@@ -191,7 +192,7 @@ class BybitHTTPClient():
                     symbol=symbol,
                     mode=0,
                 )
-            except:
+            except Exception:
                 pass
         elif hedge == 'true':
             hedge_mode = 1
@@ -202,7 +203,7 @@ class BybitHTTPClient():
                     symbol=symbol,
                     mode=3,
                 )
-            except:
+            except Exception:
                 pass
 
         try:
@@ -222,7 +223,7 @@ class BybitHTTPClient():
                     buyLeverage='1',
                     sellLeverage='1',
                 )
-        except:
+        except Exception:
             pass
 
         try:
@@ -232,7 +233,7 @@ class BybitHTTPClient():
                 buyLeverage=leverage,
                 sellLeverage=leverage,
             )
-        except:
+        except Exception:
             pass
 
         try:
@@ -244,7 +245,7 @@ class BybitHTTPClient():
                 balance = float(self.client.get_wallet_balance(
                     accountType='UNIFIED', coin='USDT',
                 )['result']['list'][0]['coin'][0]['availableToWithdraw'])
-            except:
+            except Exception:
                 balance = float(self.client.get_wallet_balance(
                     accountType='CONTRACT', coin='USDT',
                 )['result']['list'][0]['coin'][0]['availableToWithdraw'])
@@ -277,7 +278,7 @@ class BybitHTTPClient():
                         symbol=symbol,
                         orderId=order['result']['orderId']
                     )['result']['list'][0]
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -296,28 +297,19 @@ class BybitHTTPClient():
                     int(order_info['createdTime']) / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Исполнен рыночный ордер на Bybit:' +
-                '\n• направление — покупка' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['qty'] +
-                '\n• цена — ' + order_info['avgPrice']
+                f'Исполнен рыночный ордер на Bybit:'
+                f'\n• направление — покупка'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['qty']}'
+                f'\n• цена — {order_info['avgPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
 
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -331,7 +323,7 @@ class BybitHTTPClient():
                     symbol=symbol,
                     mode=0,
                 )
-            except:
+            except Exception:
                 pass
         elif hedge == 'true':
             hedge_mode = 2
@@ -342,7 +334,7 @@ class BybitHTTPClient():
                     symbol=symbol,
                     mode=3,
                 )
-            except:
+            except Exception:
                 pass
 
         try:
@@ -362,7 +354,7 @@ class BybitHTTPClient():
                     buyLeverage='1',
                     sellLeverage='1',
                 )
-        except:
+        except Exception:
             pass
 
         try:
@@ -372,7 +364,7 @@ class BybitHTTPClient():
                 buyLeverage=leverage,
                 sellLeverage=leverage,
             )
-        except:
+        except Exception:
             pass
 
         try:
@@ -384,7 +376,7 @@ class BybitHTTPClient():
                 balance = float(self.client.get_wallet_balance(
                     accountType='UNIFIED', coin='USDT',
                 )['result']['list'][0]['coin'][0]['availableToWithdraw'])
-            except:
+            except Exception:
                 balance = float(self.client.get_wallet_balance(
                     accountType='CONTRACT', coin='USDT',
                 )['result']['list'][0]['coin'][0]['availableToWithdraw'])
@@ -417,7 +409,7 @@ class BybitHTTPClient():
                         symbol=symbol,
                         orderId=order['result']['orderId']
                     )['result']['list'][0]
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -436,28 +428,19 @@ class BybitHTTPClient():
                     int(order_info['createdTime']) / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Исполнен рыночный ордер на Bybit:' +
-                '\n• направление — продажа' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['qty'] +
-                '\n• цена — ' + order_info['avgPrice']
+                f'Исполнен рыночный ордер на Bybit:'
+                f'\n• направление — продажа'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['qty']}'
+                f'\n• цена — {order_info['avgPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -506,7 +489,7 @@ class BybitHTTPClient():
                         symbol=symbol,
                         orderId=order['result']['orderId']
                     )['result']['list'][0]
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -525,28 +508,19 @@ class BybitHTTPClient():
                     int(order_info['createdTime']) / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Исполнен рыночный ордер на Bybit:' +
-                '\n• направление — покупка' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['qty'] +
-                '\n• цена — ' + order_info['avgPrice']
+                f'Исполнен рыночный ордер на Bybit:'
+                f'\n• направление — покупка'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['qty']}'
+                f'\n• цена — {order_info['avgPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -595,7 +569,7 @@ class BybitHTTPClient():
                         symbol=symbol,
                         orderId=order['result']['orderId']
                     )['result']['list'][0]
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -614,28 +588,19 @@ class BybitHTTPClient():
                     int(order_info['createdTime']) / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Исполнен рыночный ордер на Bybit:' +
-                '\n• направление — продажа' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['qty'] +
-                '\n• цена — ' + order_info['avgPrice']
+                f'Исполнен рыночный ордер на Bybit:'
+                f'\n• направление — продажа'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['qty']}'
+                f'\n• цена — {order_info['avgPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -693,7 +658,7 @@ class BybitHTTPClient():
                         symbol=symbol,
                         orderId=order['result']['orderId']
                     )['result']['list'][0]
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -713,28 +678,19 @@ class BybitHTTPClient():
                     int(order_info['createdTime']) / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Выставлен рыночный стоп на Bybit:' +
-                '\n• направление — покупка' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['qty'] +
-                '\n• цена — ' + order_info['triggerPrice']
+                f'Выставлен рыночный стоп на Bybit:'
+                f'\n• направление — покупка'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['qty']}'
+                f'\n• цена — {order_info['triggerPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -793,7 +749,7 @@ class BybitHTTPClient():
                         symbol=symbol,
                         orderId=order['result']['orderId']
                     )['result']['list'][0]
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -813,28 +769,19 @@ class BybitHTTPClient():
                     int(order_info['createdTime']) / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Выставлен рыночный стоп на Bybit:' +
-                '\n• направление — продажа' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['qty'] +
-                '\n• цена — ' + order_info['triggerPrice']
+                f'Выставлен рыночный стоп на Bybit:'
+                f'\n• направление — продажа'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['qty']}'
+                f'\n• цена — {order_info['triggerPrice']}'
             )
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -908,7 +855,7 @@ class BybitHTTPClient():
                         symbol=symbol,
                         orderId=order['result']['orderId']
                     )['result']['list'][0]
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -928,28 +875,19 @@ class BybitHTTPClient():
                     int(order_info['createdTime']) / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Выставлен лимитный ордер на Bybit:' +
-                '\n• направление — покупка' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['qty'] +
-                '\n• цена — ' + order_info['price']
+                f'Выставлен лимитный ордер на Bybit:'
+                f'\n• направление — покупка'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['qty']}'
+                f'\n• цена — {order_info['price']}'
             )
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -1023,7 +961,7 @@ class BybitHTTPClient():
                         symbol=symbol,
                         orderId=order['result']['orderId']
                     )['result']['list'][0]
-                except:
+                except Exception:
                     pass
                 else:
                     break
@@ -1043,28 +981,19 @@ class BybitHTTPClient():
                     int(order_info['createdTime']) / 1000, tz=dt.timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
-
             message = (
-                'Выставлен лимитный ордер на Bybit:' +
-                '\n• направление — продажа' +
-                '\n• символ — #' + order_info['symbol'] +
-                '\n• количество — ' + order_info['qty'] +
-                '\n• цена — ' + order_info['price']
+                f'Выставлен лимитный ордер на Bybit:'
+                f'\n• направление — продажа'
+                f'\n• символ — #{order_info['symbol']}'
+                f'\n• количество — {order_info['qty']}'
+                f'\n• цена — {order_info['price']}'
             )
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {'chat_id': self.chat_id, 'text': message}
             
             if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -1114,36 +1043,6 @@ class BybitHTTPClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def send_exception(self, exception):
-        if str(exception) != '':
-            self.alerts.append({
-                'message': {
-                    'exchange': 'BYBIT',
-                    'error': str(exception)
-                },
-                'time': dt.datetime.now(
-                    dt.timezone.utc
-                ).strftime('%Y-%m-%d %H:%M:%S')
-            })
-
-            url = (
-                'https://api.telegram.org/bot'
-                + self.bot_token + '/sendMessage'
-            )
-            data = {
-                'chat_id': self.chat_id,
-                'text': f'❗️Bybit:\n{exception}'
-            }
-
-            if self.bot_token:
-                while True:
-                    try: 
-                        rq.post(url, data=data)
-                    except: 
-                        pass
-                    else: 
-                        break
-
     def check_stop_status(self, symbol):
         try:
             for orderId in self.stop_orders.copy():
@@ -1183,28 +1082,19 @@ class BybitHTTPClient():
                             tz=dt.timezone.utc
                         ).strftime('%Y/%m/%d %H:%M:%S')
                     })
-
                     message = (
-                        status.capitalize() + ' рыночный стоп на Bybit:' +
-                        '\n• направление — ' + side +
-                        '\n• символ — #' + main_info['symbol'] +
-                        '\n• количество — ' + main_info['qty'] +
-                        '\n• цена — ' + price
+                        f'{status.capitalize()} рыночный стоп на Bybit:'
+                        f'\n• направление — {side}'
+                        f'\n• символ — #{main_info['symbol']}'
+                        f'\n• количество — {main_info['qty']}'
+                        f'\n• цена — {price}'
                     )
-                    url = (
-                        'https://api.telegram.org/bot'
-                        + self.bot_token + '/sendMessage'
-                    )
-                    data = {'chat_id': self.chat_id, 'text': message}
                     
                     if self.bot_token:
-                        while True:
-                            try: 
-                                rq.post(url, data=data)
-                            except: 
-                                pass
-                            else: 
-                                break
+                        rq.post(
+                            self.telegram_url,
+                            {'chat_id': self.chat_id, 'text': message}
+                        )
         except Exception as exception:
             self.send_exception(exception)
 
@@ -1245,27 +1135,40 @@ class BybitHTTPClient():
                             tz=dt.timezone.utc
                         ).strftime('%Y/%m/%d %H:%M:%S')
                     })
-
                     message = (
-                        status.capitalize() + ' лимитный ордер на Bybit:' +
-                        '\n• направление — ' + side +
-                        '\n• символ — #' + main_info['symbol'] +
-                        '\n• количество — ' + main_info['qty'] +
-                        '\n• цена — ' + main_info['price']
+                        f'{status.capitalize()} лимитный ордер на Bybit:'
+                        f'\n• направление — {side}'
+                        f'\n• символ — #{main_info['symbol']}'
+                        f'\n• количество — {main_info['qty']}'
+                        f'\n• цена — {main_info['price']}'
                     )
-                    url = (
-                        'https://api.telegram.org/bot'
-                        + self.bot_token + '/sendMessage'
-                    )
-                    data = {'chat_id': self.chat_id, 'text': message}
                     
                     if self.bot_token:
-                        while True:
-                            try: 
-                                rq.post(url, data=data)
-                            except: 
-                                pass
-                            else: 
-                                break
+                        rq.post(
+                            self.telegram_url,
+                            {'chat_id': self.chat_id, 'text': message}
+                        )
         except Exception as exception:
             self.send_exception(exception)
+
+    def send_exception(self, exception):
+        try:
+            if str(exception) != '':
+                self.alerts.append({
+                    'message': {
+                        'exchange': 'BYBIT',
+                        'error': str(exception)
+                    },
+                    'time': dt.datetime.now(
+                        dt.timezone.utc
+                    ).strftime('%Y-%m-%d %H:%M:%S')
+                })
+                message = f'❗️Bybit:\n{exception}'
+
+                if self.bot_token:
+                    rq.post(
+                        self.telegram_url,
+                        {'chat_id': self.chat_id, 'text': message}
+                    )
+        except Exception:
+            pass
