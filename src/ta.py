@@ -3,10 +3,15 @@ import numba as nb
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def atr(high, low, close, length):
+def atr(
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    length: int
+) -> np.ndarray:
     # tr
     hl = high - low
     hc = np.absolute(
@@ -33,10 +38,12 @@ def atr(high, low, close, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16, nb.float32), 
+    nb.types.Tuple((nb.float64[:], nb.float64[:], nb.float64[:]))(
+        nb.float64[:], nb.int16, nb.float32
+    ), 
     cache=True, nopython=True, nogil=True
 )
-def bb(source, length, mult):
+def bb(source: np.ndarray, length: int, mult: float) -> np.ndarray:
     # sma
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     sma = np.full(rolling.shape[0], np.nan)
@@ -63,10 +70,10 @@ def bb(source, length, mult):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16, nb.float32), 
+    nb.float64[:](nb.float64[:], nb.int16, nb.float32), 
     cache=True, nopython=True, nogil=True
 )
-def bbw(source, length, mult):
+def bbw(source: np.ndarray, length: int, mult: float) -> np.ndarray:
     # sma
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     sma = np.full(rolling.shape[0], np.nan)
@@ -91,10 +98,10 @@ def bbw(source, length, mult):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def change(source, length):
+def change(source: np.ndarray, length: int) -> np.ndarray:
     values = (
         source - np.concatenate(
             (np.full(length, np.nan), source[: -length])
@@ -104,10 +111,10 @@ def change(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:]), 
+    nb.boolean[:](nb.float64[:], nb.float64[:]), 
     cache=True, nopython=True, nogil=True
 )
-def cross(source1, source2):
+def cross(source1: np.ndarray, source2: np.ndarray) -> np.ndarray:
     data1 = source1 - source2
     data2 = np.concatenate((np.full(1, np.nan), data1[: -1]))
     values = ((data1 > 0) & (data2 <= 0)) | ((data1 < 0) & (data2 >= 0))
@@ -115,10 +122,10 @@ def cross(source1, source2):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:]), 
+    nb.boolean[:](nb.float64[:], nb.float64[:]), 
     cache=True, nopython=True, nogil=True
 )
-def crossover(source1, source2):
+def crossover(source1: np.ndarray, source2: np.ndarray) -> np.ndarray:
     data1 = source1 - source2
     data2 = np.concatenate((np.full(1, np.nan), data1[: -1]))
     values = (data1 > 0) & (data2 <= 0)
@@ -126,10 +133,10 @@ def crossover(source1, source2):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:]), 
+    nb.boolean[:](nb.float64[:], nb.float64[:]), 
     cache=True, nopython=True, nogil=True
 )
-def crossunder(source1, source2):
+def crossunder(source1: np.ndarray, source2: np.ndarray) -> np.ndarray:
     data1 = source1 - source2
     data2 = np.concatenate((np.full(1, np.nan), data1[: -1]))
     values = (data1 < 0) & (data2 >= 0)
@@ -137,19 +144,29 @@ def crossunder(source1, source2):
 
 
 @nb.jit(
-    (nb.float64[:],),
+    nb.float64[:](nb.float64[:],),
     cache=True, nopython=True, nogil=True
 )
-def cum(source):
+def cum(source: np.ndarray) -> np.ndarray:
     values = source.cumsum()
     return values
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:], nb.int16), 
+    nb.types.Tuple((nb.float64[:], nb.float64[:], nb.float64[:]))(
+        nb.float64[:], nb.float64[:], nb.int16
+    ), 
     cache=True, nopython=True, nogil=True
 )
-def dd(source1, source2, length):
+def dd(
+    source1: np.ndarray,
+    source2: np.ndarray,
+    length: int
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray
+]:
     # upper
     source1 = source1.copy()
     source1[np.isnan(source1)] = -np.inf
@@ -195,10 +212,22 @@ def dd(source1, source2, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:], nb.float64[:], nb.int16, nb.int16),
+    nb.types.Tuple((nb.float64[:], nb.float64[:], nb.float64[:]))(
+        nb.float64[:], nb.float64[:], nb.float64[:], nb.int16, nb.int16
+    ),
     cache=True, nopython=True, nogil=True
 )
-def dmi(high, low, close, di_length, adx_length):
+def dmi(
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    di_length: int,
+    adx_length: int
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray
+]:
     # change_high
     change_high = (
         high - np.concatenate((np.full(1, np.nan), high[: -1]))
@@ -300,10 +329,20 @@ def dmi(high, low, close, di_length, adx_length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:], nb.int16), 
+    nb.types.Tuple((nb.float64[:], nb.float64[:], nb.float64[:]))(
+        nb.float64[:], nb.float64[:], nb.int16
+    ), 
     cache=True, nopython=True, nogil=True
 )
-def donchian(source1, source2, length):
+def donchian(
+    source1: np.ndarray,
+    source2: np.ndarray,
+    length: int
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray
+]:
     # upper
     source1 = source1.copy()
     source1[np.isnan(source1)] = -np.inf
@@ -337,10 +376,21 @@ def donchian(source1, source2, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:], nb.float64[:], nb.float32, nb.int16),
+    nb.types.Tuple((nb.float64[:], nb.float64[:]))(
+        nb.float64[:], nb.float64[:], nb.float64[:], nb.float32, nb.int16
+    ),
     cache=True, nopython=True, nogil=True
 )
-def ds(high, low, close, factor, atr_length):
+def ds(
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    factor: float,
+    atr_length: int
+) -> tuple[
+    np.ndarray,
+    np.ndarray
+]:
     # tr
     hl = high - low
     hc = np.absolute(
@@ -394,10 +444,10 @@ def ds(high, low, close, factor, atr_length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def ema(source, length):
+def ema(source: np.ndarray, length: int) -> np.ndarray:
     values = source.copy()
     alpha = 2 / (length + 1)
     na_sum = np.isnan(values).sum()
@@ -411,10 +461,10 @@ def ema(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def highest(source, length):
+def highest(source: np.ndarray, length: int) -> np.ndarray:
     source = source.copy()
     source[np.isnan(source)] = -np.inf
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
@@ -429,10 +479,10 @@ def highest(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def hma(source, length):
+def hma(source: np.ndarray, length: int) -> np.ndarray:
     # wma1
     wma1_length = length // 2
     rolling = np.lib.stride_tricks.sliding_window_view(source, wma1_length)
@@ -487,10 +537,10 @@ def hma(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def lowest(source, length):
+def lowest(source: np.ndarray, length: int) -> np.ndarray:
     source = source.copy()
     source[np.isnan(source)] = np.inf
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
@@ -505,10 +555,14 @@ def lowest(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16, nb.int16), 
+    nb.float64[:](nb.float64[:], nb.int16, nb.int16), 
     cache=True, nopython=True, nogil=True
 )
-def pivothigh(source, leftbars, rightbars):
+def pivothigh(
+    source: np.ndarray,
+    leftbars: int,
+    rightbars: int
+) -> np.ndarray:
     source = source.copy()
     source[np.isnan(source)] = -np.inf
     length = leftbars + rightbars + 1
@@ -529,10 +583,14 @@ def pivothigh(source, leftbars, rightbars):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16, nb.int16), 
+    nb.float64[:](nb.float64[:], nb.int16, nb.int16), 
     cache=True, nopython=True, nogil=True
 )
-def pivotlow(source, leftbars, rightbars):
+def pivotlow(
+    source: np.ndarray,
+    leftbars: int,
+    rightbars: int
+) -> np.ndarray:
     source = source.copy()
     source[np.isnan(source)] = np.inf
     length = leftbars + rightbars + 1
@@ -553,10 +611,10 @@ def pivotlow(source, leftbars, rightbars):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def rma(source, length):
+def rma(source: np.ndarray, length: int) -> np.ndarray:
     values = source.copy()
     alpha = 1 / length
     na_sum = np.isnan(values).sum()
@@ -570,10 +628,10 @@ def rma(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def rsi(source, length):
+def rsi(source: np.ndarray, length: int) -> np.ndarray:
     u = source - np.concatenate((np.full(1, np.nan), source[: -1]))
     d = np.concatenate((np.full(1, np.nan), source[: -1])) - source
     u[u < 0] = 0
@@ -606,10 +664,10 @@ def rsi(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def sma(source, length):
+def sma(source: np.ndarray, length: int) -> np.ndarray:
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
 
@@ -621,10 +679,10 @@ def sma(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def stdev(source, length):
+def stdev(source: np.ndarray, length: int) -> np.ndarray:
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
 
@@ -635,11 +693,22 @@ def stdev(source, length):
     return values
 
 
-@nb.jit(
-    (nb.float64[:], nb.float64[:], nb.float64[:], nb.float32, nb.int16),
+@nb.jit( 
+    nb.types.Tuple((nb.float64[:], nb.float64[:]))(
+        nb.float64[:], nb.float64[:], nb.float64[:], nb.float32, nb.int16
+    ),
     cache=True, nopython=True, nogil=True
 )
-def supertrend(high, low, close, factor, atr_length):
+def supertrend(
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    factor: float,
+    atr_length: int
+) -> tuple[
+    np.ndarray,
+    np.ndarray
+]:
     # tr
     hl = high - low
     hc = np.absolute(
@@ -713,10 +782,15 @@ def supertrend(high, low, close, factor, atr_length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def stoch(source, high, low, length):
+def stoch(
+    source: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
+    length: int
+) -> np.ndarray:
     # highest
     high = high.copy()
     high[np.isnan(high)] = -np.inf
@@ -747,10 +821,15 @@ def stoch(source, high, low, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:], nb.float64[:], nb.int8),
+    nb.float64[:](nb.float64[:], nb.float64[:], nb.float64[:], nb.boolean),
     cache=True, nopython=True, nogil=True
 )
-def tr(high, low, close, handle_na):
+def tr(
+    high: np.ndarray,
+    low: np.ndarray,
+    close: np.ndarray,
+    handle_na: bool
+) -> np.ndarray:
     hl = high - low
     hc = np.absolute(
         high - np.concatenate((np.full(1, np.nan), close[:-1]))
@@ -772,10 +851,10 @@ def tr(high, low, close, handle_na):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def wma(source, length):
+def wma(source: np.ndarray, length: int) -> np.ndarray:
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
     weights = np.full(length, np.nan)
@@ -793,10 +872,15 @@ def wma(source, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
+    nb.float64[:](nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def wpr(source1, source2, source3, length):
+def wpr(
+    source1: np.ndarray,
+    source2: np.ndarray,
+    source3: np.ndarray,
+    length: int
+) -> np.ndarray:
     # highest
     source1 = source1.copy()
     source1[np.isnan(source1)] = -np.inf
@@ -827,10 +911,10 @@ def wpr(source1, source2, source3, length):
 
 
 @nb.jit(
-    (nb.float64[:], nb.int16, nb.int16),
+    nb.float64[:](nb.float64[:], nb.int16, nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def adftest(source, length, lags):
+def adftest(source: np.ndarray, length: int, lags: int) -> np.ndarray:
     if lags >= length / 2 - 2:
         lags = int(length / 2 - 3)
 

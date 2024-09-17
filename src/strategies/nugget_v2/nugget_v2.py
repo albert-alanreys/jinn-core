@@ -64,8 +64,8 @@ class NuggetV2():
             ] for i in range(1000)
         ],
         'take_volume': [
-            math.random_trading_volumes(5, 10, 10)
-            for i in range(1000)
+            math.get_random_volumes(5, 10, 10)
+            for _ in range(1000)
         ],
         'st_atr_period': [i for i in range(2, 21)],
         'st_factor': [i / 100 for i in range(1000, 2501, 5)],
@@ -110,7 +110,12 @@ class NuggetV2():
         'trade'
     )
 
-    def __init__(self, client, opt_parameters=None, all_parameters=None):
+    def __init__(
+        self,
+        client,
+        opt_parameters: list | None = None,
+        all_parameters: list | None = None
+    ) -> None:
         self.client = client
 
         for key, value in NuggetV2.__dict__.items():
@@ -184,7 +189,7 @@ class NuggetV2():
             self.adx_short_upper_bound = all_parameters[33]
             self.adx_short_lower_bound = all_parameters[34]
 
-    def start(self):
+    def start(self) -> None:
         self.price_precision = self.client.price_precision
         self.qty_precision = self.client.qty_precision
         self.time = self.client.price_data[:, 0]
@@ -338,7 +343,17 @@ class NuggetV2():
 
     @staticmethod
     @nb.jit(
-        (
+        nb.types.Tuple((
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:, :],
+            nb.float64[:],
+            nb.boolean,
+            nb.boolean,
+            nb.boolean,
+            nb.boolean,
+            nb.boolean 
+        ))(
             nb.int8,
             nb.float64,
             nb.float64,
@@ -404,72 +419,83 @@ class NuggetV2():
         nogil=True
     )
     def calculate(
-        direction,
-        initial_capital,
-        min_capital,
-        commission,
-        order_size_type,
-        order_size,
-        leverage,
-        stop_type,
-        stop,
-        trail_stop,
-        trail_percent,
-        take_percent,
-        take_volume,
-        st_upper_band,
-        st_lower_band,
-        rsi_long_upper_bound,
-        rsi_long_lower_bound,
-        rsi_short_upper_bound,
-        rsi_short_lower_bound,
-        bb_filter,
-        bb_long_bound,
-        bb_short_bound,
-        adx_filter,
-        adx_long_upper_bound,
-        adx_long_lower_bound,
-        adx_short_upper_bound,
-        adx_short_lower_bound,
-        price_precision,
-        qty_precision,
-        time,
-        high,
-        low,
-        close,
-        equity,
-        completed_deals_log,
-        open_deals_log,
-        deal_type,
-        entry_signal,
-        entry_date,
-        entry_price,
-        liquidation_price,
-        take_price,
-        stop_price,
-        position_size,
-        qty_take,
-        stop_moved,
-        ds_upper_band,
-        ds_lower_band,
-        change_upper_band,
-        change_lower_band,
-        rsi,
-        bb_rsi_upper,
-        bb_rsi_lower,
-        adx,
-        alert_long,
-        alert_short,
-        alert_long_new_stop,
-        alert_short_new_stop,
-        alert_cancel
-    ):
-        def round_to_minqty_or_mintick(number, precision):
+        direction: int,
+        initial_capital: float,
+        min_capital: float,
+        commission: float,
+        order_size_type: int,
+        order_size: float,
+        leverage: int,
+        stop_type: int,
+        stop: float,
+        trail_stop: int,
+        trail_percent: float,
+        take_percent: list,
+        take_volume: list,
+        st_upper_band: float,
+        st_lower_band: float,
+        rsi_long_upper_bound: float,
+        rsi_long_lower_bound: float,
+        rsi_short_upper_bound: float,
+        rsi_short_lower_bound: float,
+        bb_filter: bool,
+        bb_long_bound: float,
+        bb_short_bound: float,
+        adx_filter: bool,
+        adx_long_upper_bound: float,
+        adx_long_lower_bound: float,
+        adx_short_upper_bound: float,
+        adx_short_lower_bound: float,
+        price_precision: float,
+        qty_precision: float,
+        time: np.ndarray,
+        high: np.ndarray,
+        low: np.ndarray,
+        close: np.ndarray,
+        equity: float,
+        completed_deals_log: np.ndarray,
+        open_deals_log: np.ndarray,
+        deal_type: float,
+        entry_signal: float,
+        entry_date: float,
+        entry_price: float,
+        liquidation_price: float,
+        take_price: np.ndarray,
+        stop_price: np.ndarray,
+        position_size: float,
+        qty_take: np.ndarray,
+        stop_moved: int,
+        ds_upper_band: np.ndarray,
+        ds_lower_band: np.ndarray,
+        change_upper_band: np.ndarray,
+        change_lower_band: np.ndarray,
+        rsi: np.ndarray,
+        bb_rsi_upper: np.ndarray,
+        bb_rsi_lower: np.ndarray,
+        adx: np.ndarray,
+        alert_long: bool,
+        alert_short: bool,
+        alert_long_new_stop: bool,
+        alert_short_new_stop: bool,
+        alert_cancel: bool
+    ) -> tuple:
+        def round_to_minqty_or_mintick(number: float, precision: float) -> float:
             return round(round(number / precision) * precision, 8)
 
-        def update_log(log, equity, commission, deal_type, entry_signal,
-                       exit_signal, entry_date, exit_date, entry_price,
-                       exit_price, position_size, initial_capital):
+        def update_log(
+            log: np.ndarray,
+            equity: float,
+            commission: float,
+            deal_type: float,
+            entry_signal: float,
+            exit_signal: float,
+            entry_date: float,
+            exit_date: float,
+            entry_price: float,
+            exit_price: float,
+            position_size: float,
+            initial_capital: float
+        ) -> tuple[np.ndarray, float]:
             total_commission = round(
                 (position_size * entry_price
                     * commission / 100) + (position_size
@@ -1129,7 +1155,7 @@ class NuggetV2():
             alert_cancel
         )
     
-    def trade(self):
+    def trade(self) -> None:
         if self.alert_cancel:
             self.client.futures_cancel_all_orders(
                 symbol=self.client.symbol

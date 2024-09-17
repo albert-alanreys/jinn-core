@@ -76,7 +76,12 @@ class DevourerV3():
         'trade'
     )
 
-    def __init__(self, client, opt_parameters=None, all_parameters=None):
+    def __init__(
+        self,
+        client,
+        opt_parameters: list | None = None,
+        all_parameters: list | None = None
+    ) -> None:
         self.client = client
 
         for key, value in DevourerV3.__dict__.items():
@@ -135,7 +140,7 @@ class DevourerV3():
             self.ema_len_p3 = all_parameters[25]
             self.close_under_ema_p3 = all_parameters[26]
 
-    def start(self):
+    def start(self) -> None:
         self.price_precision = self.client.price_precision
         self.qty_precision = self.client.qty_precision
         self.time = self.client.price_data[:, 0]
@@ -282,7 +287,17 @@ class DevourerV3():
 
     @staticmethod
     @nb.jit(
-        (
+        nb.types.Tuple((
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:],
+            nb.boolean,
+            nb.boolean,
+            nb.boolean,
+            nb.boolean,
+            nb.boolean 
+        ))(
             nb.int8,
             nb.float64,
             nb.float64,
@@ -346,70 +361,81 @@ class DevourerV3():
         nogil=True
     )
     def calculate(
-        direction,
-        initial_capital,
-        commission,
-        order_size_type,
-        order_size,
-        leverage,
-        stop_atr_p2,
-        stop_atr_p3,
-        take_atr_p3,
-        kd_limit_p1,
-        body_atr_coef_p1,
+        direction: int,
+        initial_capital: float,
+        commission: float,
+        order_size_type: int,
+        order_size: float,
+        leverage: int,
+        stop_atr_p2: float,
+        stop_atr_p3: float,
+        take_atr_p3: float,
+        kd_limit_p1: float,
+        body_atr_coef_p1: float,
         close_under_ema_p3,
-        price_precision,
-        qty_precision,
-        time,
-        open,
-        high,
-        low,
-        close,
-        equity,
-        completed_deals_log,
-        open_deals_log,
-        deal_type,
-        entry_signal,
-        entry_date,
-        entry_price,
-        take_price,
-        stop_price,
-        liquidation_price,
-        position_size,
-        deal_p1,
-        deal_p2,
-        deal_p3,
-        filter1_p1,
-        filter2_p1,
-        filter3_p1,
-        short_allowed_p3,
-        close_under_ema_counter_p3,
-        macd_p1,
-        signal_p1,
-        k_p1,
-        d_p1,
-        direction_p1,
-        atr_p1,
-        cross_up1_p1,
-        cross_down_p1,
-        cross_up2_p1,
-        lower_band_p2,
-        cross_p2,
-        atr_p2,
-        ema_p3,
-        atr_p3,
-        alert_entry_long,
-        alert_exit_long,
-        alert_entry_short,
-        alert_exit_short,
-        alert_cancel
-    ):
-        def round_to_minqty_or_mintick(number, precision):
+        price_precision: float,
+        qty_precision: float,
+        time: np.ndarray,
+        open: np.ndarray,
+        high: np.ndarray,
+        low: np.ndarray,
+        close: np.ndarray,
+        equity: float,
+        completed_deals_log: np.ndarray,
+        open_deals_log: np.ndarray,
+        deal_type: float,
+        entry_signal: float,
+        entry_date: float,
+        entry_price: float,
+        take_price: np.ndarray,
+        stop_price: np.ndarray,
+        liquidation_price: float,
+        position_size: float,
+        deal_p1: bool,
+        deal_p2: bool,
+        deal_p3: bool,
+        filter1_p1: bool,
+        filter2_p1: bool,
+        filter3_p1: bool,
+        short_allowed_p3: bool,
+        close_under_ema_counter_p3: int,
+        macd_p1: np.ndarray,
+        signal_p1: np.ndarray,
+        k_p1: np.ndarray,
+        d_p1: np.ndarray,
+        direction_p1: np.ndarray,
+        atr_p1: np.ndarray,
+        cross_up1_p1: np.ndarray,
+        cross_down_p1: np.ndarray,
+        cross_up2_p1: np.ndarray,
+        lower_band_p2: np.ndarray,
+        cross_p2: np.ndarray,
+        atr_p2: np.ndarray,
+        ema_p3: np.ndarray,
+        atr_p3: np.ndarray,
+        alert_entry_long: bool,
+        alert_exit_long: bool,
+        alert_entry_short: bool,
+        alert_exit_short: bool,
+        alert_cancel: bool
+    ) -> tuple:
+        def round_to_minqty_or_mintick(number: float, precision: float) -> float:
             return round(round(number / precision) * precision, 8)
 
-        def update_log(log, equity, commission, deal_type, entry_signal,
-                       exit_signal, entry_date, exit_date, entry_price,
-                       exit_price, position_size, initial_capital):
+        def update_log(
+            log: np.ndarray,
+            equity: float,
+            commission: float,
+            deal_type: float,
+            entry_signal: float,
+            exit_signal: float,
+            entry_date: float,
+            exit_date: float,
+            entry_price: float,
+            exit_price: float,
+            position_size: float,
+            initial_capital: float
+        ) -> tuple[np.ndarray, float]:
             total_commission = round(
                 (position_size * entry_price
                     * commission / 100) + (position_size
@@ -948,7 +974,7 @@ class DevourerV3():
             alert_cancel
         )
 
-    def trade(self):
+    def trade(self) -> None:
         if self.alert_cancel:
             self.client.futures_cancel_all_orders(
                 symbol=self.client.symbol

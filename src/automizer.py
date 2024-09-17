@@ -1,6 +1,7 @@
 import threading
 import ast
 import os
+from typing import Any
 
 from src.flask_app import FlaskApp
 from src import BinanceClient
@@ -11,12 +12,12 @@ from src import Preprocessor
 
 
 class Automizer():
-    def __init__(self, automation):
+    def __init__(self, automation: dict[str, str]) -> None:
         self.strategies = dict()
 
         for strategy in Strategies.registry.values():
             folder_path = os.path.abspath(
-                f'src/strategies/{strategy[0]}/automation/'
+                f'src/strategies/{strategy.name}/automation/'
             )
             file_names = os.listdir(folder_path)
 
@@ -39,7 +40,7 @@ class Automizer():
                     client = BybitClient()
 
                 file_path = os.path.abspath(
-                    f'src/strategies/{strategy[0]}/automation/{name}'
+                    f'src/strategies/{strategy.name}/automation/{name}'
                 )
 
                 with open(file_path, 'r') as file:
@@ -56,18 +57,18 @@ class Automizer():
                         )
 
                 client.get_data(symbol, interval)
-                strategy_obj = strategy[1](
+                strategy_instance = strategy.cls(
                     client, all_parameters=parameters
                 )
-                all_parameters = strategy_obj.__dict__.copy()
+                all_parameters = strategy_instance.__dict__.copy()
                 all_parameters.pop('client')
                 strategy_data = {
-                    'name': strategy[0],
+                    'name': strategy.name,
                     'exchange': exchange.lower(),
                     'symbol': symbol,
                     'interval': interval,
                     'mintick': client.price_precision,
-                    'strategy': strategy_obj,
+                    'strategy': strategy_instance,
                     'parameters': all_parameters,
                     'client': client
                 }
@@ -84,18 +85,18 @@ class Automizer():
                 client = BybitClient()
 
             client.get_data(symbol, interval)
-            strategy_obj = Strategies.registry[
+            strategy_instance = Strategies.registry[
                 automation['strategy']
-            ][1](client)
-            all_parameters = strategy_obj.__dict__.copy()
+            ].cls(client)
+            all_parameters = strategy_instance.__dict__.copy()
             all_parameters.pop('client')
             strategy_data = {
-                'name': Strategies.registry[automation['strategy']][0],
+                'name': Strategies.registry[automation['strategy']].name,
                 'exchange': exchange.lower(),
                 'symbol': symbol,
                 'interval': interval,
                 'mintick': client.price_precision,
-                'strategy': strategy_obj,
+                'strategy': strategy_instance,
                 'parameters': all_parameters,
                 'client': client
             }
@@ -105,12 +106,12 @@ class Automizer():
         self.frontend_lite_data = {}
         self.alerts = []
 
-        for key, data in self.strategies.items():
-            frontend_data = self.get_frontend_data(data)
+        for key, value in self.strategies.items():
+            frontend_data = self.get_frontend_data(value)
             self.frontend_main_data[key] = frontend_data[0]
             self.frontend_lite_data[key] = frontend_data[1]
 
-    def update(self):
+    def update(self) -> None:
         while True:
             if not getattr(self.thread, "do_run"):
                 continue
@@ -134,11 +135,17 @@ class Automizer():
                         data['client'].alerts.clear()
                         self.alerts.clear()
 
-    def update_strategy(self, strategy, name, new_value):
+    def update_strategy(
+        self,
+        strategy: str,
+        parameter_name: str,
+        new_value: Any
+    ) -> None:
         self.thread.do_run = False
 
         try:
-            old_value = self.strategies[strategy]['parameters'][name]
+            parameters = self.strategies[strategy]['parameters']
+            old_value = parameters[parameter_name]
 
             if isinstance(new_value, list):
                 new_value = list(map(lambda x: float(x), new_value))
@@ -150,15 +157,15 @@ class Automizer():
 
             if type(old_value) != type(new_value):
                 raise
-            
-            self.strategies[strategy]['parameters'][name] = new_value
-            strategy_obj = self.strategies[strategy]['strategy'].__class__(
-                self.strategies[strategy]['strategy'].client,
-                all_parameters=list(
-                    self.strategies[strategy]['parameters'].values()
+
+            parameters[parameter_name] = new_value
+            strategy_instance = (
+                self.strategies[strategy]['strategy'].__class__(
+                    self.strategies[strategy]['strategy'].client,
+                    all_parameters=list(parameters.values())
                 )
             )
-            self.strategies[strategy]['strategy'] = strategy_obj
+            self.strategies[strategy]['strategy'] = strategy_instance
             frontend_data = self.get_frontend_data(self.strategies[strategy])
             self.frontend_main_data[strategy] = frontend_data[0]
             self.frontend_lite_data[strategy] = frontend_data[1]
@@ -167,7 +174,7 @@ class Automizer():
 
         self.thread.do_run = True
 
-    def get_frontend_data(self, data):
+    def get_frontend_data(self, data: dict) -> list[dict]:
         result = []
         data['strategy'].start()
         completed_deals_log = (
@@ -207,7 +214,7 @@ class Automizer():
         })
         return result
 
-    def start(self):
+    def start(self) -> None:
         self.thread = threading.Thread(target=self.update)
         self.thread.do_run = True
         self.thread.start()

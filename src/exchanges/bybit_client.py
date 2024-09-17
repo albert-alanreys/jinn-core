@@ -23,7 +23,7 @@ class BybitClient():
         'M': 'M', '1M': 'M'
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         with open(os.path.abspath('.env'), 'r') as file:
             data = file.read()
             self.api_key = data[
@@ -55,7 +55,43 @@ class BybitClient():
         self.stop_orders = []
         self.alerts = []
 
-    def get_historical_klines(self, symbol, interval, start_time, end_time):
+    def get_data(
+        self,
+        symbol: str,
+        interval: str | int,
+        start_time: str | None = None,
+        end_time: str | None = None
+    ) -> None:
+        self.symbol = symbol
+        self.interval = BybitClient.kline_intervals[interval]
+
+        if start_time is not None and end_time is not None:
+            self.start_time = int(
+                dt.datetime.strptime(
+                    start_time, '%Y/%m/%d %H:%M'
+                ).replace(tzinfo=dt.timezone.utc).timestamp()
+            ) * 1000
+            self.end_time = int(
+                dt.datetime.strptime(
+                    end_time, '%Y/%m/%d %H:%M'
+                ).replace(tzinfo=dt.timezone.utc).timestamp()
+            ) * 1000
+            self.get_historical_klines(
+                self.symbol, self.interval, self.start_time, self.end_time
+            )
+        else:
+            self.get_last_klines(self.symbol, self.interval)
+
+        self.price_precision = self.get_price_precision(symbol)
+        self.qty_precision = self.get_qty_precision(symbol)
+
+    def get_historical_klines(
+        self,
+        symbol: str,
+        interval: int | str,
+        start_time: int,
+        end_time: int
+    ) -> None:
         file = (
             f'{os.path.abspath('src/database')}'
             f'/bybit_{symbol}_{interval}_'
@@ -113,7 +149,7 @@ class BybitClient():
             np.save(file, self.price_data)
             print('Данные получены.')
 
-    def get_last_klines(self, symbol, interval):
+    def get_last_klines(self, symbol: str, interval: int | str) -> None:
         print(f'Запрос данных: BYBIT • {symbol} • {interval}.')
         self.price_data = np.array(
             self.client.get_kline(
@@ -125,43 +161,19 @@ class BybitClient():
         )[:0:-1, :6].astype(float)
         print('Данные получены.')
 
-    def get_price_precision(self, symbol):
+    def get_price_precision(self, symbol: str) -> float:
         symbol_info = self.client.get_instruments_info(
             category="linear", symbol=symbol
         )['result']['list'][0]
         return float(symbol_info['priceFilter']['tickSize'])
 
-    def get_qty_precision(self, symbol):
+    def get_qty_precision(self, symbol: str) -> float:
         symbol_info = self.client.get_instruments_info(
             category="linear", symbol=symbol
         )['result']['list'][0]
         return float(symbol_info['lotSizeFilter']['qtyStep'])
 
-    def get_data(self, symbol, interval, start_time=None, end_time=None):
-        self.symbol = symbol
-        self.interval = self.kline_intervals[interval]
-
-        if start_time is not None and end_time is not None:
-            self.start_time = int(
-                dt.datetime.strptime(
-                    start_time, '%Y/%m/%d %H:%M'
-                ).replace(tzinfo=dt.timezone.utc).timestamp()
-            ) * 1000
-            self.end_time = int(
-                dt.datetime.strptime(
-                    end_time, '%Y/%m/%d %H:%M'
-                ).replace(tzinfo=dt.timezone.utc).timestamp()
-            ) * 1000
-            self.get_historical_klines(
-                self.symbol, self.interval, self.start_time, self.end_time
-            )
-        else:
-            self.get_last_klines(self.symbol, self.interval)
-
-        self.price_precision = self.get_price_precision(symbol)
-        self.qty_precision = self.get_qty_precision(symbol)
-
-    def update_data(self):
+    def update_data(self) -> bool | None:
         while True:
             try:
                 price_data = np.array(
@@ -182,7 +194,14 @@ class BybitClient():
             self.price_data = np.concatenate((self.price_data[1:], price_data))
             return True
 
-    def futures_market_open_buy(self, symbol, size, margin, leverage, hedge):
+    def futures_market_open_buy(
+        self,
+        symbol: str,
+        size: str,
+        margin: str,
+        leverage: str,
+        hedge: str
+    ) -> None:
         if hedge == 'false':
             hedge_mode = 0
 
@@ -313,7 +332,14 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_market_open_sell(self, symbol, size, margin, leverage, hedge):
+    def futures_market_open_sell(
+        self,
+        symbol: str,
+        size: str,
+        margin: str,
+        leverage: str,
+        hedge: str
+    ) -> None:
         if hedge == 'false':
             hedge_mode = 0
 
@@ -444,7 +470,12 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_market_close_buy(self, symbol, size, hedge):
+    def futures_market_close_buy(
+        self,
+        symbol: str,
+        size: str,
+        hedge: str
+    ) -> None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
@@ -524,7 +555,12 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_market_close_sell(self, symbol, size, hedge):
+    def futures_market_close_sell(
+        self,
+        symbol: str,
+        size: str,
+        hedge: str
+    ) -> None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
@@ -604,7 +640,13 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_market_stop_buy(self, symbol, size, price, hedge):
+    def futures_market_stop_buy(
+        self,
+        symbol: str,
+        size: str,
+        price: float,
+        hedge: str
+    ) -> None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
@@ -635,7 +677,7 @@ class BybitClient():
             )
             price = round(
                 round(
-                    float(price) / self.price_precision
+                    price / self.price_precision
                 ) * self.price_precision,
                 8
             )
@@ -694,7 +736,13 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_market_stop_sell(self, symbol, size, price, hedge):
+    def futures_market_stop_sell(
+        self,
+        symbol: str,
+        size: str,
+        price: float,
+        hedge: str
+    ) -> None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
@@ -725,7 +773,7 @@ class BybitClient():
             )
             price = round(
                 round(
-                    float(price) / self.price_precision
+                    price / self.price_precision
                 ) * self.price_precision,
                 8
             )
@@ -785,7 +833,13 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_limit_take_buy(self, symbol, size, price, hedge):
+    def futures_limit_take_buy(
+        self,
+        symbol: str,
+        size: str,
+        price: float,
+        hedge: str
+    ) -> None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
@@ -833,7 +887,7 @@ class BybitClient():
             )
             price = round(
                 round(
-                    float(price) / self.price_precision
+                    price / self.price_precision
                 ) * self.price_precision,
                 8
             )
@@ -891,7 +945,13 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_limit_take_sell(self, symbol, size, price, hedge):
+    def futures_limit_take_sell(
+        self,
+        symbol: str,
+        size: str,
+        price: float,
+        hedge: str
+    ) -> None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
@@ -939,7 +999,7 @@ class BybitClient():
             )
             price = round(
                 round(
-                    float(price) / self.price_precision
+                    price / self.price_precision
                 ) * self.price_precision,
                 8
             )
@@ -997,7 +1057,7 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_cancel_stop(self, symbol, side):
+    def futures_cancel_stop(self, symbol: str, side: str) -> None:
         try:
             orders_info = self.client.get_open_orders(
                 category='linear', symbol=symbol
@@ -1019,7 +1079,7 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_cancel_one_sided_orders(self, symbol, side):
+    def futures_cancel_one_sided_orders(self, symbol: str, side: str) -> None:
         try:
             orders_info = self.client.get_open_orders(
                 category='linear', symbol=symbol
@@ -1037,13 +1097,13 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_cancel_all_orders(self, symbol):
+    def futures_cancel_all_orders(self, symbol: str) -> None:
         try:
             self.client.cancel_all_orders(category='linear', symbol=symbol)
         except Exception as exception:
             self.send_exception(exception)
 
-    def check_stop_status(self, symbol):
+    def check_stop_status(self, symbol: str) -> None:
         try:
             for orderId in self.stop_orders.copy():
                 order = self.client.get_open_orders(
@@ -1098,7 +1158,7 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def check_limit_status(self, symbol):
+    def check_limit_status(self, symbol: str) -> None:
         try:
             for orderId in self.limit_orders.copy():
                 order = self.client.get_open_orders(
@@ -1151,7 +1211,7 @@ class BybitClient():
         except Exception as exception:
             self.send_exception(exception)
 
-    def send_exception(self, exception):
+    def send_exception(self, exception: Exception) -> None:
         try:
             if str(exception) != '':
                 self.alerts.append({

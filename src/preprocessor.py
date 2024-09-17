@@ -1,11 +1,14 @@
 import datetime as dt
+from copy import deepcopy
 
 import numpy as np
+
+from src import DealKeywords
 
 
 class Preprocessor:
     @staticmethod
-    def get_klines(klines):
+    def get_klines(klines: np.ndarray) -> list[dict]:
         result = [
             {
                 "time": kline[0] / 1000,
@@ -18,8 +21,9 @@ class Preprocessor:
         return result
 
     @staticmethod
-    def get_indicators(klines, indicators):
+    def get_indicators(klines: np.ndarray, indicators: dict) -> dict:
         klines = klines.tolist()
+        indicators = deepcopy(indicators)
 
         for key in indicators.keys():
             values = indicators[key]['values'].tolist()
@@ -50,9 +54,12 @@ class Preprocessor:
 
     @staticmethod
     def get_deals(
-            completed_deals_log, open_deals_log,
-            entry_signal_keywords, exit_signal_keywords, precision
-    ):
+        completed_deals_log: np.ndarray,
+        open_deals_log: np.ndarray,
+        entry_signal_keywords: DealKeywords,
+        exit_signal_keywords: DealKeywords,
+        precision: float
+    ) -> list[dict]:
         completed_deals_log = completed_deals_log.tolist()
         open_deals_log = open_deals_log.tolist()
         result = []
@@ -65,20 +72,18 @@ class Preprocessor:
             if np.isnan(open_deals_log[0]):
                 return []
             
-            result.append(
-                {
-                    "time": open_deals_log[2] / 1000,
-                    "position": 'belowBar' 
-                        if open_deals_log[0] == 0 else 'aboveBar',
-                    "color": '#2962ff' 
-                        if open_deals_log[0] == 0 else '#ff1744',
-                    "shape": 'arrowUp' 
-                        if open_deals_log[0] == 0 else 'arrowDown',
-                    "text": (entry_signal_keywords[open_deals_log[1]] +
-                        (' +' if open_deals_log[0] == 0 else ' -') +
-                        str(open_deals_log[4]))
-                },
-            )
+            result.append({
+                "time": open_deals_log[2] / 1000,
+                "position": 'belowBar' 
+                    if open_deals_log[0] == 0 else 'aboveBar',
+                "color": '#2962ff' 
+                    if open_deals_log[0] == 0 else '#ff1744',
+                "shape": 'arrowUp' 
+                    if open_deals_log[0] == 0 else 'arrowDown',
+                "text": (entry_signal_keywords[open_deals_log[1]] +
+                    (' +' if open_deals_log[0] == 0 else ' -') +
+                    str(open_deals_log[4]))
+            })
             return result
 
         for deal in completed_deals_log:
@@ -101,7 +106,7 @@ class Preprocessor:
                             "text": (entry_signal_keywords[entry_signal] +
                                 (' +' if deal_type == 0 else ' -') +
                                 str(position_size))
-                        },
+                        }
                     )
                     deal_type = np.nan
                     entry_signal = np.nan
@@ -113,19 +118,17 @@ class Preprocessor:
             entry_date = deal[3]
             position_size += deal[7]
             exits += 1
-            result.append(
-                {
-                    "time": deal[4] / 1000,
-                    "position": 'aboveBar' 
-                        if deal[0] == 0 else 'belowBar',
-                    "color": '#d500f9',
-                    "shape": 'arrowDown'
-                        if deal[0] == 0 else 'arrowUp',
-                    "text": (exit_signal_keywords[deal[2]] +
-                        (' -' if deal[0] == 0 else ' +') +
-                        str(deal[7]))
-                },
-            )
+            result.append({
+                "time": deal[4] / 1000,
+                "position": 'aboveBar' 
+                    if deal[0] == 0 else 'belowBar',
+                "color": '#d500f9',
+                "shape": 'arrowDown'
+                    if deal[0] == 0 else 'arrowUp',
+                "text": (exit_signal_keywords[deal[2]] +
+                    (' -' if deal[0] == 0 else ' +') +
+                    str(deal[7]))
+            })
 
         if not np.isnan(open_deals_log[0]) and open_deals_log[2] == deal[3]:
             position_size += open_deals_log[4]
@@ -171,7 +174,7 @@ class Preprocessor:
         return result
 
     @staticmethod
-    def get_equity(equity):
+    def get_equity(equity: np.ndarray) -> list[dict]:
         result = [
             {
                 "time": i + 1,
@@ -182,9 +185,11 @@ class Preprocessor:
 
     @staticmethod
     def get_completed_deals_log(
-            completed_deals_log, deal_type_keywords,
-            entry_signal_keywords, exit_signal_keywords
-    ):
+        completed_deals_log: np.ndarray,
+        deal_type_keywords: DealKeywords,
+        entry_signal_keywords: DealKeywords,
+        exit_signal_keywords: DealKeywords
+    ) -> list[list]:
         completed_deals_log = completed_deals_log.tolist()
 
         for deal in completed_deals_log:
@@ -202,8 +207,10 @@ class Preprocessor:
 
     @staticmethod
     def get_open_deals_log(
-            open_deals_log, deal_type_keywords, entry_signal_keywords
-    ):
+        open_deals_log: np.ndarray,
+        deal_type_keywords: DealKeywords,
+        entry_signal_keywords: DealKeywords
+    ) -> list:
         if np.isnan(open_deals_log[0]):
             return []
 

@@ -1,8 +1,8 @@
-from functools import partial
-import multiprocessing as mp
-import random
 import json
 import os
+import random
+import multiprocessing as mp
+from functools import partial
 
 from src import BinanceClient
 from src import BybitClient
@@ -10,19 +10,19 @@ from src import Strategies
 
 
 class Optimizer:
-    iterations = 500
+    iterations = 25000
     population_size = 50
     max_population_size = 300
 
     number_of_starts = 1
     output_results = 2
 
-    def __init__(self, optimization):
+    def __init__(self, optimization: dict[str, str]) -> None:
         self.strategies = dict()
 
         for strategy in Strategies.registry.values():
             file_path = os.path.abspath(
-                f'src/strategies/{strategy[0]}'
+                f'src/strategies/{strategy.name}'
                 f'/optimization/optimization.json'
             )
 
@@ -52,7 +52,7 @@ class Optimizer:
                             symbol, interval, datetime2, datetime3
                         )
                         self.strategies[
-                            f'{strategy[0]}_'
+                            f'{strategy.name}_'
                             f'{exchange}_'
                             f'{symbol}_'
                             f'{interval} '
@@ -60,14 +60,14 @@ class Optimizer:
                         ] = {
                             'client1': client1,
                             'client2': client2,
-                            'strategy': strategy[1]
+                            'strategy': strategy.cls
                         }
             except Exception:
                 pass
 
         if len(self.strategies) == 0:
-            strategy_name = Strategies.registry[optimization['strategy']][0]
-            strategy_type = Strategies.registry[optimization['strategy']][1]
+            strategy_name = Strategies.registry[optimization['strategy']].name
+            strategy_cls = Strategies.registry[optimization['strategy']].cls
             exchange = optimization['exchange'].lower()
             symbol = optimization['symbol']
             interval = optimization['interval']
@@ -93,16 +93,16 @@ class Optimizer:
             ] = {
                 'client1': client1,
                 'client2': client2,
-                'strategy': strategy_type
+                'strategy': strategy_cls
             }
 
-    def create(self):
+    def create(self) -> None:
         samples = [
             [               
                 random.choice(j) 
                     for j in self.strategy.opt_parameters.values()
             ]
-            for _ in range(self.population_size)
+            for _ in range(Optimizer.population_size)
         ]
         self.population = {
             k: v for k, v in zip(
@@ -115,7 +115,11 @@ class Optimizer:
         }
         self.sample_length = len(self.strategy.opt_parameters)
 
-    def fit(self, sample, client):
+    def fit(
+        self,
+        sample: list,
+        client: BinanceClient | BybitClient
+    ) -> float:
         strategy = self.strategy(client, opt_parameters=sample)
         strategy.start()
         score = round(
@@ -125,7 +129,7 @@ class Optimizer:
         )
         return score
 
-    def select(self):
+    def select(self) -> None:
         if random.randint(0, 1) == 0:
             score = max(self.population)
             parent_1 = self.population[score]
@@ -137,7 +141,7 @@ class Optimizer:
             parents = random.sample(list(self.population.values()), 2)
             self.parents = [parents[0], parents[1]]
 
-    def recombine(self):
+    def recombine(self) -> None:
         r_number = random.randint(0, 1)
 
         if r_number == 0:
@@ -152,7 +156,7 @@ class Optimizer:
                         + self.parents[1][delimiter_1:delimiter_2]
                         + self.parents[0][delimiter_2:])
 
-    def mutate(self):
+    def mutate(self) -> None:
         if random.randint(1, 100) <= 95:
             gene_num = random.randint(0, self.sample_length - 1)
             gene_value = random.choice(
@@ -165,17 +169,17 @@ class Optimizer:
                     list(self.strategy.opt_parameters.values())[i]
                 )
 
-    def expand(self):
+    def expand(self) -> None:
         self.population[self.fit(self.child, self.client1)] = self.child
 
-    def kill(self):
-        while len(self.population) > self.max_population_size:
+    def kill(self) -> None:
+        while len(self.population) > Optimizer.max_population_size:
             self.population.pop(min(self.population))
 
-    def elect(self):
+    def elect(self) -> dict[float, list]:
         best_samples = dict()
 
-        for _ in range(self.output_results):
+        for _ in range(Optimizer.output_results):
             try:
                 best_score = max(self.population)
                 best_samples[best_score] = self.population[best_score]
@@ -185,7 +189,7 @@ class Optimizer:
 
         return best_samples
 
-    def validate(self):
+    def validate(self) -> None:
         validation_population = {
             k: v for k, v in zip(
                 map(
@@ -208,7 +212,11 @@ class Optimizer:
             except Exception:
                 break
 
-    def write(self, strategy, best_samples):
+    def write(
+        self,
+        strategy: tuple[str, dict],
+        best_samples: dict[float, list]
+    ) -> None:
         strategy_name = strategy[0][
             : strategy[0].rfind(
                 '_', 0, strategy[0].rfind(
@@ -243,16 +251,19 @@ class Optimizer:
             with open(file_path, 'a') as file:
                 print(file_text, file=file)
 
-    def optimize(self, strategy):
+    def optimize(
+        self,
+        strategy: tuple[str, dict]
+    ) -> dict[float, list]:
         best_samples = {}
 
-        for i in range(self.number_of_starts):
+        for i in range(Optimizer.number_of_starts):
             self.client1 = strategy[1]['client1']
             self.client2 = strategy[1]['client2']
             self.strategy = strategy[1]['strategy']
             self.create()
 
-            for j in range(1, self.iterations + 1):
+            for j in range(1, Optimizer.iterations + 1):
                 self.select()
                 self.recombine()
                 self.mutate()
@@ -270,7 +281,7 @@ class Optimizer:
 
         return best_samples
 
-    def start(self):
+    def start(self) -> None:
         with mp.Pool(mp.cpu_count()) as pool:
             result = zip(
                 self.strategies.items(),

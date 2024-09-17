@@ -1,6 +1,6 @@
-numpy
-numba
-scipy
-python-binance
-pybit
-flask
+numpy==2.0.2
+numba==0.60.0
+scipy==1.14.1
+python-binance==1.0.19
+pybit==5.8.0
+flask==3.0.3

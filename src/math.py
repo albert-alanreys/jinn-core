@@ -1,6 +1,11 @@
 import numpy as np
 
-def random_trading_volumes(quantity, min_volume, step):
+
+def get_random_volumes(
+    quantity: int,
+    min_volume: int,
+    step: int
+) -> list:
     sample = np.concatenate(
         (
             np.random.choice(

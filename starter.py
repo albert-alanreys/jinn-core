@@ -10,8 +10,9 @@ from src.delegator import Delegator
 #   'bybit'
 
 # interval:
-#   https://python-binance.readthedocs.io/en/latest/constants.html
-#   https://bybit-exchange.github.io/docs/v5/market/kline
+#   '1m', '5m', '15m', '30m'
+#   '1h', '2h', '4h', '6h'
+#   '1d', '1w', '1M'
 
 # strategy:
 #   'devourer_v3'
@@ -36,17 +37,17 @@ testing = {
     'interval': '1h',
     'date/time #1': '2019/01/01 00:00',
     'date/time #2': '2025/01/01 00:00',
-    'strategy': 'nugget_v2'
+    'strategy': 'devourer_v3'
 }
 automation = {
     'exchange': 'bybit',
     'symbol': 'ETHUSDT',
-    'interval': 1,
+    'interval': '1h',
     'strategy': 'nugget_v2'
 }
 
 
-def main():
+def main() -> None:
     Delegator.manage(mode, optimization, testing, automation)
  
 

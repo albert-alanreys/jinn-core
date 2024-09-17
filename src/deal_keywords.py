@@ -1,13 +1,10 @@
-from typing import Dict
-
-
 class DealKeywords:
-    deal_types: Dict[int, str] = {
+    deal_types: dict[int, str] = {
         0: 'long',
         1: 'short'
     }
 
-    entry_signals: Dict[int, str] = {
+    entry_signals: dict[int, str] = {
         0: 'Long',
         1: 'Short',
         2: 'Long #1',
@@ -32,7 +29,7 @@ class DealKeywords:
         21: 'Short #10'
     }
 
-    exit_signals: Dict[int, str] = {
+    exit_signals: dict[int, str] = {
         0: 'Liquidation',
         1: 'Stop-loss',
         2: 'Take-profit #1',

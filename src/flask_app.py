@@ -1,11 +1,12 @@
 import json
 import os
+from typing import Callable
 
-from flask import Flask, render_template
+from flask import Flask, render_template, Response
 
 
 class FlaskApp(Flask):
-    def __init__(self, mode, update_strategy, **args):
+    def __init__(self, mode: str, update_strategy: Callable, **args) -> None:
         self.mode = mode
         self.update_strategy = update_strategy
         self.data_updates = []
@@ -41,54 +42,54 @@ class FlaskApp(Flask):
         ) as file:
             file.writelines(lines)
   
-    def set_data_updates(self, id):
+    def set_data_updates(self, id: str) -> None:
         if id not in self.data_updates:
             self.data_updates.append(id)
 
-    def set_alert_updates(self, alerts):
+    def set_alert_updates(self, alerts: list[dict]) -> None:
         self.alert_updates.extend(alerts)
 
-    def set_lite_data(self, lite_data):
+    def set_lite_data(self, lite_data: dict) -> None:
         self.lite_data = lite_data
 
-    def set_main_data(self, main_data):
+    def set_main_data(self, main_data: dict) -> None:
         self.main_data = main_data
 
-    def set_alerts(self, alerts):
+    def set_alerts(self, alerts: list[dict]) -> None:
         self.alerts.extend(alerts)
     
-    def index(self):
+    def index(self) -> Response:
         return render_template('index.html')
 
-    def get_mode(self):
+    def get_mode(self) -> str:
         return self.mode
     
-    def get_alerts(self):
+    def get_alerts(self) -> str:
         return json.dumps(self.alerts[-100:])
     
-    def get_alert_updates(self):
+    def get_alert_updates(self) -> str:
         alerts = self.alert_updates.copy()
         self.alert_updates.clear()
         self.set_alerts(alerts)
         return json.dumps(alerts)
 
-    def get_data_updates(self):
+    def get_data_updates(self) -> str:
         return json.dumps(self.data_updates)
 
-    def get_lite_data(self):
+    def get_lite_data(self) -> str:
         return json.dumps(self.lite_data)
 
-    def get_main_data(self, id):
+    def get_main_data(self, id: str) -> str:
         if id in self.data_updates:
             self.data_updates.remove(id)
 
         return json.dumps(self.main_data[id])
     
-    def update_data(self, id, parameter):
+    def update_data(self, id: str, parameter: str) -> tuple[str, int]:
         try:
-            name = list(json.loads(parameter).items())[0][0]
+            parameter_name = list(json.loads(parameter).items())[0][0]
             new_value = list(json.loads(parameter).items())[0][1]
-            self.update_strategy(id, name, new_value)
+            self.update_strategy(id, parameter_name, new_value)
             response = {"status": "success"}
             http_status = 200
         except:

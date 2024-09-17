@@ -5,7 +5,12 @@ from src import Tester
 
 class Delegator:
     @staticmethod
-    def manage(mode, optimization, testing, automation):
+    def manage(
+        mode: str,
+        optimization: dict[str, str],
+        testing: dict[str, str],
+        automation: dict[str, str]
+    ) -> None:
         match mode:
             case 'optimization':
                 print('TVLite запущен в режиме "optimization".')

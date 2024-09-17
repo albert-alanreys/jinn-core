@@ -1,6 +1,7 @@
 import warnings
 import ast
 import os
+from typing import Any
 
 import numpy as np
 
@@ -13,12 +14,12 @@ from src import Preprocessor
 
 
 class Tester():
-    def __init__(self, testing):
+    def __init__(self, testing: dict[str, str]) -> None:
         self.strategies = dict()
 
         for strategy in Strategies.registry.values():
             folder_path = os.path.abspath(
-                f'src/strategies/{strategy[0]}/backtesting/'
+                f'src/strategies/{strategy.name}/backtesting/'
             )
             file_names = os.listdir(folder_path)
 
@@ -41,7 +42,7 @@ class Tester():
                     client = BybitClient()
 
                 file_path = os.path.abspath(
-                    f'src/strategies/{strategy[0]}/backtesting/{name}'
+                    f'src/strategies/{strategy.name}/backtesting/{name}'
                 )
                 target_line = False
                 opt_parameters = []
@@ -73,18 +74,18 @@ class Tester():
 
                 for parameters in opt_parameters:
                     client.get_data(symbol, interval, start, end)
-                    strategy_obj = strategy[1](
+                    strategy_instance = strategy.cls(
                         client, opt_parameters=parameters
                     )
-                    all_parameters = strategy_obj.__dict__.copy()
+                    all_parameters = strategy_instance.__dict__.copy()
                     all_parameters.pop('client')
                     strategy_data = {
-                        'name': strategy[0],
+                        'name': strategy.name,
                         'exchange': exchange.lower(),
                         'symbol': symbol,
                         'interval': interval,
                         'mintick': client.price_precision,
-                        'strategy': strategy_obj,
+                        'strategy': strategy_instance,
                         'parameters': all_parameters
                     }
                     self.strategies[str(id(strategy_data))] = strategy_data
@@ -102,18 +103,18 @@ class Tester():
                 client = BybitClient()
 
             client.get_data(symbol, interval, start, end)
-            strategy_obj = Strategies.registry[
+            strategy_instance = Strategies.registry[
                 testing['strategy']
-            ][1](client)
-            all_parameters = strategy_obj.__dict__.copy()
+            ].cls(client)
+            all_parameters = strategy_instance.__dict__.copy()
             all_parameters.pop('client')
             strategy_data = {
-                'name': Strategies.registry[testing['strategy']][0],
+                'name': Strategies.registry[testing['strategy']].name,
                 'exchange': exchange.lower(),
                 'symbol': symbol,
                 'interval': interval,
                 'mintick': client.price_precision,
-                'strategy': strategy_obj,
+                'strategy': strategy_instance,
                 'parameters': all_parameters
             }
             self.strategies[str(id(strategy_data))] = strategy_data
@@ -126,9 +127,15 @@ class Tester():
             self.frontend_main_data[key] = frontend_data[0]
             self.frontend_lite_data[key] = frontend_data[1]
 
-    def update_strategy(self, strategy, name, new_value):
+    def update_strategy(
+        self,
+        strategy: str,
+        parameter_name: str,
+        new_value: Any
+    ) -> None:
         try:
-            old_value = self.strategies[strategy]['parameters'][name]
+            parameters = self.strategies[strategy]['parameters']
+            old_value = parameters[parameter_name]
 
             if isinstance(new_value, list):
                 new_value = list(map(lambda x: float(x), new_value))
@@ -141,26 +148,27 @@ class Tester():
             if type(old_value) != type(new_value):
                 raise
 
-            self.strategies[strategy]['parameters'][name] = new_value
-            strategy_obj = self.strategies[strategy]['strategy'].__class__(
-                self.strategies[strategy]['strategy'].client,
-                all_parameters=list(
-                    self.strategies[strategy]['parameters'].values()
+            parameters[parameter_name] = new_value
+            strategy_instance = (
+                self.strategies[strategy]['strategy'].__class__(
+                    self.strategies[strategy]['strategy'].client,
+                    all_parameters=list(parameters.values())
                 )
             )
-            self.strategies[strategy]['strategy'] = strategy_obj
+            self.strategies[strategy]['strategy'] = strategy_instance
             frontend_data = self.get_frontend_data(self.strategies[strategy])
             self.frontend_main_data[strategy] = frontend_data[0]
             self.frontend_lite_data[strategy] = frontend_data[1]
         except Exception:
             raise
 
-    def get_frontend_data(self, data):
+    def get_frontend_data(self, data: dict) -> list[dict]:
         result = []
-        strategy_obj = data['strategy']
-        strategy_obj.start()
-        completed_deals_log = data['strategy'] \
-            .completed_deals_log.reshape((-1, 13))
+        strategy_instance = data['strategy']
+        strategy_instance.start()
+        completed_deals_log = (
+            data['strategy'].completed_deals_log.reshape((-1, 13))
+        )
         open_deals_log = data['strategy'].open_deals_log
 
         with warnings.catch_warnings():
@@ -223,7 +231,10 @@ class Tester():
         return result
 
     @staticmethod
-    def calculate(log, initial_capital):
+    def calculate(
+        log: np.ndarray,
+        initial_capital: float
+    ) -> list[list]:
         # Gross profit
         all_gross_profit = round(log[:, 8][log[:, 8] > 0].sum(), 2)
         all_gross_profit_per = round(
@@ -651,7 +662,7 @@ class Tester():
         ]
         return metrics
         
-    def start(self):
+    def start(self) -> None:
         self.app = FlaskApp(
             mode='testing',
             update_strategy=self.update_strategy,

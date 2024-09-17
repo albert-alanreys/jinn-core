@@ -55,8 +55,8 @@ class NuggetV5():
             for i in range(1000)
         ],
         'take_volume': [
-            math.random_trading_volumes(5, 10, 10)
-            for i in range(1000)
+            math.get_random_volumes(5, 10, 10)
+            for _ in range(1000)
         ],
         'st_atr_period': [i for i in range(2, 21)],
         'st_factor': [i / 100 for i in range(1000, 2501, 5)],
@@ -95,7 +95,12 @@ class NuggetV5():
         'trade'
     )
 
-    def __init__(self, client, opt_parameters=None, all_parameters=None):
+    def __init__(
+        self,
+        client,
+        opt_parameters: list | None = None,
+        all_parameters: list | None = None
+    ) -> None:
         self.client = client
 
         for key, value in NuggetV5.__dict__.items():
@@ -153,7 +158,7 @@ class NuggetV5():
             self.adx_short_upper_limit = all_parameters[25]
             self.adx_short_lower_limit = all_parameters[26]
 
-    def start(self):
+    def start(self) -> None:
         self.price_precision = self.client.price_precision
         self.qty_precision = self.client.qty_precision
         self.time = self.client.price_data[:, 0]
@@ -293,7 +298,17 @@ class NuggetV5():
 
     @staticmethod
     @nb.jit(
-        (
+        nb.types.Tuple((
+            nb.float64[:],
+            nb.float64[:],
+            nb.float64[:, :],
+            nb.float64[:],
+            nb.boolean,
+            nb.boolean,
+            nb.boolean,
+            nb.boolean,
+            nb.boolean 
+        ))(
             nb.int8,
             nb.float64,
             nb.float64,
@@ -350,63 +365,74 @@ class NuggetV5():
         nogil=True
     )
     def calculate(
-        direction,
-        initial_capital,
-        min_capital,
-        commission,
-        order_size_type,
-        order_size,
-        leverage,
-        stop,
-        take_value,
-        take_volume,
-        st_upper_limit,
-        st_lower_limit,
-        k_d_long_limit,
-        k_d_short_limit,
-        adx_filter,
-        adx_long_upper_limit,
-        adx_long_lower_limit,
-        adx_short_upper_limit,
-        adx_short_lower_limit,
-        price_precision,
-        qty_precision,
-        time,
-        high,
-        low,
-        close,
-        equity,
-        completed_deals_log,
-        open_deals_log,
-        deal_type,
-        entry_signal,
-        entry_date,
-        entry_price,
-        liquidation_price,
-        take_price,
-        stop_price,
-        position_size,
-        qty_take,
-        atr,
-        ds_upper_band,
-        ds_lower_band,
-        st_upper_band_changed,
-        st_lower_band_changed,
-        k,
-        d,
-        adx,
-        alert_long,
-        alert_short,
-        alert_long_new_stop,
-        alert_short_new_stop,
-        alert_cancel
-    ):
-        def round_to_minqty_or_mintick(number, precision):
+        direction: int,
+        initial_capital: float,
+        min_capital: float,
+        commission: float,
+        order_size_type: int,
+        order_size: float,
+        leverage: int,
+        stop: float,
+        take_value: list,
+        take_volume: list,
+        st_upper_limit: float,
+        st_lower_limit: float,
+        k_d_long_limit: float,
+        k_d_short_limit: float,
+        adx_filter: bool,
+        adx_long_upper_limit: float,
+        adx_long_lower_limit: float,
+        adx_short_upper_limit: float,
+        adx_short_lower_limit: float,
+        price_precision: float,
+        qty_precision: float,
+        time: np.ndarray,
+        high: np.ndarray,
+        low: np.ndarray,
+        close: np.ndarray,
+        equity: float,
+        completed_deals_log: np.ndarray,
+        open_deals_log: np.ndarray,
+        deal_type: float,
+        entry_signal: float,
+        entry_date: float,
+        entry_price: float,
+        liquidation_price: float,
+        take_price: np.ndarray,
+        stop_price: np.ndarray,
+        position_size: float,
+        qty_take: np.ndarray,
+        atr: np.ndarray,
+        ds_upper_band: np.ndarray,
+        ds_lower_band: np.ndarray,
+        st_upper_band_changed: np.ndarray,
+        st_lower_band_changed: np.ndarray,
+        k: np.ndarray,
+        d: np.ndarray,
+        adx: np.ndarray,
+        alert_long: bool,
+        alert_short: bool,
+        alert_long_new_stop: bool,
+        alert_short_new_stop: bool,
+        alert_cancel: bool
+    ) -> tuple:
+        def round_to_minqty_or_mintick(number: float, precision: float) -> float:
             return round(round(number / precision) * precision, 8)
 
-        def update_log(log, equity, commission, deal_type, entry_signal,
-                       exit_signal, entry_date, exit_date, entry_price,
-                       exit_price, position_size, initial_capital):
+        def update_log(
+            log: np.ndarray,
+            equity: float,
+            commission: float,
+            deal_type: float,
+            entry_signal: float,
+            exit_signal: float,
+            entry_date: float,
+            exit_date: float,
+            entry_price: float,
+            exit_price: float,
+            position_size: float,
+            initial_capital: float
+        ) -> tuple[np.ndarray, float]:
             total_commission = round(
                 (position_size * entry_price
                     * commission / 100) + (position_size
@@ -1006,7 +1032,7 @@ class NuggetV5():
             alert_cancel
         )
     
-    def trade(self):
+    def trade(self) -> None:
         if self.alert_cancel:
             self.client.futures_cancel_all_orders(
                 symbol=self.client.symbol
