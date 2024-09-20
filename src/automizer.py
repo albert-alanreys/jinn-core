@@ -6,7 +6,7 @@ from typing import Any
 from src.flask_app import FlaskApp
 from src import BinanceClient
 from src import BybitClient
-from src import Strategies
+from src import Registry
 from src import DealKeywords
 from src import Preprocessor
 
@@ -15,7 +15,7 @@ class Automizer():
     def __init__(self, automation: dict[str, str]) -> None:
         self.strategies = dict()
 
-        for strategy in Strategies.registry.values():
+        for strategy in Registry.data.values():
             folder_path = os.path.abspath(
                 f'src/strategies/{strategy.name}/automation/'
             )
@@ -57,20 +57,20 @@ class Automizer():
                         )
 
                 client.get_data(symbol, interval)
-                strategy_instance = strategy.cls(
-                    client, all_parameters=parameters
+                strategy_instance = strategy.type(
+                    all_parameters=parameters
                 )
                 all_parameters = strategy_instance.__dict__.copy()
-                all_parameters.pop('client')
+                all_parameters.pop('_abc_impl')
                 strategy_data = {
                     'name': strategy.name,
+                    'instance': strategy_instance,
+                    'client': client,
+                    'parameters': all_parameters,
                     'exchange': exchange.lower(),
                     'symbol': symbol,
                     'interval': interval,
-                    'mintick': client.price_precision,
-                    'strategy': strategy_instance,
-                    'parameters': all_parameters,
-                    'client': client
+                    'mintick': client.price_precision 
                 }
                 self.strategies[str(id(strategy_data))] = strategy_data
         
@@ -85,20 +85,20 @@ class Automizer():
                 client = BybitClient()
 
             client.get_data(symbol, interval)
-            strategy_instance = Strategies.registry[
+            strategy_instance = Registry.data[
                 automation['strategy']
-            ].cls(client)
+            ].type()
             all_parameters = strategy_instance.__dict__.copy()
-            all_parameters.pop('client')
+            all_parameters.pop('_abc_impl')
             strategy_data = {
-                'name': Strategies.registry[automation['strategy']].name,
+                'name': Registry.data[automation['strategy']].name,
+                'instance': strategy_instance,
+                'client': client,
+                'parameters': all_parameters,
                 'exchange': exchange.lower(),
                 'symbol': symbol,
                 'interval': interval,
-                'mintick': client.price_precision,
-                'strategy': strategy_instance,
-                'parameters': all_parameters,
-                'client': client
+                'mintick': client.price_precision
             }
             self.strategies[str(id(strategy_data))] = strategy_data
 
@@ -124,11 +124,11 @@ class Automizer():
                     self.app.set_main_data(self.frontend_main_data)
                     self.app.set_lite_data(self.frontend_lite_data)
                     self.app.set_data_updates(key)
-                    data['strategy'].trade()
+                    data['instance'].trade()
 
                     if len(data['client'].alerts) > 0:
                         for alert in data['client'].alerts:
-                            alert['strategy'] = key
+                            alert['instance'] = key
                             self.alerts.append(alert)
 
                         self.app.set_alert_updates(self.alerts)
@@ -160,12 +160,11 @@ class Automizer():
 
             parameters[parameter_name] = new_value
             strategy_instance = (
-                self.strategies[strategy]['strategy'].__class__(
-                    self.strategies[strategy]['strategy'].client,
+                self.strategies[strategy]['instance'].__class__(
                     all_parameters=list(parameters.values())
                 )
             )
-            self.strategies[strategy]['strategy'] = strategy_instance
+            self.strategies[strategy]['instance'] = strategy_instance
             frontend_data = self.get_frontend_data(self.strategies[strategy])
             self.frontend_main_data[strategy] = frontend_data[0]
             self.frontend_lite_data[strategy] = frontend_data[1]
@@ -176,11 +175,11 @@ class Automizer():
 
     def get_frontend_data(self, data: dict) -> list[dict]:
         result = []
-        data['strategy'].start()
+        data['instance'].start(data['client'])
         completed_deals_log = (
-            data['strategy'].completed_deals_log.reshape((-1, 13))
+            data['instance'].completed_deals_log.reshape((-1, 13))
         )
-        open_deals_log = data['strategy'].open_deals_log
+        open_deals_log = data['instance'].open_deals_log
         result.append({
             'chartData': {
                 'name': data['name'].capitalize().replace('_', '-'),
@@ -189,18 +188,18 @@ class Automizer():
                 'interval': data['interval'],
                 'mintick': data['mintick'],
                 'klines': Preprocessor.get_klines(
-                    data['strategy'].client.price_data
+                    data['client'].price_data
                 ),
                 'indicators': Preprocessor.get_indicators(
-                    data['strategy'].client.price_data,
-                    data['strategy'].indicators
+                    data['client'].price_data,
+                    data['instance'].indicators
                 ),
                 'markers': Preprocessor.get_deals(
                     completed_deals_log,
                     open_deals_log,
                     DealKeywords.entry_signals,
                     DealKeywords.exit_signals,
-                    data['strategy'].qty_precision
+                    data['instance'].qty_precision
                 ),
             }
         })

@@ -1,10 +1,11 @@
 import numpy as np
 import numba as nb
 
+from ..strategy import Strategy
 from ... import ta
 
 
-class DickeyFullerV1():
+class DickeyFullerV1(Strategy):
     # Strategy parameters
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     margin_type = 0
@@ -79,12 +80,9 @@ class DickeyFullerV1():
 
     def __init__(
         self,
-        client,
         opt_parameters: list | None = None,
         all_parameters: list | None = None
     ) -> None:
-        self.client = client
-
         for key, value in DickeyFullerV1.__dict__.items():
             if (not key.startswith('__') and
                     key not in DickeyFullerV1.class_attributes):
@@ -142,25 +140,21 @@ class DickeyFullerV1():
             self.adf_level_1_p2 = all_parameters[26]
             self.adf_level_2_p2 = all_parameters[27]
 
-    def start(self) -> None:
-        self.price_precision = self.client.price_precision
-        self.qty_precision = self.client.qty_precision
-        self.time = self.client.price_data[:, 0]
-        self.open = self.client.price_data[:, 1]
-        self.high = self.client.price_data[:, 2]
-        self.low = self.client.price_data[:, 3]
-        self.close = self.client.price_data[:, 4]
+    def start(self, client) -> None:
+        super().__init__()
+
+        self.price_precision = client.price_precision
+        self.qty_precision = client.qty_precision
+        self.time = client.price_data[:, 0]
+        self.open = client.price_data[:, 1]
+        self.high = client.price_data[:, 2]
+        self.low = client.price_data[:, 3]
+        self.close = client.price_data[:, 4]
+
         self.equity = self.initial_capital
-        self.completed_deals_log = np.array([])
-        self.open_deals_log = np.full(5, np.nan)
-        self.deal_type = np.nan
-        self.entry_signal = np.nan
-        self.entry_date = np.nan
-        self.entry_price = np.nan
-        self.liquidation_price = np.nan
-        self.take_price = np.full(self.time.shape[0], np.nan)
         self.stop_price = np.full(self.time.shape[0], np.nan)
-        self.position_size = np.nan
+        self.take_price = np.full(self.time.shape[0], np.nan)
+        self.liquidation_price = np.nan
         self.entry_short_stage_p2 = np.nan
 
         self.adf_1_p1 = ta.adftest(

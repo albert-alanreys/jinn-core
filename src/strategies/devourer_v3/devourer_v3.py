@@ -1,10 +1,11 @@
 import numpy as np
 import numba as nb
 
+from ..strategy import Strategy
 from ... import ta
 
 
-class DevourerV3():
+class DevourerV3(Strategy):
     # Strategy parameters
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     margin_type = 0
@@ -78,12 +79,9 @@ class DevourerV3():
 
     def __init__(
         self,
-        client,
         opt_parameters: list | None = None,
         all_parameters: list | None = None
     ) -> None:
-        self.client = client
-
         for key, value in DevourerV3.__dict__.items():
             if (not key.startswith('__') and
                     key not in DevourerV3.class_attributes):
@@ -140,25 +138,21 @@ class DevourerV3():
             self.ema_len_p3 = all_parameters[25]
             self.close_under_ema_p3 = all_parameters[26]
 
-    def start(self) -> None:
-        self.price_precision = self.client.price_precision
-        self.qty_precision = self.client.qty_precision
-        self.time = self.client.price_data[:, 0]
-        self.open = self.client.price_data[:, 1]
-        self.high = self.client.price_data[:, 2]
-        self.low = self.client.price_data[:, 3]
-        self.close = self.client.price_data[:, 4]
+    def start(self, client) -> None:
+        super().__init__()
+
+        self.price_precision = client.price_precision
+        self.qty_precision = client.qty_precision
+        self.time = client.price_data[:, 0]
+        self.open = client.price_data[:, 1]
+        self.high = client.price_data[:, 2]
+        self.low = client.price_data[:, 3]
+        self.close = client.price_data[:, 4]
+
         self.equity = self.initial_capital
-        self.completed_deals_log = np.array([])
-        self.open_deals_log = np.full(5, np.nan)
-        self.deal_type = np.nan
-        self.entry_signal = np.nan
-        self.entry_date = np.nan
-        self.entry_price = np.nan
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
-        self.position_size = np.nan
         self.deal_p1 = False
         self.deal_p2 = False
         self.deal_p3 = False

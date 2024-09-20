@@ -6,11 +6,11 @@ from functools import partial
 
 from src import BinanceClient
 from src import BybitClient
-from src import Strategies
+from src import Registry
 
 
 class Optimizer:
-    iterations = 25000
+    iterations = 1000
     population_size = 50
     max_population_size = 300
 
@@ -20,7 +20,7 @@ class Optimizer:
     def __init__(self, optimization: dict[str, str]) -> None:
         self.strategies = dict()
 
-        for strategy in Strategies.registry.values():
+        for strategy in Registry.data.values():
             file_path = os.path.abspath(
                 f'src/strategies/{strategy.name}'
                 f'/optimization/optimization.json'
@@ -58,16 +58,16 @@ class Optimizer:
                             f'{interval} '
                             f'T{datetime1} - {datetime3}'
                         ] = {
+                            'instance': strategy.type,
                             'client1': client1,
-                            'client2': client2,
-                            'strategy': strategy.cls
+                            'client2': client2
                         }
             except Exception:
                 pass
 
         if len(self.strategies) == 0:
-            strategy_name = Strategies.registry[optimization['strategy']].name
-            strategy_cls = Strategies.registry[optimization['strategy']].cls
+            strategy_name = Registry.data[optimization['strategy']].name
+            strategy_type = Registry.data[optimization['strategy']].type
             exchange = optimization['exchange'].lower()
             symbol = optimization['symbol']
             interval = optimization['interval']
@@ -91,9 +91,9 @@ class Optimizer:
                 f'{interval} '
                 f'T{datetime1} - {datetime3}'
             ] = {
+                'instance': strategy_type,
                 'client1': client1,
-                'client2': client2,
-                'strategy': strategy_cls
+                'client2': client2
             }
 
     def create(self) -> None:
@@ -120,8 +120,8 @@ class Optimizer:
         sample: list,
         client: BinanceClient | BybitClient
     ) -> float:
-        strategy = self.strategy(client, opt_parameters=sample)
-        strategy.start()
+        strategy = self.strategy(opt_parameters=sample)
+        strategy.start(client)
         score = round(
             strategy.completed_deals_log[8::13].sum() /
                 strategy.initial_capital * 100,
@@ -241,7 +241,7 @@ class Optimizer:
                 [
                     f'{value} = {sample[index]}\n'
                         for index, value in enumerate(
-                            strategy[1]['strategy'].opt_parameters.keys()
+                            strategy[1]['instance'].opt_parameters.keys()
                         )
                 ]
             )
@@ -260,7 +260,7 @@ class Optimizer:
         for i in range(Optimizer.number_of_starts):
             self.client1 = strategy[1]['client1']
             self.client2 = strategy[1]['client2']
-            self.strategy = strategy[1]['strategy']
+            self.strategy = strategy[1]['instance']
             self.create()
 
             for j in range(1, Optimizer.iterations + 1):

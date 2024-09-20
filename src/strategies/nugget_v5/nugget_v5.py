@@ -3,11 +3,12 @@ import random as rand
 import numpy as np
 import numba as nb
 
+from ..strategy import Strategy
 from ... import math
 from ... import ta
 
 
-class NuggetV5():
+class NuggetV5(Strategy):
     # Strategy parameters
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     margin_type = 0
@@ -97,12 +98,9 @@ class NuggetV5():
 
     def __init__(
         self,
-        client,
         opt_parameters: list | None = None,
         all_parameters: list | None = None
     ) -> None:
-        self.client = client
-
         for key, value in NuggetV5.__dict__.items():
             if (not key.startswith('__') and
                     key not in NuggetV5.class_attributes):
@@ -158,21 +156,18 @@ class NuggetV5():
             self.adx_short_upper_limit = all_parameters[25]
             self.adx_short_lower_limit = all_parameters[26]
 
-    def start(self) -> None:
-        self.price_precision = self.client.price_precision
-        self.qty_precision = self.client.qty_precision
-        self.time = self.client.price_data[:, 0]
-        self.high = self.client.price_data[:, 2]
-        self.low = self.client.price_data[:, 3]
-        self.close = self.client.price_data[:, 4]
+    def start(self, client) -> None:
+        super().__init__()
+
+        self.price_precision = client.price_precision
+        self.qty_precision = client.qty_precision
+        self.time = client.price_data[:, 0]
+        self.high = client.price_data[:, 2]
+        self.low = client.price_data[:, 3]
+        self.close = client.price_data[:, 4]
+
         self.equity = self.initial_capital
-        self.completed_deals_log = np.array([])
-        self.open_deals_log = np.full(5, np.nan)
-        self.deal_type = np.nan
-        self.entry_signal = np.nan
-        self.entry_date = np.nan
-        self.entry_price = np.nan
-        self.liquidation_price = np.nan
+        self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.array(
             [
                 np.full(self.time.shape[0], np.nan),
@@ -182,8 +177,7 @@ class NuggetV5():
                 np.full(self.time.shape[0], np.nan)
             ]
         )
-        self.stop_price = np.full(self.time.shape[0], np.nan)
-        self.position_size = np.nan
+        self.liquidation_price = np.nan
         self.qty_take = np.full(5, np.nan)
         self.atr = ta.atr(self.high, self.low, self.close, self.atr_length)
         self.ds = ta.ds(self.high, self.low, self.close,

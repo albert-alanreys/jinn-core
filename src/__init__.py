@@ -5,7 +5,7 @@ from src.strategies.nugget_v4.nugget_v4 import NuggetV4
 from src.strategies.nugget_v5.nugget_v5 import NuggetV5
 from src.exchanges.binance_client import BinanceClient
 from src.exchanges.bybit_client import BybitClient
-from src.strategies.strategies import Strategies
+from src.strategies.registry import Registry
 from src.deal_keywords import DealKeywords
 from src.preprocessor import Preprocessor
 from src.automizer import Automizer

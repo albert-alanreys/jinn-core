@@ -3,11 +3,12 @@ import random as rand
 import numpy as np
 import numba as nb
 
+from ..strategy import Strategy
 from ... import math
 from ... import ta
 
 
-class NuggetV2():
+class NuggetV2(Strategy):
     # Strategy parameters
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     margin_type = 0
@@ -112,12 +113,9 @@ class NuggetV2():
 
     def __init__(
         self,
-        client,
         opt_parameters: list | None = None,
         all_parameters: list | None = None
     ) -> None:
-        self.client = client
-
         for key, value in NuggetV2.__dict__.items():
             if (not key.startswith('__') and
                     key not in NuggetV2.class_attributes):
@@ -189,21 +187,18 @@ class NuggetV2():
             self.adx_short_upper_bound = all_parameters[33]
             self.adx_short_lower_bound = all_parameters[34]
 
-    def start(self) -> None:
-        self.price_precision = self.client.price_precision
-        self.qty_precision = self.client.qty_precision
-        self.time = self.client.price_data[:, 0]
-        self.high = self.client.price_data[:, 2]
-        self.low = self.client.price_data[:, 3]
-        self.close = self.client.price_data[:, 4]
+    def start(self, client) -> None:
+        super().__init__()
+
+        self.price_precision = client.price_precision
+        self.qty_precision = client.qty_precision
+        self.time = client.price_data[:, 0]
+        self.high = client.price_data[:, 2]
+        self.low = client.price_data[:, 3]
+        self.close = client.price_data[:, 4]
+
         self.equity = self.initial_capital
-        self.completed_deals_log = np.array([])
-        self.open_deals_log = np.full(5, np.nan)
-        self.deal_type = np.nan
-        self.entry_signal = np.nan
-        self.entry_date = np.nan
-        self.entry_price = np.nan
-        self.liquidation_price = np.nan
+        self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.array(
             [
                 np.full(self.time.shape[0], np.nan),
@@ -213,8 +208,7 @@ class NuggetV2():
                 np.full(self.time.shape[0], np.nan)
             ]
         )
-        self.stop_price = np.full(self.time.shape[0], np.nan)
-        self.position_size = np.nan
+        self.liquidation_price = np.nan
         self.qty_take = np.full(5, np.nan)
         self.stop_moved = False
         self.ds = ta.ds(self.high, self.low, self.close,
@@ -236,8 +230,8 @@ class NuggetV2():
         else:
             self.adx = np.full(self.time.shape[0], np.nan)
 
-        self.alert_long = False
-        self.alert_short = False
+        self.alert_entry_long = False
+        self.alert_entry_short = False
         self.alert_long_new_stop = False
         self.alert_short_new_stop = False
         self.alert_cancel = False
@@ -247,8 +241,8 @@ class NuggetV2():
             self.open_deals_log,
             self.take_price,
             self.stop_price,
-            self.alert_long,
-            self.alert_short,
+            self.alert_entry_long,
+            self.alert_entry_short,
             self.alert_long_new_stop,
             self.alert_short_new_stop,
             self.alert_cancel
@@ -307,8 +301,8 @@ class NuggetV2():
                 self.bb_rsi[1] if self.bb_filter else self.bb_rsi,
                 self.bb_rsi[2] if self.bb_filter else self.bb_rsi,
                 self.adx,
-                self.alert_long,
-                self.alert_short,
+                self.alert_entry_long,
+                self.alert_entry_short,
                 self.alert_long_new_stop,
                 self.alert_short_new_stop,
                 self.alert_cancel
@@ -473,8 +467,8 @@ class NuggetV2():
         bb_rsi_upper: np.ndarray,
         bb_rsi_lower: np.ndarray,
         adx: np.ndarray,
-        alert_long: bool,
-        alert_short: bool,
+        alert_entry_long: bool,
+        alert_entry_short: bool,
         alert_long_new_stop: bool,
         alert_short_new_stop: bool,
         alert_cancel: bool
@@ -550,8 +544,8 @@ class NuggetV2():
             return log, equity
 
         for i in range(time.shape[0]):
-            alert_long = False
-            alert_short = False
+            alert_entry_long = False
+            alert_entry_short = False
             alert_long_new_stop = False
             alert_short_new_stop = False
             alert_cancel = False
@@ -879,7 +873,7 @@ class NuggetV2():
                         entry_price, position_size
                     ]
                 )
-                alert_long = True
+                alert_entry_long = True
 
             # Trading logic (shorts)
             if deal_type == 1:
@@ -1141,15 +1135,15 @@ class NuggetV2():
                         entry_price, position_size
                     ]
                 )
-                alert_short = True
+                alert_entry_short = True
 
         return (
             completed_deals_log,
             open_deals_log,
             take_price,
             stop_price,
-            alert_long,
-            alert_short,
+            alert_entry_long,
+            alert_entry_short,
             alert_long_new_stop,
             alert_short_new_stop,
             alert_cancel
@@ -1190,7 +1184,7 @@ class NuggetV2():
                 hedge='false'
             )
 
-        if self.alert_long:
+        if self.alert_entry_long:
             self.client.futures_market_open_buy(
                 symbol=self.client.symbol,
                 size=(
@@ -1238,7 +1232,7 @@ class NuggetV2():
                 hedge='false'
             )
         
-        if self.alert_short:
+        if self.alert_entry_short:
             self.client.futures_market_open_sell(
                 symbol=self.client.symbol,
                 size=(

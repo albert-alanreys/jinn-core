@@ -1,11 +1,12 @@
 import numpy as np
 import numba as nb
 
+from ..strategy import Strategy
 from ... import math
 from ... import ta
 
 
-class NuggetV4():
+class NuggetV4(Strategy):
     # Strategy parameters
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     margin_type = 0
@@ -102,12 +103,9 @@ class NuggetV4():
 
     def __init__(
         self,
-        client,
         opt_parameters: list | None = None,
         all_parameters: list | None = None
     ) -> None:
-        self.client = client
-
         for key, value in NuggetV4.__dict__.items():
             if (not key.startswith('__') and
                     key not in NuggetV4.class_attributes):
@@ -171,22 +169,17 @@ class NuggetV4():
             self.look_back = all_parameters[29]
             self.channel_range = all_parameters[30]
 
-    def start(self) -> None:
-        self.price_precision = self.client.price_precision
-        self.qty_precision = self.client.qty_precision
-        self.time = self.client.price_data[:, 0]
-        self.high = self.client.price_data[:, 2]
-        self.low = self.client.price_data[:, 3]
-        self.close = self.client.price_data[:, 4]
+    def start(self, client) -> None:
+        super().__init__()
+
+        self.price_precision = client.price_precision
+        self.qty_precision = client.qty_precision
+        self.time = client.price_data[:, 0]
+        self.high = client.price_data[:, 2]
+        self.low = client.price_data[:, 3]
+        self.close = client.price_data[:, 4]
+
         self.equity = self.initial_capital
-        self.completed_deals_log = np.array([])
-        self.open_deals_log = np.full(5, np.nan)
-        self.deal_type = np.nan
-        self.entry_signal = np.nan
-        self.entry_date = np.nan
-        self.entry_price = np.nan
-        self.liquidation_price = np.nan
-        self.position_size = np.nan
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.array(
             [
@@ -202,6 +195,7 @@ class NuggetV4():
                 np.full(self.time.shape[0], np.nan)
             ]
         )
+        self.liquidation_price = np.nan
         self.qty_take_1 = np.full(5, np.nan)
         self.qty_take_2 = np.full(10, np.nan)
         self.stop_moved = False

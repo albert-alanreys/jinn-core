@@ -60,7 +60,7 @@ class Preprocessor:
         exit_signal_keywords: DealKeywords,
         precision: float
     ) -> list[dict]:
-        completed_deals_log = completed_deals_log.tolist()
+        completed_deals_log = completed_deals_log.reshape((-1, 13)).tolist()
         open_deals_log = open_deals_log.tolist()
         result = []
         deal_type = np.nan
@@ -190,7 +190,7 @@ class Preprocessor:
         entry_signal_keywords: DealKeywords,
         exit_signal_keywords: DealKeywords
     ) -> list[list]:
-        completed_deals_log = completed_deals_log.tolist()
+        completed_deals_log = completed_deals_log.reshape((-1, 13)).tolist()
 
         for deal in completed_deals_log:
             deal[0] = deal_type_keywords[deal[0]]

@@ -21,18 +21,18 @@ from src.delegator import Delegator
 #   'nugget_v4'
 #   'nugget_v5'
 
-mode = 'testing'
+mode = 'optimization'
 optimization = {
     'exchange': 'bybit',
-    'symbol': 'ETHUSDT',
+    'symbol': 'XRPUSDT',
     'interval': '1h',
-    'date/time #1': '2022/01/01 00:00',
+    'date/time #1': '2021/01/01 00:00',
     'date/time #2': '2023/06/01 00:00',
     'date/time #3': '2024/01/01 00:00',
-    'strategy': 'nugget_v2'
+    'strategy': 'dickey_fuller_v1'
 }
 testing = {
-    'exchange': 'binance',
+    'exchange': 'bybit',
     'symbol': 'ETHUSDT',
     'interval': '1h',
     'date/time #1': '2019/01/01 00:00',
