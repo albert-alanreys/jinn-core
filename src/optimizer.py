@@ -10,7 +10,7 @@ from src import Registry
 
 
 class Optimizer:
-    iterations = 1000
+    iterations = 500
     population_size = 50
     max_population_size = 300
 
@@ -39,9 +39,11 @@ class Optimizer:
                         datetime3 = i['date/time #3']
 
                         if exchange == 'binance':
+                            interval = BinanceClient.intervals[interval]
                             client1 = BinanceClient()
                             client2 = BinanceClient()
                         elif exchange == 'bybit':
+                            interval = BybitClient.intervals[interval]
                             client1 = BybitClient()
                             client2 = BybitClient()
 
@@ -62,7 +64,7 @@ class Optimizer:
                             'client1': client1,
                             'client2': client2
                         }
-            except Exception:
+            except FileNotFoundError:
                 pass
 
         if len(self.strategies) == 0:
@@ -76,9 +78,11 @@ class Optimizer:
             datetime3 = optimization['date/time #3']
 
             if exchange == 'binance':
+                interval = BinanceClient.intervals[interval]
                 client1 = BinanceClient()
                 client2 = BinanceClient()
             elif exchange == 'bybit':
+                interval = BybitClient.intervals[interval]
                 client1 = BybitClient()
                 client2 = BybitClient()
 

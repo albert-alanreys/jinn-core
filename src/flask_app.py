@@ -27,7 +27,7 @@ class FlaskApp(Flask):
 
         with open(os.path.abspath('.env'), 'r') as file:
             data = file.read()
-            base_url = data[data.rfind('BASE_URL=') + 9 :]
+            base_url = data[data.rfind('BASE_URL=') + 9 :].rstrip('\n')
 
         with open(
             os.path.abspath('src/frontend/static/js/fetchClient.js'), 'r'

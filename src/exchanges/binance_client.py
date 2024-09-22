@@ -1,13 +1,14 @@
-import datetime as dt
 import requests as rq
-import os
+import datetime as dt
 
-import binance as bn
 import numpy as np
+import binance as bn
+
+from src.exchanges.client import Client
 
 
-class BinanceClient():
-    kline_intervals = {
+class BinanceClient(Client):
+    intervals = {
         '1m': '1m', 1: '1m', '1': '1m',
         '3m': '3m', 3: '3m', '3': '3m',
         '5m': '5m', 5: '5m', '5': '5m',
@@ -18,72 +19,25 @@ class BinanceClient():
         '4h': '4h', 240: '4h', '240': '4h',
         '6h': '6h', 360: '6h', '360': '6h',
         '12h': '12h', 720: '12h', '720': '12h',
-        '1d': '1d', 'D': '1d',
+        '1d': '1d', '1D': '1d', 'd': '1d', 'D': '1d',
         '1w': '1w', 'W': '1w',
         '1M': '1M', 'M': '1M'   
     }
+    exchange = 'Binance'
 
     def __init__(self) -> None:
-        with open(os.path.abspath('.env'), 'r') as file:
-            data = file.read()
-            self.api_key = data[
-                data.rfind('BINANCE_API_KEY=') + 16 :
-                data.find('\nBINANCE_API_SECRET')
-            ]
-            self.api_secret = data[
-                data.rfind('BINANCE_API_SECRET=') + 19 :
-                data.find('\n\nTELEGRAM_BOT_TOKEN')
-            ]
-            self.bot_token = data[
-                data.rfind('TELEGRAM_BOT_TOKEN=') + 19 :
-                data.find('\nTELEGRAM_CHAT_ID')
-            ]
-            self.chat_id = data[
-                data.rfind('TELEGRAM_CHAT_ID=') + 17 :
-                data.find('\nBASE_URL')
-            ].rstrip()
-
-        self.client = bn.Client(
-            testnet=False,
-            api_key=self.api_key,
-            api_secret=self.api_secret
+        super().__init__(
+            intervals=BinanceClient.intervals,
+            exchange=BinanceClient.exchange
         )
-        self.telegram_url = (
-            f'https://api.telegram.org/bot{self.bot_token}/sendMessage'
-        )
-        self.limit_orders = []
-        self.stop_orders = []
-        self.alerts = []
 
-    def get_data(
-        self,
-        symbol: str,
-        interval: str | int,
-        start_time: str | None = None,
-        end_time: str | None = None
-    ) -> None:
-        self.symbol = symbol
-        self.interval = BinanceClient.kline_intervals[interval]
-
-        if start_time is not None and end_time is not None:
-            self.start_time = int(
-                dt.datetime.strptime(
-                    start_time, '%Y/%m/%d %H:%M'
-                ).replace(tzinfo=dt.timezone.utc).timestamp()
-            ) * 1000
-            self.end_time = int(
-                dt.datetime.strptime(
-                    end_time, '%Y/%m/%d %H:%M'
-                ).replace(tzinfo=dt.timezone.utc).timestamp()
-            ) * 1000
-            self.get_historical_klines(
-                self.symbol, self.interval, self.start_time, self.end_time
-            )
-        else:
-            self.get_last_klines(self.symbol, self.interval)
-
-        self.price_precision = self.get_price_precision(symbol)
-        self.qty_precision = self.get_qty_precision(symbol)
+        while True:
+            try:
+                self.create_session(callback=bn.Client, testnet=False)
+            except rq.exceptions.ConnectTimeout as e:
+                print(e, 000000)
+            else:
+                break
 
     def get_historical_klines(
         self,
@@ -92,41 +46,35 @@ class BinanceClient():
         start_time: int,
         end_time: int
     ) -> None:
-        file = (
-            f'{os.path.abspath('src/database')}'
-            f'/binance_{symbol}_{interval}_'
-            f'{start_time}_{end_time}.npy'
+        datetime1 = dt.datetime.fromtimestamp(
+            start_time / 1000, tz=dt.timezone.utc
+        ).strftime('%Y/%m/%d %H:%M')
+        datetime2 = dt.datetime.fromtimestamp(
+            end_time / 1000, tz=dt.timezone.utc
+        ).strftime('%Y/%m/%d %H:%M')
+        print(
+            f'Запрос данных: BINANCE • {symbol} '
+            f'• {interval} • {datetime1} - {datetime2}.'
         )
-
-        try:
-            self.price_data = np.load(file)
-        except Exception:
-            datetime1 = dt.datetime.fromtimestamp(
-                start_time / 1000, tz=dt.timezone.utc
-            ).strftime('%Y/%m/%d %H:%M')
-            datetime2 = dt.datetime.fromtimestamp(
-                end_time / 1000, tz=dt.timezone.utc
-            ).strftime('%Y/%m/%d %H:%M')
-            print(
-                f'Запрос данных: BINANCE • {symbol} '
-                f'• {interval} • {datetime1} - {datetime2}.'
+        self.price_data = np.array(
+            self.session.get_historical_klines(
+                symbol=symbol,
+                interval=interval,
+                start_str=start_time,
+                end_str=end_time,
+                klines_type=bn.enums.HistoricalKlinesType(2)
             )
-            self.price_data = np.array(
-                self.client.get_historical_klines(
-                    symbol=symbol,
-                    interval=interval,
-                    start_str=start_time,
-                    end_str=end_time,
-                    klines_type=bn.enums.HistoricalKlinesType(2)
-                )
-            )[:-1, :6].astype(float)
-            np.save(file, self.price_data)
-            print('Данные получены.')
+        )[:-1, :6].astype(float)
+        print('Данные получены.')
 
-    def get_last_klines(self, symbol: str, interval: str) -> None:
+    def get_last_klines(
+        self,
+        symbol: str,
+        interval: str
+    ) -> None:
         print(f'Запрос данных: BINANCE • {symbol} • {interval}.')
         self.price_data = np.array(
-            self.client.get_historical_klines(
+            self.session.get_historical_klines(
                 symbol=symbol,
                 interval=interval,
                 klines_type=bn.enums.HistoricalKlinesType(2)
@@ -135,23 +83,29 @@ class BinanceClient():
         print('Данные получены.')
 
     def get_price_precision(self, symbol: str) -> float:
-        symbols_info = self.client.futures_exchange_info()['symbols']
+        symbols_info = self.session.futures_exchange_info()['symbols']
         symbol_info = next(
             filter(lambda x: x['symbol'] == symbol, symbols_info))
         return float(symbol_info['filters'][0]['tickSize'])
 
     def get_qty_precision(self, symbol: str) -> float:
-        symbols_info = self.client.futures_exchange_info()['symbols']
+        symbols_info = self.session.futures_exchange_info()['symbols']
         symbol_info = next(
             filter(lambda x: x['symbol'] == symbol, symbols_info))
         return float(symbol_info['filters'][1]['minQty'])
 
-    def update_data(self) -> bool | None:
+    def update_data(
+        self,
+        symbol: str,
+        interval: str
+        ) -> bool | None:
         while True:
             try:
                 price_data = np.array(
-                    self.client.get_historical_klines(
-                        self.symbol, self.interval, limit=2,
+                    self.session.get_historical_klines(
+                        symbol=symbol,
+                        interval=interval,
+                        limit=2,
                         klines_type=bn.enums.HistoricalKlinesType(2)
                     )
                 )[:-1, :6].astype(float)
@@ -177,7 +131,7 @@ class BinanceClient():
             hedge_mode = 'BOTH'
 
             try:
-                self.client.futures_change_position_mode(
+                self.session.futures_change_position_mode(
                     dualSidePosition=False
                 )
             except Exception:
@@ -186,7 +140,7 @@ class BinanceClient():
             hedge_mode = 'LONG'
 
             try:
-                self.client.futures_change_position_mode(
+                self.session.futures_change_position_mode(
                     dualSidePosition=True
                 )
             except Exception:
@@ -194,18 +148,18 @@ class BinanceClient():
 
         try:
             if margin == 'cross':
-                self.client.futures_change_margin_type(
+                self.session.futures_change_margin_type(
                     symbol=symbol, marginType='CROSSED'
                 )
             elif margin == 'isolated':
-                self.client.futures_change_margin_type(
+                self.session.futures_change_margin_type(
                     symbol=symbol, marginType='ISOLATED'
                 )
         except Exception:
             pass
 
         try:
-            self.client.futures_change_leverage(
+            self.session.futures_change_leverage(
                 symbol=symbol, leverage=leverage
             )
         except Exception:
@@ -213,9 +167,9 @@ class BinanceClient():
 
         try:
             market_price = float(
-                self.client.futures_mark_price(symbol=symbol)['markPrice']
+                self.session.futures_mark_price(symbol=symbol)['markPrice']
             )
-            balance_info = self.client.futures_account_balance()
+            balance_info = self.session.futures_account_balance()
             balance = float(
                 next(
                     filter(lambda x: x['asset'] == 'USDT', balance_info)
@@ -234,7 +188,7 @@ class BinanceClient():
             qty = round(
                 round(qty / self.qty_precision) * self.qty_precision, 8
             )
-            order = self.client.futures_create_order(
+            order = self.session.futures_create_order(
                 symbol=symbol,
                 side='BUY',
                 positionSide=hedge_mode,
@@ -244,7 +198,7 @@ class BinanceClient():
 
             while True:
                 try:
-                    order_info = self.client.futures_get_order(
+                    order_info = self.session.futures_get_order(
                         symbol=symbol,
                         orderId=order['orderId']
                     )
@@ -275,11 +229,7 @@ class BinanceClient():
                 f'\n• количество — {order_info['executedQty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
-            url = f'https://api.telegram.org/bot{self.bot_token}/sendMessage'
-            data = {'chat_id': self.chat_id, 'text': message}
-            
-            if self.bot_token:
-                rq.post(url, data=data)
+            self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
@@ -295,7 +245,7 @@ class BinanceClient():
             hedge_mode = 'BOTH'
 
             try:
-                self.client.futures_change_position_mode(
+                self.session.futures_change_position_mode(
                     dualSidePosition=False
                 )
             except Exception: 
@@ -304,7 +254,7 @@ class BinanceClient():
             hedge_mode = 'SHORT'
 
             try:
-                self.client.futures_change_position_mode(
+                self.session.futures_change_position_mode(
                     dualSidePosition=True
                 )
             except Exception: 
@@ -312,18 +262,18 @@ class BinanceClient():
 
         try:
             if margin == 'cross':
-                self.client.futures_change_margin_type(
+                self.session.futures_change_margin_type(
                     symbol=symbol, marginType='CROSSED'
                 )
             elif margin == 'isolated':
-                self.client.futures_change_margin_type(
+                self.session.futures_change_margin_type(
                     symbol=symbol, marginType='ISOLATED'
                 )
         except Exception: 
             pass
 
         try:
-            self.client.futures_change_leverage(
+            self.session.futures_change_leverage(
                 symbol=symbol, leverage=leverage
             )
         except Exception: 
@@ -331,9 +281,9 @@ class BinanceClient():
 
         try:
             market_price = float(
-                self.client.futures_mark_price(symbol=symbol)['markPrice']
+                self.session.futures_mark_price(symbol=symbol)['markPrice']
             )
-            balance_info = self.client.futures_account_balance()
+            balance_info = self.session.futures_account_balance()
             balance = float(
                 next(
                     filter(lambda x: x['asset'] == 'USDT', balance_info)
@@ -352,7 +302,7 @@ class BinanceClient():
             qty = round(
                 round(qty / self.qty_precision) * self.qty_precision, 8
             )
-            order = self.client.futures_create_order(
+            order = self.session.futures_create_order(
                 symbol=symbol,
                 side='SELL',
                 positionSide=hedge_mode,
@@ -362,7 +312,7 @@ class BinanceClient():
 
             while True:
                 try:
-                    order_info = self.client.futures_get_order(
+                    order_info = self.session.futures_get_order(
                         symbol=symbol,
                         orderId=order['orderId']
                     )
@@ -392,12 +342,7 @@ class BinanceClient():
                 f'\n• количество — {order_info['executedQty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
-
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
+            self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
@@ -415,7 +360,7 @@ class BinanceClient():
                 reduce_only = None
                 hedge_mode = 'SHORT'
 
-            positions_info = self.client.futures_position_information(
+            positions_info = self.session.futures_position_information(
                 symbol=symbol
             )
             position_size = -float(
@@ -433,14 +378,14 @@ class BinanceClient():
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
                 market_price = float(
-                    self.client.futures_mark_price(symbol=symbol)['markPrice']
+                    self.session.futures_mark_price(symbol=symbol)['markPrice']
                 )
                 qty = size / market_price
 
             qty = round(
                 round(qty / self.qty_precision) * self.qty_precision, 8
             )
-            order = self.client.futures_create_order(
+            order = self.session.futures_create_order(
                 symbol=symbol,
                 side='BUY',
                 positionSide=hedge_mode,
@@ -451,7 +396,7 @@ class BinanceClient():
 
             while True:
                 try:
-                    order_info = self.client.futures_get_order(
+                    order_info = self.session.futures_get_order(
                         symbol=symbol,
                         orderId=order['orderId']
                     )
@@ -481,12 +426,7 @@ class BinanceClient():
                 f'\n• количество — {order_info['executedQty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
-            
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
+            self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
@@ -504,7 +444,7 @@ class BinanceClient():
                 reduce_only = None
                 hedge_mode = 'LONG'
 
-            positions_info = self.client.futures_position_information(
+            positions_info = self.session.futures_position_information(
                 symbol=symbol
             )
             position_size = float(
@@ -522,14 +462,14 @@ class BinanceClient():
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
                 market_price = float(
-                    self.client.futures_mark_price(symbol=symbol)['markPrice']
+                    self.session.futures_mark_price(symbol=symbol)['markPrice']
                 )
                 qty = size / market_price
 
             qty = round(
                 round(qty / self.qty_precision) * self.qty_precision, 8
             )
-            order = self.client.futures_create_order(
+            order = self.session.futures_create_order(
                 symbol=symbol,
                 side='SELL',
                 positionSide=hedge_mode,
@@ -540,7 +480,7 @@ class BinanceClient():
 
             while True:
                 try:
-                    order_info = self.client.futures_get_order(
+                    order_info = self.session.futures_get_order(
                         symbol=symbol,
                         orderId=order['orderId']
                     )
@@ -570,12 +510,7 @@ class BinanceClient():
                 f'\n• количество — {order_info['executedQty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
-            
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
+            self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
@@ -594,7 +529,7 @@ class BinanceClient():
                 reduce_only = None
                 hedge_mode = 'SHORT'
 
-            positions_info = self.client.futures_position_information(
+            positions_info = self.session.futures_position_information(
                 symbol=symbol
             )
             position_size = -float(
@@ -612,7 +547,7 @@ class BinanceClient():
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
                 market_price = float(
-                    self.client.futures_mark_price(symbol=symbol)['markPrice']
+                    self.session.futures_mark_price(symbol=symbol)['markPrice']
                 )
                 qty = size / market_price
 
@@ -625,7 +560,7 @@ class BinanceClient():
                 ) * self.price_precision,
                 8
             )
-            order = self.client.futures_create_order(
+            order = self.session.futures_create_order(
                 symbol=symbol,
                 side='BUY',
                 positionSide=hedge_mode,
@@ -657,12 +592,7 @@ class BinanceClient():
                 f'\n• количество — {order['origQty']}'
                 f'\n• цена — {order['stopPrice']}'
             )
-            
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
+            self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
@@ -681,7 +611,7 @@ class BinanceClient():
                 reduce_only = None
                 hedge_mode = 'LONG'
 
-            positions_info = self.client.futures_position_information(
+            positions_info = self.session.futures_position_information(
                 symbol=symbol
             )
             position_size = float(
@@ -699,7 +629,7 @@ class BinanceClient():
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
                 market_price = float(
-                    self.client.futures_mark_price(symbol=symbol)['markPrice']
+                    self.session.futures_mark_price(symbol=symbol)['markPrice']
                 )
                 qty = size / market_price
 
@@ -712,7 +642,7 @@ class BinanceClient():
                 ) * self.price_precision,
                 8
             )
-            order = self.client.futures_create_order(
+            order = self.session.futures_create_order(
                 symbol=symbol,
                 side='SELL',
                 positionSide=hedge_mode,
@@ -745,12 +675,7 @@ class BinanceClient():
                 f'\n• количество — {order['origQty']}'
                 f'\n• цена — {order['stopPrice']}'
             )
-
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
+            self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
@@ -769,7 +694,7 @@ class BinanceClient():
                 reduce_only = None
                 hedge_mode = 'SHORT'
 
-            positions_info = self.client.futures_position_information(
+            positions_info = self.session.futures_position_information(
                 symbol=symbol
             )
             position_size = -float(
@@ -787,7 +712,7 @@ class BinanceClient():
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
                 market_price = float(
-                    self.client.futures_mark_price(symbol=symbol)['markPrice']
+                    self.session.futures_mark_price(symbol=symbol)['markPrice']
                 )
                 qty = size / market_price
 
@@ -800,7 +725,7 @@ class BinanceClient():
                 ) * self.price_precision,
                 8
             )
-            order = self.client.futures_create_order(
+            order = self.session.futures_create_order(
                 symbol=symbol,
                 side='BUY',
                 positionSide=hedge_mode,
@@ -834,12 +759,7 @@ class BinanceClient():
                 f'\n• количество — {order['origQty']}'
                 f'\n• цена — {order['price']}'
             )
-            
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
+            self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
@@ -858,7 +778,7 @@ class BinanceClient():
                 reduce_only = None
                 hedge_mode = 'LONG'
 
-            positions_info = self.client.futures_position_information(
+            positions_info = self.session.futures_position_information(
                 symbol=symbol
             )
             position_size = float(
@@ -876,7 +796,7 @@ class BinanceClient():
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
                 market_price = float(
-                    self.client.futures_mark_price(symbol=symbol)['markPrice']
+                    self.session.futures_mark_price(symbol=symbol)['markPrice']
                 )
                 qty = size / market_price
 
@@ -889,7 +809,7 @@ class BinanceClient():
                 ) * self.price_precision,
                 8
             )
-            order = self.client.futures_create_order(
+            order = self.session.futures_create_order(
                 symbol=symbol,
                 side='SELL',
                 positionSide=hedge_mode,
@@ -923,18 +843,17 @@ class BinanceClient():
                 f'\n• количество — {order['origQty']}'
                 f'\n• цена — {order['price']}'
             )
-            
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
+            self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_cancel_stop(self, symbol: str, side: str) -> None:
+    def futures_cancel_stop(
+        self,
+        symbol: str,
+        side: str
+    ) -> None:
         try:
-            orders_info = self.client.futures_get_open_orders(
+            orders_info = self.session.futures_get_open_orders(
                 symbol=symbol
             )
             stop_orders = list(
@@ -946,16 +865,20 @@ class BinanceClient():
             )
 
             for i in stop_orders:
-                self.client.futures_cancel_order(
+                self.session.futures_cancel_order(
                     symbol=symbol,
                     orderId=i['orderId']
                 )
         except Exception as exception:
             self.send_exception(exception)
 
-    def futures_cancel_one_sided_orders(self, symbol: str, side: str) -> None:
+    def futures_cancel_one_sided_orders(
+        self,
+        symbol: str,
+        side: str
+    ) -> None:
         try:
-            orders_info = self.client.futures_get_open_orders(
+            orders_info = self.session.futures_get_open_orders(
                 symbol=symbol
             )
             one_sided_orders = list(
@@ -965,7 +888,7 @@ class BinanceClient():
             )
 
             for i in one_sided_orders:
-                self.client.futures_cancel_order(
+                self.session.futures_cancel_order(
                     symbol=symbol,
                     orderId=i['orderId']
                 )
@@ -974,14 +897,14 @@ class BinanceClient():
 
     def futures_cancel_all_orders(self, symbol: str) -> None:
         try:
-            self.client.futures_cancel_all_open_orders(symbol=symbol)
+            self.session.futures_cancel_all_open_orders(symbol=symbol)
         except Exception as exception:
             self.send_exception(exception)
 
     def check_stop_status(self, symbol: str) -> None:
         try:
             for orderId in self.stop_orders.copy():
-                order = self.client.futures_get_order(
+                order = self.session.futures_get_order(
                     symbol=symbol,
                     orderId=orderId
                 )
@@ -1023,19 +946,14 @@ class BinanceClient():
                         f'\n• количество — {qty}'
                         f'\n• цена — {price}'
                     )
-                    
-                    if self.bot_token:
-                        rq.post(
-                            self.telegram_url,
-                            {'chat_id': self.chat_id, 'text': message}
-                        )
+                    self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
 
     def check_limit_status(self, symbol: str) -> None:
         try:
             for orderId in self.limit_orders.copy():
-                order = self.client.futures_get_order(
+                order = self.session.futures_get_order(
                     symbol=symbol,
                     orderId=orderId
                 )
@@ -1073,33 +991,6 @@ class BinanceClient():
                         f'\n• количество — {order['origQty']}'
                         f'\n• цена — {order['price']}'
                     )
-                    
-                    if self.bot_token:
-                        rq.post(
-                            self.telegram_url,
-                            {'chat_id': self.chat_id, 'text': message}
-                        )
+                    self.send_message(message)
         except Exception as exception:
             self.send_exception(exception)
-
-    def send_exception(self, exception: Exception) -> None:
-        try:
-            if str(exception) != '':
-                self.alerts.append({
-                    'message': {
-                        'exchange': 'BINANCE',
-                        'error': str(exception)
-                    },
-                    'time': dt.datetime.now(
-                        dt.timezone.utc
-                    ).strftime('%Y-%m-%d %H:%M:%S')
-                })
-                message = f'❗️Binance:\n{exception}'
-
-                if self.bot_token:
-                    rq.post(
-                        self.telegram_url,
-                        {'chat_id': self.chat_id, 'text': message}
-                    )
-        except Exception:
-            pass

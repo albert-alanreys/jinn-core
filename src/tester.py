@@ -158,7 +158,7 @@ class Tester():
             frontend_data = self.get_frontend_data(self.strategies[strategy])
             self.frontend_main_data[strategy] = frontend_data[0]
             self.frontend_lite_data[strategy] = frontend_data[1]
-        except Exception as e:
+        except Exception:
             raise
 
     def get_frontend_data(self, data: dict) -> list[dict]:

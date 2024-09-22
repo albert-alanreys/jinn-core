@@ -35,8 +35,10 @@ class Automizer():
                 ]
 
                 if exchange.lower() == 'binance':
+                    interval = BinanceClient.intervals[interval]
                     client = BinanceClient()
                 elif exchange.lower() == 'bybit':
+                    interval = BybitClient.intervals[interval]
                     client = BybitClient()
 
                 file_path = os.path.abspath(
@@ -80,8 +82,10 @@ class Automizer():
             interval = automation['interval']
 
             if exchange.lower() == 'binance':
+                interval = BinanceClient.intervals[interval]
                 client = BinanceClient()
             elif exchange.lower() == 'bybit':
+                interval = BybitClient.intervals[interval]
                 client = BybitClient()
 
             client.get_data(symbol, interval)
@@ -117,7 +121,9 @@ class Automizer():
                 continue
 
             for key, data in self.strategies.items():
-                if data['client'].update_data():
+                if data['client'].update_data(
+                    data['symbol'], data['interval']
+                ):
                     frontend_data = self.get_frontend_data(data)
                     self.frontend_main_data[key] = frontend_data[0]
                     self.frontend_lite_data[key] = frontend_data[1]

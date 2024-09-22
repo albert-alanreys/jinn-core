@@ -13,19 +13,6 @@ class Strategy(abc.ABC):
         self.entry_date = np.nan
         self.deal_type = np.nan
 
-    @abc.abstractmethod
-    def start(self):
-        pass
-
-    @staticmethod
-    @abc.abstractmethod
-    def calculate():
-        pass
-
-    @abc.abstractmethod
-    def trade(self):
-        pass
-    
     @staticmethod
     def get_equity(
         initial_capital: float,
@@ -470,3 +457,16 @@ class Strategy(abc.ABC):
             ]
         ]
         return metrics
+    
+    @abc.abstractmethod
+    def start(self, client):
+        pass
+
+    @staticmethod
+    @abc.abstractmethod
+    def calculate():
+        pass
+
+    @abc.abstractmethod
+    def trade(self):
+        pass
