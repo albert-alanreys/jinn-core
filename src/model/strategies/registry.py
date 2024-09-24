@@ -1,10 +1,10 @@
 from collections import namedtuple
 
-from src import DickeyFullerV1
-from src import DevourerV3
-from src import NuggetV2
-from src import NuggetV4
-from src import NuggetV5
+from src.model.strategies import DickeyFullerV1
+from src.model.strategies import DevourerV3
+from src.model.strategies import NuggetV2
+from src.model.strategies import NuggetV4
+from src.model.strategies import NuggetV5
 
 Strategy = namedtuple('Strategy', ['name', 'type'])
 

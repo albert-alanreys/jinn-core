@@ -11,7 +11,7 @@ class Client(abc.ABC):
     def __init__(
             self,
             intervals: dict[str | int, str | int],
-            exchange: str,
+            exchange: str
         ) -> None:
         self.exchange = exchange.upper()
         self.intervals = intervals
@@ -50,11 +50,17 @@ class Client(abc.ABC):
         callback: Callable,
         testnet: bool
     ) -> None:
-        self.session = callback(
-            testnet=testnet,
-            api_key=self.api_key,
-            api_secret=self.api_secret
-        )
+        while True:
+            try:
+                self.session = callback(
+                    testnet=testnet,
+                    api_key=self.api_key,
+                    api_secret=self.api_secret
+                )
+            except rq.exceptions.ConnectTimeout:
+                pass
+            else:
+                break
 
     def send_exception(
         self,
@@ -99,9 +105,15 @@ class Client(abc.ABC):
         else:
             self.get_last_klines(symbol, interval)
 
-        self.price_precision = self.get_price_precision(symbol)
-        self.qty_precision = self.get_qty_precision(symbol)
-    
+        while True:
+            try:
+                self.price_precision = self.get_price_precision(symbol)
+                self.qty_precision = self.get_qty_precision(symbol)
+            except rq.exceptions.ConnectTimeout:
+                pass
+            else:
+                break
+
     def get_data_from_database(
         self,
         symbol: str,
@@ -120,7 +132,7 @@ class Client(abc.ABC):
             ).replace(tzinfo=dt.timezone.utc).timestamp()
         ) * 1000
         file = (
-            f'{os.path.abspath('src/database')}'
+            f'{os.path.abspath('src/model/database')}'
             f'/{self.exchange.lower()}_{symbol}_{interval}_'
             f'{start_time}_{end_time}.npy'
         )
@@ -131,7 +143,11 @@ class Client(abc.ABC):
             self.get_historical_klines(
                 symbol, interval, start_time, end_time
             )
-            np.save(file, self.price_data)
+
+            try:
+                np.save(file, self.price_data)
+            except FileNotFoundError:
+                print('Не удалось сохранить данные в БД.')
 
     @abc.abstractmethod
     def get_historical_klines(

@@ -4,13 +4,13 @@ import random
 import multiprocessing as mp
 from functools import partial
 
-from src import BinanceClient
-from src import BybitClient
-from src import Registry
+from src.model.exchanges.binance_client import BinanceClient
+from src.model.exchanges.bybit_client import BybitClient
+from src.model.strategies.registry import Registry
 
 
 class Optimizer:
-    iterations = 500
+    iterations = 20_000
     population_size = 50
     max_population_size = 300
 
@@ -22,7 +22,7 @@ class Optimizer:
 
         for strategy in Registry.data.values():
             file_path = os.path.abspath(
-                f'src/strategies/{strategy.name}'
+                f'src/model/strategies/{strategy.name}'
                 f'/optimization/optimization.json'
             )
 
@@ -233,7 +233,7 @@ class Optimizer:
         ].lstrip(strategy_name)
         time = strategy[0][strategy[0].rfind('T') + 1 : ]
         file_path = os.path.abspath(
-            f'src/strategies/{strategy_name}'
+            f'src/model/strategies/{strategy_name}'
             f'/optimization/{file_name}.txt'
         )
 
@@ -286,6 +286,8 @@ class Optimizer:
         return best_samples
 
     def start(self) -> None:
+        print('Выполняется оптимизация.')
+
         with mp.Pool(mp.cpu_count()) as pool:
             result = zip(
                 self.strategies.items(),

@@ -1,10 +1,9 @@
-import requests as rq
 import datetime as dt
 
 import numpy as np
 import binance as bn
 
-from src.exchanges.client import Client
+from src.model.exchanges.client import Client
 
 
 class BinanceClient(Client):
@@ -30,14 +29,7 @@ class BinanceClient(Client):
             intervals=BinanceClient.intervals,
             exchange=BinanceClient.exchange
         )
-
-        while True:
-            try:
-                self.create_session(callback=bn.Client, testnet=False)
-            except rq.exceptions.ConnectTimeout as e:
-                print(e, 000000)
-            else:
-                break
+        self.create_session(callback=bn.Client, testnet=False)
 
     def get_historical_klines(
         self,

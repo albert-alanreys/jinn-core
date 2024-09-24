@@ -1,12 +1,130 @@
+import ast
+import warnings
 import datetime as dt
 from copy import deepcopy
 
 import numpy as np
 
-from src import DealKeywords
+from src.controller.deal_keywords import DealKeywords
 
 
 class Preprocessor:
+    def __init__(
+        self,
+        mode: str,
+        strategies: dict[str, dict]
+    ) -> None:
+        self.mode = mode
+        self.strategies = strategies
+        self.main_data = {}
+        self.lite_data = {}
+
+        for id, data in self.strategies.items():
+            data['instance'].start(data['client'])
+            self.prepare_data(id, data)
+
+    def update_strategy(
+        self,
+        id: str,
+        parameter_name: str,
+        new_value: int | float
+    ) -> None:
+        try:
+            parameters = self.strategies[id]['parameters']
+            old_value = parameters[parameter_name]
+
+            if isinstance(new_value, list):
+                new_value = list(map(lambda x: float(x), new_value))
+            else:
+                new_value = ast.literal_eval(new_value.capitalize())
+
+                if isinstance(old_value, float) and isinstance(new_value, int):
+                    new_value = float(new_value)
+
+            if type(old_value) != type(new_value):
+                raise ValueError()
+
+            parameters[parameter_name] = new_value
+            strategy_instance = (
+                self.strategies[id]['instance'].__class__(
+                    all_parameters=list(parameters.values())
+                )
+            )
+            self.strategies[id]['instance'] = strategy_instance
+            self.strategies[id]['instance'].start(
+                self.strategies[id]['client']
+            )
+            self.prepare_data(id, self.strategies[id])
+        except Exception:
+            raise ValueError()
+
+    def prepare_data(
+        self,
+        id: str,
+        data: dict[str, dict]
+    ) -> None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            equity = data['instance'].get_equity(
+                data['instance'].initial_capital,
+                data['instance'].completed_deals_log
+            )
+            metrics = data['instance'].get_metrics(
+                data['instance'].initial_capital,
+                data['instance'].completed_deals_log
+            )
+
+        main_data = {}
+        main_data['chartData'] = {
+            'name': data['name'].capitalize().replace('_', '-'),
+            'exchange': data['exchange'],
+            'symbol': data['symbol'],
+            'interval': data['interval'],
+            'mintick': data['mintick'],
+            'klines': self.get_klines(
+                data['client'].price_data
+            ),
+            'indicators': self.get_indicators(
+                data['client'].price_data,
+                data['instance'].indicators
+            ),
+            'markers': self.get_deals(
+                data['instance'].completed_deals_log,
+                data['instance'].open_deals_log,
+                DealKeywords.entry_signals,
+                DealKeywords.exit_signals,
+                data['instance'].qty_precision
+            )
+        }
+
+        if self.mode == 'testing':
+            main_data['reportData'] = {
+                'equity': self.get_equity(equity),
+                'metrics': metrics,
+                'completedDealsLog': self.get_completed_deals_log(
+                    data['instance'].completed_deals_log,
+                    DealKeywords.deal_types,
+                    DealKeywords.entry_signals,
+                    DealKeywords.exit_signals,
+                ),
+                'openDealsLog': self.get_open_deals_log(
+                    data['instance'].open_deals_log,
+                    DealKeywords.deal_types,
+                    DealKeywords.entry_signals
+                )
+            }
+
+        lite_data = {
+            'name': data['name'].capitalize().replace('_', '-'),
+            'exchange': data['exchange'],
+            'symbol': data['symbol'],
+            'interval': data['interval'],
+            'mintick': data['mintick'],
+            'parameters': data['parameters']
+        }
+        self.main_data[id] = main_data
+        self.lite_data[id] = lite_data
+
     @staticmethod
     def get_klines(klines: np.ndarray) -> list[dict]:
         result = [

@@ -416,7 +416,7 @@ export default class RightToolbarManager {
         var innerDiv2 = document.createElement("div");
         innerDiv2.classList.add("target");
         innerDiv2.setAttribute("title", "Открыть стратегию");
-        innerDiv2.setAttribute("data-strategy", alert.strategy);
+        innerDiv2.setAttribute("data-strategy", alert.id);
         header.appendChild(innerDiv2);
 
         var hiddenСontent = document.createElement("div");

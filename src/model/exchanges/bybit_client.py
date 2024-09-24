@@ -1,10 +1,9 @@
-import requests as rq
 import datetime as dt
 
 import numpy as np
 from pybit.unified_trading import HTTP
 
-from src.exchanges.client import Client
+from src.model.exchanges.client import Client
 
 
 class BybitClient(Client):
@@ -30,14 +29,7 @@ class BybitClient(Client):
             intervals=BybitClient.intervals,
             exchange=BybitClient.exchange
         )
-
-        while True:
-            try:
-                self.create_session(callback=HTTP, testnet=False)
-            except rq.exceptions.ConnectTimeout:
-                pass
-            else:
-                break
+        self.create_session(callback=HTTP, testnet=False)
 
     def get_historical_klines(
         self,

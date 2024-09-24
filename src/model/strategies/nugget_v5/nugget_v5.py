@@ -3,9 +3,10 @@ import random as rand
 import numpy as np
 import numba as nb
 
-from ..strategy import Strategy
-from ... import math
-from ... import ta
+import src.model.ta as ta
+import src.model.math as math
+from src.model.exchanges.client import Client
+from src.model.strategies.strategy import Strategy
 
 
 class NuggetV5(Strategy):
@@ -156,9 +157,10 @@ class NuggetV5(Strategy):
             self.adx_short_upper_limit = all_parameters[25]
             self.adx_short_lower_limit = all_parameters[26]
 
-    def start(self, client) -> None:
+    def start(self, client: Client) -> None:
         super().__init__()
 
+        self.client = client
         self.price_precision = client.price_precision
         self.qty_precision = client.qty_precision
         self.time = client.price_data[:, 0]
@@ -1026,23 +1028,21 @@ class NuggetV5(Strategy):
             alert_cancel
         )
     
-    def trade(self) -> None:
+    def trade(self, symbol: str) -> None:
         if self.alert_cancel:
-            self.client.futures_cancel_all_orders(
-                symbol=self.client.symbol
-            )
+            self.client.futures_cancel_all_orders(symbol)
 
-        self.client.check_stop_status(self.client.symbol)
-        self.client.check_limit_status(self.client.symbol)
+        self.client.check_stop_status(symbol)
+        self.client.check_limit_status(symbol)
 
         if self.alert_long_new_stop:
             self.client.futures_cancel_stop(
-                symbol=self.client.symbol, 
+                symbol=symbol, 
                 side='Sell'
             )
-            self.client.check_stop_status(self.client.symbol)
+            self.client.check_stop_status(symbol)
             self.client.futures_market_stop_sell(
-                symbol=self.client.symbol, 
+                symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
@@ -1050,12 +1050,12 @@ class NuggetV5(Strategy):
         
         if self.alert_short_new_stop:
             self.client.futures_cancel_stop(
-                symbol=self.client.symbol, 
+                symbol=symbol, 
                 side='Buy'
             )
-            self.client.check_stop_status(self.client.symbol)
+            self.client.check_stop_status(symbol)
             self.client.futures_market_stop_buy(
-                symbol=self.client.symbol, 
+                symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
@@ -1063,7 +1063,7 @@ class NuggetV5(Strategy):
 
         if self.alert_long:
             self.client.futures_market_open_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=(
                     f'{self.order_size}'
                     f'{'%' if self.order_size_type == 0 else 'u'}'
@@ -1073,37 +1073,37 @@ class NuggetV5(Strategy):
                 hedge='false'
             )
             self.client.futures_market_stop_sell(
-                symbol=self.client.symbol, 
+                symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
             self.client.futures_limit_take_sell(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.take_volume[0]}%',
                 price=self.take_price[0][-1],
                 hedge='false'
             )
             self.client.futures_limit_take_sell(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.take_volume[1]}%',
                 price=self.take_price[1][-1],
                 hedge='false'
             )
             self.client.futures_limit_take_sell(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.take_volume[2]}%',
                 price=self.take_price[2][-1],
                 hedge='false'
             )
             self.client.futures_limit_take_sell(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.take_volume[3]}%',
                 price=self.take_price[3][-1],
                 hedge='false'
             )
             self.client.futures_limit_take_sell(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size='100%',
                 price=self.take_price[4][-1],
                 hedge='false'
@@ -1111,7 +1111,7 @@ class NuggetV5(Strategy):
         
         if self.alert_short:
             self.client.futures_market_open_sell(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=(
                     f'{self.order_size}'
                     f'{'%' if self.order_size_type == 0 else 'u'}'
@@ -1121,37 +1121,37 @@ class NuggetV5(Strategy):
                 hedge='false'
             )
             self.client.futures_market_stop_buy(
-                symbol=self.client.symbol, 
+                symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
             self.client.futures_limit_take_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.take_volume[0]}%',
                 price=self.take_price[0][-1],
                 hedge='false'
             )
             self.client.futures_limit_take_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.take_volume[1]}%',
                 price=self.take_price[1][-1],
                 hedge='false'
             )
             self.client.futures_limit_take_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.take_volume[2]}%',
                 price=self.take_price[2][-1],
                 hedge='false'
             )
             self.client.futures_limit_take_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.take_volume[3]}%',
                 price=self.take_price[3][-1],
                 hedge='false'
             )
             self.client.futures_limit_take_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size='100%',
                 price=self.take_price[4][-1],
                 hedge='false'

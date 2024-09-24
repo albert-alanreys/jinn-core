@@ -24,26 +24,26 @@ from src.delegator import Delegator
 mode = 'testing'
 optimization = {
     'exchange': 'bybit',
-    'symbol': 'XRPUSDT',
+    'symbol': 'ETHUSDT',
     'interval': '1h',
     'date/time #1': '2021/01/01 00:00',
     'date/time #2': '2023/06/01 00:00',
     'date/time #3': '2024/01/01 00:00',
-    'strategy': 'dickey_fuller_v1'
+    'strategy': 'nugget_v4'
 }
 testing = {
     'exchange': 'bybit',
-    'symbol': 'ADAUSDT',
-    'interval': '1h',
+    'symbol': 'BTCUSDT',
+    'interval': '1d',
     'date/time #1': '2020/01/01 00:00',
     'date/time #2': '2025/01/01 00:00',
-    'strategy': 'nugget_v2'
+    'strategy': 'devourer_v3'
 }
 automation = {
     'exchange': 'bybit',
     'symbol': 'ETHUSDT',
-    'interval': '1h',
-    'strategy': 'nugget_v2'
+    'interval': '1m',
+    'strategy': 'devourer_v3'
 }
 
 

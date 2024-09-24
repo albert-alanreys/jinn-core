@@ -1,8 +1,9 @@
 import numpy as np
 import numba as nb
 
-from ..strategy import Strategy
-from ... import ta
+import src.model.ta as ta
+from src.model.exchanges.client import Client
+from src.model.strategies.strategy import Strategy
 
 
 class DickeyFullerV1(Strategy):
@@ -140,9 +141,10 @@ class DickeyFullerV1(Strategy):
             self.adf_level_1_p2 = all_parameters[26]
             self.adf_level_2_p2 = all_parameters[27]
 
-    def start(self, client) -> None:
+    def start(self, client: Client) -> None:
         super().__init__()
 
+        self.client = client
         self.price_precision = client.price_precision
         self.qty_precision = client.qty_precision
         self.time = client.price_data[:, 0]
@@ -847,39 +849,37 @@ class DickeyFullerV1(Strategy):
             alert_cancel
         )
     
-    def trade(self) -> None:
+    def trade(self, symbol: str) -> None:
         if self.alert_cancel:
-            self.client.futures_cancel_all_orders(
-                symbol=self.client.symbol
-            )
+            self.client.futures_cancel_all_orders(symbol)
 
-        self.client.check_stop_status(self.client.symbol)
-        self.client.check_limit_status(self.client.symbol)
+        self.client.check_stop_status(symbol)
+        self.client.check_limit_status(symbol)
 
         if self.alert_exit_long:
             self.client.futures_market_close_sell(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size='100%',
                 hedge='false'
             )
 
         if self.alert_exit_short:
             self.client.futures_market_close_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size='100%',
                 hedge='false'
             )
 
         if self.alert_entry_long:
             self.client.futures_market_open_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.order_size_p1}%',
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=str(self.leverage_p1),
                 hedge='false'
             )
             self.client.futures_market_stop_sell(
-                symbol=self.client.symbol, 
+                symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
@@ -887,20 +887,20 @@ class DickeyFullerV1(Strategy):
 
         if self.alert_entry_short:
             self.client.futures_market_open_sell(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size=f'{self.order_size_p2}%',
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=str(self.leverage_p2),
                 hedge='false'
             )
             self.client.futures_market_stop_buy(
-                symbol=self.client.symbol, 
+                symbol=symbol, 
                 size='100%',
                 price=self.stop_price[-1], 
                 hedge='false'
             )
             self.client.futures_limit_take_buy(
-                symbol=self.client.symbol,
+                symbol=symbol,
                 size='100%',
                 price=self.take_price[-1],
                 hedge='false'
