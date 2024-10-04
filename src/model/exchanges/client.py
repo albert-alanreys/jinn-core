@@ -43,22 +43,12 @@ class Client(abc.ABC):
         self.alerts = []
 
     @abc.abstractmethod
-    def get_data(
+    def get_klines(
         self,
         symbol: str,
         interval: str | int,
         start_time: str | None = None,
         end_time: str | None = None
-    ) -> None:
-        pass
-
-    @abc.abstractmethod
-    def get_data_from_database(
-        self,
-        symbol: str,
-        interval: str | int,
-        start_time: str,
-        end_time: str
     ) -> None:
         pass
 
@@ -89,7 +79,11 @@ class Client(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_data(self) -> bool | None:
+    def update_data(
+        self,
+        symbol: str,
+        interval: int | str
+    ) -> bool | None:
         pass
 
     @abc.abstractmethod

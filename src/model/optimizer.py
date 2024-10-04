@@ -1,5 +1,5 @@
-import json
 import os
+import json
 import random
 import multiprocessing as mp
 from functools import partial
@@ -47,10 +47,10 @@ class Optimizer:
                             client1 = BybitClient()
                             client2 = BybitClient()
 
-                        client1.get_data(
+                        client1.get_klines(
                             symbol, interval, datetime1, datetime2
                         )
-                        client2.get_data(
+                        client2.get_klines(
                             symbol, interval, datetime2, datetime3
                         )
                         self.strategies[
@@ -86,8 +86,8 @@ class Optimizer:
                 client1 = BybitClient()
                 client2 = BybitClient()
 
-            client1.get_data(symbol, interval, datetime1, datetime2)
-            client2.get_data(symbol, interval, datetime2, datetime3)
+            client1.get_klines(symbol, interval, datetime1, datetime2)
+            client2.get_klines(symbol, interval, datetime2, datetime3)
             self.strategies[
                 f'{strategy_name}_'
                 f'{exchange}_'

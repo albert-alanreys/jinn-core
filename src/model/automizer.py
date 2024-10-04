@@ -55,7 +55,7 @@ class Automizer():
                             )
                         )
 
-                client.get_data(symbol, interval)
+                client.get_klines(symbol, interval)
                 strategy_instance = strategy.type(
                     all_parameters=parameters
                 )
@@ -87,7 +87,7 @@ class Automizer():
                 interval = BybitClient.intervals[interval]
                 client = BybitClient()
 
-            client.get_data(symbol, interval)
+            client.get_klines(symbol, interval)
             strategy_instance = Registry.data[
                 automation['strategy']
             ].type()

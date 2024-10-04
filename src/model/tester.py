@@ -66,7 +66,7 @@ class Tester():
                             target_line = True
 
                 for parameters in opt_parameters:
-                    client.get_data(symbol, interval, start, end)
+                    client.get_klines(symbol, interval, start, end)
                     strategy_instance = strategy.type(
                         opt_parameters=parameters
                     )
@@ -96,7 +96,7 @@ class Tester():
             elif exchange == 'bybit':
                 client = BybitClient()
 
-            client.get_data(symbol, interval, start, end)
+            client.get_klines(symbol, interval, start, end)
             strategy_instance = Registry.data[
                 testing['strategy']
             ].type()

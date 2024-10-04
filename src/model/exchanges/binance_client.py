@@ -1,10 +1,10 @@
 import requests as rq
 import datetime as dt
-import os
 
-import numpy as np
 import binance as bn
+import numpy as np
 
+from src.model.exchanges.database_manager import DatabaseManager
 from src.model.exchanges.client import Client
 
 
@@ -31,6 +31,7 @@ class BinanceClient(Client):
             intervals=BinanceClient.intervals,
             exchange=BinanceClient.exchange
         )
+        self.db_manager = DatabaseManager()
 
         while True:
             try:
@@ -44,7 +45,7 @@ class BinanceClient(Client):
             else:
                 break
 
-    def get_data(
+    def get_klines(
         self,
         symbol: str,
         interval: str | int,
@@ -52,9 +53,47 @@ class BinanceClient(Client):
         end_time: str | None = None
     ) -> None:
         if start_time and end_time:
-            self.get_data_from_database(
-                symbol, interval, start_time, end_time
+            start_time = int(
+                dt.datetime.strptime(
+                    start_time, '%Y/%m/%d %H:%M'
+                ).replace(tzinfo=dt.timezone.utc).timestamp()
+            ) * 1000
+            end_time = int(
+                dt.datetime.strptime(
+                    end_time, '%Y/%m/%d %H:%M'
+                ).replace(tzinfo=dt.timezone.utc).timestamp()
+            ) * 1000
+
+            self.db_manager.connect()
+            klines = self.db_manager.select(
+                exchange=self.exchange,
+                symbol=symbol,
+                interval=self.intervals[interval],
+                start_time=start_time,
+                end_time=end_time
             )
+            query_condition = (
+                start_time < klines[0][0] or
+                end_time - klines[1][0] - klines[0][0] > klines[-1][0]
+            ) if len(klines) > 1 else True
+
+            if not klines or query_condition:
+                self.get_historical_klines(
+                    symbol=symbol,
+                    interval=interval,
+                    start_time=start_time,
+                    end_time=end_time
+                )
+                self.db_manager.insert(
+                    exchange=self.exchange,
+                    symbol=symbol,
+                    interval=self.intervals[interval],
+                    klines=self.price_data
+                )
+            else:
+                self.price_data = np.array(klines)
+
+            self.db_manager.disconnect()
         else:
             self.get_last_klines(symbol, interval)
 
@@ -67,54 +106,6 @@ class BinanceClient(Client):
             else:
                 break
 
-    def get_price_precision(self, symbol: str) -> float:
-        symbols_info = self.session.futures_exchange_info()['symbols']
-        symbol_info = next(
-            filter(lambda x: x['symbol'] == symbol, symbols_info))
-        return float(symbol_info['filters'][0]['tickSize'])
-
-    def get_qty_precision(self, symbol: str) -> float:
-        symbols_info = self.session.futures_exchange_info()['symbols']
-        symbol_info = next(
-            filter(lambda x: x['symbol'] == symbol, symbols_info))
-        return float(symbol_info['filters'][1]['minQty'])
-
-    def get_data_from_database(
-        self,
-        symbol: str,
-        interval: str | int,
-        start_time: str,
-        end_time: str
-    ) -> None:
-        interval = self.intervals[interval]
-        start_time = int(
-            dt.datetime.strptime(
-                start_time, '%Y/%m/%d %H:%M'
-            ).replace(tzinfo=dt.timezone.utc).timestamp()
-        ) * 1000
-        end_time = int(
-            dt.datetime.strptime(
-                end_time, '%Y/%m/%d %H:%M'
-            ).replace(tzinfo=dt.timezone.utc).timestamp()
-        ) * 1000
-        file = (
-            f'{os.path.abspath('src/model/database')}'
-            f'/{self.exchange.lower()}_{symbol}_{interval}_'
-            f'{start_time}_{end_time}.npy'
-        )
-
-        try:
-            self.price_data = np.load(file)
-        except FileNotFoundError:
-            self.get_historical_klines(
-                symbol, interval, start_time, end_time
-            )
-
-            try:
-                np.save(file, self.price_data)
-            except FileNotFoundError:
-                print('Не удалось сохранить данные в БД.')
-
     def get_historical_klines(
         self,
         symbol: str,
@@ -122,7 +113,6 @@ class BinanceClient(Client):
         start_time: int,
         end_time: int
     ) -> None:
-        interval = self.intervals[interval]
         datetime1 = dt.datetime.fromtimestamp(
             start_time / 1000, tz=dt.timezone.utc
         ).strftime('%Y/%m/%d %H:%M')
@@ -136,7 +126,7 @@ class BinanceClient(Client):
         self.price_data = np.array(
             self.session.get_historical_klines(
                 symbol=symbol,
-                interval=interval,
+                interval=self.intervals[interval],
                 start_str=start_time,
                 end_str=end_time,
                 klines_type=bn.enums.HistoricalKlinesType(2)
@@ -149,7 +139,9 @@ class BinanceClient(Client):
         symbol: str,
         interval: str
     ) -> None:
-        print(f'Запрос данных: BINANCE • {symbol} • {interval}.')
+        print(
+            f'Запрос данных: BINANCE • {symbol} • {self.intervals[interval]}.'
+        )
         self.price_data = np.array(
             self.session.get_historical_klines(
                 symbol=symbol,
@@ -158,6 +150,18 @@ class BinanceClient(Client):
             )
         )[:-1, :6].astype(float)
         print('Данные получены.')
+
+    def get_price_precision(self, symbol: str) -> float:
+        symbols_info = self.session.futures_exchange_info()['symbols']
+        symbol_info = next(
+            filter(lambda x: x['symbol'] == symbol, symbols_info))
+        return float(symbol_info['filters'][0]['tickSize'])
+
+    def get_qty_precision(self, symbol: str) -> float:
+        symbols_info = self.session.futures_exchange_info()['symbols']
+        symbol_info = next(
+            filter(lambda x: x['symbol'] == symbol, symbols_info))
+        return float(symbol_info['filters'][1]['minQty'])
 
     def update_data(
         self,
@@ -169,7 +173,7 @@ class BinanceClient(Client):
                 price_data = np.array(
                     self.session.get_historical_klines(
                         symbol=symbol,
-                        interval=interval,
+                        interval=self.intervals[interval],
                         limit=2,
                         klines_type=bn.enums.HistoricalKlinesType(2)
                     )

@@ -32,11 +32,11 @@ optimization = {
     'strategy': 'nugget_v4'
 }
 testing = {
-    'exchange': 'bybit',
+    'exchange': 'binance',
     'symbol': 'BTCUSDT',
     'interval': '1d',
-    'date/time #1': '2020/01/01 00:00',
-    'date/time #2': '2025/01/01 00:00',
+    'date/time #1': '2022/01/01 00:00',
+    'date/time #2': '2024/10/01 00:00',
     'strategy': 'devourer_v3'
 }
 automation = {
