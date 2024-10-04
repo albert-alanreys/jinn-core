@@ -41,8 +41,8 @@ testing = {
 }
 automation = {
     'exchange': 'bybit',
-    'symbol': 'ETHUSDT',
-    'interval': '1m',
+    'symbol': 'BTCUSDT',
+    'interval': '1d',
     'strategy': 'devourer_v3'
 }
 

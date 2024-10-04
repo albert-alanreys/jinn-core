@@ -2,9 +2,6 @@ import requests as rq
 import datetime as dt
 import abc
 import os
-from typing import Callable
-
-import numpy as np
 
 
 class Client(abc.ABC):
@@ -45,50 +42,7 @@ class Client(abc.ABC):
         self.stop_orders = []
         self.alerts = []
 
-    def create_session(
-        self,
-        callback: Callable,
-        testnet: bool
-    ) -> None:
-        while True:
-            try:
-                self.session = callback(
-                    testnet=testnet,
-                    api_key=self.api_key,
-                    api_secret=self.api_secret
-                )
-            except rq.exceptions.ConnectTimeout:
-                pass
-            else:
-                break
-
-    def send_exception(
-        self,
-        exception: Exception
-    ) -> None:
-        if str(exception) != '':
-            self.alerts.append({
-                'message': {
-                    'exchange': self.exchange.upper(),
-                    'error': str(exception)
-                },
-                'time': dt.datetime.now(
-                    dt.timezone.utc
-                ).strftime('%Y-%m-%d %H:%M:%S')
-            })
-            message = f'❗️{self.exchange}:\n{exception}'
-            self.send_message(message)
-
-    def send_message(self, message: str) -> None:
-        try:
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
-        except Exception:
-            pass
-
+    @abc.abstractmethod
     def get_data(
         self,
         symbol: str,
@@ -96,24 +50,9 @@ class Client(abc.ABC):
         start_time: str | None = None,
         end_time: str | None = None
     ) -> None:
-        interval = self.intervals[interval]
+        pass
 
-        if start_time and end_time:
-            self.get_data_from_database(
-                symbol, interval, start_time, end_time
-            )
-        else:
-            self.get_last_klines(symbol, interval)
-
-        while True:
-            try:
-                self.price_precision = self.get_price_precision(symbol)
-                self.qty_precision = self.get_qty_precision(symbol)
-            except rq.exceptions.ConnectTimeout:
-                pass
-            else:
-                break
-
+    @abc.abstractmethod
     def get_data_from_database(
         self,
         symbol: str,
@@ -121,33 +60,7 @@ class Client(abc.ABC):
         start_time: str,
         end_time: str
     ) -> None:
-        start_time = int(
-            dt.datetime.strptime(
-                start_time, '%Y/%m/%d %H:%M'
-            ).replace(tzinfo=dt.timezone.utc).timestamp()
-        ) * 1000
-        end_time = int(
-            dt.datetime.strptime(
-                end_time, '%Y/%m/%d %H:%M'
-            ).replace(tzinfo=dt.timezone.utc).timestamp()
-        ) * 1000
-        file = (
-            f'{os.path.abspath('src/model/database')}'
-            f'/{self.exchange.lower()}_{symbol}_{interval}_'
-            f'{start_time}_{end_time}.npy'
-        )
-
-        try:
-            self.price_data = np.load(file)
-        except FileNotFoundError:
-            self.get_historical_klines(
-                symbol, interval, start_time, end_time
-            )
-
-            try:
-                np.save(file, self.price_data)
-            except FileNotFoundError:
-                print('Не удалось сохранить данные в БД.')
+        pass
 
     @abc.abstractmethod
     def get_historical_klines(
@@ -286,3 +199,30 @@ class Client(abc.ABC):
     @abc.abstractmethod
     def check_limit_status(self, symbol: str) -> None:
         pass
+
+    def send_exception(
+        self,
+        exception: Exception
+    ) -> None:
+        if str(exception) != '':
+            self.alerts.append({
+                'message': {
+                    'exchange': self.exchange.upper(),
+                    'error': str(exception)
+                },
+                'time': dt.datetime.now(
+                    dt.timezone.utc
+                ).strftime('%Y-%m-%d %H:%M:%S')
+            })
+            message = f'❗️{self.exchange}:\n{exception}'
+            self.send_message(message)
+
+    def send_message(self, message: str) -> None:
+        try:
+            if self.bot_token:
+                rq.post(
+                    self.telegram_url,
+                    {'chat_id': self.chat_id, 'text': message}
+                )
+        except Exception:
+            pass

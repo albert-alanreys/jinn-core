@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Strategy(abc.ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         self.open_deals_log = np.full(5, np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -12,6 +12,19 @@ class Strategy(abc.ABC):
         self.entry_price = np.nan
         self.entry_date = np.nan
         self.deal_type = np.nan
+
+    @abc.abstractmethod
+    def start(self, client) -> None:
+        pass
+
+    @staticmethod
+    @abc.abstractmethod
+    def calculate(*args) -> tuple:
+        pass
+
+    @abc.abstractmethod
+    def trade(self) -> None:
+        pass
 
     @staticmethod
     def get_equity(
@@ -457,16 +470,3 @@ class Strategy(abc.ABC):
             ]
         ]
         return metrics
-    
-    @abc.abstractmethod
-    def start(self, client):
-        pass
-
-    @staticmethod
-    @abc.abstractmethod
-    def calculate():
-        pass
-
-    @abc.abstractmethod
-    def trade(self):
-        pass

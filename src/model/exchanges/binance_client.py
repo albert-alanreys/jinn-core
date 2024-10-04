@@ -1,4 +1,6 @@
+import requests as rq
 import datetime as dt
+import os
 
 import numpy as np
 import binance as bn
@@ -29,15 +31,98 @@ class BinanceClient(Client):
             intervals=BinanceClient.intervals,
             exchange=BinanceClient.exchange
         )
-        self.create_session(callback=bn.Client, testnet=False)
+
+        while True:
+            try:
+                self.session = bn.Client(
+                    testnet=False,
+                    api_key=self.api_key,
+                    api_secret=self.api_secret
+                )
+            except rq.exceptions.ConnectTimeout:
+                pass
+            else:
+                break
+
+    def get_data(
+        self,
+        symbol: str,
+        interval: str | int,
+        start_time: str | None = None,
+        end_time: str | None = None
+    ) -> None:
+        if start_time and end_time:
+            self.get_data_from_database(
+                symbol, interval, start_time, end_time
+            )
+        else:
+            self.get_last_klines(symbol, interval)
+
+        while True:
+            try:
+                self.price_precision = self.get_price_precision(symbol)
+                self.qty_precision = self.get_qty_precision(symbol)
+            except rq.exceptions.ConnectTimeout:
+                pass
+            else:
+                break
+
+    def get_price_precision(self, symbol: str) -> float:
+        symbols_info = self.session.futures_exchange_info()['symbols']
+        symbol_info = next(
+            filter(lambda x: x['symbol'] == symbol, symbols_info))
+        return float(symbol_info['filters'][0]['tickSize'])
+
+    def get_qty_precision(self, symbol: str) -> float:
+        symbols_info = self.session.futures_exchange_info()['symbols']
+        symbol_info = next(
+            filter(lambda x: x['symbol'] == symbol, symbols_info))
+        return float(symbol_info['filters'][1]['minQty'])
+
+    def get_data_from_database(
+        self,
+        symbol: str,
+        interval: str | int,
+        start_time: str,
+        end_time: str
+    ) -> None:
+        interval = self.intervals[interval]
+        start_time = int(
+            dt.datetime.strptime(
+                start_time, '%Y/%m/%d %H:%M'
+            ).replace(tzinfo=dt.timezone.utc).timestamp()
+        ) * 1000
+        end_time = int(
+            dt.datetime.strptime(
+                end_time, '%Y/%m/%d %H:%M'
+            ).replace(tzinfo=dt.timezone.utc).timestamp()
+        ) * 1000
+        file = (
+            f'{os.path.abspath('src/model/database')}'
+            f'/{self.exchange.lower()}_{symbol}_{interval}_'
+            f'{start_time}_{end_time}.npy'
+        )
+
+        try:
+            self.price_data = np.load(file)
+        except FileNotFoundError:
+            self.get_historical_klines(
+                symbol, interval, start_time, end_time
+            )
+
+            try:
+                np.save(file, self.price_data)
+            except FileNotFoundError:
+                print('Не удалось сохранить данные в БД.')
 
     def get_historical_klines(
         self,
         symbol: str,
-        interval: str,
+        interval: str | int,
         start_time: int,
         end_time: int
     ) -> None:
+        interval = self.intervals[interval]
         datetime1 = dt.datetime.fromtimestamp(
             start_time / 1000, tz=dt.timezone.utc
         ).strftime('%Y/%m/%d %H:%M')
@@ -73,18 +158,6 @@ class BinanceClient(Client):
             )
         )[:-1, :6].astype(float)
         print('Данные получены.')
-
-    def get_price_precision(self, symbol: str) -> float:
-        symbols_info = self.session.futures_exchange_info()['symbols']
-        symbol_info = next(
-            filter(lambda x: x['symbol'] == symbol, symbols_info))
-        return float(symbol_info['filters'][0]['tickSize'])
-
-    def get_qty_precision(self, symbol: str) -> float:
-        symbols_info = self.session.futures_exchange_info()['symbols']
-        symbol_info = next(
-            filter(lambda x: x['symbol'] == symbol, symbols_info))
-        return float(symbol_info['filters'][1]['minQty'])
 
     def update_data(
         self,
