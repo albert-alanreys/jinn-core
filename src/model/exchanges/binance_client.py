@@ -31,7 +31,6 @@ class BinanceClient(Client):
             intervals=BinanceClient.intervals,
             exchange=BinanceClient.exchange
         )
-        self.db_manager = DatabaseManager()
 
         while True:
             try:
@@ -64,6 +63,7 @@ class BinanceClient(Client):
                 ).replace(tzinfo=dt.timezone.utc).timestamp()
             ) * 1000
 
+            self.db_manager = DatabaseManager()
             self.db_manager.connect()
             klines = self.db_manager.select(
                 exchange=self.exchange,
@@ -94,6 +94,7 @@ class BinanceClient(Client):
                 self.price_data = np.array(klines)
 
             self.db_manager.disconnect()
+            delattr(self, "db_manager")
         else:
             self.get_last_klines(symbol, interval)
 

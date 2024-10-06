@@ -31,7 +31,6 @@ class BybitClient(Client):
             intervals=BybitClient.intervals,
             exchange=BybitClient.exchange
         )
-        self.db_manager = DatabaseManager()
 
         while True:
             try:
@@ -64,6 +63,7 @@ class BybitClient(Client):
                 ).replace(tzinfo=dt.timezone.utc).timestamp()
             ) * 1000
 
+            self.db_manager = DatabaseManager()
             self.db_manager.connect()
             klines = self.db_manager.select(
                 exchange=self.exchange,
@@ -94,6 +94,7 @@ class BybitClient(Client):
                 self.price_data = np.array(klines)
 
             self.db_manager.disconnect()
+            delattr(self, "db_manager")
         else:
             self.get_last_klines(symbol, interval)
 
