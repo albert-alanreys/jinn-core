@@ -59,6 +59,7 @@ export default class ChartManager {
       barSpacing: 8,
       minBarSpacing: 2,
       borderVisible: false,
+      rightBarStaysOnScroll: true,
       tickMarkFormatter: (time) => {
         var date = new Date(time * 1000);
         var day = date.getUTCDate();
@@ -118,22 +119,24 @@ export default class ChartManager {
       this.chartOptions
     );
     this.timeScale = this.chart.timeScale();
-    this.klineSeries = this.chart.addCandlestickSeries(this.klineOptions);
-    this.klineSeries.applyOptions({
+    this.candlestickSeries = this.chart.addCandlestickSeries(
+      this.klineOptions
+    );
+    this.candlestickSeries.applyOptions({
       priceFormat: {
         type: "price",
         precision: String(data.mintick).match(/.\d+$/g)[0].length - 1,
         minMove: data.mintick,
       },
     });
-    this.lineSeriesGroups = {};
+    this.lineSeriesGroup = {};
     this.visibleRange = this.chartOptions.visibleRange;
 
     for (var key in data.indicators) {
       var lineSeries = this.chart.addLineSeries(data.indicators[key].options);
       lineSeries.applyOptions(this.lineOptions);
 
-      this.lineSeriesGroups[key] = lineSeries;
+      this.lineSeriesGroup[key] = lineSeries;
     }
 
     this.visibleLogicalRangeChangeHandler = (newVisibleTimeRange) => {
@@ -156,18 +159,18 @@ export default class ChartManager {
       );
     }
 
-    this.klineSeries.setData(data.klines.slice(-this.visibleRange));
+    this.candlestickSeries.setData(data.klines.slice(-this.visibleRange));
 
-    var startTime = this.klineSeries.data()[0].time;
+    var startTime = this.candlestickSeries.data()[0].time;
     var markers = data.markers.filter((item) => {
       if (item.time >= startTime) {
         return item;
       }
     });
-    this.klineSeries.setMarkers(markers);
+    this.candlestickSeries.setMarkers(markers);
 
-    for (var key in this.lineSeriesGroups) {
-      this.lineSeriesGroups[key].setData(
+    for (var key in this.lineSeriesGroup) {
+      this.lineSeriesGroup[key].setData(
         data.indicators[key].values.slice(-this.visibleRange)
       );
     }
@@ -175,23 +178,11 @@ export default class ChartManager {
 
   createLegends(data) {
     var mainLegend = document.createElement("div");
-    var o = data.klines.at(-1).open;
-    var h = data.klines.at(-1).high;
-    var l = data.klines.at(-1).low;
-    var c = data.klines.at(-1).close;
-    var color = c > o ? "#008984" : "#f23645";
     mainLegend.setAttribute("id", "main-legend");
     mainLegend.style.position = "absolute";
     mainLegend.style.left = "12px";
     mainLegend.style.top = "12px";
     mainLegend.style.zIndex = 2;
-    mainLegend.innerHTML = `${data.symbol} •
-        ${data.interval} • ${data.exchange.toUpperCase()}
-        &nbsp;
-        O <span style="color:${color};">${o}</span>
-        H <span style="color:${color};">${h}</span>
-        L <span style="color:${color};">${l}</span>
-        C <span style="color:${color};">${c}</span>`;
     document.getElementById("chart-panel").appendChild(mainLegend);
 
     var strategyLegend = document.createElement("div");
@@ -201,68 +192,78 @@ export default class ChartManager {
     strategyLegend.style.top = "40px";
     strategyLegend.style.zIndex = 2;
     strategyLegend.style.fontSize = "14px";
-    strategyLegend.innerHTML =
-      `${data.name} &nbsp;` +
-      Object.values(this.lineSeriesGroups)
-        .map((item) => {
-          var lastPoint = item.data().at(-1);
-
-          if (lastPoint.color == "transparent") {
-            var lastValue = "∅";
-            var color = "#000000";
-          } else {
-            var lastValue = lastPoint.value;
-            var color = lastPoint.color;
-          }
-          return `<span style="color:${color};">${lastValue}</span>`;
-        })
-        .join(" ");
     document.getElementById("chart-panel").appendChild(strategyLegend);
 
-    this.crosshairMoveHandler = (param) => {
-      if (param.time) {
-        if (param.logical >= data.klines.length) {
-          this.chart.unsubscribeCrosshairMove(this.crosshairMoveHandler);
-          this.chart.subscribeCrosshairMove(this.crosshairMoveHandler);
+    var o = data.klines.at(-1).open;
+    var h = data.klines.at(-1).high;
+    var l = data.klines.at(-1).low;
+    var c = data.klines.at(-1).close;
+
+    mainLegend.innerHTML = getMainLegendText(o, h, l, c);
+    strategyLegend.innerHTML =
+      `${data.name} &nbsp;` +
+      Object.values(this.lineSeriesGroup)
+        .map((item) => {
+          return getStrategyLegendText(
+            item.data().at(-1),
+            item.options().color,
+            o
+          );
+        })
+        .join(" ");
+
+    var crosshairMoveHandler = (crosshairPosition) => {
+      if (crosshairPosition.time) {
+        if (crosshairPosition.logical >= data.klines.length) {
+          this.chart.unsubscribeCrosshairMove(crosshairMoveHandler);
+          this.chart.subscribeCrosshairMove(crosshairMoveHandler);
         } else {
-          var mainData = param.seriesData.get(this.klineSeries);
-          var o = mainData.open;
-          var h = mainData.high;
-          var l = mainData.low;
-          var c = mainData.close;
-          var color = c > o ? "#008984" : "#f23645";
-
-          mainLegend.innerHTML = `${data.symbol} •
-              ${data.interval} • ${data.exchange.toUpperCase()}
-              &nbsp;
-              O <span style="color:${color};">${o}</span>
-              H <span style="color:${color};">${h}</span>
-              L <span style="color:${color};">${l}</span>
-              C <span style="color:${color};">${c}</span>`;
-
-          strategyLegend.innerHTML =
-            `${data.name} &nbsp;` +
-            Object.values(this.lineSeriesGroups)
-              .map((item) => {
-                var currentPoint = param.seriesData.get(item);
-                var currentValue = currentPoint.value;
-                var color = currentPoint.color;
-
-                if (color == "transparent" && currentValue == o) {
-                  currentValue = "∅";
-                  color = "#000000";
-                } else if (color == "transparent") {
-                  color = item.options().color;
-                }
-
-                return `<span style="color:${color};">${currentValue}</span>`;
-              })
-              .join(" ");
+          var mainData = crosshairPosition.seriesData.get(
+            this.candlestickSeries
+          );
+          o = mainData.open;
+          h = mainData.high;
+          l = mainData.low;
+          c = mainData.close;
+          mainLegend.innerHTML = getMainLegendText(o, h, l, c);
+          strategyLegend.innerHTML = Object.values(this.lineSeriesGroup)
+            .map((item) => {
+              return getStrategyLegendText(
+                crosshairPosition.seriesData.get(item),
+                item.options().color,
+                o
+              );
+            })
+            .join(" ");
         }
       }
     };
+    this.chart.subscribeCrosshairMove(crosshairMoveHandler);
 
-    this.chart.subscribeCrosshairMove(this.crosshairMoveHandler);
+    function getMainLegendText(o, h, l, c) {
+      let color = c > o ? "#008984" : "#f23645";
+      return `${data.symbol} •
+          ${data.interval} • ${data.exchange.toUpperCase()}
+          &nbsp;
+          O <span style="color:${color};">${o}</span>
+          H <span style="color:${color};">${h}</span>
+          L <span style="color:${color};">${l}</span>
+          C <span style="color:${color};">${c}</span>`;
+    }
+
+    function getStrategyLegendText(point, baseColor, o) {
+      let color = point.color;
+      let value = point.value;
+
+      if (point.color == "transparent" && value == o) {
+        value = "∅";
+        color = "#000000";
+      } else if (color == "transparent") {
+        color = baseColor;
+      }
+
+      return `<span style="color:${color};">${value}</span>`;
+    }
   }
 
   createScrollButton() {
