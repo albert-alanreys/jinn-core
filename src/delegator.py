@@ -35,4 +35,4 @@ class Delegator:
             static_folder="src/view/static",
             template_folder="src/view/templates",
         )
-        flask_app.run(host='0.0.0.0', port=8080)
+        flask_app.run()

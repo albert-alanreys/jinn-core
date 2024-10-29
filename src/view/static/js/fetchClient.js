@@ -1,4 +1,4 @@
-var baseURL = "http://127.0.0.1:8080";
+var baseURL = "http://127.0.0.1:5000";
 
 export async function getMode() {
   var response = await fetch(`${baseURL}/mode`);
