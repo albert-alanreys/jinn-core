@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 import src.model.enums as enums
 from src.model.db_manager import DBManager
 from src.model.api_clients.binance_client import BinanceClient
@@ -27,13 +29,14 @@ class Ingester:
             case enums.Exchange.BYBIT:
                 client = BybitClient()
 
-        klines = client.fetch_historical_klines(
+        raw_klines = client.fetch_historical_klines(
             symbol=self.symbol,
             market=self.market,
             interval=self.interval,
             start=self.start,
             end=self.end
         )
+        klines = np.array(raw_klines)[:, :6].astype(float)
 
         match self.market:
             case enums.Market.SPOT:

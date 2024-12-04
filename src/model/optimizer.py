@@ -6,7 +6,6 @@ from functools import partial
 
 from src.model.api_clients.binance_client import BinanceClient
 from src.model.api_clients.bybit_client import BybitClient
-from src.model.strategies.registry import Registry
 
 
 class Optimizer:

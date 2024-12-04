@@ -140,17 +140,17 @@ class DickeyFullerV1(Strategy):
             self.adf_level_1_p2 = all_parameters[26]
             self.adf_level_2_p2 = all_parameters[27]
 
-    def start(self, client) -> None:
+    def start(self, exchange_data: dict) -> None:
         super().__init__()
 
-        self.client = client
-        self.price_precision = client.price_precision
-        self.qty_precision = client.qty_precision
-        self.time = client.price_data[:, 0]
-        self.open = client.price_data[:, 1]
-        self.high = client.price_data[:, 2]
-        self.low = client.price_data[:, 3]
-        self.close = client.price_data[:, 4]
+        self.client = exchange_data['client']
+        self.time = exchange_data['klines'][:, 0]
+        self.open = exchange_data['klines'][:, 1]
+        self.high = exchange_data['klines'][:, 2]
+        self.low = exchange_data['klines'][:, 3]
+        self.close = exchange_data['klines'][:, 4]
+        self.price_precision = exchange_data['price_precision']
+        self.qty_precision = exchange_data['qty_precision']
 
         self.equity = self.initial_capital
         self.stop_price = np.full(self.time.shape[0], np.nan)

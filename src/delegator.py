@@ -1,8 +1,8 @@
 import logging
 
 from src.controller.flask_app import FlaskApp
-from src.model.enums import Mode
 from src.model.automizer import Automizer
+from src.model.enums import Mode
 from src.model.ingester import Ingester
 from src.model.optimizer import Optimizer
 from src.model.tester import Tester
@@ -32,16 +32,19 @@ class Delegator:
             case Mode.AUTOMATION:
                 automizer = Automizer(self.automation_info)
                 automizer.start()
-                self.create_flask_app(automizer.strategies)
+
+                # self.create_flask_app(automizer.strategies)
             case Mode.INGESTION:
                 ingester = Ingester(self.ingestion_info)
                 ingester.ingeste()
             case Mode.OPTIMIZATION:
                 optimizer = Optimizer(self.optimization_info)
-                optimizer.start()
+                optimizer.optimize()
             case Mode.TESTING:
                 tester = Tester(self.testing_info)
-                self.create_flask_app(tester.strategies)
+                tester.test()
+
+                # self.create_flask_app(tester.strategies)
 
     def create_flask_app(self, strategies: dict) -> None:
         flask_app = FlaskApp(

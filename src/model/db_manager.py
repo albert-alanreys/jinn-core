@@ -1,6 +1,7 @@
 import logging
 import os
 import sqlite3
+from datetime import datetime, timezone
 
 
 class DBManager():
@@ -41,15 +42,7 @@ class DBManager():
                 f'VALUES ({", ".join(['?'] * len(columns))})'
             )
 
-            for values in data:
-                row = (
-                    int(values[0]),
-                    float(values[1]),
-                    float(values[2]),
-                    float(values[3]),
-                    float(values[4]),
-                    float(values[5])
-                )
+            for row in data:
                 self.cursor.execute(query_to_insert, row)
 
             self.connection.commit()
@@ -62,14 +55,24 @@ class DBManager():
         self,
         db_name: str,
         table: str,
-        start_time: int,
-        end_time: int
+        start: str,
+        end: str
     ) -> tuple:
         try:
+            start = int(
+                datetime.strptime(start, '%Y-%m-%d')
+                .replace(tzinfo=timezone.utc)
+                .timestamp() * 1000
+            )
+            end = int(
+                datetime.strptime(end, '%Y-%m-%d')
+                .replace(tzinfo=timezone.utc)
+                .timestamp() * 1000
+            )
+
             self.connect(db_name)
             self.cursor.execute(
-                f'SELECT * FROM {table} WHERE time BETWEEN ? AND ?',
-                (start_time, end_time)
+                f'SELECT * FROM {table} WHERE time BETWEEN {start} AND {end}',
             )
             column_names = [
                 description[0] for description in self.cursor.description

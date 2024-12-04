@@ -20,7 +20,7 @@ TELEGRAM_CHAT_ID = "ваш_идентификатор"
 #   'OPTIMIZATION' - оптимизация
 #   'TESTING' - тестирование
 #   'AUTOMATION' - автоматизация
-MODE = enums.Mode.INGESTION
+MODE = enums.Mode.TESTING
 
 # Настройки для различных режимов
 # ---------------------------------------
@@ -30,7 +30,7 @@ AUTOMATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': enums.BybitInterval.HOUR_1,
-    'strategy': 'nugget_v2',
+    'strategy': enums.Strategy.NUGGET_V2,
 }
 
 # Режим INGESTION (сбор данных)
@@ -38,8 +38,8 @@ INGESTION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'market': enums.Market.SPOT,
     'symbol': 'ETHUSDT',
-    'interval': enums.BybitInterval.DAY_1,
-    'start': '2015-01-01',
+    'interval': enums.BybitInterval.HOUR_1,
+    'start': '2021-01-01',
     'end': '2025-01-01',
 }
 
@@ -47,21 +47,22 @@ INGESTION_INFO = {
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'market': enums.Market.SPOT,
-    'symbol': 'ADAUSDT',
+    'symbol': 'ETHUSDT',
     'interval': enums.BybitInterval.HOUR_1,
-    'date/time #1': '2017-01-01',
-    'date/time #2': '2023-06-01', 
-    'date/time #3': '2024-01-01',
-    'strategy': 'nugget_v4',
+    'start_train': '2022-01-01',
+    'end_train': '2025-01-01',
+    'start_test': '2021-01-01',
+    'end_test': '2022-01-01',
+    'strategy': enums.Strategy.NUGGET_V2,
 }
 
 # Режим TESTING (тестирование)
 TESTING_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
+    'symbol': 'ETHUSDT',
     'interval': enums.BybitInterval.HOUR_1,
-    'date/time #1': '2022-01-01',
-    'date/time #2': '2024-12-01', 
-    'strategy': 'nugget_v2',
+    'start': '2021-01-01',
+    'end': '2025-12-01',
+    'strategy': enums.Strategy.NUGGET_V2,
 }
