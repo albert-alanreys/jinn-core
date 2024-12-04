@@ -2,7 +2,6 @@ import numpy as np
 import numba as nb
 
 import src.model.ta as ta
-from src.model.exchanges.client import Client
 from src.model.strategies.strategy import Strategy
 
 
@@ -139,7 +138,7 @@ class DevourerV3(Strategy):
             self.ema_len_p3 = all_parameters[25]
             self.close_under_ema_p3 = all_parameters[26]
 
-    def start(self, client: Client) -> None:
+    def start(self, client) -> None:
         super().__init__()
 
         self.client = client

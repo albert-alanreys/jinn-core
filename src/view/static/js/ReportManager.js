@@ -104,7 +104,7 @@ export default class ReportManager {
   }
 
   createReport(data) {
-    if (this.mode == "testing") {
+    if (this.mode == "TESTING") {
       if (data.completedDealsLog.length) {
         this.createOverviewReport(data);
       } else {

@@ -3,7 +3,6 @@ import numba as nb
 
 import src.model.ta as ta
 import src.model.math as math
-from src.model.exchanges.client import Client
 from src.model.strategies.strategy import Strategy
 
 
@@ -170,7 +169,7 @@ class NuggetV4(Strategy):
             self.look_back = all_parameters[29]
             self.channel_range = all_parameters[30]
 
-    def start(self, client: Client) -> None:
+    def start(self, client) -> None:
         super().__init__()
 
         self.client = client

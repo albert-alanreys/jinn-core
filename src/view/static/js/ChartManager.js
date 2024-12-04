@@ -108,7 +108,7 @@ export default class ChartManager {
     this.createLegends(data);
     this.createScrollButton();
 
-    if (this.mode == "automation") {
+    if (this.mode == "AUTOMATION") {
       this.manageChartUpdates(id);
     }
   }

@@ -1,8 +1,8 @@
 import ast
 import os
 
-from src.model.exchanges.binance_client import BinanceClient
-from src.model.exchanges.bybit_client import BybitClient
+from src.model.api_clients.binance_client import BinanceClient
+from src.model.api_clients.bybit_client import BybitClient
 from src.model.strategies.registry import Registry
 
 

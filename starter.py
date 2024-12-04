@@ -1,55 +1,21 @@
+import logging
+
+import config
 from src.delegator import Delegator
-
-# mode:
-#   'optimization'
-#   'testing'
-#   'automation'
-
-# exchange:
-#   'binance'
-#   'bybit'
-
-# interval:
-#   '1m', '5m', '15m', '30m'
-#   '1h', '2h', '4h', '6h'
-#   '1d', '1w', '1M'
-
-# strategy:
-#   'devourer_v3'
-#   'dickey_fuller_v1'
-#   'nugget_v2'
-#   'nugget_v4'
-#   'nugget_v5'
-
-mode = 'testing'
-optimization = {
-    'exchange': 'bybit',
-    'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'date/time #1': '2021/01/01 00:00',
-    'date/time #2': '2023/06/01 00:00',
-    'date/time #3': '2024/01/01 00:00',
-    'strategy': 'nugget_v2'
-}
-testing = {
-    'exchange': 'bybit',
-    'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'date/time #1': '2022/01/01 00:00',
-    'date/time #2': '2024/12/01 00:00',
-    'strategy': 'nugget_v2'
-}
-automation = {
-    'exchange': 'bybit',
-    'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'strategy': 'nugget_v2'
-}
 
 
 def main() -> None:
-    Delegator.manage(mode, optimization, testing, automation)
- 
+    logging.basicConfig(level=logging.INFO)
+
+    delegator = Delegator(
+        mode=config.MODE,
+        automation_info=config.AUTOMATION_INFO,
+        ingestion_info=config.INGESTION_INFO,
+        optimization_info=config.OPTIMIZATION_INFO,
+        testing_info=config.TESTING_INFO  
+    )
+    delegator.delegate()
+
 
 if __name__ == '__main__':
     main()

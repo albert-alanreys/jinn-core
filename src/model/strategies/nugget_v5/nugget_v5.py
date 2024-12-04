@@ -5,7 +5,6 @@ import numba as nb
 
 import src.model.ta as ta
 import src.model.math as math
-from src.model.exchanges.client import Client
 from src.model.strategies.strategy import Strategy
 
 
@@ -157,7 +156,7 @@ class NuggetV5(Strategy):
             self.adx_short_upper_limit = all_parameters[25]
             self.adx_short_lower_limit = all_parameters[26]
 
-    def start(self, client: Client) -> None:
+    def start(self, client) -> None:
         super().__init__()
 
         self.client = client

@@ -14,7 +14,7 @@ export default class RightToolbarManager {
     this.manageButtons();
     this.manageCursor();
 
-    if (mode == "automation") {
+    if (mode == "AUTOMATION") {
       this.manageAlerts();
     }
   }
