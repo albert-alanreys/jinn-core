@@ -23,14 +23,14 @@ class Tester():
         self.end = testing_info['end']
         self.strategy = testing_info['strategy']
 
+        self.strategies = {}
         self.db_manager = DBManager()
         self.binance_client = None
         self.bybit_client = BybitClient()
-
         self.logger = logging.getLogger(__name__)
 
     def test(self) -> None:
-        self.strategies = dict()
+        self.logger.info(f'Testing process started')
 
         for strategy in enums.Strategy:
             path_to_folder = os.path.abspath(
@@ -39,9 +39,6 @@ class Tester():
             filenames = glob.glob(f'{path_to_folder}/*.txt')
 
             for filename in filenames:
-                print()
-                print(filename[filename.rfind('\\') + 1 :])
-
                 pattern = r'(\w+)_(\w+)_(\w+)_(\d+)\.txt'
                 exchange, symbol, market, interval = (
                     re.match(
@@ -172,8 +169,6 @@ class Tester():
             self.strategies[str(id(strategy_data))] = strategy_data
 
     def calculate_strategy(self, data: dict) -> tuple:
-        self.logger.info(f'Testing strategy:\n{data['instance']}')
-
         data['instance'].start(
             {
                 'client': data['client'],

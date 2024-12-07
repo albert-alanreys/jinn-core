@@ -20,7 +20,7 @@ TELEGRAM_CHAT_ID = "ваш_идентификатор"
 #   'OPTIMIZATION' - оптимизация
 #   'TESTING' - тестирование
 #   'AUTOMATION' - автоматизация
-MODE = enums.Mode.OPTIMIZATION
+MODE = enums.Mode.TESTING
 
 # Настройки для различных режимов
 # ---------------------------------------

@@ -22,14 +22,14 @@ class Optimizer:
         self.end = optimization_info['end']
         self.strategy = optimization_info['strategy']
 
+        self.strategies = {}
         self.binance_client = None
         self.bybit_client = BybitClient()
         self.db_manager = DBManager()
-
         self.logger = logging.getLogger(__name__)
 
     def optimize(self) -> None:
-        strategies = dict()
+        self.logger.info('Optimization process started')
 
         for strategy in enums.Strategy:
             path_to_file = os.path.abspath(
@@ -87,9 +87,9 @@ class Optimizer:
                         'p_precision': p_precision,
                         'q_precision': q_precision,
                     }
-                    strategies[id(strategy_data)] = strategy_data
+                    self.strategies[id(strategy_data)] = strategy_data
 
-        if len(strategies) == 0:
+        if len(self.strategies) == 0:
             match self.exchange:
                 case enums.Exchange.BINANCE:
                     client = self.binance_client
@@ -133,49 +133,47 @@ class Optimizer:
                 'p_precision': p_precision,
                 'q_precision': q_precision,
             }
-            strategies[id(strategy_data)] = strategy_data
+            self.strategies[id(strategy_data)] = strategy_data
 
-        delattr(self, 'db_manager')
-        self.logger.info('Optimization process started')
+        with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
+            delattr(self, 'db_manager')
+            best_samples_list = p.map(self.run_ga, self.strategies.values())
 
-        with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
-            best_samples_list = pool.map(self.run_ga, strategies.values())
+        for key, samples in zip(self.strategies, best_samples_list):
+            self.strategies[key]['best_samples'] = samples
 
-        for key, samples in zip(strategies, best_samples_list):
-            strategies[key]['best_samples'] = samples
-
-        for strategy_data in strategies.values():
-            self.write(strategy_data)
+        self.save_params()
 
     def run_ga(self, strategy_data: dict) -> list:
         ga = GA(strategy_data)
         ga.fit()
         return ga.best_samples
 
-    def write(self, strategy_data: dict) -> None:
-        filename = (
-            f'{strategy_data['exchange']}_'
-            f'{strategy_data['symbol']}_'
-            f'{strategy_data['market']}_'
-            f'{strategy_data['interval']}.txt'
-        )
-        path_to_file = os.path.abspath(
-            f'src/model/strategies/{strategy_data['name']}'
-            f'/optimization/{filename}'
-        )
-
-        for sample in strategy_data['best_samples']:
-            file_text = (
-                f'Period: {strategy_data['start']} - {strategy_data['end']}\n'
-                f'{"=" * 50}\n'
-                + ''.join(
-                    f'{param} = {sample[idx]}\n'
-                        for idx, param in enumerate(
-                            strategy_data['type'].opt_params.keys()
-                        )
-                )
-                + f'{"=" * 50}\n'
+    def save_params(self) -> None:
+        for strategy in self.strategies.values():
+            filename = (
+                f'{strategy['exchange']}_'
+                f'{strategy['symbol']}_'
+                f'{strategy['market']}_'
+                f'{strategy['interval']}.txt'
+            )
+            path_to_file = os.path.abspath(
+                f'src/model/strategies/{strategy['name']}'
+                f'/optimization/{filename}'
             )
 
-            with open(path_to_file, 'a') as file:
-                print(file_text, file=file)
+            for sample in strategy['best_samples']:
+                file_text = (
+                    f'Period: {strategy['start']} - {strategy['end']}\n'
+                    f'{"=" * 50}\n'
+                    + ''.join(
+                        f'{param} = {sample[idx]}\n'
+                            for idx, param in enumerate(
+                                strategy['type'].opt_params.keys()
+                            )
+                    )
+                    + f'{"=" * 50}\n'
+                )
+
+                with open(path_to_file, 'a') as file:
+                    print(file_text, file=file)
