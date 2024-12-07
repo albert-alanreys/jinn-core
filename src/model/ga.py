@@ -4,7 +4,7 @@ from numpy import array
 
 
 class GA:
-    iterations = 200
+    iterations = 10000
     population_size = 50
     max_population_size = 300
 

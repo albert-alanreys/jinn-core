@@ -75,6 +75,7 @@ class Optimizer:
                     strategy_data = {
                         'name': strategy.name.lower(),
                         'exchange': exchange,
+                        'market': market,
                         'symbol': symbol,
                         'interval': interval,
                         'start': start,
@@ -120,6 +121,7 @@ class Optimizer:
             strategy_data = {
                 'name': self.strategy.name.lower(),
                 'exchange': self.exchange.value.lower(),
+                'market': self.market.value,
                 'symbol': self.symbol,
                 'interval': self.interval.value,
                 'start': self.start,
@@ -154,6 +156,7 @@ class Optimizer:
         filename = (
             f'{strategy_data['exchange']}_'
             f'{strategy_data['symbol']}_'
+            f'{strategy_data['market']}_'
             f'{strategy_data['interval']}.txt'
         )
         path_to_file = os.path.abspath(

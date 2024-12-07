@@ -39,6 +39,9 @@ class Tester():
             filenames = glob.glob(f'{path_to_folder}/*.txt')
 
             for filename in filenames:
+                print()
+                print(filename[filename.rfind('\\') + 1 :])
+
                 pattern = r'(\w+)_(\w+)_(\w+)_(\d+)\.txt'
                 exchange, symbol, market, interval = (
                     re.match(
