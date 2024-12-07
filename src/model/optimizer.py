@@ -29,7 +29,7 @@ class Optimizer:
         self.logger = logging.getLogger(__name__)
 
     def optimize(self) -> None:
-        self.strategies = dict()
+        strategies = dict()
 
         for strategy in enums.Strategy:
             path_to_file = os.path.abspath(
@@ -72,15 +72,13 @@ class Optimizer:
                     p_precision = client.fetch_price_precision(symbol)
                     q_precision = client.fetch_qty_precision(symbol)
 
-                    strategy_id = (
-                        f'{strategy.name.lower()}_'
-                        f'{exchange}_'
-                        f'{symbol}_'
-                        f'{interval} '
-                        f'T{start} - {end}'
-                    )
                     strategy_data = {
                         'name': strategy.name.lower(),
+                        'exchange': exchange,
+                        'symbol': symbol,
+                        'interval': interval,
+                        'start': start,
+                        'end': end,
                         'type': strategy.value,
                         'fold_1': fold_1,
                         'fold_2': fold_2,
@@ -88,9 +86,9 @@ class Optimizer:
                         'p_precision': p_precision,
                         'q_precision': q_precision,
                     }
-                    self.strategies[strategy_id] = strategy_data
+                    strategies[id(strategy_data)] = strategy_data
 
-        if len(self.strategies) == 0:
+        if len(strategies) == 0:
             match self.exchange:
                 case enums.Exchange.BINANCE:
                     client = self.binance_client
@@ -119,15 +117,13 @@ class Optimizer:
             p_precision = client.fetch_price_precision(self.symbol)
             q_precision = client.fetch_qty_precision(self.symbol)
 
-            strategy_id = (
-                f'{self.strategy.name.lower()}_'
-                f'{self.exchange.value.lower()}_'
-                f'{self.symbol}_'
-                f'{self.interval.value} '
-                f'T{self.start} - {self.end}'
-            )
             strategy_data = {
                 'name': self.strategy.name.lower(),
+                'exchange': self.exchange.value.lower(),
+                'symbol': self.symbol,
+                'interval': self.interval.value,
+                'start': self.start,
+                'end': self.end,
                 'type': self.strategy.value,
                 'fold_1': fold_1,
                 'fold_2': fold_2,
@@ -135,53 +131,48 @@ class Optimizer:
                 'p_precision': p_precision,
                 'q_precision': q_precision,
             }
-            self.strategies[strategy_id] = strategy_data
+            strategies[id(strategy_data)] = strategy_data
 
         delattr(self, 'db_manager')
         self.logger.info('Optimization process started')
 
         with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
-            results = zip(
-                self.strategies.items(),
-                pool.map(
-                    self.run_ga,
-                    self.strategies.values()
-                )
-            )
+            best_samples_list = pool.map(self.run_ga, strategies.values())
 
-        for strategy, best_samples in results:
-            self.write(strategy, best_samples)
+        for key, samples in zip(strategies, best_samples_list):
+            strategies[key]['best_samples'] = samples
 
-    def run_ga(self, strategy: dict) -> dict:
-        ga = GA(strategy)
+        for strategy_data in strategies.values():
+            self.write(strategy_data)
+
+    def run_ga(self, strategy_data: dict) -> list:
+        ga = GA(strategy_data)
         ga.fit()
         return ga.best_samples
 
-    def write(self, strategy: tuple, best_samples: list) -> None:
-        strategy_name = strategy[1]['name']
-        time = strategy[0][strategy[0].find(' T') + 2:]
-        file_name = (
-            strategy[0].
-            replace(f'{strategy_name}_', '').
-            replace(f' T{time}', '')
+    def write(self, strategy_data: dict) -> None:
+        filename = (
+            f'{strategy_data['exchange']}_'
+            f'{strategy_data['symbol']}_'
+            f'{strategy_data['interval']}.txt'
         )
-        file_path = os.path.abspath(
-            f'src/model/strategies/{strategy_name}'
-            f'/optimization/{file_name}.txt'
+        path_to_file = os.path.abspath(
+            f'src/model/strategies/{strategy_data['name']}'
+            f'/optimization/{filename}'
         )
 
-        for sample in best_samples:
+        for sample in strategy_data['best_samples']:
             file_text = (
-                f'Period: {time}\n'
+                f'Period: {strategy_data['start']} - {strategy_data['end']}\n'
                 f'{"=" * 50}\n'
                 + ''.join(
                     f'{param} = {sample[idx]}\n'
                         for idx, param in enumerate(
-                            strategy[1]['type'].opt_params.keys()
+                            strategy_data['type'].opt_params.keys()
                         )
                 )
                 + f'{"=" * 50}\n'
             )
 
-            with open(file_path, 'a') as file:
+            with open(path_to_file, 'a') as file:
                 print(file_text, file=file)

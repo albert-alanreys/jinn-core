@@ -8,13 +8,13 @@ class GA:
     population_size = 50
     max_population_size = 300
 
-    def __init__(self, strategy: dict) -> None:
-        self.strategy = strategy['type']
-        self.fold_1 = strategy['fold_1']
-        self.fold_2 = strategy['fold_2']
-        self.fold_3 = strategy['fold_3']
-        self.p_precision = strategy['p_precision']
-        self.q_precision = strategy['q_precision']
+    def __init__(self, strategy_data: dict) -> None:
+        self.strategy = strategy_data['type']
+        self.fold_1 = strategy_data['fold_1']
+        self.fold_2 = strategy_data['fold_2']
+        self.fold_3 = strategy_data['fold_3']
+        self.p_precision = strategy_data['p_precision']
+        self.q_precision = strategy_data['q_precision']
 
         self.population = {}
         self.best_samples = []
