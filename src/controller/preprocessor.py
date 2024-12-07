@@ -47,7 +47,7 @@ class Preprocessor:
             parameters[parameter_name] = new_value
             strategy_instance = (
                 self.strategies[id]['instance'].__class__(
-                    all_parameters=list(parameters.values())
+                    all_params=list(parameters.values())
                 )
             )
             self.strategies[id]['instance'] = strategy_instance

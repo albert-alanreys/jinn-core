@@ -1,0 +1,160 @@
+import random
+
+from numpy import array
+
+
+class GA:
+    iterations = 200
+    population_size = 50
+    max_population_size = 300
+
+    def __init__(self, strategy: dict) -> None:
+        self.strategy = strategy['type']
+        self.fold_1 = strategy['fold_1']
+        self.fold_2 = strategy['fold_2']
+        self.fold_3 = strategy['fold_3']
+        self.p_precision = strategy['p_precision']
+        self.q_precision = strategy['q_precision']
+
+        self.population = {}
+        self.best_samples = []
+
+    def fit(self) -> None:
+        folds = [self.fold_1, self.fold_2, self.fold_3]
+
+        for i in range(3):
+            self.train_folds = [folds[j] for j in range(3) if j != i]
+            self.validation_fold = folds[i]
+
+            self.create()
+
+            for _ in range(self.iterations):
+                self.select()
+                self.recombine()
+                self.mutate()
+                self.expand()
+                self.kill()
+                self.destroy()
+
+            self.elect()
+            self.population.clear()
+
+    def create(self) -> None:
+        samples = [
+            [               
+                random.choice(values)
+                    for values in self.strategy.opt_params.values()
+            ]
+            for _ in range(self.population_size)
+        ]
+
+        for sample in samples:
+            fitness = (
+                self.evaluate(sample, self.train_folds[0]) +
+                self.evaluate(sample, self.train_folds[1])
+            )
+            self.population[fitness] = sample
+
+        self.sample_len = len(self.strategy.opt_params)
+
+    def evaluate(self, sample: list, fold: array) -> float:
+        instance = self.strategy(opt_params=sample)
+        instance.start(
+            {
+                'klines': fold,
+                'p_precision': self.p_precision,
+                'q_precision': self.q_precision,
+            }
+        )
+
+        score = round(
+            instance.completed_deals_log[8::13].sum() /
+                instance.initial_capital * 100,
+            2
+        )
+        return score
+
+    def select(self) -> None:
+        if random.randint(0, 1) == 0:
+            best_score = max(self.population)
+            parent_1 = self.population[best_score]
+
+            population_copy = self.population.copy()
+            population_copy.pop(best_score)
+
+            parent_2 = random.choice(list(population_copy.values()))
+            self.parents = [parent_1, parent_2]
+        else:
+            self.parents = random.sample(list(self.population.values()), 2)
+
+    def recombine(self) -> None:
+        r_number = random.randint(0, 1)
+
+        if r_number == 0:
+            delimiter = random.randint(1, self.sample_len - 1)
+            self.child = (
+                self.parents[0][:delimiter] + self.parents[1][delimiter:]
+            )
+        else:
+            delimiter_1 = random.randint(1, self.sample_len // 2 - 1)
+            delimiter_2 = random.randint(
+                self.sample_len // 2 + 1, self.sample_len - 1
+            )
+
+            self.child = (
+                self.parents[0][:delimiter_1] +
+                self.parents[1][delimiter_1:delimiter_2] +
+                self.parents[0][delimiter_2:]
+            )
+
+    def mutate(self) -> None:
+        if random.random() <= 0.9:
+            gene_num = random.randint(0, self.sample_len - 1)
+            gene_value = random.choice(
+                list(self.strategy.opt_params.values())[gene_num]
+            )
+            self.child[gene_num] = gene_value
+        else:
+            for i in range(len(self.child)):
+                self.child[i] = random.choice(
+                    list(self.strategy.opt_params.values())[i]
+                )
+
+    def expand(self) -> None:
+        fitness = (
+            self.evaluate(self.child, self.train_folds[0]) +
+            self.evaluate(self.child, self.train_folds[1])
+        )
+        self.population[fitness] = self.child
+
+    def kill(self) -> None:
+        while len(self.population) > self.max_population_size:
+            self.population.pop(min(self.population))
+
+    def destroy(self) -> None:
+        if random.random() > 0.001:
+            return
+
+        sorted_population = sorted(
+            self.population.items(),
+            key=lambda x: x[0]
+        )
+
+        for i in range(int(len(self.population) * 0.5)):
+            self.population.pop(sorted_population[i][0])
+
+    def elect(self) -> None:
+        best_score = float('-inf')
+        best_sample = None
+
+        for score, sample in self.population.items():
+            fitness = (
+                score * 0.3 +
+                self.evaluate(sample, self.validation_fold) * 0.7
+            )
+
+            if fitness > best_score:
+                best_score = fitness
+                best_sample = sample
+
+        self.best_samples.append(best_sample)

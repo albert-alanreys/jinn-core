@@ -2,6 +2,7 @@ import ast
 import glob
 import logging
 import os
+import re
 import warnings
 
 import numpy as np
@@ -35,31 +36,29 @@ class Tester():
             path_to_folder = os.path.abspath(
                 f'src/model/strategies/{strategy.name.lower()}/backtesting/'
             )
-            files = glob.glob(f'{path_to_folder}/*.txt')
+            filenames = glob.glob(f'{path_to_folder}/*.txt')
 
-            for file in files:
-                exchange = file[:file.find('_')]
-                symbol = file[
-                    file.find('_', file.find('_')) + 1 : file.rfind('_')
-                ]
-                interval = file[
-                    file.rfind('_') + 1 : file.rfind('.')
-                ]
-
-                match exchange.lower():
-                    case enums.Exchange.BINANCE.name.lower():
-                        client = self.binance_client
-                    case enums.Exchange.BYBIT.name.lower():
-                        client = self.bybit_client
-
-                path_to_file = os.path.abspath(
-                    f'src/model/strategies/{strategy.file}/backtesting/{file}'
+            for filename in filenames:
+                pattern = r'(\w+)_(\w+)_(\w+)_(\d+)\.txt'
+                exchange, symbol, market, interval = (
+                    re.match(
+                        pattern, filename[filename.rfind('\\') + 1 :]
+                    ).groups()
                 )
+                exchange = exchange.lower()
+                symbol = symbol.upper()
+                market = market.upper()
+
+                if exchange == enums.Exchange.BINANCE.name.lower():
+                    client = self.binance_client
+                elif exchange == enums.Exchange.BYBIT.name.lower():
+                    client = self.bybit_client
+
                 target_line = False
-                opt_parameters = []
+                opt_params = []
                 parameters = []
 
-                with open(path_to_file, 'r') as file:
+                with open(filename, 'r') as file:
                     for line_num, line in enumerate(file):
                         if line_num == 0:
                             start = line[:line.find(' - ')].lstrip('Period: ')
@@ -68,7 +67,7 @@ class Tester():
                             ]
 
                         if target_line and line.startswith('='):
-                            opt_parameters.append(parameters.copy())
+                            opt_params.append(parameters.copy())
                             parameters.clear()
                             target_line = False
                             continue
@@ -83,32 +82,26 @@ class Tester():
                         if line.startswith('='):
                             target_line = True
 
-                for parameters in opt_parameters:
-                    match self.market:
-                        case enums.Market.SPOT:
-                            postfix = '_SPOT'
-                        case enums.Market.FUTURES:
-                            postfix = '_FUTURES'
-
+                for parameters in opt_params:
                     rows, _ = self.db_manager.fetch_data(
                         db_name=f'{exchange.capitalize()}.db',
-                        table=f'{symbol}{postfix}_{interval}',
+                        table=f'{symbol}_{market}_{interval}',
                         start=start,
                         end=end
                     )
                     klines = np.array(rows)
-                    price_precision = client.fetch_price_precision(symbol)
-                    qty_precision = client.fetch_qty_precision(symbol)
+                    p_precision = client.fetch_price_precision(symbol)
+                    q_precision = client.fetch_qty_precision(symbol)
                     strategy_instance = strategy.value(
-                        opt_parameters=parameters
+                        opt_params=parameters
                     )
                     equity, metrics = self.calculate_strategy(
                         {
                             'instance': strategy_instance,
                             'client': client,
                             'klines': klines,
-                            'price_precision': price_precision,
-                            'qty_precision': qty_precision,
+                            'p_precision': p_precision,
+                            'q_precision': q_precision,
                         }
                     )
                     strategy_data = {
@@ -118,12 +111,12 @@ class Tester():
                         'equity': equity,
                         'metrics': metrics,
                         'client': client,
-                        'exchange': exchange.lower(),
+                        'exchange': exchange,
                         'symbol': symbol,
                         'interval': interval,
                         'klines': klines,
-                        'price_precision': price_precision,
-                        'qty_precision': qty_precision,
+                        'p_precision': p_precision,
+                        'q_precision': q_precision,
                     }
                     self.strategies[str(id(strategy_data))] = strategy_data
 
@@ -136,27 +129,27 @@ class Tester():
 
             match self.market:
                 case enums.Market.SPOT:
-                    postfix = '_SPOT'
+                    market = 'SPOT'
                 case enums.Market.FUTURES:
-                    postfix = '_FUTURES'
+                    market = 'FUTURES'
 
             rows, _ = self.db_manager.fetch_data(
                 db_name=f'{self.exchange.value.capitalize()}.db',
-                table=f'{self.symbol}{postfix}_{self.interval.value}',
+                table=f'{self.symbol}_{market}_{self.interval.value}',
                 start=self.start,
                 end=self.end
             )
             klines = np.array(rows)
-            price_precision = client.fetch_price_precision(self.symbol)
-            qty_precision = client.fetch_qty_precision(self.symbol)
+            p_precision = client.fetch_price_precision(self.symbol)
+            q_precision = client.fetch_qty_precision(self.symbol)
             strategy_instance = self.strategy.value()
             equity, metrics = self.calculate_strategy(
                 {
                     'instance': strategy_instance,
                     'client': client,
                     'klines': klines,
-                    'price_precision': price_precision,
-                    'qty_precision': qty_precision,
+                    'p_precision': p_precision,
+                    'q_precision': q_precision,
                 }
             )
             strategy_data = {
@@ -170,25 +163,25 @@ class Tester():
                 'symbol': self.symbol,
                 'interval': self.interval.value,
                 'klines': klines,
-                'price_precision': price_precision,
-                'qty_precision': qty_precision,
+                'p_precision': p_precision,
+                'q_precision': q_precision,
             }
             self.strategies[str(id(strategy_data))] = strategy_data
 
     def calculate_strategy(self, data: dict) -> tuple:
-        self.logger.info(f"Testing strategy:\n{data['instance']}")
+        self.logger.info(f'Testing strategy:\n{data['instance']}')
 
         data['instance'].start(
             {
                 'client': data['client'],
                 'klines': data['klines'],
-                'price_precision': data['price_precision'],
-                'qty_precision': data['qty_precision'],
+                'p_precision': data['p_precision'],
+                'q_precision': data['q_precision'],
             }
         )
 
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
+            warnings.simplefilter('ignore', category=RuntimeWarning)
             equity = data['instance'].get_equity(
                 data['instance'].initial_capital,
                 data['instance'].completed_deals_log

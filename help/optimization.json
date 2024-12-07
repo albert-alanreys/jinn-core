@@ -1,34 +1,13 @@
 [
   {
-    "exchange": "bybit",
-    "symbol": "ETHUSDT",
-    "interval": 60,
-    "date/time #1": "2021/01/01 00:00",
-    "date/time #2": "2023/01/01 00:00",
-    "date/time #3": "2024/01/01 00:00"
+    'exchange': 'BYBIT',
+    'market': 'SPOT',
+    'symbol': 'ETHUSDT',
+    'interval': 60,
+    'start_train': '2022-01-01',
+    'end_train': '2025-01-01',
+    'start_test': '2021-01-01',
+    'end_test': '2022-01-01',
+    'strategy': 'NUGGET_V2',
   },
-  {
-    "exchange": "binance",
-    "symbol": "BTCUSDT",
-    "interval": 60,
-    "date/time #1": "2021/01/01 00:00",
-    "date/time #2": "2023/01/01 00:00",
-    "date/time #3": "2024/01/01 00:00"
-  },
-  {
-    "exchange": "bybit",
-    "symbol": "ADAUSDT",
-    "interval": 60,
-    "date/time #1": "2021/01/01 00:00",
-    "date/time #2": "2023/01/01 00:00",
-    "date/time #3": "2024/01/01 00:00"
-  },
-  {
-    "exchange": "bybit",
-    "symbol": "SOLUSDT",
-    "interval": 60,
-    "date/time #1": "2021/01/01 00:00",
-    "date/time #2": "2023/01/01 00:00",
-    "date/time #3": "2024/01/01 00:00"
-  }
 ]

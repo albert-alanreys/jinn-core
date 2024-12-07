@@ -42,7 +42,7 @@ class NuggetV5(Strategy):
     adx_short_lower_limit = 1.0
 
     # Parameters to be optimized and their possible values
-    opt_parameters = {
+    opt_params = {
         'stop': [i / 10 for i in range(1, 31)],
         'atr_length': [i for i in range(1, 21)],
         'take_value': [   
@@ -88,7 +88,7 @@ class NuggetV5(Strategy):
 
     # Class attributes
     class_attributes = (
-        'opt_parameters',
+        'opt_params',
         'indicator_options',
         'class_attributes',
         'start',
@@ -98,74 +98,74 @@ class NuggetV5(Strategy):
 
     def __init__(
         self,
-        opt_parameters: list | None = None,
-        all_parameters: list | None = None
+        opt_params: list | None = None,
+        all_params: list | None = None
     ) -> None:
         for key, value in NuggetV5.__dict__.items():
             if (not key.startswith('__') and
                     key not in NuggetV5.class_attributes):
                 self.__dict__[key] = value
 
-        if opt_parameters is not None:
-            self.stop = opt_parameters[0]
-            self.atr_length = opt_parameters[1]
-            self.take_value = opt_parameters[2]
-            self.take_volume = opt_parameters[3]
-            self.st_atr_period = opt_parameters[4]
-            self.st_factor = opt_parameters[5]
-            self.st_upper_limit = opt_parameters[6]
-            self.st_lower_limit = opt_parameters[7]
-            self.k_length = opt_parameters[8]
-            self.d_length = opt_parameters[9]
-            self.k_d_long_limit = opt_parameters[10]
-            self.k_d_short_limit = opt_parameters[11]
-            self.adx_filter = opt_parameters[12]
-            self.di_length = opt_parameters[13]
-            self.adx_length = opt_parameters[14]
-            self.adx_long_upper_limit = opt_parameters[15]
-            self.adx_long_lower_limit = opt_parameters[16]
-            self.adx_short_upper_limit = opt_parameters[17]
-            self.adx_short_lower_limit = opt_parameters[18]
+        if opt_params is not None:
+            self.stop = opt_params[0]
+            self.atr_length = opt_params[1]
+            self.take_value = opt_params[2]
+            self.take_volume = opt_params[3]
+            self.st_atr_period = opt_params[4]
+            self.st_factor = opt_params[5]
+            self.st_upper_limit = opt_params[6]
+            self.st_lower_limit = opt_params[7]
+            self.k_length = opt_params[8]
+            self.d_length = opt_params[9]
+            self.k_d_long_limit = opt_params[10]
+            self.k_d_short_limit = opt_params[11]
+            self.adx_filter = opt_params[12]
+            self.di_length = opt_params[13]
+            self.adx_length = opt_params[14]
+            self.adx_long_upper_limit = opt_params[15]
+            self.adx_long_lower_limit = opt_params[16]
+            self.adx_short_upper_limit = opt_params[17]
+            self.adx_short_lower_limit = opt_params[18]
 
-        if all_parameters is not None:
-            self.margin_type = all_parameters[0]
-            self.direction = all_parameters[1]
-            self.initial_capital = all_parameters[2]
-            self.min_capital = all_parameters[3]
-            self.commission = all_parameters[4]
-            self.order_size_type = all_parameters[5]
-            self.order_size = all_parameters[6]
-            self.leverage = all_parameters[7]
-            self.stop = all_parameters[8]
-            self.atr_length = all_parameters[9]
-            self.take_value = all_parameters[10]
-            self.take_volume = all_parameters[11]
-            self.st_atr_period = all_parameters[12]
-            self.st_factor = all_parameters[13]
-            self.st_upper_limit = all_parameters[14]
-            self.st_lower_limit = all_parameters[15]
-            self.k_length = all_parameters[16]
-            self.d_length = all_parameters[17]
-            self.k_d_long_limit = all_parameters[18]
-            self.k_d_short_limit = all_parameters[19]
-            self.adx_filter = all_parameters[20]
-            self.di_length = all_parameters[21]
-            self.adx_length = all_parameters[22]
-            self.adx_long_upper_limit = all_parameters[23]
-            self.adx_long_lower_limit = all_parameters[24]
-            self.adx_short_upper_limit = all_parameters[25]
-            self.adx_short_lower_limit = all_parameters[26]
+        if all_params is not None:
+            self.margin_type = all_params[0]
+            self.direction = all_params[1]
+            self.initial_capital = all_params[2]
+            self.min_capital = all_params[3]
+            self.commission = all_params[4]
+            self.order_size_type = all_params[5]
+            self.order_size = all_params[6]
+            self.leverage = all_params[7]
+            self.stop = all_params[8]
+            self.atr_length = all_params[9]
+            self.take_value = all_params[10]
+            self.take_volume = all_params[11]
+            self.st_atr_period = all_params[12]
+            self.st_factor = all_params[13]
+            self.st_upper_limit = all_params[14]
+            self.st_lower_limit = all_params[15]
+            self.k_length = all_params[16]
+            self.d_length = all_params[17]
+            self.k_d_long_limit = all_params[18]
+            self.k_d_short_limit = all_params[19]
+            self.adx_filter = all_params[20]
+            self.di_length = all_params[21]
+            self.adx_length = all_params[22]
+            self.adx_long_upper_limit = all_params[23]
+            self.adx_long_lower_limit = all_params[24]
+            self.adx_short_upper_limit = all_params[25]
+            self.adx_short_lower_limit = all_params[26]
 
     def start(self, exchange_data: dict) -> None:
         super().__init__()
-
-        self.client = exchange_data['client']
+        
+        self.client = exchange_data.get('client', None)
         self.time = exchange_data['klines'][:, 0]
         self.high = exchange_data['klines'][:, 2]
         self.low = exchange_data['klines'][:, 3]
         self.close = exchange_data['klines'][:, 4]
-        self.price_precision = exchange_data['price_precision']
-        self.qty_precision = exchange_data['qty_precision']
+        self.p_precision = exchange_data['p_precision']
+        self.q_precision = exchange_data['q_precision']
 
         self.equity = self.initial_capital
         self.stop_price = np.full(self.time.shape[0], np.nan)
@@ -231,8 +231,8 @@ class NuggetV5(Strategy):
                 self.adx_long_lower_limit,
                 self.adx_short_upper_limit,
                 self.adx_short_lower_limit,
-                self.price_precision,
-                self.qty_precision,
+                self.p_precision,
+                self.q_precision,
                 self.time,
                 self.high,
                 self.low,
@@ -379,8 +379,8 @@ class NuggetV5(Strategy):
         adx_long_lower_limit: float,
         adx_short_upper_limit: float,
         adx_short_lower_limit: float,
-        price_precision: float,
-        qty_precision: float,
+        p_precision: float,
+        q_precision: float,
         time: np.ndarray,
         high: np.ndarray,
         low: np.ndarray,
@@ -584,7 +584,7 @@ class NuggetV5(Strategy):
                         / 100) > stop_price[i])):
                     stop_price[i] = round_to_minqty_or_mintick(
                         ds_lower_band[i] * (100 - stop) / 100,
-                        price_precision
+                        p_precision
                     )
                     alert_long_new_stop = True
 
@@ -736,43 +736,43 @@ class NuggetV5(Strategy):
                     
                 entry_date = time[i]
                 liquidation_price = round_to_minqty_or_mintick(
-                    entry_price * (1 - (1 / leverage)), price_precision
+                    entry_price * (1 - (1 / leverage)), p_precision
                 )
                 stop_price[i] = round_to_minqty_or_mintick(
-                    ds_lower_band[i] * (100 - stop) / 100, price_precision
+                    ds_lower_band[i] * (100 - stop) / 100, p_precision
                 )
                 take_price[0][i] = round_to_minqty_or_mintick(
-                    close[i] + take_value[0] * atr[i], price_precision
+                    close[i] + take_value[0] * atr[i], p_precision
                 )
                 take_price[1][i] = round_to_minqty_or_mintick(
-                    close[i] + take_value[1] * atr[i], price_precision
+                    close[i] + take_value[1] * atr[i], p_precision
                 )
                 take_price[2][i] = round_to_minqty_or_mintick(
-                    close[i] + take_value[2] * atr[i], price_precision
+                    close[i] + take_value[2] * atr[i], p_precision
                 )
                 take_price[3][i] = round_to_minqty_or_mintick(
-                    close[i] + take_value[3] * atr[i], price_precision
+                    close[i] + take_value[3] * atr[i], p_precision
                 )
                 take_price[4][i] = round_to_minqty_or_mintick(
-                    close[i] + take_value[4] * atr[i], price_precision
+                    close[i] + take_value[4] * atr[i], p_precision
                 )
                 position_size = round_to_minqty_or_mintick(
-                    position_size, qty_precision
+                    position_size, q_precision
                 )
                 qty_take[0] = round_to_minqty_or_mintick(
-                    position_size * take_volume[0] / 100, qty_precision
+                    position_size * take_volume[0] / 100, q_precision
                 )
                 qty_take[1] = round_to_minqty_or_mintick(
-                    position_size * take_volume[1] / 100, qty_precision
+                    position_size * take_volume[1] / 100, q_precision
                 )
                 qty_take[2] = round_to_minqty_or_mintick(
-                    position_size * take_volume[2] / 100, qty_precision
+                    position_size * take_volume[2] / 100, q_precision
                 )
                 qty_take[3] = round_to_minqty_or_mintick(
-                    position_size * take_volume[3] / 100, qty_precision
+                    position_size * take_volume[3] / 100, q_precision
                 )
                 qty_take[4] = round_to_minqty_or_mintick(
-                    position_size * take_volume[4] / 100, qty_precision
+                    position_size * take_volume[4] / 100, q_precision
                 )
                 open_deals_log = np.array(
                     [
@@ -817,7 +817,7 @@ class NuggetV5(Strategy):
                         / 100) < stop_price[i])):
                     stop_price[i] = round_to_minqty_or_mintick(
                         (ds_upper_band[i] * (100 + stop) / 100), 
-                        price_precision
+                        p_precision
                     )
                     alert_short_new_stop = True
 
@@ -969,43 +969,43 @@ class NuggetV5(Strategy):
 
                 entry_date = time[i]
                 liquidation_price = round_to_minqty_or_mintick(
-                    entry_price * (1 + (1 / leverage)), price_precision
+                    entry_price * (1 + (1 / leverage)), p_precision
                 )
                 stop_price[i] = round_to_minqty_or_mintick(
-                    ds_upper_band[i] * (100 + stop) / 100, price_precision
+                    ds_upper_band[i] * (100 + stop) / 100, p_precision
                 )
                 take_price[0][i] = round_to_minqty_or_mintick(
-                    close[i] - take_value[0] * atr[i], price_precision
+                    close[i] - take_value[0] * atr[i], p_precision
                 )
                 take_price[1][i] = round_to_minqty_or_mintick(
-                    close[i] - take_value[1] * atr[i], price_precision
+                    close[i] - take_value[1] * atr[i], p_precision
                 )
                 take_price[2][i] = round_to_minqty_or_mintick(
-                    close[i] - take_value[2] * atr[i], price_precision
+                    close[i] - take_value[2] * atr[i], p_precision
                 )
                 take_price[3][i] = round_to_minqty_or_mintick(
-                    close[i] - take_value[3] * atr[i], price_precision
+                    close[i] - take_value[3] * atr[i], p_precision
                 )
                 take_price[4][i] = round_to_minqty_or_mintick(
-                    close[i] - take_value[4] * atr[i], price_precision
+                    close[i] - take_value[4] * atr[i], p_precision
                 )
                 position_size = round_to_minqty_or_mintick(
-                    position_size, qty_precision
+                    position_size, q_precision
                 )
                 qty_take[0] = round_to_minqty_or_mintick(
-                    position_size * take_volume[0] / 100, qty_precision
+                    position_size * take_volume[0] / 100, q_precision
                 )
                 qty_take[1] = round_to_minqty_or_mintick(
-                    position_size * take_volume[1] / 100, qty_precision
+                    position_size * take_volume[1] / 100, q_precision
                 )
                 qty_take[2] = round_to_minqty_or_mintick(
-                    position_size * take_volume[2] / 100, qty_precision
+                    position_size * take_volume[2] / 100, q_precision
                 )
                 qty_take[3] = round_to_minqty_or_mintick(
-                    position_size * take_volume[3] / 100, qty_precision
+                    position_size * take_volume[3] / 100, q_precision
                 )
                 qty_take[4] = round_to_minqty_or_mintick(
-                    position_size * take_volume[4] / 100, qty_precision
+                    position_size * take_volume[4] / 100, q_precision
                 )
                 open_deals_log = np.array(
                     [

@@ -38,7 +38,7 @@ class DevourerV3(Strategy):
     close_under_ema_p3 = 3
 
     # Parameters to be optimized and their possible values
-    opt_parameters = {
+    opt_params = {
         'stop_atr_p2': [i / 10 for i in range(1, 30)],
         'stop_atr_p3': [i / 10 for i in range(1, 30)],
         'take_atr_p3': [i / 10 for i in range(10, 60)],
@@ -69,7 +69,7 @@ class DevourerV3(Strategy):
 
     # Class attributes
     class_attributes = (
-        'opt_parameters',
+        'opt_params',
         'indicator_options',
         'class_attributes',
         'start',
@@ -79,76 +79,76 @@ class DevourerV3(Strategy):
 
     def __init__(
         self,
-        opt_parameters: list | None = None,
-        all_parameters: list | None = None
+        opt_params: list | None = None,
+        all_params: list | None = None
     ) -> None:
         for key, value in DevourerV3.__dict__.items():
             if (not key.startswith('__') and
                     key not in DevourerV3.class_attributes):
                 self.__dict__[key] = value
 
-        if opt_parameters is not None:
-            self.stop_atr_p2 = opt_parameters[0]
-            self.stop_atr_p3 = opt_parameters[1]
-            self.take_atr_p3 = opt_parameters[2]
-            self.fast_len_p1 = opt_parameters[3]
-            self.slow_len_p1 = opt_parameters[4]
-            self.sig_len_p1 = opt_parameters[5]
-            self.k_len_p1 = opt_parameters[6]
-            self.d_len_p1 = opt_parameters[7]
-            self.kd_limit_p1 = opt_parameters[8]
-            self.atr_len_p1 = opt_parameters[9]
-            self.factor_p1 = opt_parameters[10]
-            self.body_atr_coef_p1 = opt_parameters[11]
-            self.ema_len_p1 = opt_parameters[12]
-            self.atr_len_p2 = opt_parameters[13]
-            self.highest_len_p2 = opt_parameters[14]
-            self.correction_p2 = opt_parameters[15]
-            self.ema_len_p2 = opt_parameters[16]
-            self.atr_len_p3 = opt_parameters[17]
-            self.ema_len_p3 = opt_parameters[18]
-            self.close_under_ema_p3 = opt_parameters[19]
+        if opt_params is not None:
+            self.stop_atr_p2 = opt_params[0]
+            self.stop_atr_p3 = opt_params[1]
+            self.take_atr_p3 = opt_params[2]
+            self.fast_len_p1 = opt_params[3]
+            self.slow_len_p1 = opt_params[4]
+            self.sig_len_p1 = opt_params[5]
+            self.k_len_p1 = opt_params[6]
+            self.d_len_p1 = opt_params[7]
+            self.kd_limit_p1 = opt_params[8]
+            self.atr_len_p1 = opt_params[9]
+            self.factor_p1 = opt_params[10]
+            self.body_atr_coef_p1 = opt_params[11]
+            self.ema_len_p1 = opt_params[12]
+            self.atr_len_p2 = opt_params[13]
+            self.highest_len_p2 = opt_params[14]
+            self.correction_p2 = opt_params[15]
+            self.ema_len_p2 = opt_params[16]
+            self.atr_len_p3 = opt_params[17]
+            self.ema_len_p3 = opt_params[18]
+            self.close_under_ema_p3 = opt_params[19]
 
-        if all_parameters is not None:
-            self.margin_type = all_parameters[0]
-            self.direction = all_parameters[1]
-            self.initial_capital = all_parameters[2]
-            self.commission = all_parameters[3]
-            self.order_size_type = all_parameters[4]
-            self.order_size = all_parameters[5]
-            self.leverage = all_parameters[6]
-            self.stop_atr_p2 = all_parameters[7]
-            self.stop_atr_p3 = all_parameters[8]
-            self.take_atr_p3 = all_parameters[9]
-            self.fast_len_p1 = all_parameters[10]
-            self.slow_len_p1 = all_parameters[11]
-            self.sig_len_p1 = all_parameters[12]
-            self.k_len_p1 = all_parameters[13]
-            self.d_len_p1 = all_parameters[14]
-            self.kd_limit_p1 = all_parameters[15]
-            self.atr_len_p1 = all_parameters[16]
-            self.factor_p1 = all_parameters[17]
-            self.body_atr_coef_p1 = all_parameters[18]
-            self.ema_len_p1 = all_parameters[19]
-            self.atr_len_p2 = all_parameters[20]
-            self.highest_len_p2 = all_parameters[21]
-            self.correction_p2 = all_parameters[22]
-            self.ema_len_p2 = all_parameters[23]
-            self.atr_len_p3 = all_parameters[24]
-            self.ema_len_p3 = all_parameters[25]
-            self.close_under_ema_p3 = all_parameters[26]
+        if all_params is not None:
+            self.margin_type = all_params[0]
+            self.direction = all_params[1]
+            self.initial_capital = all_params[2]
+            self.commission = all_params[3]
+            self.order_size_type = all_params[4]
+            self.order_size = all_params[5]
+            self.leverage = all_params[6]
+            self.stop_atr_p2 = all_params[7]
+            self.stop_atr_p3 = all_params[8]
+            self.take_atr_p3 = all_params[9]
+            self.fast_len_p1 = all_params[10]
+            self.slow_len_p1 = all_params[11]
+            self.sig_len_p1 = all_params[12]
+            self.k_len_p1 = all_params[13]
+            self.d_len_p1 = all_params[14]
+            self.kd_limit_p1 = all_params[15]
+            self.atr_len_p1 = all_params[16]
+            self.factor_p1 = all_params[17]
+            self.body_atr_coef_p1 = all_params[18]
+            self.ema_len_p1 = all_params[19]
+            self.atr_len_p2 = all_params[20]
+            self.highest_len_p2 = all_params[21]
+            self.correction_p2 = all_params[22]
+            self.ema_len_p2 = all_params[23]
+            self.atr_len_p3 = all_params[24]
+            self.ema_len_p3 = all_params[25]
+            self.close_under_ema_p3 = all_params[26]
 
     def start(self, exchange_data: dict) -> None:
         super().__init__()
 
-        self.client = exchange_data['client']
+        self.client = exchange_data.get('client', None)
         self.time = exchange_data['klines'][:, 0]
         self.open = exchange_data['klines'][:, 1]
         self.high = exchange_data['klines'][:, 2]
         self.low = exchange_data['klines'][:, 3]
         self.close = exchange_data['klines'][:, 4]
-        self.price_precision = exchange_data['price_precision']
-        self.qty_precision = exchange_data['qty_precision']
+        self.p_precision = exchange_data['p_precision']
+        self.q_precision = exchange_data['q_precision']
 
         self.equity = self.initial_capital
         self.stop_price = np.full(self.time.shape[0], np.nan)
@@ -222,8 +222,8 @@ class DevourerV3(Strategy):
                 self.kd_limit_p1,
                 self.body_atr_coef_p1,
                 self.close_under_ema_p3,
-                self.price_precision,
-                self.qty_precision,
+                self.p_precision,
+                self.q_precision,
                 self.time,
                 self.open,
                 self.high,
@@ -368,8 +368,8 @@ class DevourerV3(Strategy):
         kd_limit_p1: float,
         body_atr_coef_p1: float,
         close_under_ema_p3,
-        price_precision: float,
-        qty_precision: float,
+        p_precision: float,
+        q_precision: float,
         time: np.ndarray,
         open: np.ndarray,
         high: np.ndarray,
@@ -713,10 +713,10 @@ class DevourerV3(Strategy):
                         
                     entry_date = time[i]
                     liquidation_price = round_to_minqty_or_mintick(
-                        entry_price * (1 - (1 / leverage)), price_precision
+                        entry_price * (1 - (1 / leverage)), p_precision
                     )
                     position_size = round_to_minqty_or_mintick(
-                        position_size, qty_precision
+                        position_size, q_precision
                     )
                     open_deals_log = np.array(
                         [
@@ -822,13 +822,13 @@ class DevourerV3(Strategy):
                     
                 entry_date = time[i]
                 stop_price[i] = round_to_minqty_or_mintick(
-                    close[i] - atr_p2[i] * stop_atr_p2, price_precision
+                    close[i] - atr_p2[i] * stop_atr_p2, p_precision
                 )
                 liquidation_price = round_to_minqty_or_mintick(
-                    entry_price * (1 - (1 / leverage)), price_precision
+                    entry_price * (1 - (1 / leverage)), p_precision
                 )
                 position_size = round_to_minqty_or_mintick(
-                    position_size, qty_precision
+                    position_size, q_precision
                 )
                 open_deals_log = np.array(
                     [
@@ -938,16 +938,16 @@ class DevourerV3(Strategy):
 
                 entry_date = time[i]
                 stop_price[i] = round_to_minqty_or_mintick(
-                    close[i] + atr_p3[i] * stop_atr_p3, price_precision
+                    close[i] + atr_p3[i] * stop_atr_p3, p_precision
                 )
                 take_price[i] = round_to_minqty_or_mintick(
-                    close[i] - atr_p3[i] * take_atr_p3, price_precision
+                    close[i] - atr_p3[i] * take_atr_p3, p_precision
                 )
                 liquidation_price = round_to_minqty_or_mintick(
-                    entry_price * (1 + (1 / leverage)), price_precision
+                    entry_price * (1 + (1 / leverage)), p_precision
                 )
                 position_size = round_to_minqty_or_mintick(
-                    position_size, qty_precision
+                    position_size, q_precision
                 )
                 open_deals_log = np.array(
                     [

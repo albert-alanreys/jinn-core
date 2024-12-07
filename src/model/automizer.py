@@ -56,19 +56,19 @@ class Automizer():
 
                 client.get_klines(symbol, interval)
                 strategy_instance = strategy.type(
-                    all_parameters=parameters
+                    all_params=parameters
                 )
-                all_parameters = strategy_instance.__dict__.copy()
-                all_parameters.pop('_abc_impl')
+                all_params = strategy_instance.__dict__.copy()
+                all_params.pop('_abc_impl')
                 strategy_data = {
                     'name': strategy.name,
                     'instance': strategy_instance,
                     'client': client,
-                    'parameters': all_parameters,
+                    'parameters': all_params,
                     'exchange': exchange.lower(),
                     'symbol': symbol,
                     'interval': interval,
-                    'mintick': client.price_precision,
+                    'mintick': client.p_precision,
                     'alerts': self.alerts,
                     'updated': False
                 }
@@ -90,17 +90,17 @@ class Automizer():
             strategy_instance = Registry.data[
                 automation['strategy']
             ].type()
-            all_parameters = strategy_instance.__dict__.copy()
-            all_parameters.pop('_abc_impl')
+            all_params = strategy_instance.__dict__.copy()
+            all_params.pop('_abc_impl')
             strategy_data = {
                 'name': Registry.data[automation['strategy']].name,
                 'instance': strategy_instance,
                 'client': client,
-                'parameters': all_parameters,
+                'parameters': all_params,
                 'exchange': exchange.lower(),
                 'symbol': symbol,
                 'interval': interval,
-                'mintick': client.price_precision,
+                'mintick': client.p_precision,
                 'alerts': self.alerts,
                 'updated': False
             }

@@ -44,7 +44,7 @@ class NuggetV4(Strategy):
     channel_range = 7.0
 
     # Parameters to be optimized and their possible values
-    opt_parameters = {
+    opt_params = {
         'stop_type': [i for i in range(3, 4)],
         'stop': [i / 10 for i in range(1, 11)],
         'trail_stop': [i for i in range(0, 9)],
@@ -93,7 +93,7 @@ class NuggetV4(Strategy):
 
     # Class attributes
     class_attributes = (
-        'opt_parameters',
+        'opt_params',
         'indicator_options',
         'class_attributes',
         'start',
@@ -103,82 +103,82 @@ class NuggetV4(Strategy):
 
     def __init__(
         self,
-        opt_parameters: list | None = None,
-        all_parameters: list | None = None
+        opt_params: list | None = None,
+        all_params: list | None = None
     ) -> None:
         for key, value in NuggetV4.__dict__.items():
             if (not key.startswith('__') and
                     key not in NuggetV4.class_attributes):
                 self.__dict__[key] = value
 
-        if opt_parameters is not None:
-            self.stop_type = opt_parameters[0]
-            self.stop = opt_parameters[1]
-            self.trail_stop = opt_parameters[2]
-            self.trail_percent = opt_parameters[3]
-            self.take_volume_1 = opt_parameters[4]
-            self.take_volume_2 = opt_parameters[5]
-            self.st_atr_period = opt_parameters[6]
-            self.st_factor = opt_parameters[7]
-            self.st_upper_band = opt_parameters[8]
-            self.st_lower_band = opt_parameters[9]
-            self.rsi_length = opt_parameters[10]
-            self.rsi_long_upper_bound = opt_parameters[11]
-            self.rsi_long_lower_bound = opt_parameters[12]
-            self.rsi_short_upper_bound = opt_parameters[13]
-            self.rsi_short_lower_bound = opt_parameters[14]
-            self.bb_filter = opt_parameters[15]
-            self.ma_length = opt_parameters[16]
-            self.bb_mult = opt_parameters[17]
-            self.bb_long_bound = opt_parameters[18]
-            self.bb_short_bound = opt_parameters[19]
-            self.pivot_bars = opt_parameters[20]
-            self.look_back = opt_parameters[21]
-            self.channel_range = opt_parameters[22]
+        if opt_params is not None:
+            self.stop_type = opt_params[0]
+            self.stop = opt_params[1]
+            self.trail_stop = opt_params[2]
+            self.trail_percent = opt_params[3]
+            self.take_volume_1 = opt_params[4]
+            self.take_volume_2 = opt_params[5]
+            self.st_atr_period = opt_params[6]
+            self.st_factor = opt_params[7]
+            self.st_upper_band = opt_params[8]
+            self.st_lower_band = opt_params[9]
+            self.rsi_length = opt_params[10]
+            self.rsi_long_upper_bound = opt_params[11]
+            self.rsi_long_lower_bound = opt_params[12]
+            self.rsi_short_upper_bound = opt_params[13]
+            self.rsi_short_lower_bound = opt_params[14]
+            self.bb_filter = opt_params[15]
+            self.ma_length = opt_params[16]
+            self.bb_mult = opt_params[17]
+            self.bb_long_bound = opt_params[18]
+            self.bb_short_bound = opt_params[19]
+            self.pivot_bars = opt_params[20]
+            self.look_back = opt_params[21]
+            self.channel_range = opt_params[22]
 
-        if all_parameters is not None:
-            self.margin_type = all_parameters[0]
-            self.direction = all_parameters[1]
-            self.initial_capital = all_parameters[2]
-            self.min_capital = all_parameters[3]
-            self.commission = all_parameters[4]
-            self.order_size_type = all_parameters[5]
-            self.order_size = all_parameters[6]
-            self.leverage = all_parameters[7]
-            self.stop_type = all_parameters[8]
-            self.stop = all_parameters[9]
-            self.trail_stop = all_parameters[10]
-            self.trail_percent = all_parameters[11]
-            self.take_volume_1 = all_parameters[12]
-            self.take_volume_2 = all_parameters[13]
-            self.st_atr_period = all_parameters[14]
-            self.st_factor = all_parameters[15]
-            self.st_upper_band = all_parameters[16]
-            self.st_lower_band = all_parameters[17]
-            self.rsi_length = all_parameters[18]
-            self.rsi_long_upper_bound = all_parameters[19]
-            self.rsi_long_lower_bound = all_parameters[20]
-            self.rsi_short_upper_bound = all_parameters[21]
-            self.rsi_short_lower_bound = all_parameters[22]
-            self.bb_filter = all_parameters[23]
-            self.ma_length = all_parameters[24]
-            self.bb_mult = all_parameters[25]
-            self.bb_long_bound = all_parameters[26]
-            self.bb_short_bound = all_parameters[27]
-            self.pivot_bars = all_parameters[28]
-            self.look_back = all_parameters[29]
-            self.channel_range = all_parameters[30]
+        if all_params is not None:
+            self.margin_type = all_params[0]
+            self.direction = all_params[1]
+            self.initial_capital = all_params[2]
+            self.min_capital = all_params[3]
+            self.commission = all_params[4]
+            self.order_size_type = all_params[5]
+            self.order_size = all_params[6]
+            self.leverage = all_params[7]
+            self.stop_type = all_params[8]
+            self.stop = all_params[9]
+            self.trail_stop = all_params[10]
+            self.trail_percent = all_params[11]
+            self.take_volume_1 = all_params[12]
+            self.take_volume_2 = all_params[13]
+            self.st_atr_period = all_params[14]
+            self.st_factor = all_params[15]
+            self.st_upper_band = all_params[16]
+            self.st_lower_band = all_params[17]
+            self.rsi_length = all_params[18]
+            self.rsi_long_upper_bound = all_params[19]
+            self.rsi_long_lower_bound = all_params[20]
+            self.rsi_short_upper_bound = all_params[21]
+            self.rsi_short_lower_bound = all_params[22]
+            self.bb_filter = all_params[23]
+            self.ma_length = all_params[24]
+            self.bb_mult = all_params[25]
+            self.bb_long_bound = all_params[26]
+            self.bb_short_bound = all_params[27]
+            self.pivot_bars = all_params[28]
+            self.look_back = all_params[29]
+            self.channel_range = all_params[30]
 
     def start(self, exchange_data: dict) -> None:
         super().__init__()
 
-        self.client = exchange_data['client']
+        self.client = exchange_data.get('client', None)
         self.time = exchange_data['klines'][:, 0]
         self.high = exchange_data['klines'][:, 2]
         self.low = exchange_data['klines'][:, 3]
         self.close = exchange_data['klines'][:, 4]
-        self.price_precision = exchange_data['price_precision']
-        self.qty_precision = exchange_data['qty_precision']
+        self.p_precision = exchange_data['p_precision']
+        self.q_precision = exchange_data['q_precision']
 
         self.equity = self.initial_capital
         self.stop_price = np.full(self.time.shape[0], np.nan)
@@ -278,8 +278,8 @@ class NuggetV4(Strategy):
                 self.pivot_bars,
                 self.look_back,
                 self.channel_range,
-                self.price_precision,
-                self.qty_precision,
+                self.p_precision,
+                self.q_precision,
                 self.time,
                 self.high,
                 self.low,
@@ -492,8 +492,8 @@ class NuggetV4(Strategy):
         pivot_bars: int,
         look_back: int,
         channel_range: float,
-        price_precision: float,
-        qty_precision: float,
+        p_precision: float,
+        q_precision: float,
         time: np.ndarray,
         high: np.ndarray,
         low: np.ndarray,
@@ -780,7 +780,7 @@ class NuggetV4(Strategy):
                         / 100) > stop_price[i])):
                     stop_price[i] = round_to_minqty_or_mintick(
                         ds_lower_band[i] * (100 - stop) / 100,
-                        price_precision
+                        p_precision
                     )
                     alert_long_new_stop = True
                 elif (stop_type == 2 or stop_type == 3) and not stop_moved:
@@ -833,7 +833,7 @@ class NuggetV4(Strategy):
                         stop_price[i] = round_to_minqty_or_mintick(
                             (take - entry_price) * (trail_percent / 100)
                                 + entry_price,
-                            price_precision
+                            p_precision
                         )
                         alert_long_new_stop = True
 
@@ -1233,10 +1233,10 @@ class NuggetV4(Strategy):
                     )
                     
                 position_size = round_to_minqty_or_mintick(
-                    position_size, qty_precision
+                    position_size, q_precision
                 )
                 liquidation_price = round_to_minqty_or_mintick(
-                    entry_price * (1 - (1 / leverage)), price_precision
+                    entry_price * (1 - (1 / leverage)), p_precision
                 )
                 open_deals_log = np.array(
                     [
@@ -1248,11 +1248,11 @@ class NuggetV4(Strategy):
                 if stop_type == 1 or stop_type == 2:
                     stop_price[i] = round_to_minqty_or_mintick(
                         ds_lower_band[i] * (100 - stop) / 100,
-                        price_precision
+                        p_precision
                     )
                 elif stop_type == 3:
                     stop_price[i] = round_to_minqty_or_mintick(
-                        fibo_levels[0] * (100 - stop) / 100, price_precision
+                        fibo_levels[0] * (100 - stop) / 100, p_precision
                     )
 
                 if last_channel_range >= channel_range:
@@ -1260,51 +1260,51 @@ class NuggetV4(Strategy):
 
                     if close[i] >= fibo_levels[0] and close[i] < fibo_levels[1]:
                         take_price[0][i] = round_to_minqty_or_mintick(
-                            fibo_levels[2], price_precision
+                            fibo_levels[2], p_precision
                         )
                         take_price[1][i] = round_to_minqty_or_mintick(
-                            fibo_levels[3], price_precision
+                            fibo_levels[3], p_precision
                         )
                         take_price[2][i] = round_to_minqty_or_mintick(
-                            fibo_levels[4], price_precision
+                            fibo_levels[4], p_precision
                         )
                         take_price[3][i] = round_to_minqty_or_mintick(
-                            fibo_levels[5], price_precision
+                            fibo_levels[5], p_precision
                         )
                         take_price[4][i] = round_to_minqty_or_mintick(
-                            fibo_levels[6], price_precision
+                            fibo_levels[6], p_precision
                         )
                     elif close[i] >= fibo_levels[1]:
                         take_price[0][i] = round_to_minqty_or_mintick(
-                            fibo_levels[3], price_precision
+                            fibo_levels[3], p_precision
                         )
                         take_price[1][i] = round_to_minqty_or_mintick(
-                            fibo_levels[4], price_precision
+                            fibo_levels[4], p_precision
                         )
                         take_price[2][i] = round_to_minqty_or_mintick(
-                            fibo_levels[5], price_precision
+                            fibo_levels[5], p_precision
                         )
                         take_price[3][i] = round_to_minqty_or_mintick(
-                            fibo_levels[6], price_precision
+                            fibo_levels[6], p_precision
                         )
                         take_price[4][i] = round_to_minqty_or_mintick(
-                            fibo_levels[7], price_precision
+                            fibo_levels[7], p_precision
                         )
 
                     qty_take_1[0] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[0] / 100, qty_precision
+                        position_size * take_volume_1[0] / 100, q_precision
                     )
                     qty_take_1[1] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[1] / 100, qty_precision
+                        position_size * take_volume_1[1] / 100, q_precision
                     )
                     qty_take_1[2] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[2] / 100, qty_precision
+                        position_size * take_volume_1[2] / 100, q_precision
                     )
                     qty_take_1[3] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[3] / 100, qty_precision
+                        position_size * take_volume_1[3] / 100, q_precision
                     )
                     qty_take_1[4] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[4] / 100, qty_precision
+                        position_size * take_volume_1[4] / 100, q_precision
                     )
                     alert_long_1 = True
                 elif last_channel_range < channel_range:
@@ -1312,96 +1312,96 @@ class NuggetV4(Strategy):
 
                     if close[i] >= fibo_levels[0] and close[i] < fibo_levels[1]:
                         take_price[0][i] = round_to_minqty_or_mintick(
-                            fibo_levels[2], price_precision
+                            fibo_levels[2], p_precision
                         )
                         take_price[1][i] = round_to_minqty_or_mintick(
-                            fibo_levels[3], price_precision
+                            fibo_levels[3], p_precision
                         )
                         take_price[2][i] = round_to_minqty_or_mintick(
-                            fibo_levels[4], price_precision
+                            fibo_levels[4], p_precision
                         )
                         take_price[3][i] = round_to_minqty_or_mintick(
-                            fibo_levels[5], price_precision
+                            fibo_levels[5], p_precision
                         )
                         take_price[4][i] = round_to_minqty_or_mintick(
-                            fibo_levels[6], price_precision
+                            fibo_levels[6], p_precision
                         )
                         take_price[5][i] = round_to_minqty_or_mintick(
-                            fibo_levels[7], price_precision
+                            fibo_levels[7], p_precision
                         )
                         take_price[6][i] = round_to_minqty_or_mintick(
-                            fibo_levels[8], price_precision
+                            fibo_levels[8], p_precision
                         )
                         take_price[7][i] = round_to_minqty_or_mintick(
-                            fibo_levels[9], price_precision
+                            fibo_levels[9], p_precision
                         )
                         take_price[8][i] = round_to_minqty_or_mintick(
-                            fibo_levels[10], price_precision
+                            fibo_levels[10], p_precision
                         )
                         take_price[9][i] = round_to_minqty_or_mintick(
-                            fibo_levels[11], price_precision
+                            fibo_levels[11], p_precision
                         )
                     elif close[i] >= fibo_levels[1]:
                         take_price[0][i] = round_to_minqty_or_mintick(
-                            fibo_levels[3], price_precision
+                            fibo_levels[3], p_precision
                         )
                         take_price[1][i] = round_to_minqty_or_mintick(
-                            fibo_levels[4], price_precision
+                            fibo_levels[4], p_precision
                         )
                         take_price[2][i] = round_to_minqty_or_mintick(
-                            fibo_levels[5], price_precision
+                            fibo_levels[5], p_precision
                         )
                         take_price[3][i] = round_to_minqty_or_mintick(
-                            fibo_levels[6], price_precision
+                            fibo_levels[6], p_precision
                         )
                         take_price[4][i] = round_to_minqty_or_mintick(
-                            fibo_levels[7], price_precision
+                            fibo_levels[7], p_precision
                         )
                         take_price[5][i] = round_to_minqty_or_mintick(
-                            fibo_levels[8], price_precision
+                            fibo_levels[8], p_precision
                         )
                         take_price[6][i] = round_to_minqty_or_mintick(
-                            fibo_levels[9], price_precision
+                            fibo_levels[9], p_precision
                         )
                         take_price[7][i] = round_to_minqty_or_mintick(
-                            fibo_levels[10], price_precision
+                            fibo_levels[10], p_precision
                         )
                         take_price[8][i] = round_to_minqty_or_mintick(
-                            fibo_levels[11], price_precision
+                            fibo_levels[11], p_precision
                         )
                         take_price[9][i] = round_to_minqty_or_mintick(
-                            fibo_levels[12], price_precision
+                            fibo_levels[12], p_precision
                         )
 
                     qty_take_2[0] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[0] / 100, qty_precision
+                        position_size * take_volume_2[0] / 100, q_precision
                     )
                     qty_take_2[1] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[1] / 100, qty_precision
+                        position_size * take_volume_2[1] / 100, q_precision
                     )
                     qty_take_2[2] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[2] / 100, qty_precision
+                        position_size * take_volume_2[2] / 100, q_precision
                     )
                     qty_take_2[3] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[3] / 100, qty_precision
+                        position_size * take_volume_2[3] / 100, q_precision
                     )
                     qty_take_2[4] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[4] / 100, qty_precision
+                        position_size * take_volume_2[4] / 100, q_precision
                     )
                     qty_take_2[5] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[5] / 100, qty_precision
+                        position_size * take_volume_2[5] / 100, q_precision
                     )
                     qty_take_2[6] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[6] / 100, qty_precision
+                        position_size * take_volume_2[6] / 100, q_precision
                     )
                     qty_take_2[7] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[7] / 100, qty_precision
+                        position_size * take_volume_2[7] / 100, q_precision
                     )
                     qty_take_2[8] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[8] / 100, qty_precision
+                        position_size * take_volume_2[8] / 100, q_precision
                     )
                     qty_take_2[9] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[9] / 100, qty_precision
+                        position_size * take_volume_2[9] / 100, q_precision
                     )
                     alert_long_2 = True
 
@@ -1444,7 +1444,7 @@ class NuggetV4(Strategy):
                         / 100) < stop_price[i])):
                     stop_price[i] = round_to_minqty_or_mintick(
                         (ds_upper_band[i] * (100 + stop) / 100), 
-                        price_precision
+                        p_precision
                     )
                     alert_short_new_stop = True
                 elif (stop_type == 2 or stop_type == 3) and not stop_moved:
@@ -1497,7 +1497,7 @@ class NuggetV4(Strategy):
                         stop_price[i] = round_to_minqty_or_mintick(
                             (take - entry_price) * (trail_percent / 100)
                                 + entry_price,
-                            price_precision
+                            p_precision
                         )
                         alert_short_new_stop = True
     
@@ -1897,10 +1897,10 @@ class NuggetV4(Strategy):
                     )
                     
                 position_size = round_to_minqty_or_mintick(
-                    position_size, qty_precision
+                    position_size, q_precision
                 )
                 liquidation_price = round_to_minqty_or_mintick(
-                    entry_price * (1 + (1 / leverage)), price_precision
+                    entry_price * (1 + (1 / leverage)), p_precision
                 )
                 open_deals_log = np.array(
                     [
@@ -1912,11 +1912,11 @@ class NuggetV4(Strategy):
                 if stop_type == 1 or stop_type == 2:
                     stop_price[i] = round_to_minqty_or_mintick(
                         ds_upper_band[i] * (100 + stop) / 100,
-                        price_precision
+                        p_precision
                     )
                 elif stop_type == 3:
                     stop_price[i] = round_to_minqty_or_mintick(
-                        fibo_levels[0] * (100 + stop) / 100, price_precision
+                        fibo_levels[0] * (100 + stop) / 100, p_precision
                     )
 
                 if last_channel_range >= channel_range:
@@ -1924,51 +1924,51 @@ class NuggetV4(Strategy):
 
                     if close[i] <= fibo_levels[0] and close[i] > fibo_levels[1]:
                         take_price[0][i] = round_to_minqty_or_mintick(
-                            fibo_levels[2], price_precision
+                            fibo_levels[2], p_precision
                         )
                         take_price[1][i] = round_to_minqty_or_mintick(
-                            fibo_levels[3], price_precision
+                            fibo_levels[3], p_precision
                         )
                         take_price[2][i] = round_to_minqty_or_mintick(
-                            fibo_levels[4], price_precision
+                            fibo_levels[4], p_precision
                         )
                         take_price[3][i] = round_to_minqty_or_mintick(
-                            fibo_levels[5], price_precision
+                            fibo_levels[5], p_precision
                         )
                         take_price[4][i] = round_to_minqty_or_mintick(
-                            fibo_levels[6], price_precision
+                            fibo_levels[6], p_precision
                         )
                     elif close[i] <= fibo_levels[1]:
                         take_price[0][i] = round_to_minqty_or_mintick(
-                            fibo_levels[3], price_precision
+                            fibo_levels[3], p_precision
                         )
                         take_price[1][i] = round_to_minqty_or_mintick(
-                            fibo_levels[4], price_precision
+                            fibo_levels[4], p_precision
                         )
                         take_price[2][i] = round_to_minqty_or_mintick(
-                            fibo_levels[5], price_precision
+                            fibo_levels[5], p_precision
                         )
                         take_price[3][i] = round_to_minqty_or_mintick(
-                            fibo_levels[6], price_precision
+                            fibo_levels[6], p_precision
                         )
                         take_price[4][i] = round_to_minqty_or_mintick(
-                            fibo_levels[7], price_precision
+                            fibo_levels[7], p_precision
                         )
 
                     qty_take_1[0] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[0] / 100, qty_precision
+                        position_size * take_volume_1[0] / 100, q_precision
                     )
                     qty_take_1[1] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[1] / 100, qty_precision
+                        position_size * take_volume_1[1] / 100, q_precision
                     )
                     qty_take_1[2] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[2] / 100, qty_precision
+                        position_size * take_volume_1[2] / 100, q_precision
                     )
                     qty_take_1[3] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[3] / 100, qty_precision
+                        position_size * take_volume_1[3] / 100, q_precision
                     )
                     qty_take_1[4] = round_to_minqty_or_mintick(
-                        position_size * take_volume_1[4] / 100, qty_precision
+                        position_size * take_volume_1[4] / 100, q_precision
                     )
                     alert_short_1 = True
                 elif last_channel_range < channel_range:
@@ -1976,96 +1976,96 @@ class NuggetV4(Strategy):
 
                     if close[i] <= fibo_levels[0] and close[i] > fibo_levels[1]:
                         take_price[0][i] = round_to_minqty_or_mintick(
-                            fibo_levels[2], price_precision
+                            fibo_levels[2], p_precision
                         )
                         take_price[1][i] = round_to_minqty_or_mintick(
-                            fibo_levels[3], price_precision
+                            fibo_levels[3], p_precision
                         )
                         take_price[2][i] = round_to_minqty_or_mintick(
-                            fibo_levels[4], price_precision
+                            fibo_levels[4], p_precision
                         )
                         take_price[3][i] = round_to_minqty_or_mintick(
-                            fibo_levels[5], price_precision
+                            fibo_levels[5], p_precision
                         )
                         take_price[4][i] = round_to_minqty_or_mintick(
-                            fibo_levels[6], price_precision
+                            fibo_levels[6], p_precision
                         )
                         take_price[5][i] = round_to_minqty_or_mintick(
-                            fibo_levels[7], price_precision
+                            fibo_levels[7], p_precision
                         )
                         take_price[6][i] = round_to_minqty_or_mintick(
-                            fibo_levels[8], price_precision
+                            fibo_levels[8], p_precision
                         )
                         take_price[7][i] = round_to_minqty_or_mintick(
-                            fibo_levels[9], price_precision
+                            fibo_levels[9], p_precision
                         )
                         take_price[8][i] = round_to_minqty_or_mintick(
-                            fibo_levels[10], price_precision
+                            fibo_levels[10], p_precision
                         )
                         take_price[9][i] = round_to_minqty_or_mintick(
-                            fibo_levels[11], price_precision
+                            fibo_levels[11], p_precision
                         )
                     elif close[i] <= fibo_levels[1]:
                         take_price[0][i] = round_to_minqty_or_mintick(
-                            fibo_levels[3], price_precision
+                            fibo_levels[3], p_precision
                         )
                         take_price[1][i] = round_to_minqty_or_mintick(
-                            fibo_levels[4], price_precision
+                            fibo_levels[4], p_precision
                         )
                         take_price[2][i] = round_to_minqty_or_mintick(
-                            fibo_levels[5], price_precision
+                            fibo_levels[5], p_precision
                         )
                         take_price[3][i] = round_to_minqty_or_mintick(
-                            fibo_levels[6], price_precision
+                            fibo_levels[6], p_precision
                         )
                         take_price[4][i] = round_to_minqty_or_mintick(
-                            fibo_levels[7], price_precision
+                            fibo_levels[7], p_precision
                         )
                         take_price[5][i] = round_to_minqty_or_mintick(
-                            fibo_levels[8], price_precision
+                            fibo_levels[8], p_precision
                         )
                         take_price[6][i] = round_to_minqty_or_mintick(
-                            fibo_levels[9], price_precision
+                            fibo_levels[9], p_precision
                         )
                         take_price[7][i] = round_to_minqty_or_mintick(
-                            fibo_levels[10], price_precision
+                            fibo_levels[10], p_precision
                         )
                         take_price[8][i] = round_to_minqty_or_mintick(
-                            fibo_levels[11], price_precision
+                            fibo_levels[11], p_precision
                         )
                         take_price[9][i] = round_to_minqty_or_mintick(
-                            fibo_levels[12], price_precision
+                            fibo_levels[12], p_precision
                         )
 
                     qty_take_2[0] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[0] / 100, qty_precision
+                        position_size * take_volume_2[0] / 100, q_precision
                     )
                     qty_take_2[1] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[1] / 100, qty_precision
+                        position_size * take_volume_2[1] / 100, q_precision
                     )
                     qty_take_2[2] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[2] / 100, qty_precision
+                        position_size * take_volume_2[2] / 100, q_precision
                     )
                     qty_take_2[3] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[3] / 100, qty_precision
+                        position_size * take_volume_2[3] / 100, q_precision
                     )
                     qty_take_2[4] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[4] / 100, qty_precision
+                        position_size * take_volume_2[4] / 100, q_precision
                     )
                     qty_take_2[5] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[5] / 100, qty_precision
+                        position_size * take_volume_2[5] / 100, q_precision
                     )
                     qty_take_2[6] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[6] / 100, qty_precision
+                        position_size * take_volume_2[6] / 100, q_precision
                     )
                     qty_take_2[7] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[7] / 100, qty_precision
+                        position_size * take_volume_2[7] / 100, q_precision
                     )
                     qty_take_2[8] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[8] / 100, qty_precision
+                        position_size * take_volume_2[8] / 100, q_precision
                     )
                     qty_take_2[9] = round_to_minqty_or_mintick(
-                        position_size * take_volume_2[9] / 100, qty_precision
+                        position_size * take_volume_2[9] / 100, q_precision
                     )
                     alert_short_2 = True
 
