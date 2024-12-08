@@ -26,10 +26,10 @@ export default class LeftToolbarManager {
     });
   }
 
-  manage(chart, liteData, klineSeries) {
+  manage(chart, liteData, candlestickSeries) {
     this.chart = chart;
     this.liteData = liteData;
-    this.klineSeries = klineSeries;
+    this.candlestickSeries = candlestickSeries;
     this.lines = [];
 
     this.manageScreenshotButton();
@@ -45,7 +45,7 @@ export default class LeftToolbarManager {
       this.chart.takeScreenshot().toBlob(openScreenshot, "image/png", 1);
 
       function openScreenshot(blob) {
-        var url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         window.open(url, "_blank");
       }
     };
@@ -69,13 +69,13 @@ export default class LeftToolbarManager {
 
   manageLineButton() {
     this.setLinePoint = (param) => {
-      var x = param.time;
-      var y = this.klineSeries.coordinateToPrice(param.point.y);
+      const x = param.time;
+      const y = this.candlestickSeries.coordinateToPrice(param.point.y);
 
       if (this.startLine == null) {
         this.startLine = { time: x, value: y };
       } else {
-        var line = this.chart.addLineSeries(this.lineOptions);
+        const line = this.chart.addLineSeries(this.lineOptions);
         this.lines.push(line);
 
         if (x >= this.startLine.time) {
@@ -107,23 +107,23 @@ export default class LeftToolbarManager {
   }
 
   manageRulerButton() {
-    var mintick = this.liteData.mintick;
-    var precision = String(mintick).match(/.\d+$/g)[0].length - 1;
+    const mintick = this.liteData.mintick;
+    const precision = String(mintick).match(/.\d+$/g)[0].length - 1;
 
     this.crosshairMoveHandler = (param) => {
       if (param.point) {
-        var chartX = param.logical;
-        var chartY = this.klineSeries.coordinateToPrice(param.point.y);
-        var localX = param.sourceEvent.localX;
-        var localY = param.sourceEvent.localY;
+        const chartX = param.logical;
+        const chartY = this.candlestickSeries.coordinateToPrice(param.point.y);
+        const localX = param.sourceEvent.localX;
+        const localY = param.sourceEvent.localY;
 
-        var width = localX - this.rulerStart.localX;
-        var height = this.rulerStart.localY - localY;
+        const width = localX - this.rulerStart.localX;
+        const height = this.rulerStart.localY - localY;
 
-        var num1 = (chartY - this.rulerStart.chartY).toFixed(precision);
-        var num2 = ((chartY / this.rulerStart.chartY - 1) * 100).toFixed(2);
-        var num3 = (num1 / mintick).toFixed(0);
-        var num4 = (chartX - this.rulerStart.chartX).toFixed(0);
+        const num1 = (chartY - this.rulerStart.chartY).toFixed(precision);
+        const num2 = ((chartY / this.rulerStart.chartY - 1) * 100).toFixed(2);
+        const num3 = (num1 / mintick).toFixed(0);
+        const num4 = (chartX - this.rulerStart.chartX).toFixed(0);
 
         if (width >= 0) {
           if (this.innerDiv1.dataset.direction == "left") {
@@ -137,7 +137,7 @@ export default class LeftToolbarManager {
             this.innerDiv1.setAttribute("data-direction", "left");
           }
 
-          this.ruler.style.width = `${Math.abs(width) - 3}px`;
+          this.ruler.style.width = `${Math.abs(width)}px`;
         }
 
         if (height >= 0) {
@@ -175,10 +175,10 @@ export default class LeftToolbarManager {
     };
 
     this.setRulerPoint = (param) => {
-      var chartX = param.logical;
-      var chartY = this.klineSeries.coordinateToPrice(param.point.y);
-      var localX = param.sourceEvent.localX;
-      var localY = param.sourceEvent.localY;
+      const chartX = param.logical;
+      const chartY = this.candlestickSeries.coordinateToPrice(param.point.y);
+      const localX = param.sourceEvent.localX;
+      const localY = param.sourceEvent.localY;
 
       if (this.rulerStart == null) {
         this.ruler = document.createElement("div");
@@ -189,7 +189,7 @@ export default class LeftToolbarManager {
         this.rulerLabel.setAttribute("id", "ruler-label");
         this.ruler.appendChild(this.rulerLabel);
 
-        var arrowHorizontal = document.createElement("div");
+        const arrowHorizontal = document.createElement("div");
         arrowHorizontal.setAttribute("id", "arrow-horizontal");
         this.ruler.appendChild(arrowHorizontal);
 
@@ -197,7 +197,7 @@ export default class LeftToolbarManager {
         this.innerDiv1.setAttribute("data-direction", "right");
         arrowHorizontal.appendChild(this.innerDiv1);
 
-        var arrowVertical = document.createElement("div");
+        const arrowVertical = document.createElement("div");
         arrowVertical.setAttribute("id", "arrow-vertical");
         this.ruler.appendChild(arrowVertical);
 
@@ -246,13 +246,13 @@ export default class LeftToolbarManager {
       if (this.hiderButton.dataset.status == "inactive") {
         this.hiderButton.dataset.status = "active";
 
-        for (var line of this.lines) {
+        for (let line of this.lines) {
           line.applyOptions({ visible: false });
         }
       } else {
         this.hiderButton.dataset.status = "inactive";
 
-        for (var line of this.lines) {
+        for (let line of this.lines) {
           line.applyOptions({ visible: true });
         }
       }
@@ -264,7 +264,7 @@ export default class LeftToolbarManager {
 
   manageBasketButton() {
     this.removeObjects = () => {
-      for (var line of this.lines) {
+      for (let line of this.lines) {
         this.chart.removeSeries(line);
       }
 
@@ -293,7 +293,10 @@ export default class LeftToolbarManager {
     this.screenshotButton.removeEventListener("click", this.takeScreenshot);
     this.fullScreenButton.removeEventListener("click", this.takeFullScreen);
     this.lineButton.removeEventListener("click", this.lineButtonClickHandler);
-    this.rulerButton.removeEventListener("click", this.rulerButtonClickHandler);
+    this.rulerButton.removeEventListener(
+      "click",
+      this.rulerButtonClickHandler
+    );
     this.hiderButton.removeEventListener("click", this.hideObjects);
     this.basketButton.removeEventListener("click", this.removeObjects);
   }

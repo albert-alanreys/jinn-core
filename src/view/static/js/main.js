@@ -4,13 +4,13 @@ import LeftToolbarManager from "./LeftToolbarManager.js";
 import RightToolbarManager from "./RightToolbarManager.js";
 import { getMode, getLiteData, getMainData } from "./fetchClient.js";
 
-var mode = await getMode();
-var liteData = await getLiteData();
+const mode = await getMode();
+const liteData = await getLiteData();
 document.documentElement.dataset.status = mode;
 
-var chartManager = new ChartManager(mode);
-var reportManager = new ReportManager(mode);
-var leftToolbarManager = new LeftToolbarManager();
+const chartManager = new ChartManager(mode);
+const reportManager = new ReportManager(mode);
+const leftToolbarManager = new LeftToolbarManager();
 new RightToolbarManager(liteData, mode, renderUI);
 
 function renderUI(id) {
@@ -25,7 +25,7 @@ function renderUI(id) {
       leftToolbarManager.manage(
         chartManager.chart,
         liteData[id],
-        chartManager.klineSeries
+        chartManager.candlestickSeries
       );
     });
   });

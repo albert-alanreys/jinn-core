@@ -260,11 +260,11 @@
   content: url(../images/alerts-closed.svg);
 }
 
-html[data-status="testing"] #placeholder-4 {
+html[data-status="TESTING"] #placeholder-4 {
   display: flex;
 }
 
-html[data-status="automation"] #placeholder-4 {
+html[data-status="AUTOMATION"] #placeholder-4 {
   display: none;
 }
 

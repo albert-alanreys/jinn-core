@@ -20,15 +20,15 @@ export default class RightToolbarManager {
   }
 
   manageStrategies() {
-    var body = document.querySelector("#strategies-list .body");
+    const body = document.querySelector("#strategies-list .body");
 
-    for (var key in this.data) {
-      var button = document.createElement("button");
+    for (let key in this.data) {
+      const button = document.createElement("button");
       button.setAttribute("data-strategy", key);
       button.setAttribute("data-status", "inactive");
       body.appendChild(button);
 
-      var div = document.createElement("div");
+      const div = document.createElement("div");
       div.setAttribute("unselectable", "on");
       div.innerHTML = `${this.data[key].name}
       ${this.data[key].symbol}
@@ -56,12 +56,12 @@ export default class RightToolbarManager {
   }
 
   createDescription() {
-    var body = document.querySelector("#strategy-description .body");
-    var strategyData = this.data[this.currentStrategy];
-    var oldData = Array.from(body.children);
+    const body = document.querySelector("#strategy-description .body");
+    const strategyData = this.data[this.currentStrategy];
+    const oldData = Array.from(body.children);
 
     if (oldData.length > 0) {
-      for (var item of oldData) {
+      for (let item of oldData) {
         item.remove();
       }
     }
@@ -144,11 +144,11 @@ export default class RightToolbarManager {
     section.setAttribute("id", "parameter-values");
     body.appendChild(section);
 
-    for (var key in strategyData.parameters) {
+    for (let key in strategyData.parameters) {
       var parameter = strategyData.parameters[key];
 
       if (Array.isArray(parameter)) {
-        for (var i = 0; i < parameter.length; i++) {
+        for (let i = 0; i < parameter.length; i++) {
           var outerDiv = document.createElement("div");
           outerDiv.classList.add("info");
           section.appendChild(outerDiv);
@@ -187,48 +187,52 @@ export default class RightToolbarManager {
   }
 
   changeParameter(target) {
+    let parameter;
+
     if (target.hasAttribute("data-group")) {
-      var inputs = document.querySelectorAll(
+      const inputs = document.querySelectorAll(
         `input[data-group="${target.dataset.group}"]`
       );
-      var parameter = JSON.stringify({
+      parameter = JSON.stringify({
         [target.dataset.group]: [...inputs].map((input) => input.value),
       });
     } else {
-      var parameter = JSON.stringify({
+      parameter = JSON.stringify({
         [target.dataset.parameter]: target.value,
       });
     }
 
-    updateData(this.currentStrategy, parameter).then((result) => {
-      getLiteData().then((data) => {
-        this.data = data;
-        overwrite.bind(this)();
-
-        if (result.status == "success") {
+    updateData(this.currentStrategy, parameter)
+      .then(() => {
+        getLiteData().then((data) => {
+          this.data = data;
+          overwrite.bind(this)();
           this.renderUI(this.currentStrategy);
-        } else {
-          target.classList.add("animate-border");
-          setTimeout(() => target.removeAttribute("class"), 1000);
-        }
+        });
+      })
+      .catch(() => {
+        overwrite.bind(this)();
+        target.classList.add("animate-border");
+        setTimeout(() => target.removeAttribute("class"), 1000);
       });
-    });
 
     function overwrite() {
-      var strategyData = this.data[this.currentStrategy];
+      const strategyData = this.data[this.currentStrategy];
 
-      for (var key in strategyData.parameters) {
-        var parameter = strategyData.parameters[key];
+      for (let key in strategyData.parameters) {
+        const parameter = strategyData.parameters[key];
 
         if (Array.isArray(parameter)) {
-          for (var i = 0; i < parameter.length; i++) {
-            var input = document.querySelector(
+          for (let i = 0; i < parameter.length; i++) {
+            const input = document.querySelector(
               `input[data-parameter="${key} #${i + 1}"]`
             );
             input.value = parameter[i];
           }
         } else {
-          var input = document.querySelector(`input[data-parameter="${key}"]`);
+          const input = document.querySelector(
+            `input[data-parameter="${key}"]`
+          );
           input.value = parameter;
         }
       }
@@ -236,19 +240,22 @@ export default class RightToolbarManager {
   }
 
   manageButtons() {
-    var rightToolbar = document.getElementById("right-toolbar");
-    var rightToolHandle = document.getElementById("right-toolbar-handle");
-    var infoWrapper = document.getElementById("info-wrapper");
-    var strategiesList = document.getElementById("strategies-list");
-    var strategyDescription = document.getElementById("strategy-description");
-    var alertsList = document.getElementById("alerts-list");
-    var strategiesButton = document.getElementById("strategies-button");
-    var descriptionButton = document.getElementById("description-button");
-    var alertsButton = document.getElementById("alerts-button");
-    var rightToolbarDefaultMinWidth = window
+    const rightToolbar = document.getElementById("right-toolbar");
+    const rightToolHandle = document.getElementById("right-toolbar-handle");
+    const infoWrapper = document.getElementById("info-wrapper");
+    const strategiesList = document.getElementById("strategies-list");
+    const strategyDescription = document.getElementById(
+      "strategy-description"
+    );
+    const alertsList = document.getElementById("alerts-list");
+    const strategiesButton = document.getElementById("strategies-button");
+    const descriptionButton = document.getElementById("description-button");
+    const alertsButton = document.getElementById("alerts-button");
+    const rightToolbarDefaultMinWidth = window
       .getComputedStyle(rightToolbar)
       .getPropertyValue("min-width");
-    var rightToolbarLastFlex = window
+
+    let rightToolbarLastFlex = window
       .getComputedStyle(rightToolbar)
       .getPropertyValue("flex");
 
@@ -353,10 +360,11 @@ export default class RightToolbarManager {
   }
 
   manageCursor() {
-    var rightToolbar = document.getElementById("right-toolbar");
-    var rightToolHandle = document.getElementById("right-toolbar-handle");
-    var startOffset = NaN;
-    var moving = false;
+    const rightToolbar = document.getElementById("right-toolbar");
+    const rightToolHandle = document.getElementById("right-toolbar-handle");
+
+    let startOffset = NaN;
+    let moving = false;
 
     rightToolHandle.addEventListener("mousedown", (event) => {
       startOffset = rightToolbar.offsetLeft - event.clientX;
@@ -373,9 +381,9 @@ export default class RightToolbarManager {
       }
     });
 
-    var onMouseMove = (event) => {
-      var currentOffset = rightToolbar.offsetLeft - event.clientX;
-      var newInfoPanelSize = `0 0 ${
+    const onMouseMove = (event) => {
+      const currentOffset = rightToolbar.offsetLeft - event.clientX;
+      const newInfoPanelSize = `0 0 ${
         rightToolbar.offsetWidth + (currentOffset - startOffset)
       }px`;
       rightToolbar.style.flex = newInfoPanelSize;
@@ -398,9 +406,9 @@ export default class RightToolbarManager {
     }, 5000);
 
     function addAlerts(alerts) {
-      var body = document.querySelector("#alerts-list .body");
+      const body = document.querySelector("#alerts-list .body");
 
-      for (var alert of alerts) {
+      for (let alert of alerts) {
         var outerDiv = document.createElement("div");
         outerDiv.classList.add("alert");
         body.prepend(outerDiv);
@@ -553,7 +561,7 @@ export default class RightToolbarManager {
 
         outerDiv.addEventListener("click", (event) => {
           if (!event.target.classList.contains("target")) {
-            var container = event.target.closest(".alert");
+            const container = event.target.closest(".alert");
 
             if (
               window
