@@ -92,24 +92,14 @@ class Tester():
                     klines = np.array(rows)
                     p_precision = client.fetch_price_precision(symbol)
                     q_precision = client.fetch_qty_precision(symbol)
-                    strategy_instance = strategy.value(
+                    instance = strategy.value(
                         opt_params=parameters
-                    )
-                    equity, metrics = self.calculate_strategy(
-                        {
-                            'instance': strategy_instance,
-                            'client': client,
-                            'klines': klines,
-                            'p_precision': p_precision,
-                            'q_precision': q_precision,
-                        }
                     )
                     strategy_data = {
                         'name': strategy.name,
-                        'instance': strategy_instance,
-                        'parameters': strategy_instance.__dict__.copy(),
-                        'equity': equity,
-                        'metrics': metrics,
+                        'type': strategy.value,
+                        'instance': instance,
+                        'parameters': instance.__dict__.copy(),
                         'client': client,
                         'exchange': exchange,
                         'symbol': symbol,
@@ -118,6 +108,9 @@ class Tester():
                         'p_precision': p_precision,
                         'q_precision': q_precision,
                     }
+                    equity, metrics = self.calculate_strategy(strategy_data)
+                    strategy_data['equity'] = equity
+                    strategy_data['metrics'] = metrics
                     self.strategies[str(id(strategy_data))] = strategy_data
 
         if len(self.strategies) == 0:
@@ -142,22 +135,12 @@ class Tester():
             klines = np.array(rows)
             p_precision = client.fetch_price_precision(self.symbol)
             q_precision = client.fetch_qty_precision(self.symbol)
-            strategy_instance = self.strategy.value()
-            equity, metrics = self.calculate_strategy(
-                {
-                    'instance': strategy_instance,
-                    'client': client,
-                    'klines': klines,
-                    'p_precision': p_precision,
-                    'q_precision': q_precision,
-                }
-            )
+            instance = self.strategy.value()
             strategy_data = {
                 'name': self.strategy.name,
-                'instance': strategy_instance,
-                'parameters': strategy_instance.__dict__.copy(),
-                'equity': equity,
-                'metrics': metrics,
+                'type': self.strategy.value,
+                'instance': instance,
+                'parameters': instance.__dict__.copy(),
                 'client': client,
                 'exchange': self.exchange.value.lower(),
                 'symbol': self.symbol,
@@ -166,27 +149,30 @@ class Tester():
                 'p_precision': p_precision,
                 'q_precision': q_precision,
             }
+            equity, metrics = self.calculate_strategy(strategy_data)
+            strategy_data['equity'] = equity
+            strategy_data['metrics'] = metrics
             self.strategies[str(id(strategy_data))] = strategy_data
 
-    def calculate_strategy(self, data: dict) -> tuple:
-        data['instance'].start(
+    def calculate_strategy(self, strategy_data: dict) -> tuple:
+        strategy_data['instance'].start(
             {
-                'client': data['client'],
-                'klines': data['klines'],
-                'p_precision': data['p_precision'],
-                'q_precision': data['q_precision'],
+                'client': strategy_data['client'],
+                'klines': strategy_data['klines'],
+                'p_precision': strategy_data['p_precision'],
+                'q_precision': strategy_data['q_precision'],
             }
         )
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
-            equity = data['instance'].get_equity(
-                data['instance'].initial_capital,
-                data['instance'].completed_deals_log
+            equity = strategy_data['instance'].get_equity(
+                strategy_data['instance'].initial_capital,
+                strategy_data['instance'].completed_deals_log
             )
-            metrics = data['instance'].get_metrics(
-                data['instance'].initial_capital,
-                data['instance'].completed_deals_log
+            metrics = strategy_data['instance'].get_metrics(
+                strategy_data['instance'].initial_capital,
+                strategy_data['instance'].completed_deals_log
             )
 
         return equity, metrics

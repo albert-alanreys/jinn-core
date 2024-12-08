@@ -1,4 +1,5 @@
 import logging
+import os
 
 from src.controller.flask_app import FlaskApp
 from src.model.automizer import Automizer
@@ -33,7 +34,8 @@ class Delegator:
                 automizer = Automizer(self.automation_info)
                 automizer.start()
 
-                # self.create_flask_app(automizer.strategies)
+                data_to_process = (None, automizer.strategies)
+                self.create_flask_app(data_to_process)
             case Mode.INGESTION:
                 ingester = Ingester(self.ingestion_info)
                 ingester.ingeste()
@@ -44,14 +46,15 @@ class Delegator:
                 tester = Tester(self.testing_info)
                 tester.test()
 
-                # self.create_flask_app(tester.strategies)
+                data_to_process = (tester, tester.strategies)
+                self.create_flask_app(data_to_process)
 
-    def create_flask_app(self, strategies: dict) -> None:
+    def create_flask_app(self, data_to_process: tuple) -> None:
         flask_app = FlaskApp(
-            mode=self.mode.value,
-            strategies=strategies,
-            import_name='TVLite',
-            static_folder="src/view/static",
-            template_folder="src/view/templates",
+            mode=self.mode,
+            data_to_process=data_to_process,
+            import_name=__name__,
+            static_folder=os.path.abspath('src/view/static'),
+            template_folder=os.path.abspath('src/view/templates')
         )
         flask_app.run()

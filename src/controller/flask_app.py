@@ -4,70 +4,101 @@ import os
 
 from flask import Flask, render_template, Response
 
+import config
 from src.controller.preprocessor import Preprocessor
+from src.model.enums import Mode
 
 
 class FlaskApp(Flask):
     def __init__(
         self,
-        mode: str,
-        strategies: dict[str, dict],
-        **args: str
+        mode: Mode,
+        data_to_process: dict,
+        import_name: str,
+        static_folder: str,
+        template_folder: str
     ) -> None:
         self.mode = mode
-        self.strategies = strategies
-        self.preprocessor = Preprocessor(self.mode, self.strategies)
+        self.data_to_process = data_to_process
 
         self.data_updates = []
         self.alert_updates = []
         self.alerts = []
 
-        super().__init__(**args)
-        self.route('/')(self.index)
-        self.route('/mode')(self.get_mode)
-        self.route('/updates/alerts')(self.get_alert_updates)
-        self.route('/alerts')(self.get_alerts)
-        self.route('/updates/data')(self.get_data_updates)
-        self.route('/data/lite')(self.get_lite_data)
-        self.route('/data/main/<string:id>')(self.get_main_data)
-        self.route(
-            '/data/update/<string:id>/<string:parameter>', methods=['POST']
-        )(self.update_data)
+        self.preprocessor = Preprocessor(self.mode, self.data_to_process)
+        self.preprocessor.process()
 
-        with open(os.path.abspath('.env'), 'r') as file:
-            data = file.read()
-            base_url = data[data.rfind('BASE_URL=') + 9 :].rstrip('\n')
+        super().__init__(
+            import_name=import_name,
+            static_folder=static_folder,
+            template_folder=template_folder
+        )
 
-        fetch_js_path = os.path.abspath('src/view/static/js/fetchClient.js')
+        self.add_url_rule(
+            rule='/',
+            view_func=self.index
+        )
+        self.add_url_rule(
+            rule='/mode',
+            view_func=self.get_mode
+        )
+        self.add_url_rule(
+            rule='/updates/alerts',
+            view_func=self.get_alert_updates
+        )
+        self.add_url_rule(
+            rule='/alerts',
+            view_func=self.get_alerts
+        )
+        self.add_url_rule(
+            rule='/updates/data',
+            view_func=self.get_data_updates
+        )
+        self.add_url_rule(
+            rule='/data/main/<string:strategy_id>',
+            view_func=self.get_main_data
+        )
+        self.add_url_rule(
+            rule='/data/lite',
+            view_func=self.get_lite_data
+        )
+        self.add_url_rule(
+            rule='/data/update/<string:strategy_id>/<string:parameter>',
+            view_func=self.update_data, 
+            methods=['POST']
+        )
 
-        with open(fetch_js_path, 'r') as file:
+        url = config.URL
+        path_to_fetch_js = os.path.abspath('src/view/static/js/fetchClient.js')
+
+        with open(path_to_fetch_js, 'r') as file:
             lines = file.readlines()
 
         old_url = lines[0][lines[0].find('"') + 1 : lines[0].rfind('"')]
-        lines[0] = lines[0].replace(old_url, base_url)
+        lines[0] = lines[0].replace(old_url, url)
 
-        with open(fetch_js_path, 'w') as file:
+        with open(path_to_fetch_js, 'w') as file:
             file.writelines(lines)
 
-        if self.mode == 'automation':
+        if self.mode is Mode.AUTOMATION:
             self.thread = threading.Thread(target=self.check_strategies)
             self.thread.start()
   
-    def set_data_updates(self, id: str) -> None:
-        if id not in self.data_updates:
-            self.data_updates.append(id)
+    def set_data_updates(self, strategy_id: str) -> None:
+        if strategy_id not in self.data_updates:
+            self.data_updates.append(strategy_id)
 
-    def set_alert_updates(self, alerts: list[dict]) -> None:
+    def set_alert_updates(self, alerts: list) -> None:
         self.alert_updates.extend(alerts)
 
-    def set_alerts(self, alerts: list[dict]) -> None:
+    def set_alerts(self, alerts: list) -> None:
         self.alerts.extend(alerts)
     
     def index(self) -> Response:
         return render_template('index.html')
 
     def get_mode(self) -> str:
-        return self.mode
+        return self.mode.value
     
     def get_alert_updates(self) -> str:
         alerts = self.alert_updates.copy()
@@ -81,23 +112,27 @@ class FlaskApp(Flask):
     def get_data_updates(self) -> str:
         return json.dumps(self.data_updates)
 
+    def get_main_data(self, strategy_id: str) -> str:
+        if strategy_id in self.data_updates:
+            self.data_updates.remove(strategy_id)
+
+        return json.dumps(self.preprocessor.main_data[strategy_id])
+    
     def get_lite_data(self) -> str:
         return json.dumps(self.preprocessor.lite_data)
 
-    def get_main_data(self, id: str) -> str:
-        if id in self.data_updates:
-            self.data_updates.remove(id)
-
-        return json.dumps(self.preprocessor.main_data[id])
-    
-    def update_data(self, id: str, parameter: str) -> tuple[str, int]:
+    def update_data(self, strategy_id: str, parameter: str) -> tuple:
         try:
-            parameter_name = list(json.loads(parameter).items())[0][0]
-            new_value = list(json.loads(parameter).items())[0][1]
-            self.preprocessor.update_strategy(id, parameter_name, new_value)
+            param = list(json.loads(parameter).items())[0][0]
+            value = list(json.loads(parameter).items())[0][1]
+            self.preprocessor.update_strategy(
+                strategy_id=strategy_id,
+                parameter_name=param,
+                new_value=value
+            )
             response = {"status": "success"}
             http_status = 200
-        except ValueError:
+        except (ValueError, KeyError) as e:
             response = {"status": "error"}
             http_status = 400
 
@@ -105,9 +140,9 @@ class FlaskApp(Flask):
     
     def check_strategies(self) -> None:
         while True:
-            for id, data in self.strategies.items():
+            for id, data in self.data_to_process.items():
                 if data['updated']:
-                    self.preprocessor.prepare_data(id, data)
+                    self.preprocessor.prepare_strategy_data(id, data)
                     self.set_data_updates(id)
                     data['updated'] = False
 

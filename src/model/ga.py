@@ -1,6 +1,6 @@
 import random
 
-from numpy import array
+from numpy import ndarray
 
 
 class GA:
@@ -57,7 +57,7 @@ class GA:
 
         self.sample_len = len(self.strategy.opt_params)
 
-    def evaluate(self, sample: list, fold: array) -> float:
+    def evaluate(self, sample: list, fold: ndarray) -> float:
         instance = self.strategy(opt_params=sample)
         instance.start(
             {
