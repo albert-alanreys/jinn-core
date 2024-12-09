@@ -20,8 +20,8 @@ class Preprocessor:
         self.lite_data = {}
 
     def process(self) -> None:
-        for key, values in self.data_to_process.items():
-            self.prepare_strategy_data(key, values)
+        for strategy_id, strategy_data in self.data_to_process.items():
+            self.prepare_strategy_data(strategy_id, strategy_data)
 
     def update_strategy(
         self,
@@ -47,17 +47,30 @@ class Preprocessor:
 
             parameters[parameter_name] = new_value
             instance = (
-                self.data_to_process[strategy_id]['instance'].__class__(
+                self.data_to_process[strategy_id]['type'](
                     all_params=list(parameters.values())
                 )
             )
             self.data_to_process[strategy_id]['instance'] = instance
 
-            equity, metrics = self.tester.calculate_strategy(
-                self.data_to_process[strategy_id]
-            )
-            self.data_to_process[strategy_id]['equity'] = equity
-            self.data_to_process[strategy_id]['metrics'] = metrics
+            if self.mode is Mode.TESTING:
+                equity, metrics = self.tester.calculate_strategy(
+                    self.data_to_process[strategy_id]
+                )
+                self.data_to_process[strategy_id]['equity'] = equity
+                self.data_to_process[strategy_id]['metrics'] = metrics
+            else:
+                self.data_to_process[strategy_id]['instance'].start(
+                    {
+                        'client': self.data_to_process[strategy_id]['client'],
+                        'klines': self.data_to_process[strategy_id]['klines'],
+                        'p_precision':
+                            self.data_to_process[strategy_id]['p_precision'],
+                        'q_precision':
+                            self.data_to_process[strategy_id]['q_precision'],
+                    }
+                )
+
             self.prepare_strategy_data(
                 strategy_id, self.data_to_process[strategy_id]
             )

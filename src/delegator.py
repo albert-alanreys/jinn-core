@@ -32,7 +32,7 @@ class Delegator:
         match self.mode:
             case Mode.AUTOMATION:
                 automizer = Automizer(self.automation_info)
-                automizer.start()
+                automizer.automate()
 
                 data_to_process = (None, automizer.strategies)
                 self.create_flask_app(data_to_process)

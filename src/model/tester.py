@@ -25,12 +25,12 @@ class Tester():
 
         self.strategies = {}
         self.db_manager = DBManager()
-        self.binance_client = None
+        self.binance_client = BinanceClient()
         self.bybit_client = BybitClient()
         self.logger = logging.getLogger(__name__)
 
     def test(self) -> None:
-        self.logger.info(f'Testing process started')
+        self.logger.info('Testing process started')
 
         for strategy in enums.Strategy:
             path_to_folder = os.path.abspath(
@@ -39,7 +39,7 @@ class Tester():
             filenames = glob.glob(f'{path_to_folder}/*.txt')
 
             for filename in filenames:
-                pattern = r'(\w+)_(\w+)_(\w+)_(\d+)\.txt'
+                pattern = r'(\w+)_(\w+)_(\w+)_(\w+)\.txt'
                 exchange, symbol, market, interval = (
                     re.match(
                         pattern, filename[filename.rfind('\\') + 1 :]
@@ -92,9 +92,7 @@ class Tester():
                     klines = np.array(rows)
                     p_precision = client.fetch_price_precision(symbol)
                     q_precision = client.fetch_qty_precision(symbol)
-                    instance = strategy.value(
-                        opt_params=parameters
-                    )
+                    instance = strategy.value(opt_params=parameters)
                     strategy_data = {
                         'name': strategy.name,
                         'type': strategy.value,

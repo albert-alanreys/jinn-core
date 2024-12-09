@@ -138,9 +138,9 @@
   display: none;
 }
 
-html[data-status="automation"] #overview-report,
-html[data-status="automation"] #performance-report,
-html[data-status="automation"] #trades-report {
+html[data-status="AUTOMATION"] #overview-report,
+html[data-status="AUTOMATION"] #performance-report,
+html[data-status="AUTOMATION"] #trades-report {
   display: none;
 }
 
@@ -271,7 +271,7 @@ html[data-status="automation"] #trades-report {
   margin: auto;
 }
 
-html[data-status="automation"] #placeholder-1 {
+html[data-status="AUTOMATION"] #placeholder-1 {
   display: flex;
 }
 

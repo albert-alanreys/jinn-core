@@ -26,7 +26,7 @@ class Strategy():
     def get_metrics(
         initial_capital: float,
         completed_deals_log: np.ndarray,
-    ) -> list[list]:
+    ) -> list:
         log = completed_deals_log.reshape((-1, 13))
         
         # Gross profit

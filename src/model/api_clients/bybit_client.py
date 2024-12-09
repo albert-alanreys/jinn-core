@@ -1,13 +1,13 @@
 import logging
-import requests as rq
+import requests
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
-import numpy as np
 from pybit.unified_trading import HTTP
 
 import config
 import src.model.enums as enums
+from src.model.api_clients.telegram_client import TelegramClient
 
 
 class BybitClient():
@@ -24,25 +24,19 @@ class BybitClient():
     def __init__(self) -> None:
         self.api_key = config.BYBIT_API_KEY
         self.api_secret = config.BYBIT_API_SECRET
-        self.bot_token = config.TELEGRAM_BOT_TOKEN
-        self.chat_id = config.TELEGRAM_CHAT_ID
 
-        self.limit_orders = []
-        self.stop_orders = []
         self.alerts = []
 
-        self.telegram_url = (
-            f'https://api.telegram.org/bot{self.bot_token}/sendMessage'
-        )
+        self.telegram_client = TelegramClient()
         self.logger = logging.getLogger(__name__)
 
         try:
-            self.session = HTTP(
-                testnet=False,
+            self.client = HTTP(
+                testnet=True,
                 api_key=self.api_key,
                 api_secret=self.api_secret
             )
-        except rq.exceptions.ConnectTimeout as e:
+        except requests.exceptions.ConnectTimeout as e:
             self.logger.error(f'Error: {e}')
 
     def fetch_historical_klines(
@@ -50,39 +44,35 @@ class BybitClient():
         symbol: str,
         market: enums.Market,
         interval: enums.BybitInterval,
-        start: int,
-        end: int
-    ) -> None:
-        def fetch_range(start: int, end: int) -> list:
+        start: str,
+        end: str
+    ) -> list:
+        def fetch_klines(start_range: int, end_range: int) -> list:
             for _ in range(3):
                 try:
-                    klines = self.session.get_kline(
+                    klines = self.client.get_kline(
                         category=category,
                         symbol=symbol,
                         interval=interval.value,
-                        start=start,
-                        end=end,
+                        start=start_range,
+                        end=end_range,
                         limit=1000
                     )['result']['list'][::-1]
                     return klines
-                except Exception as e:
-                    self.logger.error(
-                        f'Failed to fetch data for range {start} - {end}: {e}'
-                    )
+                except Exception:
+                    pass
 
             return []
 
         match market:
             case enums.Market.SPOT:
                 category = 'spot'
-                postfix = ''
             case enums.Market.FUTURES:
                 category = 'linear'
-                postfix = '.P'
 
         self.logger.info(
-            f'Fetching data: BYBIT • {symbol}{postfix} '
-            f'• {interval.value} • {start} - {end}'
+            f'Fetching data: BYBIT • {symbol} • '
+            f'{interval.value} • {start} - {end}'
         )
 
         start = int(
@@ -104,7 +94,7 @@ class BybitClient():
         klines = []
 
         with ThreadPoolExecutor(max_workers=5) as executor:
-            results = executor.map(lambda t: fetch_range(*t), time_ranges)
+            results = executor.map(lambda t: fetch_klines(*t), time_ranges)
 
             for result in results:
                 klines.extend(result)
@@ -114,95 +104,80 @@ class BybitClient():
     def fetch_last_klines(
         self,
         symbol: str,
-        interval: enums.BybitInterval
-    ) -> None:
-        self.logger.info(
-            f'Fetching data: BYBIT • {symbol} • {interval.value}'
-        )
+        interval: enums.BybitInterval | int | str,
+        limit: int = 1000
+    ) -> list:
+            if isinstance(interval, enums.BybitInterval):
+                interval = interval.value
 
-        klines = np.array(
-            self.session.get_kline(
-                category='linear',
-                symbol=symbol,
-                interval=interval.value,
-                limit=1000
-            )['result']['list']
-        )[:0:-1, :6].astype(float)
-        return klines
-
-    def fetch_price_precision(self, symbol: str) -> float:
-        symbol_info = self.session.get_instruments_info(
-            category="linear", symbol=symbol
-        )['result']['list'][0]
-        return float(symbol_info['priceFilter']['tickSize'])
-
-    def fetch_qty_precision(self, symbol: str) -> float:
-        symbol_info = self.session.get_instruments_info(
-            category="linear", symbol=symbol
-        )['result']['list'][0]
-        return float(symbol_info['lotSizeFilter']['qtyStep'])
-
-    def update_data(
-        self,
-        symbol: str,
-        interval: enums.BybitInterval
-        ) -> bool | None:
-        while True:
-            try:
-                klines = np.array(
-                    self.session.get_kline(
+            for _ in range(3):
+                try:
+                    klines = self.client.get_kline(
                         category='linear',
                         symbol=symbol,
-                        interval=interval.value,
-                        limit=2
-                    )['result']['list']
-                )[:0:-1, :6].astype(float)
-            except Exception as e:
-                self.logger.error(f'Error: {e}')
-            else:
-                break
+                        interval=interval,
+                        limit=limit
+                    )['result']['list'][:0:-1]
+                    return klines
+                except Exception:
+                    pass
 
-        if (klines.shape[0] == 1 and 
-                klines[0, 0] > self.klines[-1, 0]):
-            self.klines = np.concatenate(
-                (self.klines[1:], klines)
-            )
-            return True
+            return []
+
+    def fetch_price_precision(self, symbol: str) -> float:
+        try:
+            symbol_info = self.client.get_instruments_info(
+                category="linear", symbol=symbol
+            )['result']['list'][0]
+            return float(symbol_info['priceFilter']['tickSize'])
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f'Error: {e}')
+            return 1.0
+
+    def fetch_qty_precision(self, symbol: str) -> float:
+        try:
+            symbol_info = self.client.get_instruments_info(
+                category="linear", symbol=symbol
+            )['result']['list'][0]
+            return float(symbol_info['lotSizeFilter']['qtyStep'])
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f'Error: {e}')
+            return 1.0
 
     def futures_market_open_buy(
         self,
         symbol: str,
         size: str,
         margin: str,
-        leverage: str,
+        leverage: int,
         hedge: str
     ) -> None:
         if hedge == 'false':
             hedge_mode = 0
 
             try:
-                self.session.switch_position_mode(
+                self.client.switch_position_mode(
                     category='linear',
                     symbol=symbol,
                     mode=0,
                 )
-            except Exception as e:
-                self.logger.error(f'Error: {e}')
+            except Exception:
+                pass
         elif hedge == 'true':
             hedge_mode = 1
 
             try:
-                self.session.switch_position_mode(
+                self.client.switch_position_mode(
                     category='linear',
                     symbol=symbol,
                     mode=3,
                 )
-            except Exception as e:
-                self.logger.error(f'Error: {e}')
+            except Exception:
+                pass
 
         try:
             if margin == 'cross':
-                self.session.switch_margin_mode(
+                self.client.switch_margin_mode(
                     category='linear',
                     symbol=symbol,
                     tradeMode=0,
@@ -210,55 +185,53 @@ class BybitClient():
                     sellLeverage='1',
                 )
             elif margin == 'isolated':
-                self.session.switch_margin_mode(
+                self.client.switch_margin_mode(
                     category='linear',
                     symbol=symbol,
                     tradeMode=1,
                     buyLeverage='1',
                     sellLeverage='1',
                 )
-        except Exception as e:
-            self.logger.error(f'Error: {e}')
+        except Exception:
+            pass
 
         try:
-            self.session.set_leverage(
+            self.client.set_leverage(
                 category='linear',
                 symbol=symbol,
-                buyLeverage=leverage,
-                sellLeverage=leverage,
+                buyLeverage=str(leverage),
+                sellLeverage=str(leverage),
             )
-        except Exception as e:
-            self.logger.error(f'Error: {e}')
+        except Exception:
+            pass
 
         try:
-            market_price = float(self.session.get_tickers(
+            market_price = float(self.client.get_tickers(
                 category='linear', symbol=symbol
             )['result']['list'][0]['lastPrice'])
 
             try:
-                balance = float(self.session.get_wallet_balance(
+                balance = float(self.client.get_wallet_balance(
                     accountType='UNIFIED', coin='USDT',
                 )['result']['list'][0]['coin'][0]['availableToWithdraw'])
-            except Exception as e:
-                self.logger.error(f'Error: {e}')
+            except Exception:
+                pass
 
-                balance = float(self.session.get_wallet_balance(
+                balance = float(self.client.get_wallet_balance(
                     accountType='CONTRACT', coin='USDT',
                 )['result']['list'][0]['coin'][0]['availableToWithdraw'])
 
             if size.endswith('%'):
-                leverage = int(leverage)
                 size = float(size.rstrip('%'))
                 qty = balance * leverage * size * 0.01 / market_price
             elif size.endswith('u'):
-                leverage = int(leverage)
                 size = float(size.rstrip('u'))
                 qty = leverage * size / market_price
 
-            qty = round(
-                round(qty / self.qty_precision) * self.qty_precision, 8
-            )
-            order = self.session.place_order(
+            q_precision = self.fetch_qty_precision(symbol)
+            qty = round(round(qty / q_precision) * q_precision, 8)
+
+            order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Buy',
@@ -267,9 +240,9 @@ class BybitClient():
                 positionIdx=hedge_mode
             )
 
-            while True:
+            for _ in range(3):
                 try:
-                    order_info = self.session.get_open_orders(
+                    order_info = self.client.get_open_orders(
                         category='linear',
                         symbol=symbol,
                         orderId=order['result']['orderId']
@@ -300,7 +273,7 @@ class BybitClient():
                 f'\n• количество — {order_info['qty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
-            self.send_message(message)
+            self.telegram_client.send_message(message)
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
@@ -310,35 +283,35 @@ class BybitClient():
         symbol: str,
         size: str,
         margin: str,
-        leverage: str,
+        leverage: int,
         hedge: str
     ) -> None:
         if hedge == 'false':
             hedge_mode = 0
 
             try:
-                self.session.switch_position_mode(
+                self.client.switch_position_mode(
                     category='linear',
                     symbol=symbol,
                     mode=0,
                 )
-            except Exception as e:
-                self.logger.error(f'Error: {e}')
+            except Exception:
+                pass
         elif hedge == 'true':
             hedge_mode = 2
 
             try:
-                self.session.switch_position_mode(
+                self.client.switch_position_mode(
                     category='linear',
                     symbol=symbol,
                     mode=3,
                 )
-            except Exception as e:
-                self.logger.error(f'Error: {e}')
+            except Exception:
+                pass
 
         try:
             if margin == 'cross':
-                self.session.switch_margin_mode(
+                self.client.switch_margin_mode(
                     category='linear',
                     symbol=symbol,
                     tradeMode=0,
@@ -346,55 +319,53 @@ class BybitClient():
                     sellLeverage='1',
                 )
             elif margin == 'isolated':
-                self.session.switch_margin_mode(
+                self.client.switch_margin_mode(
                     category='linear',
                     symbol=symbol,
                     tradeMode=1,
                     buyLeverage='1',
                     sellLeverage='1',
                 )
-        except Exception as e:
-            self.logger.error(f'Error: {e}')
+        except Exception:
+            pass
 
         try:
-            self.session.set_leverage(
+            self.client.set_leverage(
                 category='linear',
                 symbol=symbol,
-                buyLeverage=leverage,
-                sellLeverage=leverage,
+                buyLeverage=str(leverage),
+                sellLeverage=str(leverage),
             )
-        except Exception as e:
-            self.logger.error(f'Error: {e}')
+        except Exception:
+            pass
 
         try:
-            market_price = float(self.session.get_tickers(
+            market_price = float(self.client.get_tickers(
                 category='linear', symbol=symbol
             )['result']['list'][0]['lastPrice'])
 
             try:
-                balance = float(self.session.get_wallet_balance(
+                balance = float(self.client.get_wallet_balance(
                     accountType='UNIFIED', coin='USDT',
                 )['result']['list'][0]['coin'][0]['availableToWithdraw'])
-            except Exception as e:
-                self.logger.error(f'Error: {e}')
+            except Exception:
+                pass
 
-                balance = float(self.session.get_wallet_balance(
+                balance = float(self.client.get_wallet_balance(
                     accountType='CONTRACT', coin='USDT',
                 )['result']['list'][0]['coin'][0]['availableToWithdraw'])
 
             if size.endswith('%'):
-                leverage = int(leverage)
                 size = float(size.rstrip('%'))
                 qty = balance * leverage * size * 0.01 / market_price
             elif size.endswith('u'):
-                leverage = int(leverage)
                 size = float(size.rstrip('u'))
                 qty = leverage * size / market_price
 
-            qty = round(
-                round(qty / self.qty_precision) * self.qty_precision, 8
-            )
-            order = self.session.place_order(
+            q_precision = self.fetch_qty_precision(symbol)
+            qty = round(round(qty / q_precision) * q_precision, 8)
+
+            order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Sell',
@@ -403,9 +374,9 @@ class BybitClient():
                 positionIdx=hedge_mode
             )
 
-            while True:
+            for _ in range(3):
                 try:
-                    order_info = self.session.get_open_orders(
+                    order_info = self.client.get_open_orders(
                         category='linear',
                         symbol=symbol,
                         orderId=order['result']['orderId']
@@ -436,7 +407,7 @@ class BybitClient():
                 f'\n• количество — {order_info['qty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
-            self.send_message(message)
+            self.telegram_client.send_message(message)
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
@@ -453,7 +424,7 @@ class BybitClient():
             elif hedge == 'true':
                 hedge_mode = 2
 
-            positions_info = self.session.get_positions(
+            positions_info = self.client.get_positions(
                 category='linear', symbol=symbol
             )['result']['list']
             position_size = float(
@@ -467,15 +438,15 @@ class BybitClient():
                 qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                market_price = float(self.session.get_tickers(
+                market_price = float(self.client.get_tickers(
                     category='linear', symbol=symbol
                 )['result']['list'][0]['lastPrice'])
                 qty = size / market_price
 
-            qty = round(
-                round(qty / self.qty_precision) * self.qty_precision, 8
-            )
-            order = self.session.place_order(
+            q_precision = self.fetch_qty_precision(symbol)
+            qty = round(round(qty / q_precision) * q_precision, 8)
+
+            order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Buy',
@@ -484,9 +455,9 @@ class BybitClient():
                 positionIdx=hedge_mode
             )
 
-            while True:
+            for _ in range(3):
                 try:
-                    order_info = self.session.get_open_orders(
+                    order_info = self.client.get_open_orders(
                         category='linear',
                         symbol=symbol,
                         orderId=order['result']['orderId']
@@ -517,7 +488,7 @@ class BybitClient():
                 f'\n• количество — {order_info['qty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
-            self.send_message(message)
+            self.telegram_client.send_message(message)
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
@@ -534,7 +505,7 @@ class BybitClient():
             elif hedge == 'true':
                 hedge_mode = 1
 
-            positions_info = self.session.get_positions(
+            positions_info = self.client.get_positions(
                 category='linear', symbol=symbol
             )['result']['list']
             position_size = float(
@@ -548,15 +519,15 @@ class BybitClient():
                 qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                market_price = float(self.session.get_tickers(
+                market_price = float(self.client.get_tickers(
                     category='linear', symbol=symbol
                 )['result']['list'][0]['lastPrice'])
                 qty = size / market_price
 
-            qty = round(
-                round(qty / self.qty_precision) * self.qty_precision, 8
-            )
-            order = self.session.place_order(
+            q_precision = self.fetch_qty_precision(symbol)
+            qty = round(round(qty / q_precision) * q_precision, 8)
+
+            order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Sell',
@@ -565,9 +536,9 @@ class BybitClient():
                 positionIdx=hedge_mode
             )
 
-            while True:
+            for _ in range(3):
                 try:
-                    order_info = self.session.get_open_orders(
+                    order_info = self.client.get_open_orders(
                         category='linear',
                         symbol=symbol,
                         orderId=order['result']['orderId']
@@ -598,7 +569,7 @@ class BybitClient():
                 f'\n• количество — {order_info['qty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
-            self.send_message(message)
+            self.telegram_client.send_message(message)
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
@@ -609,14 +580,14 @@ class BybitClient():
         size: str,
         price: float,
         hedge: str
-    ) -> None:
+    ) -> str | None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
             elif hedge == 'true':
                 hedge_mode = 1
 
-            positions_info = self.session.get_positions(
+            positions_info = self.client.get_positions(
                 category='linear', symbol=symbol
             )['result']['list']
             position_size = float(
@@ -630,21 +601,17 @@ class BybitClient():
                 qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                market_price = float(self.session.get_tickers(
+                market_price = float(self.client.get_tickers(
                     category='linear', symbol=symbol
                 )['result']['list'][0]['lastPrice'])
                 qty = size / market_price
 
-            qty = round(
-                round(qty / self.qty_precision) * self.qty_precision, 8
-            )
-            price = round(
-                round(
-                    price / self.price_precision
-                ) * self.price_precision,
-                8
-            )
-            order = self.session.place_order(
+            q_precision = self.fetch_qty_precision(symbol)
+            p_precision = self.fetch_price_precision(symbol)
+            qty = round(round(qty / q_precision) * q_precision, 8)
+            price = round(round(price / p_precision) * p_precision, 8)
+
+            order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Buy',
@@ -656,9 +623,9 @@ class BybitClient():
                 reduceOnly=True
             )
 
-            while True:
+            for _ in range(3):
                 try:
-                    order_info = self.session.get_open_orders(
+                    order_info = self.client.get_open_orders(
                         category='linear',
                         symbol=symbol,
                         orderId=order['result']['orderId']
@@ -668,7 +635,6 @@ class BybitClient():
                 else:
                     break
 
-            self.stop_orders.append(order['result']['orderId'])
             self.alerts.append({
                 'message': {
                     'exchange': 'BYBIT',
@@ -690,7 +656,8 @@ class BybitClient():
                 f'\n• количество — {order_info['qty']}'
                 f'\n• цена — {order_info['triggerPrice']}'
             )
-            self.send_message(message)
+            self.telegram_client.send_message(message)
+            return order['result']['orderId']
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
@@ -701,14 +668,14 @@ class BybitClient():
         size: str,
         price: float,
         hedge: str
-    ) -> None:
+    ) -> str | None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
             elif hedge == 'true':
                 hedge_mode = 2
 
-            positions_info = self.session.get_positions(
+            positions_info = self.client.get_positions(
                 category='linear', symbol=symbol
             )['result']['list']
             position_size = float(
@@ -722,22 +689,17 @@ class BybitClient():
                 qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                market_price = float(self.session.get_tickers(
+                market_price = float(self.client.get_tickers(
                     category='linear', symbol=symbol
                 )['result']['list'][0]['lastPrice'])
                 qty = size / market_price
 
-            qty = round(
-                round(qty / self.qty_precision) * self.qty_precision, 8
-            )
-            price = round(
-                round(
-                    price / self.price_precision
-                ) * self.price_precision,
-                8
-            )
+            q_precision = self.fetch_qty_precision(symbol)
+            p_precision = self.fetch_price_precision(symbol)
+            qty = round(round(qty / q_precision) * q_precision, 8)
+            price = round(round(price / p_precision) * p_precision, 8)
 
-            order = self.session.place_order(
+            order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Sell',
@@ -749,9 +711,9 @@ class BybitClient():
                 reduceOnly=True
             )
 
-            while True:
+            for _ in range(3):
                 try:
-                    order_info = self.session.get_open_orders(
+                    order_info = self.client.get_open_orders(
                         category='linear',
                         symbol=symbol,
                         orderId=order['result']['orderId']
@@ -761,7 +723,6 @@ class BybitClient():
                 else:
                     break
 
-            self.stop_orders.append(order['result']['orderId'])
             self.alerts.append({
                 'message': {
                     'exchange': 'BYBIT',
@@ -783,7 +744,8 @@ class BybitClient():
                 f'\n• количество — {order_info['qty']}'
                 f'\n• цена — {order_info['triggerPrice']}'
             )
-            self.send_message(message)
+            self.telegram_client.send_message(message)
+            return order['result']['orderId']
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
@@ -794,14 +756,14 @@ class BybitClient():
         size: str,
         price: float,
         hedge: str
-    ) -> None:
+    ) -> str | None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
             elif hedge == 'true':
                 hedge_mode = 2
 
-            positions_info = self.session.get_positions(
+            positions_info = self.client.get_positions(
                 category='linear', symbol=symbol
             )['result']['list']
             position_size = float(
@@ -814,7 +776,7 @@ class BybitClient():
                 size = float(size.rstrip('%'))
 
                 if size == 100:
-                    orders_info = self.session.get_open_orders(
+                    orders_info = self.client.get_open_orders(
                         category='linear', symbol=symbol
                     )['result']['list']
                     limit_orders = list(
@@ -832,21 +794,17 @@ class BybitClient():
                     qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                market_price = float(self.session.get_tickers(
+                market_price = float(self.client.get_tickers(
                     category='linear', symbol=symbol
                 )['result']['list'][0]['lastPrice'])
                 qty = size / market_price
 
-            qty = round(
-                round(qty / self.qty_precision) * self.qty_precision, 8
-            )
-            price = round(
-                round(
-                    price / self.price_precision
-                ) * self.price_precision,
-                8
-            )
-            order = self.session.place_order(
+            q_precision = self.fetch_qty_precision(symbol)
+            p_precision = self.fetch_price_precision(symbol)
+            qty = round(round(qty / q_precision) * q_precision, 8)
+            price = round(round(price / p_precision) * p_precision, 8)
+
+            order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Buy',
@@ -857,9 +815,9 @@ class BybitClient():
                 reduceOnly=True
             )
 
-            while True:
+            for _ in range(3):
                 try:
-                    order_info = self.session.get_open_orders(
+                    order_info = self.client.get_open_orders(
                         category='linear',
                         symbol=symbol,
                         orderId=order['result']['orderId']
@@ -869,7 +827,6 @@ class BybitClient():
                 else:
                     break
 
-            self.limit_orders.append(order['result']['orderId'])
             self.alerts.append({
                 'message': {
                     'exchange': 'BYBIT',
@@ -891,7 +848,8 @@ class BybitClient():
                 f'\n• количество — {order_info['qty']}'
                 f'\n• цена — {order_info['price']}'
             )
-            self.send_message(message)
+            self.telegram_client.send_message(message)
+            return order['result']['orderId']
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
@@ -902,14 +860,14 @@ class BybitClient():
         size: str,
         price: float,
         hedge: str
-    ) -> None:
+    ) -> str | None:
         try:
             if hedge == 'false':
                 hedge_mode = 0
             elif hedge == 'true':
                 hedge_mode = 1
 
-            positions_info = self.session.get_positions(
+            positions_info = self.client.get_positions(
                 category='linear', symbol=symbol
             )['result']['list']
             position_size = float(
@@ -922,7 +880,7 @@ class BybitClient():
                 size = float(size.rstrip('%'))
 
                 if size == 100:
-                    orders_info = self.session.get_open_orders(
+                    orders_info = self.client.get_open_orders(
                         category='linear', symbol=symbol
                     )['result']['list']
                     limit_orders = list(
@@ -940,21 +898,17 @@ class BybitClient():
                     qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                market_price = float(self.session.get_tickers(
+                market_price = float(self.client.get_tickers(
                     category='linear', symbol=symbol
                 )['result']['list'][0]['lastPrice'])
                 qty = size / market_price
 
-            qty = round(
-                round(qty / self.qty_precision) * self.qty_precision, 8
-            )
-            price = round(
-                round(
-                    price / self.price_precision
-                ) * self.price_precision,
-                8
-            )
-            order = self.session.place_order(
+            q_precision = self.fetch_qty_precision(symbol)
+            p_precision = self.fetch_price_precision(symbol)
+            qty = round(round(qty / q_precision) * q_precision, 8)
+            price = round(round(price / p_precision) * p_precision, 8)
+
+            order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Sell',
@@ -965,9 +919,9 @@ class BybitClient():
                 reduceOnly=True
             )
 
-            while True:
+            for _ in range(3):
                 try:
-                    order_info = self.session.get_open_orders(
+                    order_info = self.client.get_open_orders(
                         category='linear',
                         symbol=symbol,
                         orderId=order['result']['orderId']
@@ -977,7 +931,6 @@ class BybitClient():
                 else:
                     break
 
-            self.limit_orders.append(order['result']['orderId'])
             self.alerts.append({
                 'message': {
                     'exchange': 'BYBIT',
@@ -999,7 +952,8 @@ class BybitClient():
                 f'\n• количество — {order_info['qty']}'
                 f'\n• цена — {order_info['price']}'
             )
-            self.send_message(message)
+            self.telegram_client.send_message(message)
+            return order['result']['orderId']
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
@@ -1010,7 +964,7 @@ class BybitClient():
         side: str
     ) -> None:
         try:
-            orders_info = self.session.get_open_orders(
+            orders_info = self.client.get_open_orders(
                 category='linear', symbol=symbol
             )['result']['list']
             stop_orders = list(
@@ -1022,7 +976,7 @@ class BybitClient():
             )
 
             for i in stop_orders:
-                self.session.cancel_order(
+                self.client.cancel_order(
                     category='linear',
                     symbol=symbol,
                     orderId=i['orderId']
@@ -1037,7 +991,7 @@ class BybitClient():
         side: str
     ) -> None:
         try:
-            orders_info = self.session.get_open_orders(
+            orders_info = self.client.get_open_orders(
                 category='linear', symbol=symbol
             )['result']['list']
             one_sided_orders = list(
@@ -1045,7 +999,7 @@ class BybitClient():
             )
 
             for i in one_sided_orders:
-                self.session.cancel_order(
+                self.client.cancel_order(
                     category='linear',
                     symbol=symbol,
                     orderId=i['orderId']
@@ -1056,134 +1010,129 @@ class BybitClient():
 
     def futures_cancel_all_orders(self, symbol: str) -> None:
         try:
-            self.session.cancel_all_orders(category='linear', symbol=symbol)
+            self.client.cancel_all_orders(category='linear', symbol=symbol)
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
 
-    def check_stop_status(self, symbol: str) -> None:
+    def check_stop_orders(self, symbol: str, order_ids: list) -> list | None:
         try:
-            for orderId in self.stop_orders.copy():
-                order = self.session.get_open_orders(
+            for order_id in order_ids.copy():
+                order = self.client.get_open_orders(
                     category="linear",
                     symbol=symbol,
-                    orderId=orderId
+                    orderId=order_id
                 )
-                main_info = order['result']['list'][0]
+                order_info = order['result']['list'][0]
 
-                if main_info['orderStatus'] != 'Untriggered':
-                    if main_info['orderStatus'] == 'Filled':
-                        status = 'исполнен'
-                        price = main_info['avgPrice']
-                    else:
-                        status = 'отменён'
-                        price = main_info['triggerPrice']
+                if order_info['orderStatus'] == 'Untriggered':
+                    continue
 
-                    if main_info['side'] == 'Buy':
-                        side = 'покупка'
-                    else:
-                        side = 'продажа'
+                if order_info['orderStatus'] == 'Filled':
+                    status = 'исполнен'
+                    price = order_info['avgPrice']
+                else:
+                    status = 'отменён'
+                    price = order_info['triggerPrice']
 
-                    self.stop_orders.remove(orderId)
-                    self.alerts.append({
-                        'message': {
-                            'exchange': 'BYBIT',
-                            'type': 'рыночный стоп',
-                            'status': status,
-                            'side': side,
-                            'symbol': main_info['symbol'],
-                            'qty': main_info['qty'],
-                            'price': price
-                        },
-                        'time': datetime.fromtimestamp(
-                            int(main_info['updatedTime']) / 1000,
-                            tz=timezone.utc
-                        ).strftime('%Y/%m/%d %H:%M:%S')
-                    })
-                    message = (
-                        f'{status.capitalize()} рыночный стоп на Bybit:'
-                        f'\n• направление — {side}'
-                        f'\n• символ — #{main_info['symbol']}'
-                        f'\n• количество — {main_info['qty']}'
-                        f'\n• цена — {price}'
-                    )
-                    self.send_message(message)
+                if order_info['side'] == 'Buy':
+                    side = 'покупка'
+                else:
+                    side = 'продажа'
+
+                order_ids.remove(order_id)
+                self.alerts.append({
+                    'message': {
+                        'exchange': 'BYBIT',
+                        'type': 'рыночный стоп',
+                        'status': status,
+                        'side': side,
+                        'symbol': order_info['symbol'],
+                        'qty': order_info['qty'],
+                        'price': price
+                    },
+                    'time': datetime.fromtimestamp(
+                        int(order_info['updatedTime']) / 1000,
+                        tz=timezone.utc
+                    ).strftime('%Y/%m/%d %H:%M:%S')
+                })
+                message = (
+                    f'{status.capitalize()} рыночный стоп на Bybit:'
+                    f'\n• направление — {side}'
+                    f'\n• символ — #{order_info['symbol']}'
+                    f'\n• количество — {order_info['qty']}'
+                    f'\n• цена — {price}'
+                )
+                self.telegram_client.send_message(message)
+
+            return order_ids
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
 
-    def check_limit_status(self, symbol: str) -> None:
+    def check_limit_orders(self, symbol: str, order_ids: list) -> list | None:
         try:
-            for orderId in self.limit_orders.copy():
-                order = self.session.get_open_orders(
+            for order_id in order_ids.copy():
+                order = self.client.get_open_orders(
                     category="linear",
                     symbol=symbol,
-                    orderId=orderId
+                    orderId=order_id
                 )
-                main_info = order['result']['list'][0]
+                order_info = order['result']['list'][0]
 
-                if main_info['orderStatus'] != 'New':
-                    if main_info['orderStatus'] == 'Filled':
-                        status = 'исполнен'
-                    else:
-                        status = 'отменён'
+                if order_info['orderStatus'] == 'New':
+                    continue
 
-                    if main_info['side'] == 'Buy':
-                        side = 'покупка'
-                    else:
-                        side = 'продажа'
+                if order_info['orderStatus'] == 'Filled':
+                    status = 'исполнен'
+                else:
+                    status = 'отменён'
 
-                    self.limit_orders.remove(orderId)
-                    self.alerts.append({
-                        'message': {
-                            'exchange': 'BYBIT',
-                            'type': 'лимитный ордер',
-                            'status': status,
-                            'side': side,
-                            'symbol': main_info['symbol'],
-                            'qty': main_info['qty'],
-                            'price': main_info['price']
-                        },
-                        'time': datetime.fromtimestamp(
-                            int(main_info['updatedTime']) / 1000,
-                            tz=timezone.utc
-                        ).strftime('%Y/%m/%d %H:%M:%S')
-                    })
-                    message = (
-                        f'{status.capitalize()} лимитный ордер на Bybit:'
-                        f'\n• направление — {side}'
-                        f'\n• символ — #{main_info['symbol']}'
-                        f'\n• количество — {main_info['qty']}'
-                        f'\n• цена — {main_info['price']}'
-                    )
-                    self.send_message(message)
+                if order_info['side'] == 'Buy':
+                    side = 'покупка'
+                else:
+                    side = 'продажа'
+
+                order_ids.remove(order_id)
+                self.alerts.append({
+                    'message': {
+                        'exchange': 'BYBIT',
+                        'type': 'лимитный ордер',
+                        'status': status,
+                        'side': side,
+                        'symbol': order_info['symbol'],
+                        'qty': order_info['qty'],
+                        'price': order_info['price']
+                    },
+                    'time': datetime.fromtimestamp(
+                        int(order_info['updatedTime']) / 1000,
+                        tz=timezone.utc
+                    ).strftime('%Y/%m/%d %H:%M:%S')
+                })
+                message = (
+                    f'{status.capitalize()} лимитный ордер на Bybit:'
+                    f'\n• направление — {side}'
+                    f'\n• символ — #{order_info['symbol']}'
+                    f'\n• количество — {order_info['qty']}'
+                    f'\n• цена — {order_info['price']}'
+                )
+                self.telegram_client.send_message(message)
+
+            return order_ids
         except Exception as e:
             self.logger.error(f'Error: {e}')
             self.send_exception(e)
 
-    def send_exception(
-        self,
-        exception: Exception
-    ) -> None:
+    def send_exception(self, exception: Exception) -> None:
         if str(exception) != '':
             self.alerts.append({
                 'message': {
-                    'api': self.api,
+                    'exchange': 'BYBIT',
                     'error': str(exception)
                 },
                 'time': datetime.now(
                     timezone.utc
                 ).strftime('%Y-%m-%d %H:%M:%S')
             })
-            message = f'❗️{self.api}:\n{exception}'
-            self.send_message(message)
-
-    def send_message(self, message: str) -> None:
-        try:
-            if self.bot_token:
-                rq.post(
-                    self.telegram_url,
-                    {'chat_id': self.chat_id, 'text': message}
-                )
-        except Exception as e:
-            self.logger.error(f'Error: {e}')
+            message = f'❗️{'BYBIT'}:\n{exception}'
+            self.telegram_client.send_message(message)

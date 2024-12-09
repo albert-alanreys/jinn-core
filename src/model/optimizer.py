@@ -23,7 +23,7 @@ class Optimizer:
         self.strategy = optimization_info['strategy']
 
         self.strategies = {}
-        self.binance_client = None
+        self.binance_client = BinanceClient()
         self.bybit_client = BybitClient()
         self.db_manager = DBManager()
         self.logger = logging.getLogger(__name__)

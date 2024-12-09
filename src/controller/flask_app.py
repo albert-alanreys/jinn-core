@@ -19,13 +19,13 @@ class FlaskApp(Flask):
         template_folder: str
     ) -> None:
         self.mode = mode
-        self.data_to_process = data_to_process
+        self.data_to_process = data_to_process[1]
 
         self.data_updates = []
         self.alert_updates = []
         self.alerts = []
 
-        self.preprocessor = Preprocessor(self.mode, self.data_to_process)
+        self.preprocessor = Preprocessor(mode, data_to_process)
         self.preprocessor.process()
 
         super().__init__(
@@ -81,8 +81,8 @@ class FlaskApp(Flask):
             file.writelines(lines)
 
         if self.mode is Mode.AUTOMATION:
-            self.thread = threading.Thread(target=self.check_strategies)
-            self.thread.start()
+            thread = threading.Thread(target=self.check_strategies)
+            thread.start()
   
     def set_data_updates(self, strategy_id: str) -> None:
         if strategy_id not in self.data_updates:
@@ -125,14 +125,16 @@ class FlaskApp(Flask):
         try:
             param = list(json.loads(parameter).items())[0][0]
             value = list(json.loads(parameter).items())[0][1]
+
             self.preprocessor.update_strategy(
                 strategy_id=strategy_id,
                 parameter_name=param,
                 new_value=value
             )
+
             response = {"status": "success"}
             http_status = 200
-        except (ValueError, KeyError) as e:
+        except (ValueError, KeyError):
             response = {"status": "error"}
             http_status = 400
 
@@ -140,12 +142,14 @@ class FlaskApp(Flask):
     
     def check_strategies(self) -> None:
         while True:
-            for id, data in self.data_to_process.items():
-                if data['updated']:
-                    self.preprocessor.prepare_strategy_data(id, data)
-                    self.set_data_updates(id)
-                    data['updated'] = False
+            for strategy_id, strategy_data in self.data_to_process.items():
+                if strategy_data['updated']:
+                    self.preprocessor.prepare_strategy_data(
+                        strategy_id, strategy_data
+                    )
+                    self.set_data_updates(strategy_id)
+                    strategy_data['updated'] = False
 
-                if data['alerts']:
-                    self.set_alert_updates(data['alerts'])
-                    data['alerts'].clear()
+                if strategy_data['alerts']:
+                    self.set_alert_updates(strategy_data['alerts'])
+                    strategy_data['alerts'].clear()

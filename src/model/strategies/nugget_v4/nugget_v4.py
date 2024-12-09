@@ -2084,37 +2084,78 @@ class NuggetV4(Strategy):
         )
     
     def trade(self, symbol: str) -> None:
+        if not hasattr(self, 'pending_order_ids'):
+            self.pending_order_ids = {
+                'market_stop_ids': [],
+                'limit_ids': [],
+            }
+
         if self.alert_cancel:
             self.client.futures_cancel_all_orders(symbol)
 
-        self.client.check_stop_status(symbol)
-        self.client.check_limit_status(symbol)
+        order_ids = self.client.check_stop_orders(
+            symbol=symbol,
+            order_ids=self.pending_order_ids['market_stop_ids']
+        )
+
+        if order_ids is not None:
+            self.pending_order_ids['market_stop_ids'] = order_ids
+
+        order_ids = self.client.check_limit_orders(
+            symbol=symbol,
+            order_ids=self.pending_order_ids['limit_ids']
+        )
+
+        if order_ids is not None:
+            self.pending_order_ids['limit_ids'] = order_ids
 
         if self.alert_long_new_stop:
             self.client.futures_cancel_stop(
                 symbol=symbol, 
                 side='Sell'
             )
-            self.client.check_stop_status(symbol)
-            self.client.futures_market_stop_sell(
+
+            order_ids = self.client.check_stop_orders(
+                symbol=symbol,
+                order_ids=self.pending_order_ids['market_stop_ids']
+            )
+
+            if order_ids is not None:
+                self.pending_order_ids['market_stop_ids'] = order_ids
+
+            order_id = self.client.futures_market_stop_sell(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
 
+            if order_id:
+                self.pending_order_ids['market_stop_ids'].append(order_id)
+
         if self.alert_short_new_stop:
             self.client.futures_cancel_stop(
                 symbol=symbol, 
                 side='Buy'
             )
-            self.client.check_stop_status(symbol)
-            self.client.futures_market_stop_buy(
+
+            order_ids = self.client.check_stop_orders(
+                symbol=symbol,
+                order_ids=self.pending_order_ids['market_stop_ids']
+            )
+
+            if order_ids is not None:
+                self.pending_order_ids['market_stop_ids'] = order_ids
+
+            order_id = self.client.futures_market_stop_buy(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
+
+            if order_id:
+                self.pending_order_ids['market_stop_ids'].append(order_id)
 
         if self.alert_long_1:
             self.client.futures_market_open_buy(
@@ -2124,45 +2165,68 @@ class NuggetV4(Strategy):
                     f'{'%' if self.order_size_type == 0 else 'u'}'
                 ),
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=str(self.leverage),
+                leverage=self.leverage,
                 hedge='false'
             )
-            self.client.futures_market_stop_sell(
+            order_id = self.client.futures_market_stop_sell(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['market_stop_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_1[0]}%',
                 price=self.take_price[0][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_1[1]}%',
                 price=self.take_price[1][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_1[2]}%',
                 price=self.take_price[2][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_1[3]}%',
                 price=self.take_price[3][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size='100%',
                 price=self.take_price[4][-1],
                 hedge='false'
             )
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
 
         if self.alert_long_2:
             self.client.futures_market_open_buy(
@@ -2172,75 +2236,118 @@ class NuggetV4(Strategy):
                     f'{'%' if self.order_size_type == 0 else 'u'}'
                 ),
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=str(self.leverage),
+                leverage=self.leverage,
                 hedge='false'
             )
-            self.client.futures_market_stop_sell(
+            order_id = self.client.futures_market_stop_sell(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['market_stop_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[0]}%',
                 price=self.take_price[0][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[1]}%',
                 price=self.take_price[1][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[2]}%',
                 price=self.take_price[2][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[3]}%',
                 price=self.take_price[3][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[4]}%',
                 price=self.take_price[4][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[5]}%',
                 price=self.take_price[5][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[6]}%',
                 price=self.take_price[6][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[7]}%',
                 price=self.take_price[7][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume_2[8]}%',
                 price=self.take_price[8][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_sell(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_sell(
                 symbol=symbol,
                 size='100%',
                 price=self.take_price[9][-1],
                 hedge='false'
             )
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
 
         if self.alert_short_1:
             self.client.futures_market_open_sell(
@@ -2250,45 +2357,68 @@ class NuggetV4(Strategy):
                     f'{'%' if self.order_size_type == 0 else 'u'}'
                 ),
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=str(self.leverage),
+                leverage=self.leverage,
                 hedge='false'
             )
-            self.client.futures_market_stop_buy(
+            order_id = elf.client.futures_market_stop_buy(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['market_stop_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_1[0]}%',
                 price=self.take_price[0][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_1[1]}%',
                 price=self.take_price[1][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_1[2]}%',
                 price=self.take_price[2][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_1[3]}%',
                 price=self.take_price[3][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size='100%',
                 price=self.take_price[4][-1],
                 hedge='false'
             )
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
 
         if self.alert_short_2:
             self.client.futures_market_open_sell(
@@ -2298,72 +2428,115 @@ class NuggetV4(Strategy):
                     f'{'%' if self.order_size_type == 0 else 'u'}'
                 ),
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=str(self.leverage),
+                leverage=self.leverage,
                 hedge='false'
             )
-            self.client.futures_market_stop_buy(
+            order_id = self.client.futures_market_stop_buy(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['market_stop_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[0]}%',
                 price=self.take_price[0][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[1]}%',
                 price=self.take_price[1][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[2]}%',
                 price=self.take_price[2][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[3]}%',
                 price=self.take_price[3][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[4]}%',
                 price=self.take_price[4][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[5]}%',
                 price=self.take_price[5][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[6]}%',
                 price=self.take_price[6][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[7]}%',
                 price=self.take_price[7][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume_2[8]}%',
                 price=self.take_price[8][-1],
                 hedge='false'
             )
-            self.client.futures_limit_take_buy(
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.futures_limit_take_buy(
                 symbol=symbol,
                 size='100%',
                 price=self.take_price[9][-1],
                 hedge='false'
             )
+
+            if order_id:
+                self.pending_order_ids['limit_ids'].append(order_id)
