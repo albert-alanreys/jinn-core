@@ -32,7 +32,7 @@ class BybitClient():
 
         try:
             self.client = HTTP(
-                testnet=True,
+                testnet=False,
                 api_key=self.api_key,
                 api_secret=self.api_secret
             )
@@ -47,6 +47,10 @@ class BybitClient():
         start: str,
         end: str
     ) -> list:
+        if isinstance(interval, enums.BinanceInterval):
+            self.logger.error(f'Invalid interval: {interval}')
+            return []
+
         def fetch_klines(start_range: int, end_range: int) -> list:
             for _ in range(3):
                 try:
@@ -93,7 +97,7 @@ class BybitClient():
         ]
         klines = []
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=7) as executor:
             results = executor.map(lambda t: fetch_klines(*t), time_ranges)
 
             for result in results:
@@ -107,6 +111,10 @@ class BybitClient():
         interval: enums.BybitInterval | int | str,
         limit: int = 1000
     ) -> list:
+            if isinstance(interval, enums.BinanceInterval):
+                self.logger.error(f'Invalid interval: {interval}')
+                return []
+            
             if isinstance(interval, enums.BybitInterval):
                 interval = interval.value
 

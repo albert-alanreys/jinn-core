@@ -43,6 +43,10 @@ class BinanceClient():
         start: str,
         end: str
     ) -> list:
+        if isinstance(interval, enums.BybitInterval):
+            self.logger.error(f'Invalid interval: {interval}')
+            return []
+
         def fetch_klines(start_range: int, end_range: int) -> list:
             params = {
                 'symbol': symbol,
@@ -91,7 +95,7 @@ class BinanceClient():
         ]
         klines = []
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=7) as executor:
             results = executor.map(lambda t: fetch_klines(*t), time_ranges)
 
             for result in results:
@@ -105,6 +109,10 @@ class BinanceClient():
         interval: enums.BinanceInterval | str,
         limit: int = 1000
     ) -> list:
+            if isinstance(interval, enums.BybitInterval):
+                self.logger.error(f'Invalid interval: {interval}')
+                return []
+
             if isinstance(interval, enums.BinanceInterval):
                 interval = interval.value
 

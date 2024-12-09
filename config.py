@@ -20,26 +20,26 @@ TELEGRAM_CHAT_ID = "TELEGRAM_CHAT_ID"
 #   'OPTIMIZATION' - оптимизация
 #   'TESTING' - тестирование
 #   'AUTOMATION' - автоматизация
-MODE = enums.Mode.AUTOMATION
+MODE = enums.Mode.INGESTION
 
 # Настройки для различных режимов
 # ---------------------------------------
 
 # Режим AUTOMATION (автоматизация)
 AUTOMATION_INFO = {
-    'exchange': enums.Exchange.BINANCE,
+    'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
-    'interval': enums.BinanceInterval.MIN_1,
-    'strategy': enums.Strategy.NUGGET_V2,
+    'interval': enums.BybitInterval.MIN_1,
+    'strategy': enums.Strategy.DEVOURER_V3,
 }
 
 # Режим INGESTION (сбор данных)
 INGESTION_INFO = {
-    'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
-    'interval': enums.BinanceInterval.HOUR_1,
-    'start': '2015-01-01',
+    'exchange': enums.Exchange.BYBIT,
+    'market': enums.Market.FUTURES,
+    'symbol': 'LTCUSDT',
+    'interval': enums.BybitInterval.HOUR_1,
+    'start': '2020-01-01',
     'end': '2025-01-01',
 }
 
@@ -47,9 +47,9 @@ INGESTION_INFO = {
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'market': enums.Market.SPOT,
-    'symbol': 'ETHUSDT',
+    'symbol': 'LTCUSDT',
     'interval': enums.BybitInterval.HOUR_1,
-    'start': '2022-01-01',
+    'start': '2020-01-01',
     'end': '2025-01-01',
     'strategy': enums.Strategy.NUGGET_V2,
 }
@@ -57,10 +57,10 @@ OPTIMIZATION_INFO = {
 # Режим TESTING (тестирование)
 TESTING_INFO = {
     'exchange': enums.Exchange.BYBIT,
-    'market': enums.Market.SPOT,
-    'symbol': 'ETHUSDT',
+    'market': enums.Market.FUTURES,
+    'symbol': 'LTCUSDT',
     'interval': enums.BybitInterval.HOUR_1,
-    'start': '2021-01-01',
+    'start': '2020-01-01',
     'end': '2025-12-01',
     'strategy': enums.Strategy.NUGGET_V2,
 }

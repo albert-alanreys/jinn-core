@@ -107,7 +107,7 @@ class Automizer():
             klines = np.array(raw_klines)[:, :6].astype(float)
             p_precision = client.fetch_price_precision(self.symbol)
             q_precision = client.fetch_qty_precision(self.symbol)
-            instance = strategy.value()
+            instance = self.strategy.value()
             strategy_data = {
                 'name': self.strategy.name,
                 'type': self.strategy.value,

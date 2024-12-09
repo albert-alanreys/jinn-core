@@ -228,15 +228,17 @@ export default class ChartManager {
           l = mainData.low;
           c = mainData.close;
           mainLegend.innerHTML = getMainLegendText(o, h, l, c);
-          strategyLegend.innerHTML = Object.values(this.lineSeriesGroup)
-            .map((item) => {
-              return getStrategyLegendText(
-                crosshairPosition.seriesData.get(item),
-                item.options().color,
-                o
-              );
-            })
-            .join(" ");
+          strategyLegend.innerHTML =
+            `${data.name} &nbsp;` +
+            Object.values(this.lineSeriesGroup)
+              .map((item) => {
+                return getStrategyLegendText(
+                  crosshairPosition.seriesData.get(item),
+                  item.options().color,
+                  o
+                );
+              })
+              .join(" ");
         }
       }
     };
