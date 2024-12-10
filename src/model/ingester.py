@@ -45,7 +45,7 @@ class Ingester:
                 postfix = '_FUTURES'
 
         self.db_manager.load_data(
-            db_name=f'{self.exchange.value.capitalize()}.db',
+            db_name=f'{self.exchange.value.lower()}.db',
             table=f'{self.symbol}{postfix}_{self.interval.value}',
             columns={
                 'time': 'TIMESTAMP',

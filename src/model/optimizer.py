@@ -57,7 +57,7 @@ class Optimizer:
                         client = self.bybit_client
 
                     rows, _ = self.db_manager.fetch_data(
-                        db_name=f'{exchange.capitalize()}.db',
+                        db_name=f'{exchange.lower()}.db',
                         table=f'{symbol}_{market}_{interval}',
                         start=start,
                         end=end
@@ -103,7 +103,7 @@ class Optimizer:
                     market = 'FUTURES'
 
             rows, _ = self.db_manager.fetch_data(
-                db_name=f'{self.exchange.value.capitalize()}.db',
+                db_name=f'{self.exchange.value.lower()}.db',
                 table=f'{self.symbol}_{market}_{self.interval.value}',
                 start=self.start,
                 end=self.end

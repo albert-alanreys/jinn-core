@@ -1,5 +1,6 @@
 import logging
 import requests
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -61,6 +62,8 @@ class BinanceClient():
                     response = requests.get(url, params=params)
                     response.raise_for_status()
                     return response.json()
+                except requests.exceptions.Timeout:
+                    time.sleep(1.0)
                 except Exception:
                     pass
 
@@ -73,7 +76,7 @@ class BinanceClient():
                 url = 'https://fapi.binance.com/fapi/v1/klines'
 
         self.logger.info(
-            f'Fetching data: BINANCE • {symbol} • '
+            f'Fetching data: BINANCE • {symbol} • {market.value} • '
             f'{interval.value} • {start} - {end}'
         )
 
@@ -130,6 +133,8 @@ class BinanceClient():
                     )
                     response.raise_for_status()
                     return response.json()[:-1]
+                except requests.exceptions.Timeout:
+                    time.sleep(1.0)
                 except Exception:
                     pass
 
@@ -139,35 +144,41 @@ class BinanceClient():
         url = 'https://fapi.binance.com/fapi/v1/exchangeInfo'
         params = {'symbol': symbol}
 
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            symbols_info = response.json()['symbols']
-            symbol_info = next(
-                filter(lambda x: x['symbol'] == symbol, symbols_info)
-            )
-            price_precision = float(symbol_info['filters'][0]['tickSize'])
-            return price_precision
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f'Error: {e}')
-            return 1.0
+        for _ in range(3):
+            try:
+                response = requests.get(url, params=params)
+                response.raise_for_status()
+                symbols_info = response.json()['symbols']
+                symbol_info = next(
+                    filter(lambda x: x['symbol'] == symbol, symbols_info)
+                )
+                return float(symbol_info['filters'][0]['tickSize'])
+            except requests.exceptions.Timeout:
+                time.sleep(1.0)
+            except Exception:
+                pass
+
+        return 1.0
 
     def fetch_qty_precision(self, symbol: str) -> float:
         url = 'https://fapi.binance.com/fapi/v1/exchangeInfo'
         params = {'symbol': symbol}
 
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            symbols_info = response.json()['symbols']
-            symbol_info = next(
-                filter(lambda x: x['symbol'] == symbol, symbols_info)
-            )
-            qty_precision = float(symbol_info['filters'][1]['stepSize'])
-            return qty_precision
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f'Error: {e}')
-            return 1.0
+        for _ in range(3):
+            try:
+                response = requests.get(url, params=params)
+                response.raise_for_status()
+                symbols_info = response.json()['symbols']
+                symbol_info = next(
+                    filter(lambda x: x['symbol'] == symbol, symbols_info)
+                )
+                return float(symbol_info['filters'][1]['stepSize'])
+            except requests.exceptions.Timeout:
+                time.sleep(1.0)
+            except Exception:
+                pass
+
+        return 1.0
 
     def futures_market_open_buy(
         self,

@@ -116,6 +116,18 @@ export default class RightToolbarManager {
     section.appendChild(outerDiv);
 
     var innerDiv1 = document.createElement("div");
+    innerDiv1.innerText = "Рынок";
+    outerDiv.appendChild(innerDiv1);
+
+    var innerDiv2 = document.createElement("div");
+    innerDiv2.innerText = strategyData.market;
+    outerDiv.appendChild(innerDiv2);
+
+    var outerDiv = document.createElement("div");
+    outerDiv.classList.add("info");
+    section.appendChild(outerDiv);
+
+    var innerDiv1 = document.createElement("div");
     innerDiv1.innerText = "Таймфрейм";
     outerDiv.appendChild(innerDiv1);
 

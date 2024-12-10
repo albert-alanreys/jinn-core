@@ -1,13 +1,18 @@
 [
   {
-    'exchange': 'BYBIT',
-    'market': 'SPOT',
-    'symbol': 'ETHUSDT',
-    'interval': 60,
-    'start_train': '2022-01-01',
-    'end_train': '2025-01-01',
-    'start_test': '2021-01-01',
-    'end_test': '2022-01-01',
-    'strategy': 'NUGGET_V2',
+    "exchange": "BINANCE",
+    "market": "SPOT",
+    "symbol": "BTCUSDT",
+    "interval": "1h",
+    "start": "2019-01-01",
+    "end": "2025-01-01"
   },
+  {
+    "exchange": "BYBIT",
+    "market": "SPOT",
+    "symbol": "ETHUSDT",
+    "interval": 60,
+    "start": "2019-01-01",
+    "end": "2025-01-01"
+  }
 ]

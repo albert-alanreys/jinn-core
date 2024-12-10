@@ -31,6 +31,7 @@ class BinanceInterval(Enum):
     HOUR_2 = '2h'
     HOUR_4 = '4h'
     HOUR_6 = '6h'
+    HOUR_12 = '12h'
     DAY_1 = '1d'
 
 

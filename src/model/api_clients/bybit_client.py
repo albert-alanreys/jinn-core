@@ -1,5 +1,6 @@
 import logging
 import requests
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -63,6 +64,8 @@ class BybitClient():
                         limit=1000
                     )['result']['list'][::-1]
                     return klines
+                except requests.exceptions.Timeout:
+                    time.sleep(1.0)
                 except Exception:
                     pass
 
@@ -75,7 +78,7 @@ class BybitClient():
                 category = 'linear'
 
         self.logger.info(
-            f'Fetching data: BYBIT • {symbol} • '
+            f'Fetching data: BYBIT • {symbol} • {market.value} • '
             f'{interval.value} • {start} - {end}'
         )
 
@@ -127,30 +130,40 @@ class BybitClient():
                         limit=limit
                     )['result']['list'][:0:-1]
                     return klines
+                except requests.exceptions.Timeout:
+                    time.sleep(1.0)
                 except Exception:
                     pass
 
             return []
 
     def fetch_price_precision(self, symbol: str) -> float:
-        try:
-            symbol_info = self.client.get_instruments_info(
-                category="linear", symbol=symbol
-            )['result']['list'][0]
-            return float(symbol_info['priceFilter']['tickSize'])
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f'Error: {e}')
-            return 1.0
+        for _ in range(3):
+            try:
+                symbol_info = self.client.get_instruments_info(
+                    category="linear", symbol=symbol
+                )['result']['list'][0]
+                return float(symbol_info['priceFilter']['tickSize'])
+            except requests.exceptions.Timeout:
+                time.sleep(1.0)
+            except Exception:
+                pass
+
+        return 1.0
 
     def fetch_qty_precision(self, symbol: str) -> float:
-        try:
-            symbol_info = self.client.get_instruments_info(
-                category="linear", symbol=symbol
-            )['result']['list'][0]
-            return float(symbol_info['lotSizeFilter']['qtyStep'])
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f'Error: {e}')
-            return 1.0
+        for _ in range(3):
+            try:
+                symbol_info = self.client.get_instruments_info(
+                    category="linear", symbol=symbol
+                )['result']['list'][0]
+                return float(symbol_info['lotSizeFilter']['qtyStep'])
+            except requests.exceptions.Timeout:
+                time.sleep(1.0)
+            except Exception:
+                pass
+
+        return 1.0
 
     def futures_market_open_buy(
         self,

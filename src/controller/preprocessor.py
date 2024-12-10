@@ -89,6 +89,7 @@ class Preprocessor:
             'name': strategy_data['name'].capitalize().replace('_', '-'),
             'exchange': strategy_data['exchange'],
             'symbol': strategy_data['symbol'],
+            'market': strategy_data['market'],
             'interval': strategy_data['interval'],
             'mintick': strategy_data['p_precision'],
             'klines': self.get_klines(strategy_data['klines']),
@@ -119,6 +120,7 @@ class Preprocessor:
             'name': strategy_data['name'].capitalize().replace('_', '-'),
             'exchange': strategy_data['exchange'],
             'symbol': strategy_data['symbol'],
+            'market': strategy_data['market'],
             'interval': strategy_data['interval'],
             'mintick': strategy_data['p_precision'],
             'parameters': strategy_data['parameters']

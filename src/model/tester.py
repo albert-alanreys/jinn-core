@@ -84,7 +84,7 @@ class Tester():
 
                 for parameters in opt_params:
                     rows, _ = self.db_manager.fetch_data(
-                        db_name=f'{exchange.capitalize()}.db',
+                        db_name=f'{exchange.lower()}.db',
                         table=f'{symbol}_{market}_{interval}',
                         start=start,
                         end=end
@@ -101,6 +101,7 @@ class Tester():
                         'client': client,
                         'exchange': exchange,
                         'symbol': symbol,
+                        'market': market,
                         'interval': interval,
                         'klines': klines,
                         'p_precision': p_precision,
@@ -125,7 +126,7 @@ class Tester():
                     market = 'FUTURES'
 
             rows, _ = self.db_manager.fetch_data(
-                db_name=f'{self.exchange.value.capitalize()}.db',
+                db_name=f'{self.exchange.value.lower()}.db',
                 table=f'{self.symbol}_{market}_{self.interval.value}',
                 start=self.start,
                 end=self.end
@@ -142,6 +143,7 @@ class Tester():
                 'client': client,
                 'exchange': self.exchange.value.lower(),
                 'symbol': self.symbol,
+                'market': market,
                 'interval': self.interval.value,
                 'klines': klines,
                 'p_precision': p_precision,

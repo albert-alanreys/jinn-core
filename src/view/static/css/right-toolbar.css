@@ -269,7 +269,7 @@ html[data-status="AUTOMATION"] #placeholder-4 {
 }
 
 #right-toolbar ::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 
 #right-toolbar ::-webkit-scrollbar-thumb {

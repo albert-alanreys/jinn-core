@@ -1,4 +1,4 @@
-const URL = "https://8798-77-35-16-133.ngrok-free.app";
+const URL = "http://127.0.0.1:5000";
 
 export async function getMode() {
   try {

@@ -246,7 +246,7 @@ export default class ChartManager {
 
     function getMainLegendText(o, h, l, c) {
       let color = c > o ? "#008984" : "#f23645";
-      return `${data.symbol} •
+      return `${data.symbol} • ${data.market} •
           ${data.interval} • ${data.exchange.toUpperCase()}
           &nbsp;
           O <span style="color:${color};">${o}</span>
