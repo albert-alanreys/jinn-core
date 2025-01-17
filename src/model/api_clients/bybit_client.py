@@ -230,17 +230,9 @@ class BybitClient():
             market_price = float(self.client.get_tickers(
                 category='linear', symbol=symbol
             )['result']['list'][0]['lastPrice'])
-
-            try:
-                balance = float(self.client.get_wallet_balance(
-                    accountType='UNIFIED', coin='USDT',
-                )['result']['list'][0]['coin'][0]['availableToWithdraw'])
-            except Exception:
-                pass
-
-                balance = float(self.client.get_wallet_balance(
-                    accountType='CONTRACT', coin='USDT',
-                )['result']['list'][0]['coin'][0]['availableToWithdraw'])
+            balance = float(self.client.get_wallet_balance(
+                accountType='UNIFIED', coin='USDT',
+            )['result']['list'][0]['coin'][0]['availableToWithdraw'])
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
@@ -364,17 +356,9 @@ class BybitClient():
             market_price = float(self.client.get_tickers(
                 category='linear', symbol=symbol
             )['result']['list'][0]['lastPrice'])
-
-            try:
-                balance = float(self.client.get_wallet_balance(
-                    accountType='UNIFIED', coin='USDT',
-                )['result']['list'][0]['coin'][0]['availableToWithdraw'])
-            except Exception:
-                pass
-
-                balance = float(self.client.get_wallet_balance(
-                    accountType='CONTRACT', coin='USDT',
-                )['result']['list'][0]['coin'][0]['availableToWithdraw'])
+            balance = float(self.client.get_wallet_balance(
+                accountType='UNIFIED', coin='USDT',
+            )['result']['list'][0]['coin'][0]['availableToWithdraw'])
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))

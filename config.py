@@ -61,6 +61,6 @@ TESTING_INFO = {
     'symbol': 'BTCUSDT',
     'interval': enums.BinanceInterval.HOUR_1,
     'start': '2017-01-01',
-    'end': '2019-12-01',
+    'end': '2020-01-01',
     'strategy': enums.Strategy.NUGGET_V2,
 }

@@ -1,6 +1,7 @@
-numpy==2.0.2
-numba==0.60.0
-scipy==1.14.1
 binance-futures-connector==4.1.0
-pybit==5.8.0
 Flask==3.0.3
+numba==0.60.0
+numpy==2.0.2
+pybit==5.8.0
+requests==2.32.3
+scipy==1.14.1
