@@ -232,7 +232,7 @@ class BybitClient():
             )['result']['list'][0]['lastPrice'])
             balance = float(self.client.get_wallet_balance(
                 accountType='UNIFIED', coin='USDT',
-            )['result']['list'][0]['coin'][0]['availableToWithdraw'])
+            )['result']['list'][0]['coin'][0]['walletBalance'])
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
@@ -358,7 +358,7 @@ class BybitClient():
             )['result']['list'][0]['lastPrice'])
             balance = float(self.client.get_wallet_balance(
                 accountType='UNIFIED', coin='USDT',
-            )['result']['list'][0]['coin'][0]['availableToWithdraw'])
+            )['result']['list'][0]['coin'][0]['walletBalance'])
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
