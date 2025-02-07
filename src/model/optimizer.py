@@ -29,8 +29,6 @@ class Optimizer:
         self.logger = logging.getLogger(__name__)
 
     def optimize(self) -> None:
-        self.logger.info('Optimization process started')
-
         for strategy in enums.Strategy:
             path_to_file = os.path.abspath(
                 f'src/model/strategies/{strategy.name.lower()}'
@@ -56,6 +54,7 @@ class Optimizer:
                     elif exchange == enums.Exchange.BYBIT.name.lower():
                         client = self.bybit_client
 
+                    interval = client.get_valid_interval(interval)
                     rows, _ = self.db_manager.fetch_data(
                         db_name=f'{exchange.lower()}.db',
                         table=f'{symbol}_{market}_{interval}',
@@ -102,9 +101,10 @@ class Optimizer:
                 case enums.Market.FUTURES:
                     market = 'FUTURES'
 
+            self.interval = client.get_valid_interval(self.interval)
             rows, _ = self.db_manager.fetch_data(
                 db_name=f'{self.exchange.value.lower()}.db',
-                table=f'{self.symbol}_{market}_{self.interval.value}',
+                table=f'{self.symbol}_{market}_{self.interval}',
                 start=self.start,
                 end=self.end
             )
@@ -123,7 +123,7 @@ class Optimizer:
                 'exchange': self.exchange.value.lower(),
                 'market': self.market.value,
                 'symbol': self.symbol,
-                'interval': self.interval.value,
+                'interval': self.interval,
                 'start': self.start,
                 'end': self.end,
                 'type': self.strategy.value,
@@ -134,6 +134,16 @@ class Optimizer:
                 'q_precision': q_precision,
             }
             self.strategies[id(strategy_data)] = strategy_data
+
+        strategies_info = [
+            f'{item['name']} • {item['exchange']} • {item['market']}' +
+            f' • {item['symbol']} • {item['interval']}' +
+            f' • {item['start']} • {item['end']}'
+                for item in self.strategies.values()
+        ]
+        self.logger.info(
+            f'Optimization started for:\n{'\n'.join(strategies_info)}'
+        )
 
         with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
             delattr(self, 'db_manager')

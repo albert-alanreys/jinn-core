@@ -83,6 +83,7 @@ class Tester():
                             target_line = True
 
                 for parameters in opt_params:
+                    interval = client.get_valid_interval(interval)
                     rows, _ = self.db_manager.fetch_data(
                         db_name=f'{exchange.lower()}.db',
                         table=f'{symbol}_{market}_{interval}',
@@ -125,9 +126,10 @@ class Tester():
                 case enums.Market.FUTURES:
                     market = 'FUTURES'
 
+            self.interval = client.get_valid_interval(self.interval)
             rows, _ = self.db_manager.fetch_data(
                 db_name=f'{self.exchange.value.lower()}.db',
-                table=f'{self.symbol}_{market}_{self.interval.value}',
+                table=f'{self.symbol}_{market}_{self.interval}',
                 start=self.start,
                 end=self.end
             )
@@ -144,7 +146,7 @@ class Tester():
                 'exchange': self.exchange.value.lower(),
                 'symbol': self.symbol,
                 'market': market,
-                'interval': self.interval.value,
+                'interval': self.interval,
                 'klines': klines,
                 'p_precision': p_precision,
                 'q_precision': q_precision,

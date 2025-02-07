@@ -2,7 +2,7 @@
 
 TVLite — это среда для оптимизации, тестирования и автоматизации торговых стратегий.
 
-**Актуальная версия:** `2.0.0`
+**Актуальная версия:** `2.1.0`
 
 ---
 
@@ -96,7 +96,7 @@ TELEGRAM_CHAT_ID = "ваш_TELEGRAM_CHAT_ID"
 
 ### Сбор данных
 
-Для загрузки ценовых данных с Binance и/или Bybit, используемых в оптимизации и тестировании стратегий, выполните следующие шаги:
+#### Сбор данных по одному символу
 
 1. В файле `config.py` установите значение переменной `MODE`:
 
@@ -111,13 +111,61 @@ INGESTION_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
-    'interval': enums.BinanceInterval.HOUR_1,
+    'interval': '1h',
     'start': '2017-01-01',
     'end': '2025-01-01',
 }
 ```
 
 Возможные значения параметров перечислены в файле `config_enums.txt` (папка `help`).
+
+3. Запустите программу в терминале из корневой директории проекта:
+
+```bash
+python starter.py
+```
+
+#### Сбор данных по нескольким символам
+
+1. В файле `config.py` установите значение переменной `MODE`:
+
+```python
+MODE = enums.Mode.INGESTION
+```
+
+2. Создайте JSON-файл сбора данных `ingestion.json` в корневой директории проекта. Пример содержимого JSON-файла:
+
+```json
+[
+  {
+    "exchange": "BINANCE",
+    "market": "SPOT",
+    "symbol": "BTCUSDT",
+    "interval": "1h",
+    "start": "2017-01-01",
+    "end": "2025-01-01"
+  },
+  {
+    "exchange": "BINANCE",
+    "market": "SPOT",
+    "symbol": "ETHUSDT",
+    "interval": "1h",
+    "start": "2017-01-01",
+    "end": "2025-01-01"
+  },
+  {
+    "exchange": "BINANCE",
+    "market": "SPOT",
+    "symbol": "XRPUSDT",
+    "interval": "1h",
+    "start": "2018-01-01",
+    "end": "2025-01-01"
+  }
+]
+
+```
+
+Пример файла `ingestion.json` доступен в папке `help`. Возможные значения ключей JSON-файла перечислены в файле `json_enums.txt`.
 
 3. Запустите программу в терминале из корневой директории проекта:
 
@@ -142,7 +190,7 @@ OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
-    'interval': enums.BinanceInterval.HOUR_1,
+    'interval': '1h',
     'start': '2019-01-01',
     'end': '2025-01-01',
     'strategy': enums.Strategy.NUGGET_V2,
@@ -214,7 +262,7 @@ TESTING_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
-    'interval': enums.BinanceInterval.HOUR_1,
+    'interval': '1h',
     'start': '2017-01-01',
     'end': '2019-12-01',
     'strategy': enums.Strategy.NUGGET_V2,
@@ -265,7 +313,7 @@ MODE = enums.Mode.AUTOMATION
 AUTOMATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
-    'interval': enums.BybitInterval.MIN_1,
+    'interval': 1,
     'strategy': enums.Strategy.DEVOURER_V3,
 }
 ```

@@ -12,14 +12,29 @@ from src.model.api_clients.telegram_client import TelegramClient
 
 
 class BybitClient():
+    intervals = {
+        1: 1, '1': 1, '1m': 1,
+        5: 5, '5': 5, '5m': 5,
+        15: 15, '15': 15, '15m': 15,
+        30: 30, '30': 30, '30m': 30,
+        60: 60, '60': 60, '1h': 60,
+        120: 120, '120': 120, '2h': 120,
+        240: 240, '240': 240, '4h': 240,
+        360: 360, '360': 360, '6h': 360,
+        720: 720, '720': 720, '12h': 720,
+        'D': 'D', 'd': 'D', '1d': 'D',
+    }
     interval_ms = {
-        enums.BybitInterval.MIN_1: 60 * 1000,
-        enums.BybitInterval.MIN_30: 30 * 60 * 1000,
-        enums.BybitInterval.HOUR_1: 60 * 60 * 1000,
-        enums.BybitInterval.HOUR_2: 2 * 60 * 60 * 1000,
-        enums.BybitInterval.HOUR_4: 4 * 60 * 60 * 1000,
-        enums.BybitInterval.HOUR_6: 6 * 60 * 60 * 1000,
-        enums.BybitInterval.DAY_1: 24 * 60 * 60 * 1000,
+        1: 60 * 1000,
+        5: 5 * 60 * 1000,
+        15: 15 * 60 * 1000,
+        30: 30 * 60 * 1000,
+        60: 60 * 60 * 1000,
+        120: 2 * 60 * 60 * 1000,
+        240: 4 * 60 * 60 * 1000,
+        360: 6 * 60 * 60 * 1000,
+        720: 12 * 60 * 60 * 1000,
+        'D': 24 * 60 * 60 * 1000,
     }
 
     def __init__(self) -> None:
@@ -40,25 +55,27 @@ class BybitClient():
         except requests.exceptions.ConnectTimeout as e:
             self.logger.error(f'Error: {e}')
 
+    def get_valid_interval(self, interval: str | int) -> str | int | None:
+        if interval in self.intervals:
+            return self.intervals[interval]
+        
+        self.logger.error(f'Invalid interval: {interval}')
+
     def fetch_historical_klines(
         self,
         symbol: str,
         market: enums.Market,
-        interval: enums.BybitInterval,
+        interval: str | int,
         start: str,
         end: str
     ) -> list:
-        if isinstance(interval, enums.BinanceInterval):
-            self.logger.error(f'Invalid interval: {interval}')
-            return []
-
         def fetch_klines(start_range: int, end_range: int) -> list:
             for _ in range(3):
                 try:
                     klines = self.client.get_kline(
                         category=category,
                         symbol=symbol,
-                        interval=interval.value,
+                        interval=interval,
                         start=start_range,
                         end=end_range,
                         limit=1000
@@ -78,8 +95,8 @@ class BybitClient():
                 category = 'linear'
 
         self.logger.info(
-            f'Fetching data: BYBIT • {symbol} • {market.value} • '
-            f'{interval.value} • {start} - {end}'
+            f'Fetching data: BYBIT • {market.value} • '
+            f'{symbol} • {interval} • {start} - {end}'
         )
 
         start = int(
@@ -111,31 +128,24 @@ class BybitClient():
     def fetch_last_klines(
         self,
         symbol: str,
-        interval: enums.BybitInterval | int | str,
+        interval: str | int,
         limit: int = 1000
     ) -> list:
-            if isinstance(interval, enums.BinanceInterval):
-                self.logger.error(f'Invalid interval: {interval}')
-                return []
-            
-            if isinstance(interval, enums.BybitInterval):
-                interval = interval.value
+        for _ in range(3):
+            try:
+                klines = self.client.get_kline(
+                    category='linear',
+                    symbol=symbol,
+                    interval=interval,
+                    limit=limit
+                )['result']['list'][:0:-1]
+                return klines
+            except requests.exceptions.Timeout:
+                time.sleep(1.0)
+            except Exception:
+                pass
 
-            for _ in range(3):
-                try:
-                    klines = self.client.get_kline(
-                        category='linear',
-                        symbol=symbol,
-                        interval=interval,
-                        limit=limit
-                    )['result']['list'][:0:-1]
-                    return klines
-                except requests.exceptions.Timeout:
-                    time.sleep(1.0)
-                except Exception:
-                    pass
-
-            return []
+        return []
 
     def fetch_price_precision(self, symbol: str) -> float:
         for _ in range(3):

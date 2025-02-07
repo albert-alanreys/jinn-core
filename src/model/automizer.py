@@ -45,9 +45,6 @@ class Automizer():
                 exchange = exchange.lower()
                 symbol = symbol.upper()
 
-                if interval.isdigit():
-                    interval = int(interval)
-
                 if exchange == enums.Exchange.BINANCE.name.lower():
                     client = self.binance_client
                 elif exchange == enums.Exchange.BYBIT.name.lower():
@@ -66,6 +63,7 @@ class Automizer():
                             )
                         )
 
+                interval = client.get_valid_interval(interval)
                 raw_klines = client.fetch_last_klines(symbol, interval)
                 klines = np.array(raw_klines)[:, :6].astype(float)
                 p_precision = client.fetch_price_precision(symbol)
@@ -104,6 +102,7 @@ class Automizer():
                 case enums.Exchange.BYBIT:
                     client = self.bybit_client
 
+            self.interval = client.get_valid_interval(self.interval)
             raw_klines = client.fetch_last_klines(self.symbol, self.interval)
             klines = np.array(raw_klines)[:, :6].astype(float)
             p_precision = client.fetch_price_precision(self.symbol)
@@ -118,7 +117,7 @@ class Automizer():
                 'exchange': self.exchange.value.lower(),
                 'symbol': self.symbol,
                 'market': 'FUTURES',
-                'interval': self.interval.value,
+                'interval': self.interval,
                 'klines': klines,
                 'p_precision': p_precision,
                 'q_precision': q_precision,

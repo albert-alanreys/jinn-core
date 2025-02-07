@@ -1,6 +1,6 @@
 import logging
-
-import numpy as np
+import json
+import os
 
 import src.model.enums as enums
 from src.model.db_manager import DBManager
@@ -17,43 +17,113 @@ class Ingester:
         self.start = ingestion_info['start']
         self.end = ingestion_info['end']
 
+        self.ingestion = []
+        self.binance_client = BinanceClient()
+        self.bybit_client = BybitClient()
         self.logger = logging.getLogger(__name__)
         self.db_manager = DBManager()
 
     def ingeste(self) -> None:
-        self.logger.info(f'Data ingestion for {self.symbol}')
+        path_to_file = os.path.abspath('ingestion.json')
 
-        match self.exchange:
-            case enums.Exchange.BINANCE:
-                client = BinanceClient()
-            case enums.Exchange.BYBIT:
-                client = BybitClient()
+        if os.path.exists(path_to_file):
+            with open(path_to_file, 'r') as file:
+                configs = json.load(file)
+                
+                for config in configs:
+                    exchange = config['exchange'].upper()
+                    market = config['market'].upper()
+                    symbol = config['symbol'].upper()
+                    interval = config['interval']
+                    start = config['start']
+                    end = config['end']
 
-        raw_klines = client.fetch_historical_klines(
-            symbol=self.symbol,
-            market=self.market,
-            interval=self.interval,
-            start=self.start,
-            end=self.end
+                    match exchange:
+                        case 'BINANCE':
+                            exchange = enums.Exchange.BINANCE
+                            client = self.binance_client
+                        case 'BYBIT':
+                            exchange = enums.Exchange.BYBIT
+                            client = self.bybit_client
+
+                    match market:
+                        case 'FUTURES':
+                            market = enums.Market.FUTURES
+                        case 'SPOT':
+                            market = enums.Market.SPOT
+
+                    interval = client.get_valid_interval(interval)
+                    ingestion = {
+                        'client': client,
+                        'exchange': exchange,
+                        'market': market,
+                        'symbol': symbol,
+                        'interval': interval,
+                        'start': start,
+                        'end': end,
+                    }
+                    self.ingestion.append(ingestion)
+        else:
+            match self.exchange:
+                case enums.Exchange.BINANCE:
+                    client = BinanceClient()
+                case enums.Exchange.BYBIT:
+                    client = BybitClient()
+
+            self.interval = client.get_valid_interval(self.interval)
+            ingestion = {
+                'client': client,
+                'exchange': self.exchange,
+                'market': self.market,
+                'symbol': self.symbol,
+                'interval': self.interval,
+                'start': self.start,
+                'end': self.end,
+            }
+            self.ingestion.append(ingestion)
+
+        ingestion_info = [
+            f'{item['exchange'].value.lower()} • {item['market'].value}' +
+            f' • {item['symbol']} • {item['interval']}' +
+            f' • {item['start']} • {item['end']}'
+            for item in self.ingestion
+        ]
+        self.logger.info(
+            f'Ingestion started for:\n{'\n'.join(ingestion_info)}'
         )
-        klines = np.array(raw_klines)[:, :6].astype(float)
 
-        match self.market:
-            case enums.Market.SPOT:
-                postfix = '_SPOT'
-            case enums.Market.FUTURES:
-                postfix = '_FUTURES'
+        for item in self.ingestion:
+            raw_klines = client.fetch_historical_klines(
+                symbol=item['symbol'],
+                market=item['market'],
+                interval=item['interval'],
+                start=item['start'],
+                end=item['end']
+            )
+            klines = [
+                [float(value) for value in row[:6]]
+                    for row in raw_klines
+            ]
 
-        self.db_manager.load_data(
-            db_name=f'{self.exchange.value.lower()}.db',
-            table=f'{self.symbol}{postfix}_{self.interval.value}',
-            columns={
-                'time': 'TIMESTAMP',
-                'open': 'REAL',
-                'high': 'REAL',
-                'low': 'REAL',
-                'close': 'REAL',
-                'volume': 'REAL',
-            },
-            data=klines
-        )
+            if not klines:
+                continue
+
+            match item['market']:
+                case enums.Market.SPOT:
+                    postfix = '_SPOT'
+                case enums.Market.FUTURES:
+                    postfix = '_FUTURES'
+
+            self.db_manager.load_data(
+                db_name=f'{item['exchange'].value.lower()}.db',
+                table=f'{item['symbol']}{postfix}_{item['interval']}',
+                columns={
+                    'time': 'TIMESTAMP',
+                    'open': 'REAL',
+                    'high': 'REAL',
+                    'low': 'REAL',
+                    'close': 'REAL',
+                    'volume': 'REAL',
+                },
+                data=klines
+            )

@@ -4,37 +4,37 @@
   3. enums.Mode.TESTING — режим тестирования
   4. enums.Mode.AUTOMATION — режим автоматизации
 
-
 Ключ exchange (биржа):
   1. enums.Exchange.BINANCE — Binance
   2. enums.Exchange.BYBIT — Bybit
-
 
 Ключ market (рынок):
   1. enums.Market.SPOT — спотовый рынок
   2. enums.Market.FUTURES — рынок фьючерсов
 
-
 Ключ interval (таймфрейм):
   a) Binance:
-    1. enums.BinanceInterval.MIN_1 — 1 минута
-    2. enums.BinanceInterval.MIN_30 — 30 минут
-    3. enums.BinanceInterval.HOUR_1 — 1 час
-    4. enums.BinanceInterval.HOUR_2 — 2 часа
-    5. enums.BinanceInterval.HOUR_4 — 4 часа
-    6. enums.BinanceInterval.HOUR_6 — 6 часов
-    7. enums.BinanceInterval.HOUR_12 — 6 часов
-    8. enums.BinanceInterval.DAY_1 — 1 день
+    1. "1m" — 1 минута
+    2. "5m" — 5 минут
+    3. "15m" — 15 минут
+    4. "30m" — 30 минут
+    5. "1h" — 1 час
+    6. "2h" — 2 часа
+    7. "4h" — 4 часа
+    8. "6h" — 6 часов
+    9. "12h" — 12 часов
+    10. "1d" — 1 день
   b) Bybit:
-    1. enums.BybitInterval.MIN_1 — 1 минута
-    2. enums.BybitInterval.MIN_30 — 30 минут
-    3. enums.BybitInterval.HOUR_1 — 1 час
-    4. enums.BybitInterval.HOUR_2 — 2 часа
-    5. enums.BybitInterval.HOUR_4 — 4 часа
-    6. enums.BybitInterval.HOUR_6 — 6 часов
-    7. enums.BybitInterval.HOUR_12 — 12 часов
-    8. enums.BybitInterval.DAY_1 — 1 день
-
+    1. 1 — 1 минута
+    2. 5 — 5 минут
+    3. 15 — 15 минут
+    4. 30 — 30 минут
+    5. 60 — 1 час
+    6. 120 — 2 часа
+    7. 240 — 4 часа
+    8. 360 — 6 часов
+    9. 720 — 12 часов
+    10. "D" — 1 день
 
 Ключ strategy (стратегия):
   1. enums.Strategy.DEVOURER_V3 — стратегия Devourer версии 3
@@ -42,4 +42,3 @@
   3. enums.Strategy.NUGGET_V2 — стратегия Nugget версии 2
   4. enums.Strategy.NUGGET_V4 — стратегия Nugget версии 4
   5. enums.Strategy.NUGGET_V5 — стратегия Nugget версии 5
-

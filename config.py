@@ -29,7 +29,7 @@ MODE = enums.Mode.INGESTION
 AUTOMATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
-    'interval': enums.BybitInterval.MIN_1,
+    'interval': 1,
     'strategy': enums.Strategy.DEVOURER_V3,
 }
 
@@ -37,8 +37,8 @@ AUTOMATION_INFO = {
 INGESTION_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
-    'interval': enums.BinanceInterval.HOUR_1,
+    'symbol': 'XRPUSDT',
+    'interval': '1h',
     'start': '2017-01-01',
     'end': '2025-01-01',
 }
@@ -47,8 +47,8 @@ INGESTION_INFO = {
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
-    'interval': enums.BinanceInterval.HOUR_1,
+    'symbol': 'XRPUSDT',
+    'interval': '1h',
     'start': '2019-01-01',
     'end': '2025-01-01',
     'strategy': enums.Strategy.NUGGET_V2,
@@ -58,8 +58,8 @@ OPTIMIZATION_INFO = {
 TESTING_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
-    'interval': enums.BinanceInterval.HOUR_1,
+    'symbol': 'XRPUSDT',
+    'interval': '1h',
     'start': '2017-01-01',
     'end': '2020-01-01',
     'strategy': enums.Strategy.NUGGET_V2,

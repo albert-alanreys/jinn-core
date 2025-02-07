@@ -12,14 +12,29 @@ from src.model.api_clients.telegram_client import TelegramClient
 
 
 class BinanceClient():
+    intervals = {
+        '1m': '1m', '1': '1m', 1: '1m',
+        '5m': '5m', '5': '5m', 5: '5m',
+        '15m': '15m', '15': '15m', 15: '15m',
+        '30m': '30m', '30': '30m', 30: '30m',
+        '1h': '1h', '60': '1h', 60: '1h',
+        '2h': '2h', '120': '2h', 120: '2h',
+        '4h': '4h', '240': '4h', 240: '4h',
+        '6h': '6h', '360': '6h', 360: '6h',
+        '12h': '12h', '720': '12h', 720: '12h',
+        '1d': '1d', 'd': '1d', 'D': '1d',
+    }
     interval_ms = {
-        enums.BinanceInterval.MIN_1: 60 * 1000,
-        enums.BinanceInterval.MIN_30: 30 * 60 * 1000,
-        enums.BinanceInterval.HOUR_1: 60 * 60 * 1000,
-        enums.BinanceInterval.HOUR_2: 2 * 60 * 60 * 1000,
-        enums.BinanceInterval.HOUR_4: 4 * 60 * 60 * 1000,
-        enums.BinanceInterval.HOUR_6: 6 * 60 * 60 * 1000,
-        enums.BinanceInterval.DAY_1: 24 * 60 * 60 * 1000,
+        '1m': 60 * 1000,
+        '5m': 5 * 60 * 1000,
+        '15m': 15 * 60 * 1000,
+        '30m': 30 * 60 * 1000,
+        '1h': 60 * 60 * 1000,
+        '2h': 2 * 60 * 60 * 1000,
+        '4h': 4 * 60 * 60 * 1000,
+        '6h': 6 * 60 * 60 * 1000,
+        '12h': 12 * 60 * 60 * 1000,
+        '1d': 24 * 60 * 60 * 1000,
     }
 
     def __init__(self) -> None:
@@ -36,22 +51,24 @@ class BinanceClient():
         except requests.exceptions.ConnectTimeout as e:
             self.logger.error(f'Error: {e}')
 
+    def get_valid_interval(self, interval: str | int) -> str | None:
+        if interval in self.intervals:
+            return self.intervals[interval]
+        
+        self.logger.error(f'Invalid interval: {interval}')
+
     def fetch_historical_klines(
         self,
         symbol: str,
         market: enums.Market,
-        interval: enums.BinanceInterval,
+        interval: str,
         start: str,
         end: str
     ) -> list:
-        if isinstance(interval, enums.BybitInterval):
-            self.logger.error(f'Invalid interval: {interval}')
-            return []
-
         def fetch_klines(start_range: int, end_range: int) -> list:
             params = {
                 'symbol': symbol,
-                'interval': interval.value,
+                'interval': interval,
                 'startTime': start_range,
                 'endTime': end_range,
                 'limit': 1000,
@@ -76,8 +93,8 @@ class BinanceClient():
                 url = 'https://fapi.binance.com/fapi/v1/klines'
 
         self.logger.info(
-            f'Fetching data: BINANCE • {symbol} • {market.value} • '
-            f'{interval.value} • {start} - {end}'
+            f'Fetching data: BINANCE • {market.value} • '
+            f'{symbol} • {interval} • {start} - {end}'
         )
 
         start = int(
@@ -109,36 +126,29 @@ class BinanceClient():
     def fetch_last_klines(
         self,
         symbol: str,
-        interval: enums.BinanceInterval | str,
+        interval: str,
         limit: int = 1000
     ) -> list:
-            if isinstance(interval, enums.BybitInterval):
-                self.logger.error(f'Invalid interval: {interval}')
-                return []
+        params = {
+            'symbol': symbol,
+            'interval': interval,
+            'limit': limit,
+        }
 
-            if isinstance(interval, enums.BinanceInterval):
-                interval = interval.value
+        for _ in range(3):
+            try:
+                response = requests.get(
+                    url='https://fapi.binance.com/fapi/v1/klines',
+                    params=params
+                )
+                response.raise_for_status()
+                return response.json()[:-1]
+            except requests.exceptions.Timeout:
+                time.sleep(1.0)
+            except Exception:
+                pass
 
-            params = {
-                'symbol': symbol,
-                'interval': interval,
-                'limit': limit,
-            }
-
-            for _ in range(3):
-                try:
-                    response = requests.get(
-                        url='https://fapi.binance.com/fapi/v1/klines',
-                        params=params
-                    )
-                    response.raise_for_status()
-                    return response.json()[:-1]
-                except requests.exceptions.Timeout:
-                    time.sleep(1.0)
-                except Exception:
-                    pass
-
-            return []
+        return []
 
     def fetch_price_precision(self, symbol: str) -> float:
         url = 'https://fapi.binance.com/fapi/v1/exchangeInfo'
