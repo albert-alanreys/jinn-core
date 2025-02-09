@@ -1158,7 +1158,7 @@ class NuggetV2(Strategy):
             }
 
         if self.alert_cancel:
-            self.client.futures_cancel_all_orders(symbol)
+            self.client.cancel_all_orders(symbol)
 
         order_ids = self.client.check_stop_orders(
             symbol=symbol,
@@ -1177,7 +1177,7 @@ class NuggetV2(Strategy):
             self.pending_order_ids['limit_ids'] = order_ids
 
         if self.alert_long_new_stop:
-            self.client.futures_cancel_stop(
+            self.client.cancel_stop(
                 symbol=symbol, 
                 side='Sell'
             )
@@ -1190,18 +1190,18 @@ class NuggetV2(Strategy):
             if order_ids is not None:
                 self.pending_order_ids['market_stop_ids'] = order_ids
 
-            order_id = self.client.futures_market_stop_sell(
+            order_id = self.client.market_stop_sell(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['market_stop_ids'].append(order_id)
         
         if self.alert_short_new_stop:
-            self.client.futures_cancel_stop(
+            self.client.cancel_stop(
                 symbol=symbol, 
                 side='Buy'
             )
@@ -1214,18 +1214,18 @@ class NuggetV2(Strategy):
             if order_ids is not None:
                 self.pending_order_ids['market_stop_ids'] = order_ids
 
-            order_id = self.client.futures_market_stop_buy(
+            order_id = self.client.market_stop_buy(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['market_stop_ids'].append(order_id)
 
         if self.alert_entry_long:
-            self.client.futures_market_open_buy(
+            self.client.market_open_buy(
                 symbol=symbol,
                 size=(
                     f'{self.order_size}'
@@ -1233,70 +1233,70 @@ class NuggetV2(Strategy):
                 ),
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=self.leverage,
-                hedge='false'
+                hedge=False
             )
-            order_id = self.client.futures_market_stop_sell(
+            order_id = self.client.market_stop_sell(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['market_stop_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_sell(
+            order_id = self.client.limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume[0]}%',
                 price=self.take_price[0][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_sell(
+            order_id = self.client.limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume[1]}%',
                 price=self.take_price[1][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_sell(
+            order_id = self.client.limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume[2]}%',
                 price=self.take_price[2][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_sell(
+            order_id = self.client.limit_take_sell(
                 symbol=symbol,
                 size=f'{self.take_volume[3]}%',
                 price=self.take_price[3][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_sell(
+            order_id = self.client.limit_take_sell(
                 symbol=symbol,
                 size='100%',
                 price=self.take_price[4][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
         if self.alert_entry_short:
-            self.client.futures_market_open_sell(
+            self.client.market_open_sell(
                 symbol=symbol,
                 size=(
                     f'{self.order_size}'
@@ -1304,63 +1304,63 @@ class NuggetV2(Strategy):
                 ),
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=self.leverage,
-                hedge='false'
+                hedge=False
             )
-            order_id = self.client.futures_market_stop_buy(
+            order_id = self.client.market_stop_buy(
                 symbol=symbol, 
                 size='100%', 
                 price=self.stop_price[-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['market_stop_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_buy(
+            order_id = self.client.limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume[0]}%',
                 price=self.take_price[0][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_buy(
+            order_id = self.client.limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume[1]}%',
                 price=self.take_price[1][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_buy(
+            order_id = self.client.limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume[2]}%',
                 price=self.take_price[2][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_buy(
+            order_id = self.client.limit_take_buy(
                 symbol=symbol,
                 size=f'{self.take_volume[3]}%',
                 price=self.take_price[3][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_buy(
+            order_id = self.client.limit_take_buy(
                 symbol=symbol,
                 size='100%',
                 price=self.take_price[4][-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:

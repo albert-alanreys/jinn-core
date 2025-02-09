@@ -1,10 +1,10 @@
 import logging
-import requests
 
 import config
+from src.model.api_clients.http_client import HttpClient
 
 
-class TelegramClient():
+class TelegramClient(HttpClient):
     _instance = None
 
     def __new__(cls):
@@ -23,8 +23,6 @@ class TelegramClient():
 
             self._initialized = True
 
-    def send_message(self, msg: str) -> None:
-        try:
-            requests.post(self.url, {'chat_id': self.chat, 'text': msg})
-        except Exception as e:
-            self.logger.error(f'Error: {e}')
+    def send_message(self, message: str) -> None:
+        params = {'chat_id': self.chat, 'text': message}
+        self.post(self.url, json=params)

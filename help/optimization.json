@@ -4,15 +4,23 @@
     "market": "SPOT",
     "symbol": "BTCUSDT",
     "interval": "1h",
-    "start": "2019-01-01",
+    "start": "2020-01-01",
     "end": "2025-01-01"
   },
   {
-    "exchange": "BYBIT",
+    "exchange": "BINANCE",
     "market": "SPOT",
     "symbol": "ETHUSDT",
-    "interval": 60,
-    "start": "2019-01-01",
+    "interval": "1h",
+    "start": "2020-01-01",
+    "end": "2025-01-01"
+  },
+  {
+    "exchange": "BINANCE",
+    "market": "SPOT",
+    "symbol": "XRPUSDT",
+    "interval": "1h",
+    "start": "2020-01-01",
     "end": "2025-01-01"
   }
 ]

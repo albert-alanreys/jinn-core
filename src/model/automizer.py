@@ -42,12 +42,10 @@ class Automizer():
                         pattern, filename[filename.rfind('\\') + 1 :]
                     ).groups()
                 )
-                exchange = exchange.lower()
-                symbol = symbol.upper()
 
-                if exchange == enums.Exchange.BINANCE.name.lower():
+                if exchange.upper() == enums.Exchange.BINANCE.name:
                     client = self.binance_client
-                elif exchange == enums.Exchange.BYBIT.name.lower():
+                elif exchange.upper() == enums.Exchange.BYBIT.name:
                     client = self.bybit_client
 
                 with open(filename, 'r') as file:
@@ -64,10 +62,15 @@ class Automizer():
                         )
 
                 interval = client.get_valid_interval(interval)
-                raw_klines = client.fetch_last_klines(symbol, interval)
-                klines = np.array(raw_klines)[:, :6].astype(float)
-                p_precision = client.fetch_price_precision(symbol)
-                q_precision = client.fetch_qty_precision(symbol)
+                raw_klines = client.get_last_klines(symbol, interval)
+
+                if not raw_klines:
+                    self.logger.error(f'No klines for {symbol} • {interval}')
+                    continue
+
+                klines = np.array(raw_klines)[:-1, :6].astype(float)
+                p_precision = client.get_price_precision(symbol)
+                q_precision = client.get_qty_precision(symbol)
                 instance = strategy.value(all_params=parameters)
                 strategy_data = {
                     'name': strategy.name,
@@ -94,7 +97,7 @@ class Automizer():
                     }
                 )
                 self.strategies[str(id(strategy_data))] = strategy_data
-        
+
         if len(self.strategies) == 0:
             match self.exchange:
                 case enums.Exchange.BINANCE:
@@ -103,10 +106,17 @@ class Automizer():
                     client = self.bybit_client
 
             self.interval = client.get_valid_interval(self.interval)
-            raw_klines = client.fetch_last_klines(self.symbol, self.interval)
-            klines = np.array(raw_klines)[:, :6].astype(float)
-            p_precision = client.fetch_price_precision(self.symbol)
-            q_precision = client.fetch_qty_precision(self.symbol)
+            raw_klines = client.get_last_klines(self.symbol, self.interval)
+
+            if not raw_klines:
+                self.logger.error(
+                    f'No klines for {self.symbol} • {self.interval}'
+                )
+                raise Exception
+
+            klines = np.array(raw_klines)[:-1, :6].astype(float)
+            p_precision = client.get_price_precision(self.symbol)
+            q_precision = client.get_qty_precision(self.symbol)
             instance = self.strategy.value()
             strategy_data = {
                 'name': self.strategy.name,
@@ -114,7 +124,7 @@ class Automizer():
                 'instance': instance,
                 'parameters': instance.__dict__.copy(),
                 'client': client,
-                'exchange': self.exchange.value.lower(),
+                'exchange': self.exchange.value,
                 'symbol': self.symbol,
                 'market': 'FUTURES',
                 'interval': self.interval,
@@ -134,22 +144,22 @@ class Automizer():
             )
             self.strategies[str(id(strategy_data))] = strategy_data
 
-        thread = threading.Thread(target=self.run)
+        thread = threading.Thread(target=self.run, daemon=True)
         thread.start()
 
     def run(self) -> None:
         while True:
             for strategy_id, strategy_data in self.strategies.items():
-                raw_klines = strategy_data['client'].fetch_last_klines(
+                raw_klines = strategy_data['client'].get_last_klines(
                     symbol=strategy_data['symbol'],
                     interval=strategy_data['interval'],
                     limit=2
                 )
-                new_klines = np.array(raw_klines)[:, :6].astype(float)
 
-                if new_klines.shape[0] == 0:
+                if not raw_klines:
                     continue
-
+                
+                new_klines = np.array(raw_klines)[:-1, :6].astype(float)
                 last_kline_time = strategy_data['klines'][-1, 0]
                 new_kline_time = new_klines[-1, 0]
 

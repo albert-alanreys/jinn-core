@@ -977,7 +977,7 @@ class DevourerV3(Strategy):
             }
 
         if self.alert_cancel:
-            self.client.futures_cancel_all_orders(symbol)
+            self.client.cancel_all_orders(symbol)
 
         order_ids = self.client.check_stop_orders(
             symbol=symbol,
@@ -996,63 +996,63 @@ class DevourerV3(Strategy):
             self.pending_order_ids['limit_ids'] = order_ids
 
         if self.alert_exit_long:
-            self.client.futures_market_close_sell(
+            self.client.market_close_sell(
                 symbol=symbol,
                 size='100%',
-                hedge='false'
+                hedge=False
             )
 
         if self.alert_exit_short:
-            self.client.futures_market_close_buy(
+            self.client.market_close_buy(
                 symbol=symbol,
                 size='100%',
-                hedge='false'
+                hedge=False
             )
 
         if self.alert_entry_long:
-            self.client.futures_market_open_buy(
+            self.client.market_open_buy(
                 symbol=symbol,
                 size=f'{self.order_size}%',
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=self.leverage,
-                hedge='false'
+                hedge=False
             )
 
             if not np.isnan(self.stop_price[-1]):
-                order_id = self.client.futures_market_stop_sell(
+                order_id = self.client.market_stop_sell(
                     symbol=symbol, 
                     size='100%', 
                     price=self.stop_price[-1], 
-                    hedge='false'
+                    hedge=False
                 )
 
                 if order_id:
                     self.pending_order_ids['market_stop_ids'].append(order_id)
 
         if self.alert_entry_short:
-            self.client.futures_market_open_sell(
+            self.client.market_open_sell(
                 symbol=symbol,
                 size=f'{self.order_size}%',
                 margin=('isolated' if self.margin_type == 0 else 'cross'),
                 leverage=self.leverage,
-                hedge='false'
+                hedge=False
             )
 
-            order_id = self.client.futures_market_stop_buy(
+            order_id = self.client.market_stop_buy(
                 symbol=symbol, 
                 size='100%',
                 price=self.stop_price[-1], 
-                hedge='false'
+                hedge=False
             )
 
             if order_id:
                 self.pending_order_ids['market_stop_ids'].append(order_id)
 
-            order_id = self.client.futures_limit_take_buy(
+            order_id = self.client.limit_take_buy(
                 symbol=symbol,
                 size='100%',
                 price=self.take_price[-1],
-                hedge='false'
+                hedge=False
             )
 
             if order_id:

@@ -68,8 +68,8 @@ class Optimizer:
                     fold_2 = klines[fold_size : 2 * fold_size]
                     fold_3 = klines[2 * fold_size :]
 
-                    p_precision = client.fetch_price_precision(symbol)
-                    q_precision = client.fetch_qty_precision(symbol)
+                    p_precision = client.get_price_precision(symbol)
+                    q_precision = client.get_qty_precision(symbol)
 
                     strategy_data = {
                         'name': strategy.name.lower(),
@@ -115,12 +115,12 @@ class Optimizer:
             fold_2 = klines[fold_size : 2 * fold_size]
             fold_3 = klines[2 * fold_size :]
 
-            p_precision = client.fetch_price_precision(self.symbol)
-            q_precision = client.fetch_qty_precision(self.symbol)
+            p_precision = client.get_price_precision(self.symbol)
+            q_precision = client.get_qty_precision(self.symbol)
 
             strategy_data = {
                 'name': self.strategy.name.lower(),
-                'exchange': self.exchange.value.lower(),
+                'exchange': self.exchange.value,
                 'market': self.market.value,
                 'symbol': self.symbol,
                 'interval': self.interval,
@@ -136,10 +136,14 @@ class Optimizer:
             self.strategies[id(strategy_data)] = strategy_data
 
         strategies_info = [
-            f'{item['name']} • {item['exchange']} • {item['market']}' +
-            f' • {item['symbol']} • {item['interval']}' +
-            f' • {item['start']} • {item['end']}'
-                for item in self.strategies.values()
+            ' • '.join(
+                [
+                    item['name'], item['exchange'], item['market'],
+                    item['symbol'], str(item['interval']),
+                    item['start'], item['end']
+                ]
+            )
+            for item in self.strategies.values()
         ]
         self.logger.info(
             f'Optimization started for:\n{'\n'.join(strategies_info)}'
@@ -175,14 +179,14 @@ class Optimizer:
             for sample in strategy['best_samples']:
                 file_text = (
                     f'Period: {strategy['start']} - {strategy['end']}\n'
-                    f'{"=" * 50}\n'
+                    f'{'=' * 50}\n'
                     + ''.join(
                         f'{param} = {sample[idx]}\n'
                             for idx, param in enumerate(
                                 strategy['type'].opt_params.keys()
                             )
                     )
-                    + f'{"=" * 50}\n'
+                    + f'{'=' * 50}\n'
                 )
 
                 with open(path_to_file, 'a') as file:

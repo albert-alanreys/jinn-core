@@ -83,9 +83,13 @@ class Ingester:
             self.ingestion.append(ingestion)
 
         ingestion_info = [
-            f'{item['exchange'].value.lower()} • {item['market'].value}' +
-            f' • {item['symbol']} • {item['interval']}' +
-            f' • {item['start']} • {item['end']}'
+            ' • '.join(
+                [
+                    item['exchange'].value, item['market'].value,
+                    item['symbol'], str(item['interval']),
+                    item['start'], item['end']
+                ]
+            )
             for item in self.ingestion
         ]
         self.logger.info(
@@ -93,37 +97,40 @@ class Ingester:
         )
 
         for item in self.ingestion:
-            raw_klines = client.fetch_historical_klines(
-                symbol=item['symbol'],
-                market=item['market'],
-                interval=item['interval'],
-                start=item['start'],
-                end=item['end']
-            )
-            klines = [
-                [float(value) for value in row[:6]]
-                    for row in raw_klines
-            ]
+            try:
+                raw_klines = client.get_historical_klines(
+                    symbol=item['symbol'],
+                    market=item['market'],
+                    interval=item['interval'],
+                    start=item['start'],
+                    end=item['end']
+                )
+                klines = [
+                    [float(value) for value in row[:6]]
+                        for row in raw_klines
+                ]
+                
+                if not klines:
+                    continue
 
-            if not klines:
-                continue
+                match item['market']:
+                    case enums.Market.SPOT:
+                        postfix = '_SPOT'
+                    case enums.Market.FUTURES:
+                        postfix = '_FUTURES'
 
-            match item['market']:
-                case enums.Market.SPOT:
-                    postfix = '_SPOT'
-                case enums.Market.FUTURES:
-                    postfix = '_FUTURES'
-
-            self.db_manager.load_data(
-                db_name=f'{item['exchange'].value.lower()}.db',
-                table=f'{item['symbol']}{postfix}_{item['interval']}',
-                columns={
-                    'time': 'TIMESTAMP',
-                    'open': 'REAL',
-                    'high': 'REAL',
-                    'low': 'REAL',
-                    'close': 'REAL',
-                    'volume': 'REAL',
-                },
-                data=klines
-            )
+                self.db_manager.load_data(
+                    db_name=f'{item['exchange'].value.lower()}.db',
+                    table=f'{item['symbol']}{postfix}_{item['interval']}',
+                    columns={
+                        'time': 'TIMESTAMP',
+                        'open': 'REAL',
+                        'high': 'REAL',
+                        'low': 'REAL',
+                        'close': 'REAL',
+                        'volume': 'REAL',
+                    },
+                    data=klines
+                )
+            except Exception as e:
+                self.logger.error(e)

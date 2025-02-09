@@ -37,7 +37,7 @@ AUTOMATION_INFO = {
 INGESTION_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
-    'symbol': 'XRPUSDT',
+    'symbol': 'BTCUSDT',
     'interval': '1h',
     'start': '2017-01-01',
     'end': '2025-01-01',
@@ -47,7 +47,7 @@ INGESTION_INFO = {
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
-    'symbol': 'XRPUSDT',
+    'symbol': 'BTCUSDT',
     'interval': '1h',
     'start': '2019-01-01',
     'end': '2025-01-01',
@@ -58,7 +58,7 @@ OPTIMIZATION_INFO = {
 TESTING_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
-    'symbol': 'XRPUSDT',
+    'symbol': 'BTCUSDT',
     'interval': '1h',
     'start': '2017-01-01',
     'end': '2020-01-01',

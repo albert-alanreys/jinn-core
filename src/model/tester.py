@@ -45,13 +45,10 @@ class Tester():
                         pattern, filename[filename.rfind('\\') + 1 :]
                     ).groups()
                 )
-                exchange = exchange.lower()
-                symbol = symbol.upper()
-                market = market.upper()
 
-                if exchange == enums.Exchange.BINANCE.name.lower():
+                if exchange.upper() == enums.Exchange.BINANCE.name:
                     client = self.binance_client
-                elif exchange == enums.Exchange.BYBIT.name.lower():
+                elif exchange.upper() == enums.Exchange.BYBIT.name:
                     client = self.bybit_client
 
                 target_line = False
@@ -91,8 +88,8 @@ class Tester():
                         end=end
                     )
                     klines = np.array(rows)
-                    p_precision = client.fetch_price_precision(symbol)
-                    q_precision = client.fetch_qty_precision(symbol)
+                    p_precision = client.get_price_precision(symbol)
+                    q_precision = client.get_qty_precision(symbol)
                     instance = strategy.value(opt_params=parameters)
                     strategy_data = {
                         'name': strategy.name,
@@ -134,8 +131,8 @@ class Tester():
                 end=self.end
             )
             klines = np.array(rows)
-            p_precision = client.fetch_price_precision(self.symbol)
-            q_precision = client.fetch_qty_precision(self.symbol)
+            p_precision = client.get_price_precision(self.symbol)
+            q_precision = client.get_qty_precision(self.symbol)
             instance = self.strategy.value()
             strategy_data = {
                 'name': self.strategy.name,
@@ -143,7 +140,7 @@ class Tester():
                 'instance': instance,
                 'parameters': instance.__dict__.copy(),
                 'client': client,
-                'exchange': self.exchange.value.lower(),
+                'exchange': self.exchange.value,
                 'symbol': self.symbol,
                 'market': market,
                 'interval': self.interval,
