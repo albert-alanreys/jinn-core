@@ -20,7 +20,7 @@ TELEGRAM_CHAT_ID = "ваш_TELEGRAM_CHAT_ID"
 #   OPTIMIZATION - оптимизация
 #   TESTING - тестирование
 #   AUTOMATION - автоматизация
-MODE = enums.Mode.INGESTION
+MODE = enums.Mode.TESTING
 
 # Настройки для различных режимов
 # ---------------------------------------
@@ -36,17 +36,17 @@ AUTOMATION_INFO = {
 # Режим INGESTION (сбор данных)
 INGESTION_INFO = {
     'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
+    'market': enums.Market.FUTURES,
+    'symbol': '1INCHUSDT',
     'interval': '1h',
-    'start': '2017-01-01',
+    'start': '2021-01-01',
     'end': '2025-01-01',
 }
 
 # Режим OPTIMIZATION (оптимизация)
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
+    'market': enums.Market.FUTURES,
     'symbol': 'BTCUSDT',
     'interval': '1h',
     'start': '2019-01-01',
@@ -57,10 +57,10 @@ OPTIMIZATION_INFO = {
 # Режим TESTING (тестирование)
 TESTING_INFO = {
     'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
+    'market': enums.Market.FUTURES,
+    'symbol': '1INCHUSDT',
     'interval': '1h',
-    'start': '2017-01-01',
-    'end': '2020-01-01',
+    'start': '2021-01-01',
+    'end': '2025-01-01',
     'strategy': enums.Strategy.NUGGET_V2,
 }

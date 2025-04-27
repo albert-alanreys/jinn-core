@@ -31,14 +31,14 @@ class DBManager():
     ) -> None:
         try:
             self.connect(db_name)
-            self.cursor.execute(f'DROP TABLE IF EXISTS {table}')
+            self.cursor.execute(f'DROP TABLE IF EXISTS "{table}"')
             query_columns = ', '.join(
                 f"{column} {dtype} {'PRIMARY KEY' if i == 0 else ''}"
                 for i, (column, dtype) in enumerate(columns.items())
             )
-            self.cursor.execute(f'CREATE TABLE {table} ({query_columns})')
+            self.cursor.execute(f'CREATE TABLE "{table}" ({query_columns})')
             query_to_insert = (
-                f'INSERT INTO {table} '
+                f'INSERT INTO "{table}" '
                 f'VALUES ({", ".join(['?'] * len(columns))})'
             )
 
@@ -72,12 +72,16 @@ class DBManager():
 
             self.connect(db_name)
             self.cursor.execute(
-                f'SELECT * FROM {table} WHERE time BETWEEN {start} AND {end}',
+                f'SELECT * FROM "{table}" WHERE time BETWEEN {start} AND {end}',
             )
             column_names = [
                 description[0] for description in self.cursor.description
             ]
             rows = self.cursor.fetchall()
+
+            if not rows:
+                raise ValueError(f'No data found in table "{table}" ')
+
             return rows, column_names
         except Exception as e:
             self.logger.error(f'Error while working with database: {e}')

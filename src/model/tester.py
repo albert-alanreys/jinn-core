@@ -81,34 +81,38 @@ class Tester():
 
                 for parameters in opt_params:
                     interval = client.get_valid_interval(interval)
-                    rows, _ = self.db_manager.fetch_data(
-                        db_name=f'{exchange.lower()}.db',
-                        table=f'{symbol}_{market}_{interval}',
-                        start=start,
-                        end=end
-                    )
-                    klines = np.array(rows)
-                    p_precision = client.get_price_precision(symbol)
-                    q_precision = client.get_qty_precision(symbol)
-                    instance = strategy.value(opt_params=parameters)
-                    strategy_data = {
-                        'name': strategy.name,
-                        'type': strategy.value,
-                        'instance': instance,
-                        'parameters': instance.__dict__.copy(),
-                        'client': client,
-                        'exchange': exchange,
-                        'symbol': symbol,
-                        'market': market,
-                        'interval': interval,
-                        'klines': klines,
-                        'p_precision': p_precision,
-                        'q_precision': q_precision,
-                    }
-                    equity, metrics = self.calculate_strategy(strategy_data)
-                    strategy_data['equity'] = equity
-                    strategy_data['metrics'] = metrics
-                    self.strategies[str(id(strategy_data))] = strategy_data
+
+                    try:
+                        rows, _ = self.db_manager.fetch_data(
+                            db_name=f'{exchange.lower()}.db',
+                            table=f'{symbol}_{market}_{interval}',
+                            start=start,
+                            end=end
+                        )
+                        klines = np.array(rows)
+                        p_precision = client.get_price_precision(symbol)
+                        q_precision = client.get_qty_precision(symbol)
+                        instance = strategy.value(opt_params=parameters)
+                        strategy_data = {
+                            'name': strategy.name,
+                            'type': strategy.value,
+                            'instance': instance,
+                            'parameters': instance.__dict__.copy(),
+                            'client': client,
+                            'exchange': exchange,
+                            'symbol': symbol,
+                            'market': market,
+                            'interval': interval,
+                            'klines': klines,
+                            'p_precision': p_precision,
+                            'q_precision': q_precision,
+                        }
+                        equity, metrics = self.calculate_strategy(strategy_data)
+                        strategy_data['equity'] = equity
+                        strategy_data['metrics'] = metrics
+                        self.strategies[str(id(strategy_data))] = strategy_data
+                    except Exception as e:
+                        self.logger.error(f'Error: {e}')
 
         if len(self.strategies) == 0:
             match self.exchange:
@@ -124,34 +128,38 @@ class Tester():
                     market = 'FUTURES'
 
             self.interval = client.get_valid_interval(self.interval)
-            rows, _ = self.db_manager.fetch_data(
-                db_name=f'{self.exchange.value.lower()}.db',
-                table=f'{self.symbol}_{market}_{self.interval}',
-                start=self.start,
-                end=self.end
-            )
-            klines = np.array(rows)
-            p_precision = client.get_price_precision(self.symbol)
-            q_precision = client.get_qty_precision(self.symbol)
-            instance = self.strategy.value()
-            strategy_data = {
-                'name': self.strategy.name,
-                'type': self.strategy.value,
-                'instance': instance,
-                'parameters': instance.__dict__.copy(),
-                'client': client,
-                'exchange': self.exchange.value,
-                'symbol': self.symbol,
-                'market': market,
-                'interval': self.interval,
-                'klines': klines,
-                'p_precision': p_precision,
-                'q_precision': q_precision,
-            }
-            equity, metrics = self.calculate_strategy(strategy_data)
-            strategy_data['equity'] = equity
-            strategy_data['metrics'] = metrics
-            self.strategies[str(id(strategy_data))] = strategy_data
+
+            try:
+                rows, _ = self.db_manager.fetch_data(
+                    db_name=f'{self.exchange.value.lower()}.db',
+                    table=f'{self.symbol}_{market}_{self.interval}',
+                    start=self.start,
+                    end=self.end
+                )
+                klines = np.array(rows)
+                p_precision = client.get_price_precision(self.symbol)
+                q_precision = client.get_qty_precision(self.symbol)
+                instance = self.strategy.value()
+                strategy_data = {
+                    'name': self.strategy.name,
+                    'type': self.strategy.value,
+                    'instance': instance,
+                    'parameters': instance.__dict__.copy(),
+                    'client': client,
+                    'exchange': self.exchange.value,
+                    'symbol': self.symbol,
+                    'market': market,
+                    'interval': self.interval,
+                    'klines': klines,
+                    'p_precision': p_precision,
+                    'q_precision': q_precision,
+                }
+                equity, metrics = self.calculate_strategy(strategy_data)
+                strategy_data['equity'] = equity
+                strategy_data['metrics'] = metrics
+                self.strategies[str(id(strategy_data))] = strategy_data
+            except Exception as e:
+                self.logger.error(f'Error: {e}')
 
     def calculate_strategy(self, strategy_data: dict) -> tuple:
         strategy_data['instance'].start(
