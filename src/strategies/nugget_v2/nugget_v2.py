@@ -3,9 +3,9 @@ import random as rand
 import numpy as np
 import numba as nb
 
-import src.model.ta as ta
-import src.model.math as math
-from src.model.strategies.strategy import Strategy
+import src.core.algorithms.random_percentages as rp
+import src.core.algorithms.ta as ta
+from src.strategies.strategy import Strategy
 
 
 class NuggetV2(Strategy):
@@ -65,7 +65,7 @@ class NuggetV2(Strategy):
             ] for i in range(1000)
         ],
         'take_volume': [
-            math.get_random_volumes(5, 10, 10)
+            rp.get_random_percentages(5, 10, 10)
             for _ in range(1000)
         ],
         'st_atr_period': [i for i in range(2, 21)],

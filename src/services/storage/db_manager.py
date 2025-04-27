@@ -11,7 +11,9 @@ class DBManager():
         self.cursor = None
 
     def connect(self, db_name: str):
-        db_path = os.path.abspath(f'src/model/databases/{db_name}')
+        db_path = os.path.join(
+            os.path.dirname(__file__), 'databases', db_name
+        )
         self.connection = sqlite3.connect(db_path)
         self.cursor = self.connection.cursor()
     

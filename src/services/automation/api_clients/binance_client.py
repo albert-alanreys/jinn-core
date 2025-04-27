@@ -1,47 +1,47 @@
 import hashlib
 import hmac
-import json
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 import config
-import src.model.enums as enums
-from src.model.api_clients.http_client import HttpClient
-from src.model.api_clients.telegram_client import TelegramClient
+import src.core.enums as enums
+from .http_client import HttpClient
+from .telegram_client import TelegramClient
 
 
-class BybitClient(HttpClient):
+class BinanceClient(HttpClient):
     intervals = {
-        1: 1, '1': 1, '1m': 1,
-        5: 5, '5': 5, '5m': 5,
-        15: 15, '15': 15, '15m': 15,
-        30: 30, '30': 30, '30m': 30,
-        60: 60, '60': 60, '1h': 60,
-        120: 120, '120': 120, '2h': 120,
-        240: 240, '240': 240, '4h': 240,
-        360: 360, '360': 360, '6h': 360,
-        720: 720, '720': 720, '12h': 720,
-        'D': 'D', 'd': 'D', '1d': 'D',
+        '1m': '1m', '1': '1m', 1: '1m',
+        '5m': '5m', '5': '5m', 5: '5m',
+        '15m': '15m', '15': '15m', 15: '15m',
+        '30m': '30m', '30': '30m', 30: '30m',
+        '1h': '1h', '60': '1h', 60: '1h',
+        '2h': '2h', '120': '2h', 120: '2h',
+        '4h': '4h', '240': '4h', 240: '4h',
+        '6h': '6h', '360': '6h', 360: '6h',
+        '12h': '12h', '720': '12h', 720: '12h',
+        '1d': '1d', 'd': '1d', 'D': '1d',
     }
     interval_ms = {
-        1: 60 * 1000,
-        5: 5 * 60 * 1000,
-        15: 15 * 60 * 1000,
-        30: 30 * 60 * 1000,
-        60: 60 * 60 * 1000,
-        120: 2 * 60 * 60 * 1000,
-        240: 4 * 60 * 60 * 1000,
-        360: 6 * 60 * 60 * 1000,
-        720: 12 * 60 * 60 * 1000,
-        'D': 24 * 60 * 60 * 1000,
+        '1m': 60 * 1000,
+        '5m': 5 * 60 * 1000,
+        '15m': 15 * 60 * 1000,
+        '30m': 30 * 60 * 1000,
+        '1h': 60 * 60 * 1000,
+        '2h': 2 * 60 * 60 * 1000,
+        '4h': 4 * 60 * 60 * 1000,
+        '6h': 6 * 60 * 60 * 1000,
+        '12h': 12 * 60 * 60 * 1000,
+        '1d': 24 * 60 * 60 * 1000,
     }
-    base_endpoint = 'https://api.bybit.com'
+    base_endpoint_futures = 'https://fapi.binance.com'
+    base_endpoint_spot = 'https://api.binance.com'
 
     def __init__(self) -> None:
-        self.api_key = config.BYBIT_API_KEY
-        self.api_secret = config.BYBIT_API_SECRET
+        self.api_key = config.BINANCE_API_KEY
+        self.api_secret = config.BINANCE_API_SECRET
         self.telegram_client = TelegramClient()
         self.logger = logging.getLogger(__name__)
         self.alerts = []
@@ -50,7 +50,7 @@ class BybitClient(HttpClient):
         self,
         symbol: str,
         market: enums.Market,
-        interval: str | int,
+        interval: str,
         start: str,
         end: str
     ) -> list:
@@ -101,25 +101,23 @@ class BybitClient(HttpClient):
             interval=interval,
             limit=limit
         )
-
-        if klines is None:
-            return []
-
         return klines
 
     def get_price_precision(self, symbol: str) -> float:
-        symbol_info = (
-            self._get_symbol_info(symbol)['result']['list'][0]
+        symbols_info = self._get_exchange_info()['symbols']
+        symbol_info = next(
+            filter(lambda x: x['symbol'] == symbol, symbols_info)
         )
-        return float(symbol_info['priceFilter']['tickSize'])
+        return float(symbol_info['filters'][0]['tickSize'])
 
     def get_qty_precision(self, symbol: str) -> float:
-        symbol_info = (
-            self._get_symbol_info(symbol)['result']['list'][0]
+        symbols_info = self._get_exchange_info()['symbols']
+        symbol_info = next(
+            filter(lambda x: x['symbol'] == symbol, symbols_info)
         )
-        return float(symbol_info['lotSizeFilter']['qtyStep'])
+        return float(symbol_info['filters'][1]['stepSize'])
 
-    def get_valid_interval(self, interval: str | int) -> str | int | None:
+    def get_valid_interval(self, interval: str | int) -> str | None:
         if interval in self.intervals:
             return self.intervals[interval]
         
@@ -134,23 +132,26 @@ class BybitClient(HttpClient):
         hedge: bool
     ) -> None:
         if hedge:
-            self._switch_position_mode(symbol, 3)
+            self._switch_position_mode(True)
         else:
-            self._switch_position_mode(symbol, 0)
-            
+            self._switch_position_mode(False)
+
         match margin:
             case 'cross':
-                self._switch_margin_mode(symbol, 0)
+                self._switch_margin_mode(symbol, 'CROSSED')
             case 'isolated':
-                self._switch_margin_mode(symbol, 1)
+                self._switch_margin_mode(symbol, 'ISOLATED')
 
-        self._set_leverage(symbol, str(leverage), str(leverage))
- 
+        self._set_leverage(symbol, leverage)
+
         try:
-            ticker_data = self._get_tickers(symbol)['result']['list'][0]
-            last_price = float(ticker_data['lastPrice'])
-            wallet_data = self._get_wallet_balance()['result']['list']
-            balance = float(wallet_data[0]['coin'][0]['walletBalance'])
+            last_price = float(self._get_tickers(symbol)['markPrice'])
+            balance_info = self._get_wallet_balance()['assets']
+            balance = float(
+                next(
+                    filter(lambda x: x['asset'] == 'USDT', balance_info)
+                )['availableBalance']
+            )
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
@@ -159,38 +160,36 @@ class BybitClient(HttpClient):
                 size = float(size.rstrip('u'))
                 qty = leverage * size / last_price
 
-            q_precision = self.get_qty_precision(symbol)
-            qty = round(round(qty / q_precision) * q_precision, 8)
+            qty_precision = self.get_qty_precision(symbol)
+            qty = round(round(qty / qty_precision) * qty_precision, 8)
             order = self._create_order(
                 symbol=symbol,
-                side='Buy',
-                order_type='Market',
-                qty=str(qty),
-                position_idx=(1 if hedge else 0)
+                side='BUY',
+                position_side=('LONG' if hedge else 'BOTH'),
+                order_type='MARKET',
+                qty=qty
             )
-            order_info = self._get_orders(
-                symbol, order['result']['orderId']
-            )['result']['list'][0]
+            order_info = self._get_order(symbol, order['orderId'])
 
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'type': 'рыночный ордер',
                     'status': 'исполнен',
                     'side': 'покупка',
                     'symbol': order_info['symbol'],
-                    'qty': order_info['qty'],
+                    'qty': order_info['executedQty'],
                     'price': order_info['avgPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    int(order_info['createdTime']) / 1000, timezone.utc
+                    order_info['updateTime'] / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
             message = (
-                f'Исполнен рыночный ордер на Bybit:'
+                f'Исполнен рыночный ордер на Binance:'
                 f'\n• направление — покупка'
                 f'\n• символ — #{order_info['symbol']}'
-                f'\n• количество — {order_info['qty']}'
+                f'\n• количество — {order_info['executedQty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
             self.telegram_client.send_message(message)
@@ -207,23 +206,26 @@ class BybitClient(HttpClient):
         hedge: bool
     ) -> None:
         if hedge:
-            self._switch_position_mode(symbol, 3)
+            self._switch_position_mode(True)
         else:
-            self._switch_position_mode(symbol, 0)
+            self._switch_position_mode(False)
 
         match margin:
             case 'cross':
-                self._switch_margin_mode(symbol, 0)
+                self._switch_margin_mode(symbol, 'CROSSED')
             case 'isolated':
-                self._switch_margin_mode(symbol, 1)
+                self._switch_margin_mode(symbol, 'ISOLATED')
 
-        self._set_leverage(symbol, str(leverage), str(leverage))
+        self._set_leverage(symbol, leverage)
 
         try:
-            ticker_data = self._get_tickers(symbol)['result']['list'][0]
-            last_price = float(ticker_data['lastPrice'])
-            wallet_data = self._get_wallet_balance()['result']['list']
-            balance = float(wallet_data[0]['coin'][0]['walletBalance'])
+            last_price = float(self._get_tickers(symbol)['markPrice'])
+            balance_info = self._get_wallet_balance()['assets']
+            balance = float(
+                next(
+                    filter(lambda x: x['asset'] == 'USDT', balance_info)
+                )['availableBalance']
+            )
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
@@ -236,34 +238,32 @@ class BybitClient(HttpClient):
             qty = round(round(qty / q_precision) * q_precision, 8)
             order = self._create_order(
                 symbol=symbol,
-                side='Sell',
-                order_type='Market',
-                qty=str(qty),
-                position_idx=(2 if hedge else 0)
+                side='SELL',
+                position_side=('SHORT' if hedge else 'BOTH'),
+                order_type='MARKET',
+                qty=qty
             )
-            order_info = self._get_orders(
-                symbol, order['result']['orderId']
-            )['result']['list'][0]
+            order_info = self._get_order(symbol, order['orderId'])
 
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'type': 'рыночный ордер',
                     'status': 'исполнен',
                     'side': 'продажа',
                     'symbol': order_info['symbol'],
-                    'qty': order_info['qty'],
+                    'qty': order_info['executedQty'],
                     'price': order_info['avgPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    int(order_info['createdTime']) / 1000, timezone.utc
+                    order_info['updateTime'] / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
             message = (
-                f'Исполнен рыночный ордер на Bybit:'
+                f'Исполнен рыночный ордер на Binance:'
                 f'\n• направление — продажа'
                 f'\n• символ — #{order_info['symbol']}'
-                f'\n• количество — {order_info['qty']}'
+                f'\n• количество — {order_info['executedQty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
             self.telegram_client.send_message(message)
@@ -278,11 +278,16 @@ class BybitClient(HttpClient):
         hedge: bool
     ) -> None:
         try:
-            positions_info = self._get_positions(symbol)['result']['list']
-            position_size = float(
+            positions_info = self._get_positions(symbol)
+            position_size = -float(
                 next(
-                    filter(lambda x: x['side'] == 'Sell', positions_info)
-                )['size']
+                    filter(
+                        lambda x: x['positionSide'] == (
+                            'SHORT' if hedge else 'BOTH'
+                        ),
+                        positions_info
+                    )
+                )['positionAmt']
             )
 
             if size.endswith('%'):
@@ -290,42 +295,40 @@ class BybitClient(HttpClient):
                 qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                ticker_data = self._get_tickers(symbol)['result']['list'][0]
-                last_price = float(ticker_data['lastPrice'])
+                last_price = float(self._get_tickers(symbol)['markPrice'])
                 qty = size / last_price
 
             q_precision = self.get_qty_precision(symbol)
             qty = round(round(qty / q_precision) * q_precision, 8)
             order = self._create_order(
                 symbol=symbol,
-                side='Buy',
-                order_type='Market',
-                qty=str(qty),
-                position_idx=(2 if hedge else 0)
+                side='BUY',
+                position_side=('SHORT' if hedge else 'BOTH'),
+                order_type='MARKET',
+                qty=qty,
+                reduce_only=(None if hedge else True)
             )
-            order_info = self._get_orders(
-                symbol, order['result']['orderId']
-            )['result']['list'][0]
+            order_info = self._get_order(symbol, order['orderId'])
 
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'type': 'рыночный ордер',
                     'status': 'исполнен',
                     'side': 'покупка',
                     'symbol': order_info['symbol'],
-                    'qty': order_info['qty'],
+                    'qty': order_info['executedQty'],
                     'price': order_info['avgPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    int(order_info['createdTime']) / 1000, timezone.utc
+                    order_info['updateTime'] / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
             message = (
-                f'Исполнен рыночный ордер на Bybit:'
+                f'Исполнен рыночный ордер на Binance:'
                 f'\n• направление — покупка'
                 f'\n• символ — #{order_info['symbol']}'
-                f'\n• количество — {order_info['qty']}'
+                f'\n• количество — {order_info['executedQty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
             self.telegram_client.send_message(message)
@@ -340,11 +343,16 @@ class BybitClient(HttpClient):
         hedge: bool
     ) -> None:
         try:
-            positions_info = self._get_positions(symbol)['result']['list']
+            positions_info = self._get_positions(symbol)
             position_size = float(
                 next(
-                    filter(lambda x: x['side'] == 'Buy', positions_info)
-                )['size']
+                    filter(
+                        lambda x: x['positionSide'] == (
+                            'LONG' if hedge else 'BOTH'
+                        ),
+                        positions_info
+                    )
+                )['positionAmt']
             )
 
             if size.endswith('%'):
@@ -352,42 +360,40 @@ class BybitClient(HttpClient):
                 qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                ticker_data = self._get_tickers(symbol)['result']['list'][0]
-                last_price = float(ticker_data['lastPrice'])
+                last_price = float(self._get_tickers(symbol)['markPrice'])
                 qty = size / last_price
 
             q_precision = self.get_qty_precision(symbol)
             qty = round(round(qty / q_precision) * q_precision, 8)
             order = self._create_order(
                 symbol=symbol,
-                side='Sell',
-                order_type='Market',
-                qty=str(qty),
-                position_idx=(1 if hedge else 0)
+                side='SELL',
+                position_side=('LONG' if hedge else 'BOTH'),
+                order_type='MARKET',
+                qty=qty,
+                reduce_only=(None if hedge else True)
             )
-            order_info = self._get_orders(
-                symbol, order['result']['orderId']
-            )['result']['list'][0]
+            order_info = self._get_order(symbol, order['orderId'])
 
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'type': 'рыночный ордер',
                     'status': 'исполнен',
                     'side': 'продажа',
                     'symbol': order_info['symbol'],
-                    'qty': order_info['qty'],
+                    'qty': order_info['executedQty'],
                     'price': order_info['avgPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    int(order_info['createdTime']) / 1000, timezone.utc
+                    order_info['updateTime'] / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
             message = (
-                f'Исполнен рыночный ордер на Bybit:'
+                f'Исполнен рыночный ордер на Binance:'
                 f'\n• направление — продажа'
                 f'\n• символ — #{order_info['symbol']}'
-                f'\n• количество — {order_info['qty']}'
+                f'\n• количество — {order_info['executedQty']}'
                 f'\n• цена — {order_info['avgPrice']}'
             )
             self.telegram_client.send_message(message)
@@ -401,13 +407,18 @@ class BybitClient(HttpClient):
         size: str,
         price: float,
         hedge: bool
-    ) -> str | None:
+    ) -> int | None:
         try:
-            positions_info = self._get_positions(symbol)['result']['list']
-            position_size = float(
+            positions_info = self._get_positions(symbol)
+            position_size = -float(
                 next(
-                    filter(lambda x: x['side'] == 'Sell', positions_info)
-                )['size']
+                    filter(
+                        lambda x: x['positionSide'] == (
+                            'SHORT' if hedge else 'BOTH'
+                        ),
+                        positions_info
+                    )
+                )['positionAmt']
             )
 
             if size.endswith('%'):
@@ -415,8 +426,7 @@ class BybitClient(HttpClient):
                 qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                ticker_data = self._get_tickers(symbol)['result']['list'][0]
-                last_price = float(ticker_data['lastPrice'])
+                last_price = float(self._get_tickers(symbol)['markPrice'])
                 qty = size / last_price
 
             q_precision = self.get_qty_precision(symbol)
@@ -425,41 +435,37 @@ class BybitClient(HttpClient):
             price = round(round(price / p_precision) * p_precision, 8)
             order = self._create_order(
                 symbol=symbol,
-                side='Buy',
-                order_type='Market',
-                qty=str(qty),
-                trigger_direction=1,
-                trigger_price=str(price),
-                position_idx=(1 if hedge else 0),
-                reduce_only=True
+                side='BUY',
+                position_side=('SHORT' if hedge else 'BOTH'),
+                order_type='STOP_MARKET',
+                qty=qty,
+                reduce_only=(None if hedge else True),
+                stop_price=price
             )
-            order_info = self._get_orders(
-                symbol, order['result']['orderId']
-            )['result']['list'][0]
 
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'type': 'рыночный стоп',
                     'status': 'ожидает исполнения',
                     'side': 'покупка',
-                    'symbol': order_info['symbol'],
-                    'qty': order_info['qty'],
-                    'price': order_info['triggerPrice']
+                    'symbol': order['symbol'],
+                    'qty': order['origQty'],
+                    'price': order['stopPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    int(order_info['createdTime']) / 1000, timezone.utc
+                    order['updateTime'] / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
             message = (
-                f'Выставлен рыночный стоп на Bybit:'
+                f'Выставлен рыночный стоп на Binance:'
                 f'\n• направление — покупка'
-                f'\n• символ — #{order_info['symbol']}'
-                f'\n• количество — {order_info['qty']}'
-                f'\n• цена — {order_info['triggerPrice']}'
+                f'\n• символ — #{order['symbol']}'
+                f'\n• количество — {order['origQty']}'
+                f'\n• цена — {order['stopPrice']}'
             )
             self.telegram_client.send_message(message)
-            return order['result']['orderId']
+            return order['orderId']
         except Exception as e:
             self.logger.error(e)
             self._send_exception(e)
@@ -470,13 +476,18 @@ class BybitClient(HttpClient):
         size: str,
         price: float,
         hedge: bool
-    ) -> str | None:
+    ) -> int | None:
         try:
-            positions_info = self._get_positions(symbol)['result']['list']
+            positions_info = self._get_positions(symbol)
             position_size = float(
                 next(
-                    filter(lambda x: x['side'] == 'Buy', positions_info)
-                )['size']
+                    filter(
+                        lambda x: x['positionSide'] == (
+                            'LONG' if hedge else 'BOTH'
+                        ),
+                        positions_info
+                    )
+                )['positionAmt']
             )
 
             if size.endswith('%'):
@@ -484,8 +495,7 @@ class BybitClient(HttpClient):
                 qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                ticker_data = self._get_tickers(symbol)['result']['list'][0]
-                last_price = float(ticker_data['lastPrice'])
+                last_price = float(self._get_tickers(symbol)['markPrice'])
                 qty = size / last_price
 
             q_precision = self.get_qty_precision(symbol)
@@ -494,41 +504,38 @@ class BybitClient(HttpClient):
             price = round(round(price / p_precision) * p_precision, 8)
             order = self._create_order(
                 symbol=symbol,
-                side='Sell',
-                order_type='Market',
-                qty=str(qty),
-                trigger_direction=2,
-                trigger_price=str(price),
-                position_idx=(2 if hedge else 0),
-                reduce_only=True
+                side='SELL',
+                position_side=('LONG' if hedge else 'BOTH'),
+                order_type='STOP_MARKET',
+                qty=qty,
+                reduce_only=(None if hedge else True),
+                stop_price=price
             )
-            order_info = self._get_orders(
-                symbol, order['result']['orderId']
-            )['result']['list'][0]
 
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'type': 'рыночный стоп',
                     'status': 'ожидает исполнения',
                     'side': 'продажа',
-                    'symbol': order_info['symbol'],
-                    'qty': order_info['qty'],
-                    'price': order_info['triggerPrice']
+                    'symbol': order['symbol'],
+                    'qty': order['origQty'],
+                    'price': order['stopPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    int(order_info['createdTime']) / 1000, timezone.utc
+                    order['updateTime'] / 1000,
+                    timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
             message = (
-                f'Выставлен рыночный стоп на Bybit:'
+                f'Выставлен рыночный стоп на Binance:'
                 f'\n• направление — продажа'
-                f'\n• символ — #{order_info['symbol']}'
-                f'\n• количество — {order_info['qty']}'
-                f'\n• цена — {order_info['triggerPrice']}'
+                f'\n• символ — #{order['symbol']}'
+                f'\n• количество — {order['origQty']}'
+                f'\n• цена — {order['stopPrice']}'
             )
             self.telegram_client.send_message(message)
-            return order['result']['orderId']
+            return order['orderId']
         except Exception as e:
             self.logger.error(e)
             self._send_exception(e)
@@ -539,39 +546,43 @@ class BybitClient(HttpClient):
         size: str,
         price: float,
         hedge: bool
-    ) -> str | None:
+    ) -> int | None:
         try:
-            positions_info = self._get_positions(symbol)['result']['list']
-            position_size = float(
+            positions_info = self._get_positions(symbol)
+            position_size = -float(
                 next(
-                    filter(lambda x: x['side'] == 'Sell', positions_info)
-                )['size']
+                    filter(
+                        lambda x: x['positionSide'] == (
+                            'SHORT' if hedge else 'BOTH'
+                        ),
+                        positions_info
+                    )
+                )['positionAmt']
             )
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
 
                 if size == 100:
-                    orders_info = (
-                        self._get_orders(symbol)['result']['list']
-                    )
+                    orders_info = self._get_orders(symbol)
                     limit_orders = list(
                         filter(
-                            lambda x: x['orderType'] == 'Limit' and
-                                x['side'] == 'Buy',
+                            lambda x: (
+                                x['type'] == 'LIMIT' and
+                                x['side'] == 'SELL'
+                            ),
                             orders_info
                         )
                     )
                     limit_orders_qty = sum(
-                        map(lambda x: float(x['qty']), limit_orders)
+                        map(lambda x: float(x['origQty']), limit_orders)
                     )
                     qty = position_size - limit_orders_qty
                 else:
                     qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                ticker_data = self._get_tickers(symbol)['result']['list'][0]
-                last_price = float(ticker_data['lastPrice'])
+                last_price = float(self._get_tickers(symbol)['markPrice'])
                 qty = size / last_price
 
             q_precision = self.get_qty_precision(symbol)
@@ -580,40 +591,39 @@ class BybitClient(HttpClient):
             price = round(round(price / p_precision) * p_precision, 8)
             order = self._create_order(
                 symbol=symbol,
-                side='Buy',
-                order_type='Limit',
-                qty=str(qty),
-                price=str(price),
-                position_idx=(2 if hedge else 0),
-                reduce_only=True
+                side='BUY',
+                position_side=('SHORT' if hedge else 'BOTH'),
+                order_type='LIMIT',
+                qty=qty,
+                time_in_force='GTC',
+                reduce_only=(None if hedge else True),
+                price=price
             )
-            order_info = self._get_orders(
-                symbol, order['result']['orderId']
-            )['result']['list'][0]
 
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'type': 'лимитный ордер',
                     'status': 'ожидает исполнения',
                     'side': 'покупка',
-                    'symbol': order_info['symbol'],
-                    'qty': order_info['qty'],
-                    'price': order_info['price']
+                    'symbol': order['symbol'],
+                    'qty': order['origQty'],
+                    'price': order['price']
                 },
                 'time': datetime.fromtimestamp(
-                    int(order_info['createdTime']) / 1000, timezone.utc
+                    order['updateTime'] / 1000,
+                    timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
             message = (
-                f'Выставлен лимитный ордер на Bybit:'
+                f'Выставлен лимитный ордер на Binance:'
                 f'\n• направление — покупка'
-                f'\n• символ — #{order_info['symbol']}'
-                f'\n• количество — {order_info['qty']}'
-                f'\n• цена — {order_info['price']}'
+                f'\n• символ — #{order['symbol']}' 
+                f'\n• количество — {order['origQty']}'
+                f'\n• цена — {order['price']}'
             )
             self.telegram_client.send_message(message)
-            return order['result']['orderId']
+            return order['orderId']
         except Exception as e:
             self.logger.error(e)
             self._send_exception(e)
@@ -624,39 +634,43 @@ class BybitClient(HttpClient):
         size: str,
         price: float,
         hedge: bool
-    ) -> str | None:
+    ) -> int | None:
         try:
-            positions_info = self._get_positions(symbol)['result']['list']
+            positions_info = self._get_positions(symbol)
             position_size = float(
                 next(
-                    filter(lambda x: x['side'] == 'Buy', positions_info)
-                )['size']
+                    filter(
+                        lambda x: x['positionSide'] == (
+                            'LONG' if hedge else 'BOTH'
+                        ),
+                        positions_info
+                    )
+                )['positionAmt']
             )
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
 
                 if size == 100:
-                    orders_info = (
-                        self._get_orders(symbol)['result']['list']
-                    )
+                    orders_info = self._get_orders(symbol)
                     limit_orders = list(
                         filter(
-                            lambda x: x['orderType'] == 'Limit' and
-                                x['side'] == 'Sell',
+                            lambda x: (
+                                x['type'] == 'LIMIT' and
+                                x['side'] == 'SELL'
+                            ),
                             orders_info
                         )
                     )
                     limit_orders_qty = sum(
-                        map(lambda x: float(x['qty']), limit_orders)
+                        map(lambda x: float(x['origQty']), limit_orders)
                     )
                     qty = position_size - limit_orders_qty
                 else:
                     qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                ticker_data = self._get_tickers(symbol)['result']['list'][0]
-                last_price = float(ticker_data['lastPrice'])
+                last_price = float(self._get_tickers(symbol)['markPrice'])
                 qty = size / last_price
 
             q_precision = self.get_qty_precision(symbol)
@@ -665,41 +679,39 @@ class BybitClient(HttpClient):
             price = round(round(price / p_precision) * p_precision, 8)
             order = self._create_order(
                 symbol=symbol,
-                side='Sell',
-                order_type='Limit',
-                qty=str(qty),
-                price=str(price),
-                position_idx=(1 if hedge else 0),
-                reduce_only=True
+                side='SELL',
+                position_side=('LONG' if hedge else 'BOTH'),
+                order_type='LIMIT',
+                qty=qty,
+                time_in_force='GTC',
+                reduce_only=(None if hedge else True),
+                price=price
             )
-            order_info = self._get_orders(
-                symbol=symbol,
-                order_id=order['result']['orderId']
-            )['result']['list'][0]
 
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'type': 'лимитный ордер',
                     'status': 'ожидает исполнения',
                     'side': 'продажа',
-                    'symbol': order_info['symbol'],
-                    'qty': order_info['qty'],
-                    'price': order_info['price']
+                    'symbol': order['symbol'],
+                    'qty': order['origQty'],
+                    'price': order['price']
                 },
                 'time': datetime.fromtimestamp(
-                    int(order_info['createdTime']) / 1000, timezone.utc
+                    order['updateTime'] / 1000,
+                    timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             })
             message = (
-                f'Выставлен лимитный ордер на Bybit:'
+                f'Выставлен лимитный ордер на Binance:'
                 f'\n• направление — продажа'
-                f'\n• символ — #{order_info['symbol']}'
-                f'\n• количество — {order_info['qty']}'
-                f'\n• цена — {order_info['price']}'
+                f'\n• символ — #{order['symbol']}'
+                f'\n• количество — {order['origQty']}'
+                f'\n• цена — {order['price']}'
             )
             self.telegram_client.send_message(message)
-            return order['result']['orderId']
+            return order['orderId']
         except Exception as e:
             self.logger.error(e)
             self._send_exception(e)
@@ -710,11 +722,11 @@ class BybitClient(HttpClient):
         side: str
     ) -> None:
         try:
-            orders_info = self._get_orders(symbol)['result']['list']
+            orders_info = self._get_orders(symbol)
             stop_orders = list(
                 filter(
-                    lambda x: x['stopOrderType'] == 'Stop' and
-                        x['side'] == side,
+                    lambda x: x['type'] == 'STOP_MARKET' and
+                        x['side'] == side.upper(),
                     orders_info
                 )
             )
@@ -731,9 +743,11 @@ class BybitClient(HttpClient):
         side: str
     ) -> None:
         try:
-            orders_info = self._get_orders(symbol)['result']['list']
+            orders_info = self._get_orders(symbol)
             one_sided_orders = list(
-                filter(lambda x: x['side'] == side, orders_info)
+                filter(
+                    lambda x: x['side'] == side.upper(), orders_info
+                )
             )
 
             for order in one_sided_orders:
@@ -752,20 +766,21 @@ class BybitClient(HttpClient):
     def check_stop_orders(self, symbol: str, order_ids: list) -> list | None:
         try:
             for order_id in order_ids.copy():
-                order = self._get_orders(symbol, order_id)
-                order_info = order['result']['list'][0]
+                order_info = self._get_order(symbol, order_id)
 
-                if order_info['orderStatus'] == 'Untriggered':
+                if order_info['status'] == 'NEW':
                     continue
 
-                if order_info['orderStatus'] == 'Filled':
+                if order_info['status'] == 'FILLED':
                     status = 'исполнен'
+                    qty = order_info['executedQty']
                     price = order_info['avgPrice']
                 else:
                     status = 'отменён'
-                    price = order_info['triggerPrice']
+                    qty = order_info['origQty']
+                    price = order_info['stopPrice']
 
-                if order_info['side'] == 'Buy':
+                if order_info['side'] == 'BUY':
                     side = 'покупка'
                 else:
                     side = 'продажа'
@@ -773,24 +788,23 @@ class BybitClient(HttpClient):
                 order_ids.remove(order_id)
                 self.alerts.append({
                     'message': {
-                        'exchange': 'BYBIT',
+                        'exchange': 'BINANCE',
                         'type': 'рыночный стоп',
                         'status': status,
                         'side': side,
                         'symbol': order_info['symbol'],
-                        'qty': order_info['qty'],
+                        'qty': qty,
                         'price': price
                     },
                     'time': datetime.fromtimestamp(
-                        int(order_info['updatedTime']) / 1000,
-                        timezone.utc
+                        order_info['updateTime'] / 1000, timezone.utc
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 })
                 message = (
-                    f'{status.capitalize()} рыночный стоп на Bybit:'
+                    f'{status.capitalize()} рыночный стоп на Binance:'
                     f'\n• направление — {side}'
                     f'\n• символ — #{order_info['symbol']}'
-                    f'\n• количество — {order_info['qty']}'
+                    f'\n• количество — {qty}'
                     f'\n• цена — {price}'
                 )
                 self.telegram_client.send_message(message)
@@ -803,18 +817,17 @@ class BybitClient(HttpClient):
     def check_limit_orders(self, symbol: str, order_ids: list) -> list | None:
         try:
             for order_id in order_ids.copy():
-                order = self._get_orders(symbol, order_id)
-                order_info = order['result']['list'][0]
+                order_info = self._get_order(symbol, order_id)
 
-                if order_info['orderStatus'] == 'New':
+                if order_info['status'] == 'NEW':
                     continue
 
-                if order_info['orderStatus'] == 'Filled':
+                if order_info['status'] == 'FILLED':
                     status = 'исполнен'
                 else:
                     status = 'отменён'
 
-                if order_info['side'] == 'Buy':
+                if order_info['side'] == 'BUY':
                     side = 'покупка'
                 else:
                     side = 'продажа'
@@ -822,24 +835,23 @@ class BybitClient(HttpClient):
                 order_ids.remove(order_id)
                 self.alerts.append({
                     'message': {
-                        'exchange': 'BYBIT',
+                        'exchange': 'BINANCE',
                         'type': 'лимитный ордер',
                         'status': status,
                         'side': side,
                         'symbol': order_info['symbol'],
-                        'qty': order_info['qty'],
+                        'qty': order_info['origQty'],
                         'price': order_info['price']
                     },
                     'time': datetime.fromtimestamp(
-                        int(order_info['updatedTime']) / 1000,
-                        timezone.utc
+                        order_info['updateTime'] / 1000, timezone.utc
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 })
                 message = (
-                    f'{status.capitalize()} лимитный ордер на Bybit:'
+                    f'{status.capitalize()} лимитный ордер на Binance:'
                     f'\n• направление — {side}'
                     f'\n• символ — #{order_info['symbol']}'
-                    f'\n• количество — {order_info['qty']}'
+                    f'\n• количество — {order_info['origQty']}'
                     f'\n• цена — {order_info['price']}'
                 )
                 self.telegram_client.send_message(message)
@@ -850,60 +862,73 @@ class BybitClient(HttpClient):
             self._send_exception(e)
 
     def _cancel_order(self, symbol: str, order_id: str) -> dict | None:
-        url = f'{self.base_endpoint}/v5/order/cancel'
+        url = f'{self.base_endpoint_futures}/fapi/v1/order'
         params = {
-            'category': 'linear',
             'symbol': symbol,
             'orderId': order_id,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
         }
-        headers = self._get_headers(params, 'POST')
-        response = self.post(url, params, headers=headers)
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
+        response = self.delete(url, params=params, headers=headers)
         return response
 
     def _cancel_orders(self, symbol: str) -> dict | None:
-        url = f'{self.base_endpoint}/v5/order/cancel-all'
-        params = {'category': 'linear', 'symbol': symbol}
-        headers = self._get_headers(params, 'POST')
-        response = self.post(url, params, headers=headers)
+        url = f'{self.base_endpoint_futures}/fapi/v1/allOpenOrders'
+        params = {
+            'symbol': symbol,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
+        }
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
+        response = self.delete(url, params=params, headers=headers)
         return response
 
     def _create_order(
         self,
         symbol: str,
         side: str,
+        position_side: str,
         order_type: str,
-        qty: str,
-        price: str = None,
-        trigger_direction: int = None,
-        trigger_price: float = None,
-        position_idx: int = None,
-        reduce_only: bool = None
+        qty: float,
+        time_in_force: str = None,
+        reduce_only: str = None,
+        price: float = None,
+        stop_price: float = None
     ) -> dict | None:
-        url = f'{self.base_endpoint}/v5/order/create'
+        url = f'{self.base_endpoint_futures}/fapi/v1/order'
         params = {
-            'category': 'linear',
             'symbol': symbol,
             'side': side,
-            'orderType': order_type,
-            'qty': qty,
-            'positionIdx': position_idx,
-
+            'positionSide': position_side,
+            'type': order_type,
+            'quantity': qty,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
         }
 
-        if price:
-            params['price'] = price
-
-        if trigger_direction:
-            params['triggerDirection'] = trigger_direction
-
-        if trigger_price:
-            params['triggerPrice'] = trigger_price
+        if time_in_force:
+            params['timeInForce'] = time_in_force
 
         if reduce_only:
             params['reduceOnly'] = reduce_only
 
-        headers = self._get_headers(params, 'POST')
-        response = self.post(url, params, headers=headers)
+        if price:
+            params['price'] = price
+
+        if stop_price:
+            params['stopPrice'] = stop_price
+
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
+        response = self.post(url, params=params, headers=headers)
+        return response
+
+    def _get_exchange_info(self) -> dict | None:
+        url = f'{self.base_endpoint_futures}/fapi/v1/exchangeInfo'
+        response = self.get(url)
         return response
 
     def _get_klines(
@@ -914,144 +939,155 @@ class BybitClient(HttpClient):
         start: int = None,
         end: int = None,
         limit: int = 1000
-    ) -> dict | None:
-        url = f'{self.base_endpoint}/v5/market/kline'
-        
+    ) -> list | None:
         match market:
             case enums.Market.FUTURES:
-                category = 'linear'
+                url = f'{self.base_endpoint_futures}/fapi/v1/klines'
             case enums.Market.SPOT:
-                category = 'spot'
+                url = f'{self.base_endpoint_spot}/api/v3/klines'
 
         params = {
-            'category': category,
             'symbol': symbol,
             'interval': interval,
             'limit': limit,
         }
 
         if start:
-            params['start'] = start
+            params['startTime'] = start
 
         if end:
-            params['end'] = end
+            params['endTime'] = end
 
         response = self.get(url, params, logging=False)
-        return response['result']['list'][::-1]
+        return response
 
-    def _get_orders(self, symbol: str, order_id: str = None) -> dict | None:
-        url = f'{self.base_endpoint}/v5/order/realtime'
-        params = {'category': 'linear', 'symbol': symbol}
-
-        if order_id:
-            params['orderId'] = order_id
-
-        headers = self._get_headers(params, 'GET')
+    def _get_order(self, symbol: str, order_id: str) -> dict | None:
+        url = f'{self.base_endpoint_futures}/fapi/v1/order'
+        params = {
+            'symbol': symbol,
+            'orderId': order_id,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
+        }
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
         response = self.get(url, params, headers)
         return response
 
+    def _get_orders(self, symbol: str) -> list | None:
+        url = f'{self.base_endpoint_futures}/fapi/v1/openOrders'
+        params = {
+            'symbol': symbol,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
+        }
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
+        response = self.get(url, params, headers)
+        return response
+    
     def _get_positions(self, symbol: str) -> dict | None:
-        url = f'{self.base_endpoint}/v5/position/list'
-        params = {'category': 'linear', 'symbol': symbol}
-        headers = self._get_headers(params, 'GET')
+        url = f'{self.base_endpoint_futures}/fapi/v3/positionRisk'
+        params = {
+            'symbol': symbol,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
+        }
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
         response = self.get(url, params, headers)
         return response
 
     def _get_tickers(self, symbol: str) -> dict | None:
-        url = f'{self.base_endpoint}/v5/market/tickers'
-        params = {'category': 'linear', 'symbol': symbol}
-        response = self.get(url, params)
-        return response
-
-    def _get_symbol_info(self, symbol: str) -> dict | None:
-        url = f'{self.base_endpoint}/v5/market/instruments-info'
-        params = {'category': 'linear', 'symbol': symbol}
+        url = f'{self.base_endpoint_futures}/fapi/v1/premiumIndex'
+        params = {'symbol': symbol}
         response = self.get(url, params)
         return response
 
     def _get_wallet_balance(self) -> dict | None:
-        url = f'{self.base_endpoint}/v5/account/wallet-balance'
-        params = {'accountType': 'UNIFIED', 'coin': 'USDT'}
-        headers = self._get_headers(params, 'GET')
+        url = f'{self.base_endpoint_futures}/fapi/v3/account'
+        params = {
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
+        }
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
         response = self.get(url, params, headers)
         return response
-
-    def _set_leverage(
-        self,
-        symbol: str,
-        buy_leverage: str,
-        sell_leverage: str
-    ) -> dict | None:
-        url = f'{self.base_endpoint}/v5/position/set-leverage'
+    
+    def _set_leverage(self, symbol: str, leverage: int) -> dict | None:
+        url = f'{self.base_endpoint_futures}/fapi/v1/leverage'
         params = {
-            'category': 'linear',
             'symbol': symbol,
-            'buyLeverage': buy_leverage,
-            'sellLeverage': sell_leverage
+            'leverage': leverage,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
         }
-        headers = self._get_headers(params, 'POST')
-        response = self.post(url, params, headers=headers, logging=False)
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
+        response = self.post(
+            url=url,
+            params=params,
+            headers=headers,
+            logging=False
+        )
         return response
 
     def _switch_margin_mode(self, symbol: str, mode: int) -> dict | None:
-        url = f'{self.base_endpoint}/v5/position/switch-isolated'
+        url = f'{self.base_endpoint_futures}/fapi/v1/marginType'
         params = {
-            'category': 'linear',
             'symbol': symbol,
-            'tradeMode': mode,
-            'buyLeverage': '1',
-            'sellLeverage': '1'
-
+            'marginType': mode,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
         }
-        headers = self._get_headers(params, 'POST')
-        response = self.post(url, params, headers=headers, logging=False)
-        return response
-    
-    def _switch_position_mode(self, symbol: str, mode: int) -> dict | None:
-        url = f'{self.base_endpoint}/v5/position/switch-mode'
-        params = {
-            'category': 'linear',
-            'symbol': symbol,
-            'mode': mode
-        }
-        headers = self._get_headers(params, 'POST')
-        response = self.post(url, params, headers=headers, logging=False)
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
+        response = self.post(
+            url=url,
+            params=params,
+            headers=headers,
+            logging=False
+        )
         return response
 
-    def _get_headers(self, params: dict, method: str) -> dict:
-        timestamp = str(int(time.time() * 1000))
-        recv_window = '5000'
+    def _switch_position_mode(self, mode: False) -> dict | None:
+        url = f'{self.base_endpoint_futures}/fapi/v1/positionSide/dual'
+        params = {
+            'dualSidePosition': mode,
+            'recvWindow': 5000,
+            'timestamp': int(time.time() * 1000),
+        }
+        params = self._add_signature(params)
+        headers = {'X-MBX-APIKEY': self.api_key}
+        response = self.post(
+            url=url,
+            params=params,
+            headers=headers,
+            logging=False
+        )
+        return response
 
-        match method:
-            case 'GET':
-                query_str = '&'.join(f'{k}={v}' for k, v in params.items())
-            case 'POST':
-                query_str = json.dumps(params)
-
-        str_to_sign = f'{timestamp}{self.api_key}{recv_window}{query_str}'
+    def _add_signature(self, params: dict) -> dict:
+        str_to_sign = '&'.join([f'{k}={v}' for k, v in params.items()])
         signature = hmac.new(
             key=self.api_secret.encode('utf-8'),
             msg=str_to_sign.encode('utf-8'),
             digestmod=hashlib.sha256
         ).hexdigest()
-        headers = {
-            'X-BAPI-API-KEY': self.api_key,
-            'X-BAPI-TIMESTAMP': timestamp,
-            'X-BAPI-SIGN': signature,
-            'X-BAPI-RECV-WINDOW': recv_window,
-        }
-        return headers
+        params['signature'] = signature
+        return params
 
     def _send_exception(self, exception: Exception) -> None:
         if str(exception) != '':
             self.alerts.append({
                 'message': {
-                    'exchange': 'BYBIT',
+                    'exchange': 'BINANCE',
                     'error': str(exception)
                 },
                 'time': datetime.now(
                     timezone.utc
                 ).strftime('%Y-%m-%d %H:%M:%S')
             })
-            message = f'❗️{'BYBIT'}:\n{exception}'
+            message = f'❗️{'BINANCE'}:\n{exception}'
             self.telegram_client.send_message(message)

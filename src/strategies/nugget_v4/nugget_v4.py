@@ -1,9 +1,9 @@
 import numpy as np
 import numba as nb
 
-import src.model.ta as ta
-import src.model.math as math
-from src.model.strategies.strategy import Strategy
+import src.core.algorithms.random_percentages as rp
+import src.core.algorithms.ta as ta
+from src.strategies.strategy import Strategy
 
 
 class NuggetV4(Strategy):
@@ -50,11 +50,11 @@ class NuggetV4(Strategy):
         'trail_stop': [i for i in range(0, 9)],
         'trail_percent': [float(i) for i in range(0, 51, 1)],
         'take_volume_1': [
-            math.get_random_volumes(5, 10, 10)
+            rp.get_random_percentages(5, 10, 10)
             for _ in range(10000)
         ],
         'take_volume_2': [
-            math.get_random_volumes(10, 5, 5)
+            rp.get_random_percentages(10, 5, 5)
             for _ in range(10000)
         ],
         'st_atr_period': [i for i in range(2, 21)],

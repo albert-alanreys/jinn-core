@@ -2,11 +2,11 @@ import logging
 import os
 
 from src.controller.flask_app import FlaskApp
-from src.model.automizer import Automizer
-from src.model.enums import Mode
-from src.model.ingester import Ingester
-from src.model.optimizer import Optimizer
-from src.model.tester import Tester
+from src.core.enums import Mode
+from src.services.automation.automizer import Automizer
+from src.services.optimization.optimizer import Optimizer
+from src.services.storage.ingester import Ingester
+from src.services.testing.tester import Tester
 
 
 class Delegator:

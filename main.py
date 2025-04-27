@@ -1,7 +1,7 @@
 import logging
 
 import config
-from src.delegator import Delegator
+from src.core.delegator import Delegator
 
 
 def main() -> None:

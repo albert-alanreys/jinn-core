@@ -1,10 +1,10 @@
 from enum import Enum
 
-from src.model.strategies import DickeyFullerV1
-from src.model.strategies import DevourerV3
-from src.model.strategies import NuggetV2
-from src.model.strategies import NuggetV4
-from src.model.strategies import NuggetV5
+from src.strategies import DickeyFullerV1
+from src.strategies import DevourerV3
+from src.strategies import NuggetV2
+from src.strategies import NuggetV4
+from src.strategies import NuggetV5
 
 
 class Mode(Enum):

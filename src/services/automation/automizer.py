@@ -7,9 +7,9 @@ import threading
 
 import numpy as np
 
-import src.model.enums as enums
-from src.model.api_clients.binance_client import BinanceClient
-from src.model.api_clients.bybit_client import BybitClient
+import src.core.enums as enums
+from .api_clients.binance_client import BinanceClient
+from .api_clients.bybit_client import BybitClient
 
 
 class Automizer():
@@ -31,7 +31,12 @@ class Automizer():
 
         for strategy in enums.Strategy:
             path_to_folder = os.path.abspath(
-                f'src/model/strategies/{strategy.name.lower()}/automation/'
+                os.path.join(
+                    'src',
+                    'strategies',
+                    strategy.name.lower(),
+                    'automation'
+                )
             )
             filenames = glob.glob(f'{path_to_folder}/*.txt')
 

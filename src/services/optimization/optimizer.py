@@ -5,11 +5,11 @@ import os
 
 import numpy as np
 
-import src.model.enums as enums
-from src.model.api_clients.binance_client import BinanceClient
-from src.model.api_clients.bybit_client import BybitClient
-from src.model.db_manager import DBManager
-from src.model.ga import GA
+import src.core.enums as enums
+from src.services.automation.api_clients.binance_client import BinanceClient
+from src.services.automation.api_clients.bybit_client import BybitClient
+from src.services.storage.db_manager import DBManager
+from .ga import GA
 
 
 class Optimizer:
@@ -31,8 +31,13 @@ class Optimizer:
     def optimize(self) -> None:
         for strategy in enums.Strategy:
             path_to_file = os.path.abspath(
-                f'src/model/strategies/{strategy.name.lower()}'
-                f'/optimization/optimization.json'
+                os.path.join(
+                    'src',
+                    'strategies',
+                    strategy.name.lower(),
+                    'optimization',
+                    'optimization.json'
+                )
             )
 
             if not os.path.exists(path_to_file):
@@ -172,8 +177,13 @@ class Optimizer:
                 f'{strategy['interval']}.txt'
             )
             path_to_file = os.path.abspath(
-                f'src/model/strategies/{strategy['name']}'
-                f'/optimization/{filename}'
+                os.path.join(
+                    'src',
+                    'strategies',
+                    strategy['name'],
+                    'optimization',
+                    filename
+                )
             )
 
             for sample in strategy['best_samples']:

@@ -6,7 +6,7 @@ from flask import Flask, render_template, Response
 
 import config
 from src.controller.preprocessor import Preprocessor
-from src.model.enums import Mode
+from src.core.enums import Mode
 
 
 class FlaskApp(Flask):

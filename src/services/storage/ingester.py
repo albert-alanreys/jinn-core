@@ -2,10 +2,10 @@ import logging
 import json
 import os
 
-import src.model.enums as enums
-from src.model.db_manager import DBManager
-from src.model.api_clients.binance_client import BinanceClient
-from src.model.api_clients.bybit_client import BybitClient
+import src.core.enums as enums
+from src.services.automation.api_clients.binance_client import BinanceClient
+from src.services.automation.api_clients.bybit_client import BybitClient
+from src.services.storage.db_manager import DBManager
 
 
 class Ingester:

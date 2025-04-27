@@ -1,7 +1,7 @@
 import logging
 
 import config
-from src.model.api_clients.http_client import HttpClient
+from .http_client import HttpClient
 
 
 class TelegramClient(HttpClient):

@@ -1,19 +1,19 @@
 import ast
 import glob
 import logging
+import numpy as np
 import os
 import re
 import warnings
 
-import numpy as np
+import src.core.enums as enums
+from src.services.automation.api_clients.binance_client import BinanceClient
+from src.services.automation.api_clients.bybit_client import BybitClient
+from src.services.storage.db_manager import DBManager
+from .performance_metrics import get_performance_metrics
 
-import src.model.enums as enums
-from src.model.api_clients.binance_client import BinanceClient
-from src.model.api_clients.bybit_client import BybitClient
-from src.model.db_manager import DBManager
 
-
-class Tester():
+class Tester:
     def __init__(self, testing_info: dict) -> None:
         self.exchange = testing_info['exchange']
         self.market = testing_info['market']
@@ -34,7 +34,12 @@ class Tester():
 
         for strategy in enums.Strategy:
             path_to_folder = os.path.abspath(
-                f'src/model/strategies/{strategy.name.lower()}/backtesting/'
+                os.path.join(
+                    'src',
+                    'strategies',
+                    strategy.name.lower(),
+                    'backtesting'
+                )
             )
             filenames = glob.glob(f'{path_to_folder}/*.txt')
 
@@ -173,11 +178,7 @@ class Tester():
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
-            equity = strategy_data['instance'].get_equity(
-                strategy_data['instance'].initial_capital,
-                strategy_data['instance'].completed_deals_log
-            )
-            metrics = strategy_data['instance'].get_metrics(
+            equity, metrics = get_performance_metrics(
                 strategy_data['instance'].initial_capital,
                 strategy_data['instance'].completed_deals_log
             )

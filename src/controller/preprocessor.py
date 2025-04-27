@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-from src.model.enums import Mode
-from src.controller.deal_keywords import DealKeywords
+from src.core.enums import Mode
+from src.core.deal_keywords import DealKeywords
 
 
 class Preprocessor:

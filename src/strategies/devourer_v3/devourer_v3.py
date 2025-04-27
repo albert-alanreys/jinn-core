@@ -1,8 +1,8 @@
 import numpy as np
 import numba as nb
 
-import src.model.ta as ta
-from src.model.strategies.strategy import Strategy
+import src.core.algorithms.ta as ta
+from src.strategies.strategy import Strategy
 
 
 class DevourerV3(Strategy):
