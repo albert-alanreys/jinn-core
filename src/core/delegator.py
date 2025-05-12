@@ -50,11 +50,18 @@ class Delegator:
                 self.create_flask_app(data_to_process)
 
     def create_flask_app(self, data_to_process: tuple) -> None:
+        path_to_static = os.path.abspath(
+            os.path.join('src', 'view', 'static')
+        )
+        path_to_templates = os.path.abspath(
+            os.path.join('src', 'view', 'templates')
+        )
+
         flask_app = FlaskApp(
             mode=self.mode,
             data_to_process=data_to_process,
             import_name=__name__,
-            static_folder=os.path.abspath('src/view/static'),
-            template_folder=os.path.abspath('src/view/templates')
+            static_folder=path_to_static,
+            template_folder=path_to_templates
         )
         flask_app.run()

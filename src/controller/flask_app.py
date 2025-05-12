@@ -69,7 +69,9 @@ class FlaskApp(Flask):
         )
 
         url = config.URL
-        path_to_fetch_js = os.path.abspath('src/view/static/js/fetchClient.js')
+        path_to_fetch_js = os.path.abspath(
+            os.path.join('src', 'view', 'static', 'js', 'fetchClient.js')
+        )
 
         with open(path_to_fetch_js, 'r') as file:
             lines = file.readlines()
