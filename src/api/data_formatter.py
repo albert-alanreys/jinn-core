@@ -191,7 +191,7 @@ class DataFormatter:
 
         for deal in open_deals:
             if deal[2] == last_deal[3]:
-                position_size += Decimal(str(open_deals[4]))
+                position_size += Decimal(str(deal[4]))
 
         marker = {
             'time': last_deal[3] / 1000,
