@@ -3,8 +3,7 @@ import random as rand
 import numpy as np
 import numba as nb
 
-import src.core.algorithms.random_percentages as rp
-import src.core.algorithms.ta as ta
+import src.core.ta as ta
 from src.strategies.strategy import Strategy
 
 
@@ -62,11 +61,29 @@ class NuggetV2(Strategy):
                 rand.randint(88, 146) / 10,
                 rand.randint(148, 196) / 10,
                 rand.randint(198, 326) / 10
-            ] for i in range(1000)
+            ] for _ in range(100)
         ],
         'take_volume': [
-            rp.get_random_percentages(5, 10, 10)
-            for _ in range(1000)
+            [20.0, 20.0, 20.0, 20.0, 20.0],
+            [40.0, 30.0, 15.0, 10.0, 5.0],
+            [5.0, 10.0, 15.0, 30.0, 40.0],
+            [10.0, 20.0, 30.0, 20.0, 20.0],
+            [25.0, 25.0, 25.0, 15.0, 10.0],
+            [15.0, 15.0, 30.0, 30.0, 10.0],
+            [50.0, 20.0, 10.0, 10.0, 10.0],
+            [10.0, 10.0, 10.0, 20.0, 50.0],
+            [30.0, 20.0, 20.0, 20.0, 10.0],
+            [10.0, 20.0, 20.0, 20.0, 30.0],
+            [35.0, 25.0, 15.0, 15.0, 10.0],
+            [10.0, 15.0, 15.0, 25.0, 35.0],
+            [25.0, 15.0, 25.0, 15.0, 20.0],
+            [10.0, 30.0, 10.0, 30.0, 20.0],
+            [45.0, 15.0, 15.0, 15.0, 10.0],
+            [10.0, 15.0, 15.0, 15.0, 45.0],
+            [15.0, 25.0, 15.0, 25.0, 20.0],
+            [33.0, 22.0, 11.0, 22.0, 12.0],
+            [12.5, 25.0, 25.0, 25.0, 12.5],
+            [5.0, 15.0, 30.0, 30.0, 20.0]
         ],
         'st_atr_period': [i for i in range(2, 21)],
         'st_factor': [i / 100 for i in range(1000, 2501, 5)],

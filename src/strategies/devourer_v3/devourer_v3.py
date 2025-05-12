@@ -1,7 +1,7 @@
 import numpy as np
 import numba as nb
 
-import src.core.algorithms.ta as ta
+import src.core.ta as ta
 from src.strategies.strategy import Strategy
 
 

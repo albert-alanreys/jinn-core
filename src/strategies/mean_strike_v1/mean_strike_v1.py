@@ -1,7 +1,7 @@
 import numpy as np
 import numba as nb
 
-import src.core.algorithms.ta as ta
+import src.core.ta as ta
 from src.strategies.strategy import Strategy
 
 
@@ -107,6 +107,14 @@ class MeanStrike(Strategy):
 
     def start(self, exchange_data: dict) -> None:
         super().__init__()
+
+        self.open_deals_log = np.full((4, 5), np.nan)
+        self.completed_deals_log = np.array([])
+        self.position_size = np.nan
+        self.entry_signal = np.nan
+        self.entry_price = np.nan
+        self.entry_date = np.nan
+        self.deal_type = np.nan
         
         self.client = exchange_data.get('client', None)
         self.time = exchange_data['klines'][:, 0]
@@ -118,7 +126,6 @@ class MeanStrike(Strategy):
         self.q_precision = exchange_data['q_precision']
 
         self.equity = self.initial_capital
-        self.open_deals_log = np.full((4, 5), np.nan)
         self.qty_entry = np.full(4, np.nan)
         self.entry_price_2 = np.full(self.time.shape[0], np.nan)
         self.entry_price_3 = np.full(self.time.shape[0], np.nan)
@@ -202,7 +209,6 @@ class MeanStrike(Strategy):
                 'values': self.take_price
             }
         }
-        self.open_deals_log = self.open_deals_log[0]
 
     @staticmethod
     @nb.jit(
