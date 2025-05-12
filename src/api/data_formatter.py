@@ -1,4 +1,3 @@
-import ast
 from copy import deepcopy
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -9,76 +8,20 @@ from src.core.enums import Mode
 from src.core.deal_keywords import DealKeywords
 
 
-class Formatter:
-    def __init__(self, mode: str, data_to_process: dict) -> None:
+class DataFormatter:
+    def __init__(self, mode: str, data_to_format: dict) -> None:
         self.mode = mode
-        self.data_to_process = data_to_process[1]
+        self.data_to_format = data_to_format[1]
 
         if self.mode is Mode.TESTING:
-            self.tester = data_to_process[0]
+            self.tester = data_to_format[0]
 
         self.main_data = {}
         self.lite_data = {}
 
     def format(self) -> None:
-        for strategy_id, strategy_data in self.data_to_process.items():
+        for strategy_id, strategy_data in self.data_to_format.items():
             self.format_strategy_data(strategy_id, strategy_data)
-
-    def update_strategy(
-        self,
-        strategy_id: str,
-        parameter_name: str,
-        new_value: int | float
-    ) -> None:
-        try:
-            parameters = self.data_to_process[strategy_id]['parameters']
-            old_value = parameters[parameter_name]
-
-            if isinstance(new_value, list):
-                new_value = list(map(lambda x: float(x), new_value))
-            else:
-                new_value = ast.literal_eval(new_value.capitalize())
-
-                if isinstance(old_value, float):
-                    if isinstance(new_value, int):
-                        new_value = float(new_value)
-
-            if type(old_value) != type(new_value):
-                raise ValueError()
-
-            parameters[parameter_name] = new_value
-            instance = (
-                self.data_to_process[strategy_id]['type'](
-                    all_params=list(parameters.values())
-                )
-            )
-            self.data_to_process[strategy_id]['instance'] = instance
-
-            if self.mode is Mode.TESTING:
-                equity, metrics = self.tester.calculate_strategy(
-                    self.data_to_process[strategy_id]
-                )
-                self.data_to_process[strategy_id]['equity'] = equity
-                self.data_to_process[strategy_id]['metrics'] = metrics
-            else:
-                self.data_to_process[strategy_id]['instance'].start(
-                    {
-                        'client': self.data_to_process[strategy_id]['client'],
-                        'klines': self.data_to_process[strategy_id]['klines'],
-                        'p_precision':
-                            self.data_to_process[strategy_id]['p_precision'],
-                        'q_precision':
-                            self.data_to_process[strategy_id]['q_precision'],
-                    }
-                )
-
-            self.format_strategy_data(
-                strategy_id, self.data_to_process[strategy_id]
-            )
-        except ValueError:
-            raise ValueError()
-        except KeyError:
-            raise KeyError()
 
     def format_strategy_data(
         self,

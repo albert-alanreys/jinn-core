@@ -34,8 +34,8 @@ class Delegator:
                 automizer = Automizer(self.automation_info)
                 automizer.automate()
 
-                data_to_process = (None, automizer.strategies)
-                self.create_flask_app(data_to_process)
+                data_to_format = (None, automizer.strategies)
+                self.create_server(data_to_format)
             case Mode.INGESTION:
                 ingester = Ingester(self.ingestion_info)
                 ingester.ingeste()
@@ -46,10 +46,10 @@ class Delegator:
                 tester = Tester(self.testing_info)
                 tester.test()
 
-                data_to_process = (tester, tester.strategies)
-                self.create_flask_app(data_to_process)
+                data_to_format = (tester, tester.strategies)
+                self.create_server(data_to_format)
 
-    def create_flask_app(self, data_to_process: tuple) -> None:
+    def create_server(self, data_to_format: tuple) -> None:
         path_to_static = os.path.abspath(
             os.path.join('src', 'view', 'static')
         )
@@ -59,7 +59,7 @@ class Delegator:
 
         server = Server(
             mode=self.mode,
-            data_to_process=data_to_process,
+            data_to_format=data_to_format,
             import_name=__name__,
             static_folder=path_to_static,
             template_folder=path_to_templates

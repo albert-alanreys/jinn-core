@@ -4,8 +4,9 @@ import os
 from flask import Flask
 
 import config
-from src.api.formatter import Formatter
 from src.core.enums import Mode
+from .data_formatter import DataFormatter
+from .strategy_manager import StrategyManager
 from .routes import register_routes
 
 
@@ -13,19 +14,21 @@ class Server(Flask):
     def __init__(
         self,
         mode: Mode,
-        data_to_process: dict,
+        data_to_format: tuple,
         import_name: str,
         static_folder: str,
         template_folder: str
     ) -> None:
         self.mode = mode
-        self.data_to_process = data_to_process[1]
+        self.data_to_format = data_to_format[1]
 
         self.alerts = []
         self.alert_updates = []
         self.data_updates = []
 
-        self.formatter = Formatter(mode, data_to_process)
+        self.formatter = DataFormatter(mode, data_to_format)
+        self.manager = StrategyManager(mode, data_to_format)
+
         self.formatter.format()
 
         super().__init__(
@@ -49,7 +52,7 @@ class Server(Flask):
         with open(path_to_fetch_js, 'r') as file:
             lines = file.readlines()
 
-        old_url = lines[0][lines[0].find('"') + 1 : lines[0].rfind('"')]
+        old_url = lines[0][lines[0].find("'") + 1 : lines[0].rfind("'")]
         lines[0] = lines[0].replace(old_url, url)
 
         with open(path_to_fetch_js, 'w') as file:
@@ -67,7 +70,7 @@ class Server(Flask):
     
     def check_strategies(self) -> None:
         while True:
-            for strategy_id, strategy_data in self.data_to_process.items():
+            for strategy_id, strategy_data in self.data_to_format.items():
                 if strategy_data['updated']:
                     self.formatter.format_strategy_data(
                         strategy_id, strategy_data

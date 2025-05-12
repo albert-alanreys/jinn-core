@@ -1,5 +1,7 @@
 import json
 
+from flask import request
+
 
 def register_data_routes(app):
     @app.route('/updates/data')
@@ -17,21 +19,24 @@ def register_data_routes(app):
     def get_lite_data():
         return json.dumps(app.formatter.lite_data)
 
-    @app.route(
-      '/data/update/<string:strategy_id>/<string:parameter>',
-      methods=['POST']
-    )
-    def update_data(strategy_id, parameter):
+    @app.route('/data/update/<string:strategy_id>', methods=['PATCH'])
+    def update_data(strategy_id):
         try:
-            data = json.loads(parameter)
-            param, value = list(data.items())[0]
+            print(request.get_json())
 
-            app.formatter.update_strategy(
+            data = request.get_json()
+            param = data.get('param')
+            value = data.get('value')
+
+            app.manager.update_strategy(
                 strategy_id=strategy_id,
-                parameter_name=param,
+                param_name=param,
                 new_value=value
             )
-
+            app.formatter.format_strategy_data(
+                strategy_id=strategy_id,
+                strategy_data=app.data_to_format[strategy_id]
+            )
             return json.dumps({'status': 'success'}), 200
-        except (ValueError, KeyError):
+        except (ValueError, KeyError, TypeError):
             return json.dumps({'status': 'error'}), 400
