@@ -1,7 +1,7 @@
 import logging
 import os
 
-from src.controller.flask_app import FlaskApp
+from src.api.server import Server
 from src.core.enums import Mode
 from src.services.automation.automizer import Automizer
 from src.services.optimization.optimizer import Optimizer
@@ -57,11 +57,11 @@ class Delegator:
             os.path.join('src', 'view', 'templates')
         )
 
-        flask_app = FlaskApp(
+        server = Server(
             mode=self.mode,
             data_to_process=data_to_process,
             import_name=__name__,
             static_folder=path_to_static,
             template_folder=path_to_templates
         )
-        flask_app.run()
+        server.run()
