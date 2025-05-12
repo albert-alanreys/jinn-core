@@ -5,7 +5,7 @@ import os
 from flask import Flask, render_template, Response
 
 import config
-from src.controller.preprocessor import Preprocessor
+from src.controller.formatter import Formatter
 from src.core.enums import Mode
 
 
@@ -25,8 +25,8 @@ class FlaskApp(Flask):
         self.alert_updates = []
         self.alerts = []
 
-        self.preprocessor = Preprocessor(mode, data_to_process)
-        self.preprocessor.process()
+        self.formatter = Formatter(mode, data_to_process)
+        self.formatter.format()
 
         super().__init__(
             import_name=import_name,
@@ -118,17 +118,17 @@ class FlaskApp(Flask):
         if strategy_id in self.data_updates:
             self.data_updates.remove(strategy_id)
 
-        return json.dumps(self.preprocessor.main_data[strategy_id])
+        return json.dumps(self.formatter.main_data[strategy_id])
     
     def get_lite_data(self) -> str:
-        return json.dumps(self.preprocessor.lite_data)
+        return json.dumps(self.formatter.lite_data)
 
     def update_data(self, strategy_id: str, parameter: str) -> tuple:
         try:
             param = list(json.loads(parameter).items())[0][0]
             value = list(json.loads(parameter).items())[0][1]
 
-            self.preprocessor.update_strategy(
+            self.formatter.update_strategy(
                 strategy_id=strategy_id,
                 parameter_name=param,
                 new_value=value
@@ -146,7 +146,7 @@ class FlaskApp(Flask):
         while True:
             for strategy_id, strategy_data in self.data_to_process.items():
                 if strategy_data['updated']:
-                    self.preprocessor.prepare_strategy_data(
+                    self.formatter.format_strategy_data(
                         strategy_id, strategy_data
                     )
                     self.set_data_updates(strategy_id)
