@@ -2,10 +2,9 @@ import numpy as np
 import numba as nb
 
 import src.core.ta as ta
-from src.strategies.strategy import Strategy
 
 
-class MeanStrike(Strategy):
+class MeanStrike():
     # Strategy parameters
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     margin_type = 0
@@ -116,8 +115,6 @@ class MeanStrike(Strategy):
             self.range_threshold = all_params[14]
 
     def start(self, exchange_data: dict) -> None:
-        super().__init__()
-
         self.open_deals_log = np.full((4, 5), np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan

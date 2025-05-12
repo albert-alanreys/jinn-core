@@ -2,10 +2,9 @@ import numpy as np
 import numba as nb
 
 import src.core.ta as ta
-from src.strategies.strategy import Strategy
 
 
-class DevourerV3(Strategy):
+class DevourerV3():
     # Strategy parameters
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     margin_type = 0
@@ -139,7 +138,13 @@ class DevourerV3(Strategy):
             self.close_under_ema_p3 = all_params[26]
 
     def start(self, exchange_data: dict) -> None:
-        super().__init__()
+        self.open_deals_log = np.full(5, np.nan)
+        self.completed_deals_log = np.array([])
+        self.position_size = np.nan
+        self.entry_signal = np.nan
+        self.entry_price = np.nan
+        self.entry_date = np.nan
+        self.deal_type = np.nan
 
         self.client = exchange_data.get('client', None)
         self.time = exchange_data['klines'][:, 0]
