@@ -989,7 +989,7 @@ class DevourerV3():
             order_ids=self.pending_order_ids['market_stop_ids']
         )
 
-        if order_ids is not None:
+        if order_ids:
             self.pending_order_ids['market_stop_ids'] = order_ids
 
         order_ids = self.client.check_limit_orders(
@@ -997,7 +997,7 @@ class DevourerV3():
             order_ids=self.pending_order_ids['limit_ids']
         )
 
-        if order_ids is not None:
+        if order_ids:
             self.pending_order_ids['limit_ids'] = order_ids
 
         if self.alert_exit_long:

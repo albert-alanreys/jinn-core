@@ -1,0 +1,9 @@
+from .base import BaseClient
+
+
+class AccountClient(BaseClient):
+    def get_wallet_balance(self) -> dict:
+        url = f'{self.base_endpoint}/v5/account/wallet-balance'
+        params = {'accountType': 'UNIFIED', 'coin': 'USDT'}
+        headers = self.get_headers(params, 'GET')
+        return self.get(url, params, headers)

@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 import time
 from datetime import datetime, timezone
 
@@ -9,36 +10,52 @@ from src.services.automation.api_clients.telegram_client import TelegramClient
 
 
 class BaseClient(HttpClient):
-    futures_endpoint = 'https://fapi.binance.com'
-    spot_endpoint = 'https://api.binance.com'
+    base_endpoint = 'https://api.bybit.com'
 
     def __init__(self) -> None:
         self.telegram_client = TelegramClient()
 
-        self.api_key = config.BINANCE_API_KEY
-        self.api_secret = config.BINANCE_API_SECRET
+        self.api_key = config.BYBIT_API_KEY
+        self.api_secret = config.BYBIT_API_SECRET
 
         self.alerts = []
 
-    def build_signed_request(self, params: dict) -> tuple:
-        params['recvWindow'] = 5000
-        params['timestamp'] = int(time.time() * 1000)
-        params = self._add_signature(params)
-        headers = {'X-MBX-APIKEY': self.api_key}
-        return params, headers
+    def get_headers(self, params: dict, method: str) -> dict:
+        timestamp = str(int(time.time() * 1000))
+        recv_window = '5000'
+
+        match method:
+            case 'GET':
+                query_str = '&'.join(f'{k}={v}' for k, v in params.items())
+            case 'POST':
+                query_str = json.dumps(params)
+
+        str_to_sign = f'{timestamp}{self.api_key}{recv_window}{query_str}'
+        signature = hmac.new(
+            key=self.api_secret.encode('utf-8'),
+            msg=str_to_sign.encode('utf-8'),
+            digestmod=hashlib.sha256
+        ).hexdigest()
+        
+        return {
+            'X-BAPI-API-KEY': self.api_key,
+            'X-BAPI-TIMESTAMP': timestamp,
+            'X-BAPI-SIGN': signature,
+            'X-BAPI-RECV-WINDOW': recv_window,
+        }
 
     def send_exception(self, exception: Exception) -> None:
         if exception:
             self.alerts.append({
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'error': str(exception)
                 },
                 'time': datetime.now(
                     timezone.utc
                 ).strftime('%Y-%m-%d %H:%M:%S')
             })
-            message = f'❗️{'BINANCE'}:\n{exception}'
+            message = f'❗️{'BYBIT'}:\n{exception}'
             self.send_telegram_alert(message)
 
     def send_telegram_alert(self, alert: dict) -> None:
@@ -52,13 +69,3 @@ class BaseClient(HttpClient):
             f"Цена — {alert['message']['price']}"
         )
         self.telegram_client.send_message(message)
-
-    def _add_signature(self, params: dict) -> dict:
-        str_to_sign = '&'.join([f'{k}={v}' for k, v in params.items()])
-        signature = hmac.new(
-            key=self.api_secret.encode('utf-8'),
-            msg=str_to_sign.encode('utf-8'),
-            digestmod=hashlib.sha256
-        ).hexdigest()
-        params['signature'] = signature
-        return params

@@ -659,18 +659,21 @@ class MeanStrike():
             self.pending_order_ids = {'limit_ids': []}
 
         if self.alert_cancel:
-            self.client.cancel_all_orders(symbol)
+            self.client.cancel_orders(
+                symbol=symbol, 
+                side='Buy'
+            )
 
         order_ids = self.client.check_limit_orders(
             symbol=symbol,
             order_ids=self.pending_order_ids['limit_ids']
         )
 
-        if order_ids is not None:
+        if order_ids:
             self.pending_order_ids['limit_ids'] = order_ids
 
         if self.alert_new_take:
-            self.client.cancel_limit(
+            self.client.cancel_orders(
                 symbol=symbol, 
                 side='Sell'
             )
@@ -680,7 +683,7 @@ class MeanStrike():
                 order_ids=self.pending_order_ids['limit_ids']
             )
 
-            if order_ids is not None:
+            if order_ids:
                 self.pending_order_ids['limit_ids'] = order_ids
 
             order_id = self.client.limit_take_sell(
@@ -694,6 +697,8 @@ class MeanStrike():
                 self.pending_order_ids['limit_ids'].append(order_id)
 
         if self.alert_long:
+            self.client.cancel_all_orders(symbol)
+
             order_id = self.client.limit_open_buy(
                 symbol=symbol,
                 size=(

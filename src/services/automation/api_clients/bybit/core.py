@@ -6,7 +6,7 @@ from .position import PositionClient
 from .trade import TradeClient
 
 
-class BinanceClient():
+class BybitClient():
     def __init__(self) -> None:
         self.account = AccountClient()
         self.market = MarketClient()
@@ -19,11 +19,11 @@ class BinanceClient():
 
         if hasattr(self.market, name):
             return getattr(self.market, name)
-
+        
         if hasattr(self.position, name):
             return getattr(self.position, name)
-
+        
         if hasattr(self.trade, name):
             return getattr(self.trade, name)
-
-        raise AttributeError(f'BinanceClient has no attribute "{name}"')
+        
+        raise AttributeError(f'BybitClient has no attribute "{name}"')

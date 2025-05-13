@@ -31,41 +31,43 @@ class TradeClient(BaseClient):
         hedge: bool
     ) -> None:
         if hedge:
-            self.position.switch_position_mode(True)
+            self.position.switch_position_mode(symbol, 3)
         else:
-            self.position.switch_position_mode(False)
-
+            self.position.switch_position_mode(symbol, 0)
+            
         match margin:
             case 'cross':
-                self.position.switch_margin_mode(symbol, 'CROSSED')
+                self.position.switch_margin_mode(symbol, 0)
             case 'isolated':
-                self.position.switch_margin_mode(symbol, 'ISOLATED')
+                self.position.switch_margin_mode(symbol, 1)
 
-        self.position.set_leverage(symbol, leverage)
-
+        self.position.set_leverage(symbol, str(leverage), str(leverage))
+ 
         try:
             qty = self._get_quantity_to_open(symbol, size, leverage)
             order = self._create_order(
                 symbol=symbol,
-                side='BUY',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='MARKET',
-                qty=qty
+                side='Buy',
+                order_type='Market',
+                qty=str(qty),
+                position_idx=(1 if hedge else 0)
             )
-            order_info = self._get_order(symbol, order['orderId'])
+            order_info = self._get_orders(
+                symbol, order['result']['orderId']
+            )['result']['list'][0]
 
             alert = {
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'type': 'рыночный ордер',
                     'status': 'исполнен',
                     'side': 'покупка',
                     'symbol': order_info['symbol'],
-                    'qty': order_info['executedQty'],
+                    'qty': order_info['qty'],
                     'price': order_info['avgPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    order_info['updateTime'] / 1000, timezone.utc
+                    int(order_info['createdTime']) / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
@@ -83,41 +85,43 @@ class TradeClient(BaseClient):
         hedge: bool
     ) -> None:
         if hedge:
-            self.position.switch_position_mode(True)
+            self.position.switch_position_mode(symbol, 3)
         else:
-            self.position.switch_position_mode(False)
+            self.position.switch_position_mode(symbol, 0)
 
         match margin:
             case 'cross':
-                self.position.switch_margin_mode(symbol, 'CROSSED')
+                self.position.switch_margin_mode(symbol, 0)
             case 'isolated':
-                self.position.switch_margin_mode(symbol, 'ISOLATED')
+                self.position.switch_margin_mode(symbol, 1)
 
-        self.position.set_leverage(symbol, leverage)
+        self.position.set_leverage(symbol, str(leverage), str(leverage))
 
         try:
             qty = self._get_quantity_to_open(symbol, size, leverage)
             order = self._create_order(
                 symbol=symbol,
-                side='SELL',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='MARKET',
-                qty=qty
+                side='Sell',
+                order_type='Market',
+                qty=str(qty),
+                position_idx=(2 if hedge else 0)
             )
-            order_info = self._get_order(symbol, order['orderId'])
+            order_info = self._get_orders(
+                symbol, order['result']['orderId']
+            )['result']['list'][0]
 
             alert = {
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'type': 'рыночный ордер',
                     'status': 'исполнен',
                     'side': 'продажа',
                     'symbol': order_info['symbol'],
-                    'qty': order_info['executedQty'],
+                    'qty': order_info['qty'],
                     'price': order_info['avgPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    order_info['updateTime'] / 1000, timezone.utc
+                    int(order_info['createdTime']) / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
@@ -128,29 +132,30 @@ class TradeClient(BaseClient):
 
     def market_close_buy(self, symbol: str, size: str, hedge: bool) -> None:
         try:
-            qty = self._get_quantity_to_close('SHORT', symbol, size, hedge)
+            qty = self._get_quantity_to_close('Sell', symbol, size)
             order = self._create_order(
                 symbol=symbol,
-                side='BUY',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='MARKET',
-                qty=qty,
-                reduce_only=(None if hedge else True)
+                side='Buy',
+                order_type='Market',
+                qty=str(qty),
+                position_idx=(2 if hedge else 0)
             )
-            order_info = self._get_order(symbol, order['orderId'])
+            order_info = self._get_orders(
+                symbol, order['result']['orderId']
+            )['result']['list'][0]
 
             alert = {
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'type': 'рыночный ордер',
                     'status': 'исполнен',
                     'side': 'покупка',
                     'symbol': order_info['symbol'],
-                    'qty': order_info['executedQty'],
+                    'qty': order_info['qty'],
                     'price': order_info['avgPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    order_info['updateTime'] / 1000, timezone.utc
+                    int(order_info['createdTime']) / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
@@ -161,29 +166,30 @@ class TradeClient(BaseClient):
 
     def market_close_sell(self, symbol: str, size: str, hedge: bool) -> None:
         try:
-            qty = self._get_quantity_to_close('LONG', symbol, size, hedge)
+            qty = self._get_quantity_to_close('Buy', symbol, size)
             order = self._create_order(
                 symbol=symbol,
-                side='SELL',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='MARKET',
-                qty=qty,
-                reduce_only=(None if hedge else True)
+                side='Sell',
+                order_type='Market',
+                qty=str(qty),
+                position_idx=(1 if hedge else 0)
             )
-            order_info = self._get_order(symbol, order['orderId'])
+            order_info = self._get_orders(
+                symbol, order['result']['orderId']
+            )['result']['list'][0]
 
             alert = {
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'type': 'рыночный ордер',
                     'status': 'исполнен',
                     'side': 'продажа',
                     'symbol': order_info['symbol'],
-                    'qty': order_info['executedQty'],
+                    'qty': order_info['qty'],
                     'price': order_info['avgPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    order_info['updateTime'] / 1000, timezone.utc
+                    int(order_info['createdTime']) / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
@@ -198,39 +204,43 @@ class TradeClient(BaseClient):
         size: str,
         price: float,
         hedge: bool
-    ) -> int:
+    ) -> str | None:
         try:
             p_precision = self.market.get_price_precision(symbol)
             price = round(round(price / p_precision) * p_precision, 8)
-            qty = self._get_quantity_to_close('SHORT', symbol, size, hedge)
+            qty = self._get_quantity_to_close('Sell', symbol, size)
 
             order = self._create_order(
                 symbol=symbol,
-                side='BUY',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='STOP_MARKET',
-                qty=qty,
-                reduce_only=(None if hedge else True),
-                stop_price=price
+                side='Buy',
+                order_type='Market',
+                qty=str(qty),
+                trigger_direction=1,
+                trigger_price=str(price),
+                position_idx=(1 if hedge else 0),
+                reduce_only=True
             )
+            order_info = self._get_orders(
+                symbol, order['result']['orderId']
+            )['result']['list'][0]
 
             alert = {
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'type': 'рыночный стоп',
                     'status': 'ожидает исполнения',
                     'side': 'покупка',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['stopPrice']
+                    'symbol': order_info['symbol'],
+                    'qty': order_info['qty'],
+                    'price': order_info['triggerPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    order['updateTime'] / 1000, timezone.utc
+                    int(order_info['createdTime']) / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
-            return order['orderId']
+            return order['result']['orderId']
         except Exception as e:
             self.logger.error(e)
             self.send_exception(e)
@@ -241,40 +251,43 @@ class TradeClient(BaseClient):
         size: str,
         price: float,
         hedge: bool
-    ) -> int:
+    ) -> str | None:
         try:
             p_precision = self.market.get_price_precision(symbol)
             price = round(round(price / p_precision) * p_precision, 8)
-            qty = self._get_quantity_to_close('LONG', symbol, size, hedge)
+            qty = self._get_quantity_to_close('Sell', symbol, size)
 
             order = self._create_order(
                 symbol=symbol,
-                side='SELL',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='STOP_MARKET',
-                qty=qty,
-                reduce_only=(None if hedge else True),
-                stop_price=price
+                side='Sell',
+                order_type='Market',
+                qty=str(qty),
+                trigger_direction=2,
+                trigger_price=str(price),
+                position_idx=(2 if hedge else 0),
+                reduce_only=True
             )
+            order_info = self._get_orders(
+                symbol, order['result']['orderId']
+            )['result']['list'][0]
 
             alert = {
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'type': 'рыночный стоп',
                     'status': 'ожидает исполнения',
                     'side': 'продажа',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['stopPrice']
+                    'symbol': order_info['symbol'],
+                    'qty': order_info['qty'],
+                    'price': order_info['triggerPrice']
                 },
                 'time': datetime.fromtimestamp(
-                    order['updateTime'] / 1000,
-                    timezone.utc
+                    int(order_info['createdTime']) / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
-            return order['orderId']
+            return order['result']['orderId']
         except Exception as e:
             self.logger.error(e)
             self.send_exception(e)
@@ -285,35 +298,36 @@ class TradeClient(BaseClient):
         size: str,
         price: float,
         hedge: bool
-    ) -> int:
+    ) -> str | None:
         try:
-            position_size = self._get_position_size('SHORT', symbol, hedge)
+            position_size = self._get_position_size('Sell', symbol)
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
 
                 if size == 100:
-                    orders_info = self._get_orders(symbol)
+                    orders_info = (
+                        self._get_orders(symbol)['result']['list']
+                    )
                     limit_orders = list(
                         filter(
-                            lambda x: (
-                                x['type'] == 'LIMIT' and
-                                x['side'] == 'SELL'
-                            ),
+                            lambda x: x['orderType'] == 'Limit' and
+                                x['side'] == 'Buy',
                             orders_info
                         )
                     )
                     limit_orders_qty = sum(
-                        map(lambda x: float(x['origQty']), limit_orders)
+                        map(lambda x: float(x['qty']), limit_orders)
                     )
                     qty = position_size - limit_orders_qty
                 else:
                     qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                last_price = float(
-                    self.market.get_tickers(symbol)['markPrice']
+                ticker_data = (
+                    self.market.get_tickers(symbol)['result']['list'][0]
                 )
+                last_price = float(ticker_data['lastPrice'])
                 qty = size / last_price
 
             q_precision = self.market.get_qty_precision(symbol)
@@ -324,33 +338,34 @@ class TradeClient(BaseClient):
 
             order = self._create_order(
                 symbol=symbol,
-                side='BUY',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='LIMIT',
-                qty=qty,
-                time_in_force='GTC',
-                reduce_only=(None if hedge else True),
-                price=price
+                side='Buy',
+                order_type='Limit',
+                qty=str(qty),
+                price=str(price),
+                position_idx=(2 if hedge else 0),
+                reduce_only=True
             )
+            order_info = self._get_orders(
+                symbol, order['result']['orderId']
+            )['result']['list'][0]
 
             alert = {
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'type': 'лимитный ордер',
                     'status': 'ожидает исполнения',
                     'side': 'покупка',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['price']
+                    'symbol': order_info['symbol'],
+                    'qty': order_info['qty'],
+                    'price': order_info['price']
                 },
                 'time': datetime.fromtimestamp(
-                    order['updateTime'] / 1000,
-                    timezone.utc
+                    int(order_info['createdTime']) / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
-            return order['orderId']
+            return order['result']['orderId']
         except Exception as e:
             self.logger.error(e)
             self.send_exception(e)
@@ -361,35 +376,36 @@ class TradeClient(BaseClient):
         size: str,
         price: float,
         hedge: bool
-    ) -> int:
+    ) -> str | None:
         try:
-            position_size = self._get_position_size('LONG', symbol, hedge)
+            position_size = self._get_position_size('Buy', symbol)
 
             if size.endswith('%'):
                 size = float(size.rstrip('%'))
 
                 if size == 100:
-                    orders_info = self._get_orders(symbol)
+                    orders_info = (
+                        self._get_orders(symbol)['result']['list']
+                    )
                     limit_orders = list(
                         filter(
-                            lambda x: (
-                                x['type'] == 'LIMIT' and
-                                x['side'] == 'SELL'
-                            ),
+                            lambda x: x['orderType'] == 'Limit' and
+                                x['side'] == 'Sell',
                             orders_info
                         )
                     )
                     limit_orders_qty = sum(
-                        map(lambda x: float(x['origQty']), limit_orders)
+                        map(lambda x: float(x['qty']), limit_orders)
                     )
                     qty = position_size - limit_orders_qty
                 else:
                     qty = position_size * size * 0.01
             elif size.endswith('u'):
                 size = float(size.rstrip('u'))
-                last_price = float(
-                    self.market.get_tickers(symbol)['markPrice']
+                ticker_data = (
+                    self.market.get_tickers(symbol)['result']['list'][0]
                 )
+                last_price = float(ticker_data['lastPrice'])
                 qty = size / last_price
 
             q_precision = self.market.get_qty_precision(symbol)
@@ -400,33 +416,35 @@ class TradeClient(BaseClient):
 
             order = self._create_order(
                 symbol=symbol,
-                side='SELL',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='LIMIT',
-                qty=qty,
-                time_in_force='GTC',
-                reduce_only=(None if hedge else True),
-                price=price
+                side='Sell',
+                order_type='Limit',
+                qty=str(qty),
+                price=str(price),
+                position_idx=(1 if hedge else 0),
+                reduce_only=True
             )
+            order_info = self._get_orders(
+                symbol=symbol,
+                order_id=order['result']['orderId']
+            )['result']['list'][0]
 
             alert = {
                 'message': {
-                    'exchange': 'BINANCE',
+                    'exchange': 'BYBIT',
                     'type': 'лимитный ордер',
                     'status': 'ожидает исполнения',
                     'side': 'продажа',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['price']
+                    'symbol': order_info['symbol'],
+                    'qty': order_info['qty'],
+                    'price': order_info['price']
                 },
                 'time': datetime.fromtimestamp(
-                    order['updateTime'] / 1000,
-                    timezone.utc
+                    int(order_info['createdTime']) / 1000, timezone.utc
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
-            return order['orderId']
+            return order['result']['orderId']
         except Exception as e:
             self.logger.error(e)
             self.send_exception(e)
@@ -439,12 +457,9 @@ class TradeClient(BaseClient):
 
     def cancel_orders(self, symbol: str, side: str) -> None:
         try:
-            orders_info = self._get_orders(symbol)
+            orders_info = self._get_orders(symbol)['result']['list']
             one_sided_orders = list(
-                filter(
-                    lambda x: x['side'] == side.upper(),
-                    orders_info
-                )
+                filter(lambda x: x['side'] == side, orders_info)
             )
 
             for order in one_sided_orders:
@@ -455,11 +470,11 @@ class TradeClient(BaseClient):
 
     def cancel_stop(self, symbol: str, side: str) -> None:
         try:
-            orders_info = self._get_orders(symbol)
+            orders_info = self._get_orders(symbol)['result']['list']
             stop_orders = list(
                 filter(
-                    lambda x: x['type'] == 'STOP_MARKET' and
-                        x['side'] == side.upper(),
+                    lambda x: x['stopOrderType'] == 'Stop' and
+                        x['side'] == side,
                     orders_info
                 )
             )
@@ -473,21 +488,20 @@ class TradeClient(BaseClient):
     def check_stop_orders(self, symbol: str, order_ids: list) -> list:
         try:
             for order_id in order_ids.copy():
-                order_info = self._get_order(symbol, order_id)
+                order = self._get_orders(symbol, order_id)
+                order_info = order['result']['list'][0]
 
-                if order_info['status'] == 'NEW':
+                if order_info['orderStatus'] == 'Untriggered':
                     continue
 
-                if order_info['status'] == 'FILLED':
+                if order_info['orderStatus'] == 'Filled':
                     status = 'исполнен'
-                    qty = order_info['executedQty']
                     price = order_info['avgPrice']
                 else:
                     status = 'отменён'
-                    qty = order_info['origQty']
-                    price = order_info['stopPrice']
+                    price = order_info['triggerPrice']
 
-                if order_info['side'] == 'BUY':
+                if order_info['side'] == 'Buy':
                     side = 'покупка'
                 else:
                     side = 'продажа'
@@ -496,16 +510,17 @@ class TradeClient(BaseClient):
 
                 alert = {
                     'message': {
-                        'exchange': 'BINANCE',
+                        'exchange': 'BYBIT',
                         'type': 'рыночный стоп',
                         'status': status,
                         'side': side,
                         'symbol': order_info['symbol'],
-                        'qty': qty,
+                        'qty': order_info['qty'],
                         'price': price
                     },
                     'time': datetime.fromtimestamp(
-                        order_info['updateTime'] / 1000, timezone.utc
+                        int(order_info['updatedTime']) / 1000,
+                        timezone.utc
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 }
                 self.alerts.append(alert)
@@ -519,17 +534,18 @@ class TradeClient(BaseClient):
     def check_limit_orders(self, symbol: str, order_ids: list) -> list:
         try:
             for order_id in order_ids.copy():
-                order_info = self._get_order(symbol, order_id)
+                order = self._get_orders(symbol, order_id)
+                order_info = order['result']['list'][0]
 
-                if order_info['status'] == 'NEW':
+                if order_info['orderStatus'] == 'New':
                     continue
 
-                if order_info['status'] == 'FILLED':
+                if order_info['orderStatus'] == 'Filled':
                     status = 'исполнен'
                 else:
                     status = 'отменён'
 
-                if order_info['side'] == 'BUY':
+                if order_info['side'] == 'Buy':
                     side = 'покупка'
                 else:
                     side = 'продажа'
@@ -538,16 +554,17 @@ class TradeClient(BaseClient):
 
                 alert = {
                     'message': {
-                        'exchange': 'BINANCE',
+                        'exchange': 'BYBIT',
                         'type': 'лимитный ордер',
                         'status': status,
                         'side': side,
                         'symbol': order_info['symbol'],
-                        'qty': order_info['origQty'],
+                        'qty': order_info['qty'],
                         'price': order_info['price']
                     },
                     'time': datetime.fromtimestamp(
-                        order_info['updateTime'] / 1000, timezone.utc
+                        int(order_info['updatedTime']) / 1000,
+                        timezone.utc
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 }
                 self.alerts.append(alert)
@@ -559,82 +576,82 @@ class TradeClient(BaseClient):
             self.send_exception(e)
 
     def _cancel_all_orders(self, symbol: str) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/allOpenOrders'
-        params = {'symbol': symbol}
-        params, headers = self.build_signed_request(params)
-        return self.delete(url, params=params, headers=headers)
+        url = f'{self.base_endpoint}/v5/order/cancel-all'
+        params = {'category': 'linear', 'symbol': symbol}
+        headers = self.get_headers(params, 'POST')
+        return self.post(url, params, headers=headers)
 
     def _cancel_order(self, symbol: str, order_id: str) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/order'
-        params = {'symbol': symbol, 'orderId': order_id}
-        params, headers = self.build_signed_request(params)
-        return self.delete(url, params=params, headers=headers)
+        url = f'{self.base_endpoint}/v5/order/cancel'
+        params = {'category': 'linear', 'symbol': symbol, 'orderId': order_id}
+        headers = self.get_headers(params, 'POST')
+        return self.post(url, params, headers=headers)
 
     def _create_order(
         self,
         symbol: str,
         side: str,
-        position_side: str,
         order_type: str,
-        qty: float,
-        time_in_force: str = None,
-        reduce_only: str = None,
-        price: float = None,
-        stop_price: float = None
+        qty: str,
+        price: str = None,
+        trigger_direction: int = None,
+        trigger_price: float = None,
+        position_idx: int = None,
+        reduce_only: bool = None
     ) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/order'
+        url = f'{self.base_endpoint}/v5/order/create'
         params = {
+            'category': 'linear',
             'symbol': symbol,
             'side': side,
-            'positionSide': position_side,
-            'type': order_type,
-            'quantity': qty
+            'orderType': order_type,
+            'qty': qty,
+            'positionIdx': position_idx,
+
         }
-
-        if time_in_force:
-            params['timeInForce'] = time_in_force
-
-        if reduce_only:
-            params['reduceOnly'] = reduce_only
 
         if price:
             params['price'] = price
 
-        if stop_price:
-            params['stopPrice'] = stop_price
+        if trigger_direction:
+            params['triggerDirection'] = trigger_direction
 
-        params, headers = self.build_signed_request(params)
-        return self.post(url, params=params, headers=headers)
-    
-    def _get_order(self, symbol: str, order_id: str) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/order'
-        params = {'symbol': symbol, 'orderId': order_id}
-        params, headers = self.build_signed_request(params)
+        if trigger_price:
+            params['triggerPrice'] = trigger_price
+
+        if reduce_only:
+            params['reduceOnly'] = reduce_only
+
+        headers = self.get_headers(params, 'POST')
+        return self.post(url, params, headers=headers)
+
+    def _get_orders(self, symbol: str, order_id: str = None) -> dict:
+        url = f'{self.base_endpoint}/v5/order/realtime'
+        params = {'category': 'linear', 'symbol': symbol}
+
+        if order_id:
+            params['orderId'] = order_id
+
+        headers = self.get_headers(params, 'GET')
         return self.get(url, params, headers)
 
-    def _get_orders(self, symbol: str) -> list:
-        url = f'{self.futures_endpoint}/fapi/v1/openOrders'
-        params = {'symbol': symbol}
-        params, headers = self.build_signed_request(params)
-        return self.get(url, params, headers)
-    
     def _get_quantity_to_close(
         self,
         side: str,
         symbol: str,
-        size: str,
-        hedge: bool
+        size: str
     ) -> float:
-        position_size = self._get_position_size(side, symbol, hedge)
+        position_size = self._get_position_size(side, symbol)
 
         if size.endswith('%'):
             size = float(size.rstrip('%'))
             qty = position_size * size * 0.01
         elif size.endswith('u'):
             size = float(size.rstrip('u'))
-            last_price = float(
-                self.market.get_tickers(symbol)['markPrice']
+            ticker_data = (
+                self.market.get_tickers(symbol)['result']['list'][0]
             )
+            last_price = float(ticker_data['lastPrice'])
             qty = size / last_price
 
         q_precision = self.market.get_qty_precision(symbol)
@@ -646,13 +663,10 @@ class TradeClient(BaseClient):
         size: str,
         leverage: int
     ) -> float:
-        last_price = float(self.market.get_tickers(symbol)['markPrice'])
-        balance_info = self.account.get_wallet_balance()['assets']
-        balance = float(
-            next(
-                filter(lambda x: x['asset'] == 'USDT', balance_info)
-            )['availableBalance']
-        )
+        ticker_data = self.market.get_tickers(symbol)['result']['list'][0]
+        last_price = float(ticker_data['lastPrice'])
+        wallet_data = self.account.get_wallet_balance()['result']['list']
+        balance = float(wallet_data[0]['coin'][0]['walletBalance'])
 
         if size.endswith('%'):
             size = float(size.rstrip('%'))
@@ -663,29 +677,19 @@ class TradeClient(BaseClient):
 
         q_precision = self.market.get_qty_precision(symbol)
         return round(round(qty / q_precision) * q_precision, 8)
-    
-    def _get_position_size(
-        self,
-        side: str,
-        symbol: str,
-        hedge: bool
-    ) -> float:
+
+    def _get_position_size(self, side: str, symbol: str) -> float:
         try:
-            positions = self._get_positions(symbol)
-            multiplier = 1 if side == 'LONG' else -1
-            position_side = side if hedge else 'BOTH'
+            positions = self._get_positions(symbol)['result']['list']
             position = next(
-                filter(
-                    lambda p: p['positionSide'] == position_side,
-                    positions
-                )
+                filter(lambda p: p['side'] == side, positions)
             )
-            return multiplier * float(position['positionAmt'])
+            return float(position['size'])
         except Exception:
             return 0.0
 
-    def _get_positions(self, symbol: str) -> list:
-        url = f'{self.futures_endpoint}/fapi/v3/positionRisk'
-        params = {'symbol': symbol}
-        params, headers = self.build_signed_request(params)
+    def _get_positions(self, symbol: str) -> dict:
+        url = f'{self.base_endpoint}/v5/position/list'
+        params = {'category': 'linear', 'symbol': symbol}
+        headers = self.get_headers(params, 'GET')
         return self.get(url, params, headers)

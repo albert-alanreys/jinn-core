@@ -2138,7 +2138,7 @@ class NuggetV4():
             order_ids=self.pending_order_ids['market_stop_ids']
         )
 
-        if order_ids is not None:
+        if order_ids:
             self.pending_order_ids['market_stop_ids'] = order_ids
 
         order_ids = self.client.check_limit_orders(
@@ -2146,7 +2146,7 @@ class NuggetV4():
             order_ids=self.pending_order_ids['limit_ids']
         )
 
-        if order_ids is not None:
+        if order_ids:
             self.pending_order_ids['limit_ids'] = order_ids
 
         if self.alert_long_new_stop:
@@ -2160,7 +2160,7 @@ class NuggetV4():
                 order_ids=self.pending_order_ids['market_stop_ids']
             )
 
-            if order_ids is not None:
+            if order_ids:
                 self.pending_order_ids['market_stop_ids'] = order_ids
 
             order_id = self.client.market_stop_sell(
@@ -2184,7 +2184,7 @@ class NuggetV4():
                 order_ids=self.pending_order_ids['market_stop_ids']
             )
 
-            if order_ids is not None:
+            if order_ids:
                 self.pending_order_ids['market_stop_ids'] = order_ids
 
             order_id = self.client.market_stop_buy(
