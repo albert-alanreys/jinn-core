@@ -8,8 +8,8 @@ import threading
 import numpy as np
 
 import src.core.enums as enums
-from .api_clients.binance_client import BinanceClient
-from .api_clients.bybit_client import BybitClient
+from .api_clients.binance import BinanceClient
+from .api_clients.bybit import BybitClient
 
 
 class Automizer():

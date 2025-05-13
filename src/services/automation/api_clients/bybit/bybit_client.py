@@ -134,22 +134,22 @@ class BybitClient(HttpClient):
         hedge: bool
     ) -> None:
         if hedge:
-            self._switch_position_mode(symbol, 3)
+            self.switch_position_mode(symbol, 3)
         else:
-            self._switch_position_mode(symbol, 0)
+            self.switch_position_mode(symbol, 0)
             
         match margin:
             case 'cross':
-                self._switch_margin_mode(symbol, 0)
+                self.switch_margin_mode(symbol, 0)
             case 'isolated':
-                self._switch_margin_mode(symbol, 1)
+                self.switch_margin_mode(symbol, 1)
 
-        self._set_leverage(symbol, str(leverage), str(leverage))
+        self.set_leverage(symbol, str(leverage), str(leverage))
  
         try:
             ticker_data = self._get_tickers(symbol)['result']['list'][0]
             last_price = float(ticker_data['lastPrice'])
-            wallet_data = self._get_wallet_balance()['result']['list']
+            wallet_data = self.get_wallet_balance()['result']['list']
             balance = float(wallet_data[0]['coin'][0]['walletBalance'])
 
             if size.endswith('%'):
@@ -196,7 +196,7 @@ class BybitClient(HttpClient):
             self.telegram_client.send_message(message)
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def market_open_sell(
         self,
@@ -207,22 +207,22 @@ class BybitClient(HttpClient):
         hedge: bool
     ) -> None:
         if hedge:
-            self._switch_position_mode(symbol, 3)
+            self.switch_position_mode(symbol, 3)
         else:
-            self._switch_position_mode(symbol, 0)
+            self.switch_position_mode(symbol, 0)
 
         match margin:
             case 'cross':
-                self._switch_margin_mode(symbol, 0)
+                self.switch_margin_mode(symbol, 0)
             case 'isolated':
-                self._switch_margin_mode(symbol, 1)
+                self.switch_margin_mode(symbol, 1)
 
-        self._set_leverage(symbol, str(leverage), str(leverage))
+        self.set_leverage(symbol, str(leverage), str(leverage))
 
         try:
             ticker_data = self._get_tickers(symbol)['result']['list'][0]
             last_price = float(ticker_data['lastPrice'])
-            wallet_data = self._get_wallet_balance()['result']['list']
+            wallet_data = self.get_wallet_balance()['result']['list']
             balance = float(wallet_data[0]['coin'][0]['walletBalance'])
 
             if size.endswith('%'):
@@ -269,7 +269,7 @@ class BybitClient(HttpClient):
             self.telegram_client.send_message(message)
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def market_close_buy(
         self,
@@ -331,7 +331,7 @@ class BybitClient(HttpClient):
             self.telegram_client.send_message(message)
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def market_close_sell(
         self,
@@ -393,7 +393,7 @@ class BybitClient(HttpClient):
             self.telegram_client.send_message(message)
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def market_stop_buy(
         self,
@@ -462,7 +462,7 @@ class BybitClient(HttpClient):
             return order['result']['orderId']
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def market_stop_sell(
         self,
@@ -531,7 +531,7 @@ class BybitClient(HttpClient):
             return order['result']['orderId']
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def limit_take_buy(
         self,
@@ -616,7 +616,7 @@ class BybitClient(HttpClient):
             return order['result']['orderId']
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def limit_take_sell(
         self,
@@ -702,7 +702,7 @@ class BybitClient(HttpClient):
             return order['result']['orderId']
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def cancel_stop(
         self,
@@ -723,7 +723,7 @@ class BybitClient(HttpClient):
                 self._cancel_order(symbol, order['orderId'])
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def cancel_one_sided_orders(
         self,
@@ -740,14 +740,14 @@ class BybitClient(HttpClient):
                 self._cancel_order(symbol, order['orderId'])
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def cancel_all_orders(self, symbol: str) -> None:
         try:
             self._cancel_orders(symbol)
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def check_stop_orders(self, symbol: str, order_ids: list) -> list | None:
         try:
@@ -798,7 +798,7 @@ class BybitClient(HttpClient):
             return order_ids
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def check_limit_orders(self, symbol: str, order_ids: list) -> list | None:
         try:
@@ -847,7 +847,7 @@ class BybitClient(HttpClient):
             return order_ids
         except Exception as e:
             self.logger.error(e)
-            self._send_exception(e)
+            self.send_exception(e)
 
     def _cancel_order(self, symbol: str, order_id: str) -> dict | None:
         url = f'{self.base_endpoint}/v5/order/cancel'
@@ -969,14 +969,14 @@ class BybitClient(HttpClient):
         response = self.get(url, params)
         return response
 
-    def _get_wallet_balance(self) -> dict | None:
+    def get_wallet_balance(self) -> dict | None:
         url = f'{self.base_endpoint}/v5/account/wallet-balance'
         params = {'accountType': 'UNIFIED', 'coin': 'USDT'}
         headers = self._get_headers(params, 'GET')
         response = self.get(url, params, headers)
         return response
 
-    def _set_leverage(
+    def set_leverage(
         self,
         symbol: str,
         buy_leverage: str,
@@ -993,7 +993,7 @@ class BybitClient(HttpClient):
         response = self.post(url, params, headers=headers, logging=False)
         return response
 
-    def _switch_margin_mode(self, symbol: str, mode: int) -> dict | None:
+    def switch_margin_mode(self, symbol: str, mode: int) -> dict | None:
         url = f'{self.base_endpoint}/v5/position/switch-isolated'
         params = {
             'category': 'linear',
@@ -1007,7 +1007,7 @@ class BybitClient(HttpClient):
         response = self.post(url, params, headers=headers, logging=False)
         return response
     
-    def _switch_position_mode(self, symbol: str, mode: int) -> dict | None:
+    def switch_position_mode(self, symbol: str, mode: int) -> dict | None:
         url = f'{self.base_endpoint}/v5/position/switch-mode'
         params = {
             'category': 'linear',
@@ -1042,7 +1042,7 @@ class BybitClient(HttpClient):
         }
         return headers
 
-    def _send_exception(self, exception: Exception) -> None:
+    def send_exception(self, exception: Exception) -> None:
         if str(exception) != '':
             self.alerts.append({
                 'message': {

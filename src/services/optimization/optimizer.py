@@ -6,8 +6,8 @@ import os
 import numpy as np
 
 import src.core.enums as enums
-from src.services.automation.api_clients.binance_client import BinanceClient
-from src.services.automation.api_clients.bybit_client import BybitClient
+from src.services.automation.api_clients.binance import BinanceClient
+from src.services.automation.api_clients.bybit import BybitClient
 from src.services.storage.db_manager import DBManager
 from .ga import GA
 
