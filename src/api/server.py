@@ -1,9 +1,7 @@
 import threading
-import os
 
 from flask import Flask
 
-import config
 from src.core.enums import Mode
 from .data_formatter import DataFormatter
 from .strategy_manager import StrategyManager
@@ -36,27 +34,11 @@ class Server(Flask):
             static_folder=static_folder,
             template_folder=template_folder
         )
-
         register_routes(self)
-        self._update_fetch_js_url(config.URL)
 
         if self.mode is Mode.AUTOMATION:
             thread = threading.Thread(target=self.check_strategies)
             thread.start()
-
-    def _update_fetch_js_url(self, url: str) -> None:
-        path_to_fetch_js = os.path.abspath(
-            os.path.join('src', 'view', 'static', 'js', 'fetchClient.js')
-        )
-
-        with open(path_to_fetch_js, 'r') as file:
-            lines = file.readlines()
-
-        old_url = lines[0][lines[0].find("'") + 1 : lines[0].rfind("'")]
-        lines[0] = lines[0].replace(old_url, url)
-
-        with open(path_to_fetch_js, 'w') as file:
-            file.writelines(lines)
 
     def set_alerts(self, alerts: list) -> None:
         self.alerts.extend(alerts)

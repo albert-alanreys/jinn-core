@@ -1,8 +1,6 @@
-const URL = 'http://127.0.0.1:5000';
-
 export async function getMode() {
   try {
-    const response = await fetch(`${URL}/mode`);
+    const response = await fetch(`${API_URL}/mode`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -18,7 +16,7 @@ export async function getMode() {
 
 export async function getAlerts() {
   try {
-    const response = await fetch(`${URL}/alerts`);
+    const response = await fetch(`${API_URL}/alerts`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -34,7 +32,7 @@ export async function getAlerts() {
 
 export async function getAlertUpdates() {
   try {
-    const response = await fetch(`${URL}/updates/alerts`);
+    const response = await fetch(`${API_URL}/updates/alerts`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -50,7 +48,7 @@ export async function getAlertUpdates() {
 
 export async function getDataUpdates() {
   try {
-    const response = await fetch(`${URL}/updates/data`);
+    const response = await fetch(`${API_URL}/updates/data`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -66,7 +64,7 @@ export async function getDataUpdates() {
 
 export async function getLiteData() {
   try {
-    const response = await fetch(`${URL}/data/lite`);
+    const response = await fetch(`${API_URL}/data/lite`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -82,7 +80,7 @@ export async function getLiteData() {
 
 export async function getMainData(strategy_id) {
   try {
-    const response = await fetch(`${URL}/data/main/${strategy_id}`);
+    const response = await fetch(`${API_URL}/data/main/${strategy_id}`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -103,7 +101,7 @@ export async function updateData(strategy_id, parameter) {
   try {
     const parsed = JSON.parse(parameter);
 
-    const response = await fetch(`${URL}/data/update/${strategy_id}`, {
+    const response = await fetch(`${API_URL}/data/update/${strategy_id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

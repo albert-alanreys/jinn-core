@@ -1,8 +1,8 @@
 import src.core.enums as enums
 
 
-# Основной URL
-URL = "http://127.0.0.1:5000"
+# Базовый адрес API для фронтенда
+API_URL = "http://127.0.0.1:5000"
 
 # API-ключи
 BYBIT_API_KEY = "ваш_BYBIT_API_KEY"
