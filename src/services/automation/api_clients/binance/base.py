@@ -12,13 +12,12 @@ class BaseClient(HttpClient):
     futures_endpoint = 'https://fapi.binance.com'
     spot_endpoint = 'https://api.binance.com'
 
-    def __init__(self) -> None:
-        self.telegram_client = TelegramClient()
+    def __init__(self, alerts: list) -> None:
+        self.telegram = TelegramClient()
 
+        self.alerts = alerts
         self.api_key = config.BINANCE_API_KEY
         self.api_secret = config.BINANCE_API_SECRET
-
-        self.alerts = []
 
     def build_signed_request(self, params: dict) -> tuple:
         params['recvWindow'] = 5000
@@ -43,15 +42,15 @@ class BaseClient(HttpClient):
 
     def send_telegram_alert(self, alert: dict) -> None:
         message = (
-            f"Биржа — {alert['message']['exchange']}"
-            f"Тип — {alert['message']['type']}"
-            f"Статус — {alert['message']['status']}"
-            f"Направление — {alert['message']['side']}"
-            f"Символ — {alert['message']['symbol']}"
-            f"Количество — {alert['message']['qty']}"
+            f"Биржа — {alert['message']['exchange']}\n"
+            f"Тип — {alert['message']['type']}\n"
+            f"Статус — {alert['message']['status']}\n"
+            f"Направление — {alert['message']['side']}\n"
+            f"Символ — {alert['message']['symbol']}\n"
+            f"Количество — {alert['message']['qty']}\n"
             f"Цена — {alert['message']['price']}"
         )
-        self.telegram_client.send_message(message)
+        self.telegram.send_message(message)
 
     def _add_signature(self, params: dict) -> dict:
         str_to_sign = '&'.join([f'{k}={v}' for k, v in params.items()])

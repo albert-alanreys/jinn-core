@@ -2,6 +2,9 @@ from .base import BaseClient
 
 
 class PositionClient(BaseClient):
+    def __init__(self, alerts: list) -> None:
+        super().__init__(alerts)
+
     def set_leverage(self, symbol: str, leverage: int) -> dict:
         url = f'{self.futures_endpoint}/fapi/v1/leverage'
         params = {'symbol': symbol, 'leverage': leverage}

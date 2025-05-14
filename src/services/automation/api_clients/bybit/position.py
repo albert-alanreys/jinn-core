@@ -2,6 +2,9 @@ from .base import BaseClient
 
 
 class PositionClient(BaseClient):
+    def __init__(self, alerts: list) -> None:
+        super().__init__(alerts)
+
     def set_leverage(
         self,
         symbol: str,
@@ -16,7 +19,7 @@ class PositionClient(BaseClient):
             'sellLeverage': sell_leverage
         }
         headers = self.get_headers(params, 'POST')
-        return self.post(url, params=params, headers=headers, logging=False)
+        return self.post(url, params, headers=headers, logging=False)
 
     def switch_margin_mode(self, symbol: str, mode: int) -> dict:
         url = f'{self.base_endpoint}/v5/position/switch-isolated'
@@ -29,7 +32,7 @@ class PositionClient(BaseClient):
 
         }
         headers = self.get_headers(params, 'POST')
-        return self.post(url, params=params, headers=headers, logging=False)
+        return self.post(url, params, headers=headers, logging=False)
 
     def switch_position_mode(self, symbol: str, mode: int) -> dict:
         url = f'{self.base_endpoint}/v5/position/switch-mode'
@@ -39,4 +42,4 @@ class PositionClient(BaseClient):
             'mode': mode
         }
         headers = self.get_headers(params, 'POST')
-        return self.post(url, params=params, headers=headers, logging=False)
+        return self.post(url, params, headers=headers, logging=False)

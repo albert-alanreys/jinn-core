@@ -2,6 +2,9 @@ from .base import BaseClient
 
 
 class AccountClient(BaseClient):
+    def __init__(self, alerts: list) -> None:
+        super().__init__(alerts)
+
     def get_wallet_balance(self) -> dict:
         url = f'{self.base_endpoint}/v5/account/wallet-balance'
         params = {'accountType': 'UNIFIED', 'coin': 'USDT'}

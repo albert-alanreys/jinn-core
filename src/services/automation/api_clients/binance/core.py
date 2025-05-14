@@ -8,10 +8,17 @@ from .trade import TradeClient
 
 class BinanceClient():
     def __init__(self) -> None:
-        self.account = AccountClient()
-        self.market = MarketClient()
-        self.position = PositionClient()
-        self.trade = TradeClient(self.account, self.market, self.position)
+        self.alerts = []
+
+        self.account = AccountClient(self.alerts)
+        self.market = MarketClient(self.alerts)
+        self.position = PositionClient(self.alerts)
+        self.trade = TradeClient(
+            account=self.account,
+            market=self.market,
+            position=self.position,
+            alerts=self.alerts
+        )
 
     def __getattr__(self, name: str) -> Any:
         if hasattr(self.account, name):

@@ -12,15 +12,17 @@ class TradeClient(BaseClient):
         self,
         account: AccountClient,
         market: MarketClient,
-        position: PositionClient
+        position: PositionClient,
+        alerts: list
     ) -> None:
-        super().__init__()
+        super().__init__(alerts)
 
         self.logger = logging.getLogger(__name__)
 
         self.account = account
         self.market = market
         self.position = position
+        self.alerts = alerts
 
     def market_open_buy(
         self,

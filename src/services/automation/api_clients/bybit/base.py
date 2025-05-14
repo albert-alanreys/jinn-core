@@ -12,14 +12,13 @@ from src.services.automation.api_clients.telegram_client import TelegramClient
 class BaseClient(HttpClient):
     base_endpoint = 'https://api.bybit.com'
 
-    def __init__(self) -> None:
-        self.telegram_client = TelegramClient()
+    def __init__(self, alerts: list) -> None:
+        self.telegram = TelegramClient()
 
+        self.alerts = alerts
         self.api_key = config.BYBIT_API_KEY
         self.api_secret = config.BYBIT_API_SECRET
-
-        self.alerts = []
-
+        
     def get_headers(self, params: dict, method: str) -> dict:
         timestamp = str(int(time.time() * 1000))
         recv_window = '5000'
@@ -60,12 +59,12 @@ class BaseClient(HttpClient):
 
     def send_telegram_alert(self, alert: dict) -> None:
         message = (
-            f"Биржа — {alert['message']['exchange']}"
-            f"Тип — {alert['message']['type']}"
-            f"Статус — {alert['message']['status']}"
-            f"Направление — {alert['message']['side']}"
-            f"Символ — {alert['message']['symbol']}"
-            f"Количество — {alert['message']['qty']}"
+            f"Биржа — {alert['message']['exchange']}\n"
+            f"Тип — {alert['message']['type']}\n"
+            f"Статус — {alert['message']['status']}\n"
+            f"Направление — {alert['message']['side']}\n"
+            f"Символ — {alert['message']['symbol']}\n"
+            f"Количество — {alert['message']['qty']}\n"
             f"Цена — {alert['message']['price']}"
         )
-        self.telegram_client.send_message(message)
+        self.telegram.send_message(message)

@@ -32,6 +32,9 @@ class MarketClient(BaseClient):
         '1d': 24 * 60 * 60 * 1000,
     }
 
+    def __init__(self, alerts: list) -> None:
+        super().__init__(alerts)
+
     def get_historical_klines(
         self,
         symbol: str,
