@@ -132,19 +132,6 @@ export default class ChartManager {
         minMove: data.mintick,
       },
     });
-    this.candlestickSeries.setData(data.klines.slice(-this.visibleRange));
-
-    var startTime = this.candlestickSeries.data()[0].time;
-    var markers = data.markers.filter((marker) => {
-      if (marker.time >= startTime) {
-        return marker;
-      }
-    });
-
-    this.seriesMarkers = LightweightCharts.createSeriesMarkers(
-      this.candlestickSeries,
-      markers
-    );
 
     this.lineSeriesGroup = {};
 
@@ -159,11 +146,12 @@ export default class ChartManager {
     }
 
     this.visibleLogicalRangeChangeHandler = (newVisibleTimeRange) => {
-      if (newVisibleTimeRange.from < 100) {
+      if (newVisibleTimeRange.from < 50) {
         this.visibleRange += this.chartOptions.visibleRange;
         this.setChartData(data);
       }
     };
+
     this.timeScale.subscribeVisibleLogicalRangeChange(
       this.visibleLogicalRangeChangeHandler
     );
@@ -187,7 +175,14 @@ export default class ChartManager {
       }
     });
 
-    this.seriesMarkers.setMarkers(markers);
+    if (!this.seriesMarkers) {
+      this.seriesMarkers = LightweightCharts.createSeriesMarkers(
+        this.candlestickSeries,
+        markers
+      );
+    } else {
+      this.seriesMarkers.setMarkers(markers);
+    }
 
     for (var name in this.lineSeriesGroup) {
       this.lineSeriesGroup[name].setData(
