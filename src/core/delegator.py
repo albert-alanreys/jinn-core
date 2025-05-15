@@ -51,10 +51,10 @@ class Delegator:
 
     def create_server(self, data_to_format: tuple) -> None:
         path_to_static = os.path.abspath(
-            os.path.join('src', 'view', 'static')
+            os.path.join('src', 'frontend', 'static')
         )
         path_to_templates = os.path.abspath(
-            os.path.join('src', 'view', 'templates')
+            os.path.join('src', 'frontend', 'templates')
         )
 
         server = Server(

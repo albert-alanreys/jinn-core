@@ -242,7 +242,10 @@ export default class ReportManager {
       new HorzScaleBehaviorPrice(),
       this.chartOptions
     );
-    var areaSeries = this.chart.addAreaSeries(this.areaOptions);
+    var areaSeries = this.chart.addSeries(
+      LightweightCharts.AreaSeries,
+      this.areaOptions
+    );
     areaSeries.setData(data.equity);
 
     this.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {

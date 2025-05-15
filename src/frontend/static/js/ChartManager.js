@@ -118,7 +118,8 @@ export default class ChartManager {
       this.chartOptions
     );
     this.timeScale = this.chart.timeScale();
-    this.candlestickSeries = this.chart.addCandlestickSeries(
+    this.candlestickSeries = this.chart.addSeries(
+      LightweightCharts.CandlestickSeries,
       this.klineOptions
     );
     this.candlestickSeries.applyOptions({
@@ -132,7 +133,8 @@ export default class ChartManager {
     this.visibleRange = this.chartOptions.visibleRange;
 
     for (let key in data.indicators) {
-      const lineSeries = this.chart.addLineSeries(
+      const lineSeries = this.chart.addSeries(
+        LightweightCharts.LineSeries,
         data.indicators[key].options
       );
       lineSeries.applyOptions(this.lineOptions);
@@ -168,7 +170,10 @@ export default class ChartManager {
         return item;
       }
     });
-    this.candlestickSeries.setMarkers(markers);
+    this.seriesMarkers = LightweightCharts.createSeriesMarkers(
+      this.candlestickSeries,
+      markers
+    );
 
     for (let key in this.lineSeriesGroup) {
       this.lineSeriesGroup[key].setData(
