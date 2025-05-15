@@ -7,16 +7,16 @@ export default class LeftToolbarManager {
   };
 
   constructor() {
-    this.screenshotButton = document.getElementById("screenshot-button");
-    this.fullScreenButton = document.getElementById("full-screen-button");
-    this.lineButton = document.getElementById("line-button");
-    this.rulerButton = document.getElementById("ruler-button");
-    this.hiderButton = document.getElementById("hider-button");
-    this.basketButton = document.getElementById("basket-button");
-    this.chartPanel = document.getElementById("chart-panel");
+    this.screenshotButton = document.getElementById('screenshot-button');
+    this.fullScreenButton = document.getElementById('full-screen-button');
+    this.lineButton = document.getElementById('line-button');
+    this.rulerButton = document.getElementById('ruler-button');
+    this.hiderButton = document.getElementById('hider-button');
+    this.basketButton = document.getElementById('basket-button');
+    this.chartPanel = document.getElementById('chart-panel');
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
         this.resetLine();
         this.resetRuler();
 
@@ -42,15 +42,15 @@ export default class LeftToolbarManager {
 
   manageScreenshotButton() {
     this.takeScreenshot = () => {
-      this.chart.takeScreenshot().toBlob(openScreenshot, "image/png", 1);
+      this.chart.takeScreenshot().toBlob(openScreenshot, 'image/png', 1);
 
       function openScreenshot(blob) {
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
+        var url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
       }
     };
 
-    this.screenshotButton.addEventListener("click", this.takeScreenshot);
+    this.screenshotButton.addEventListener('click', this.takeScreenshot);
   }
 
   manageFullScreenButton() {
@@ -64,18 +64,21 @@ export default class LeftToolbarManager {
       }
     };
 
-    this.fullScreenButton.addEventListener("click", this.takeFullScreen);
+    this.fullScreenButton.addEventListener('click', this.takeFullScreen);
   }
 
   manageLineButton() {
     this.setLinePoint = (param) => {
-      const x = param.time;
-      const y = this.candlestickSeries.coordinateToPrice(param.point.y);
+      var x = param.time;
+      var y = this.candlestickSeries.coordinateToPrice(param.point.y);
 
       if (this.startLine == null) {
         this.startLine = { time: x, value: y };
       } else {
-        const line = this.chart.addLineSeries(this.lineOptions);
+        var line = this.chart.addSeries(
+          LightweightCharts.LineSeries,
+          this.lineOptions
+        );
         this.lines.push(line);
 
         if (x >= this.startLine.time) {
@@ -91,11 +94,11 @@ export default class LeftToolbarManager {
     };
 
     this.lineButtonClickHandler = () => {
-      if (this.lineButton.dataset.status == "inactive") {
+      if (this.lineButton.dataset.status == 'inactive') {
         this.resetRuler();
 
         this.startLine = null;
-        this.lineButton.dataset.status = "active";
+        this.lineButton.dataset.status = 'active';
         this.chart.subscribeClick(this.setLinePoint);
       } else {
         this.resetLine();
@@ -103,55 +106,55 @@ export default class LeftToolbarManager {
     };
 
     this.resetLine();
-    this.lineButton.addEventListener("click", this.lineButtonClickHandler);
+    this.lineButton.addEventListener('click', this.lineButtonClickHandler);
   }
 
   manageRulerButton() {
-    const mintick = this.liteData.mintick;
-    const precision = String(mintick).match(/.\d+$/g)[0].length - 1;
+    var mintick = this.liteData.mintick;
+    var precision = String(mintick).match(/.\d+$/g)[0].length - 1;
 
     this.crosshairMoveHandler = (param) => {
       if (param.point) {
-        const chartX = param.logical;
-        const chartY = this.candlestickSeries.coordinateToPrice(param.point.y);
-        const localX = param.sourceEvent.localX;
-        const localY = param.sourceEvent.localY;
+        var chartX = param.logical;
+        var chartY = this.candlestickSeries.coordinateToPrice(param.point.y);
+        var localX = param.sourceEvent.localX;
+        var localY = param.sourceEvent.localY;
 
-        const width = localX - this.rulerStart.localX;
-        const height = this.rulerStart.localY - localY;
+        var width = localX - this.rulerStart.localX;
+        var height = this.rulerStart.localY - localY;
 
-        const num1 = (chartY - this.rulerStart.chartY).toFixed(precision);
-        const num2 = ((chartY / this.rulerStart.chartY - 1) * 100).toFixed(2);
-        const num3 = (num1 / mintick).toFixed(0);
-        const num4 = (chartX - this.rulerStart.chartX).toFixed(0);
+        var num1 = (chartY - this.rulerStart.chartY).toFixed(precision);
+        var num2 = ((chartY / this.rulerStart.chartY - 1) * 100).toFixed(2);
+        var num3 = (num1 / mintick).toFixed(0);
+        var num4 = (chartX - this.rulerStart.chartX).toFixed(0);
 
         if (width >= 0) {
-          if (this.innerDiv1.dataset.direction == "left") {
-            this.innerDiv1.setAttribute("data-direction", "right");
+          if (this.innerDiv1.dataset.direction == 'left') {
+            this.innerDiv1.setAttribute('data-direction', 'right');
           }
 
           this.ruler.style.right = `${this.chartPanel.offsetWidth - localX}px`;
           this.ruler.style.width = `${width}px`;
         } else {
-          if (this.innerDiv1.dataset.direction == "right") {
-            this.innerDiv1.setAttribute("data-direction", "left");
+          if (this.innerDiv1.dataset.direction == 'right') {
+            this.innerDiv1.setAttribute('data-direction', 'left');
           }
 
           this.ruler.style.width = `${Math.abs(width)}px`;
         }
 
         if (height >= 0) {
-          if (this.ruler.dataset.direction == "down") {
-            this.ruler.setAttribute("data-direction", "up");
-            this.innerDiv2.setAttribute("data-direction", "up");
+          if (this.ruler.dataset.direction == 'down') {
+            this.ruler.setAttribute('data-direction', 'up');
+            this.innerDiv2.setAttribute('data-direction', 'up');
           }
 
           this.ruler.style.top = `${localY}px`;
           this.ruler.style.height = `${height}px`;
         } else {
-          if (this.innerDiv2.dataset.direction == "up") {
-            this.ruler.setAttribute("data-direction", "down");
-            this.innerDiv2.setAttribute("data-direction", "down");
+          if (this.innerDiv2.dataset.direction == 'up') {
+            this.ruler.setAttribute('data-direction', 'down');
+            this.innerDiv2.setAttribute('data-direction', 'down');
           }
 
           this.ruler.style.height = `${Math.abs(height)}px`;
@@ -161,48 +164,48 @@ export default class LeftToolbarManager {
           <br />Бары: ${num4}`;
 
         if (Math.abs(width) > 50) {
-          this.innerDiv1.style.display = "block";
+          this.innerDiv1.style.display = 'block';
         } else {
-          this.innerDiv1.style.display = "none";
+          this.innerDiv1.style.display = 'none';
         }
 
         if (Math.abs(height) > 50) {
-          this.innerDiv2.style.display = "block";
+          this.innerDiv2.style.display = 'block';
         } else {
-          this.innerDiv2.style.display = "none";
+          this.innerDiv2.style.display = 'none';
         }
       }
     };
 
     this.setRulerPoint = (param) => {
-      const chartX = param.logical;
-      const chartY = this.candlestickSeries.coordinateToPrice(param.point.y);
-      const localX = param.sourceEvent.localX;
-      const localY = param.sourceEvent.localY;
+      var chartX = param.logical;
+      var chartY = this.candlestickSeries.coordinateToPrice(param.point.y);
+      var localX = param.sourceEvent.localX;
+      var localY = param.sourceEvent.localY;
 
       if (this.rulerStart == null) {
-        this.ruler = document.createElement("div");
-        this.ruler.setAttribute("id", "ruler");
-        this.ruler.setAttribute("data-direction", "up");
+        this.ruler = document.createElement('div');
+        this.ruler.setAttribute('id', 'ruler');
+        this.ruler.setAttribute('data-direction', 'up');
 
-        this.rulerLabel = document.createElement("div");
-        this.rulerLabel.setAttribute("id", "ruler-label");
+        this.rulerLabel = document.createElement('div');
+        this.rulerLabel.setAttribute('id', 'ruler-label');
         this.ruler.appendChild(this.rulerLabel);
 
-        const arrowHorizontal = document.createElement("div");
-        arrowHorizontal.setAttribute("id", "arrow-horizontal");
+        var arrowHorizontal = document.createElement('div');
+        arrowHorizontal.setAttribute('id', 'arrow-horizontal');
         this.ruler.appendChild(arrowHorizontal);
 
-        this.innerDiv1 = document.createElement("div");
-        this.innerDiv1.setAttribute("data-direction", "right");
+        this.innerDiv1 = document.createElement('div');
+        this.innerDiv1.setAttribute('data-direction', 'right');
         arrowHorizontal.appendChild(this.innerDiv1);
 
-        const arrowVertical = document.createElement("div");
-        arrowVertical.setAttribute("id", "arrow-vertical");
+        var arrowVertical = document.createElement('div');
+        arrowVertical.setAttribute('id', 'arrow-vertical');
         this.ruler.appendChild(arrowVertical);
 
-        this.innerDiv2 = document.createElement("div");
-        this.innerDiv2.setAttribute("data-direction", "up");
+        this.innerDiv2 = document.createElement('div');
+        this.innerDiv2.setAttribute('data-direction', 'up');
         arrowVertical.appendChild(this.innerDiv2);
 
         this.rulerStart = {
@@ -213,8 +216,8 @@ export default class LeftToolbarManager {
         };
 
         this.rulerLabel.innerHTML = `0.${Array(precision)
-          .fill("0")
-          .join("")} (0.00%), 0<br />Бары: 0`;
+          .fill('0')
+          .join('')} (0.00%), 0<br />Бары: 0`;
         this.ruler.style.top = `${localY}px`;
         this.ruler.style.right = `${this.chartPanel.offsetWidth - localX}px`;
 
@@ -226,11 +229,11 @@ export default class LeftToolbarManager {
     };
 
     this.rulerButtonClickHandler = () => {
-      if (this.rulerButton.dataset.status == "inactive") {
+      if (this.rulerButton.dataset.status == 'inactive') {
         this.resetLine();
 
         this.rulerStart = null;
-        this.rulerButton.dataset.status = "active";
+        this.rulerButton.dataset.status = 'active';
         this.chart.subscribeClick(this.setRulerPoint);
       } else {
         this.resetRuler();
@@ -238,49 +241,49 @@ export default class LeftToolbarManager {
     };
 
     this.resetRuler();
-    this.rulerButton.addEventListener("click", this.rulerButtonClickHandler);
+    this.rulerButton.addEventListener('click', this.rulerButtonClickHandler);
   }
 
   manageHiderButton() {
     this.hideObjects = () => {
-      if (this.hiderButton.dataset.status == "inactive") {
-        this.hiderButton.dataset.status = "active";
+      if (this.hiderButton.dataset.status == 'inactive') {
+        this.hiderButton.dataset.status = 'active';
 
-        for (let line of this.lines) {
+        for (var line of this.lines) {
           line.applyOptions({ visible: false });
         }
       } else {
-        this.hiderButton.dataset.status = "inactive";
+        this.hiderButton.dataset.status = 'inactive';
 
-        for (let line of this.lines) {
+        for (var line of this.lines) {
           line.applyOptions({ visible: true });
         }
       }
     };
 
-    this.hiderButton.dataset.status = "inactive";
-    this.hiderButton.addEventListener("click", this.hideObjects);
+    this.hiderButton.dataset.status = 'inactive';
+    this.hiderButton.addEventListener('click', this.hideObjects);
   }
 
   manageBasketButton() {
     this.removeObjects = () => {
-      for (let line of this.lines) {
+      for (var line of this.lines) {
         this.chart.removeSeries(line);
       }
 
       this.lines = [];
     };
 
-    this.basketButton.addEventListener("click", this.removeObjects);
+    this.basketButton.addEventListener('click', this.removeObjects);
   }
 
   resetLine() {
-    this.lineButton.dataset.status = "inactive";
+    this.lineButton.dataset.status = 'inactive';
     this.chart.unsubscribeClick(this.setLinePoint);
   }
 
   resetRuler() {
-    this.rulerButton.dataset.status = "inactive";
+    this.rulerButton.dataset.status = 'inactive';
     this.chart.unsubscribeClick(this.setRulerPoint);
     this.chart.unsubscribeCrosshairMove(this.crosshairMoveHandler);
 
@@ -290,14 +293,14 @@ export default class LeftToolbarManager {
   }
 
   removeEventListeners() {
-    this.screenshotButton.removeEventListener("click", this.takeScreenshot);
-    this.fullScreenButton.removeEventListener("click", this.takeFullScreen);
-    this.lineButton.removeEventListener("click", this.lineButtonClickHandler);
+    this.screenshotButton.removeEventListener('click', this.takeScreenshot);
+    this.fullScreenButton.removeEventListener('click', this.takeFullScreen);
+    this.lineButton.removeEventListener('click', this.lineButtonClickHandler);
     this.rulerButton.removeEventListener(
-      "click",
+      'click',
       this.rulerButtonClickHandler
     );
-    this.hiderButton.removeEventListener("click", this.hideObjects);
-    this.basketButton.removeEventListener("click", this.removeObjects);
+    this.hiderButton.removeEventListener('click', this.hideObjects);
+    this.basketButton.removeEventListener('click', this.removeObjects);
   }
 }

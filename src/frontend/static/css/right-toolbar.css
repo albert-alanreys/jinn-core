@@ -1,35 +1,23 @@
 #right-toolbar {
   display: flex;
-
-  flex: 1 1 0%;
   flex-direction: row;
-
   min-width: 350px;
-  max-width: 450px;
-}
-
-#right-toolbar-handle {
-  min-width: 4px;
-
-  cursor: ew-resize;
+  margin-left: 4px;
 }
 
 #info-wrapper {
   width: 100%;
-  border-right: 1px solid #e0e3eb;
-
   background-color: #fff;
+  border-right: 1px solid #e0e3eb;
 }
 
 #strategies-list,
 #strategy-description,
 #alerts-list {
   display: flex;
-
   flex-direction: column;
-  align-items: start;
   justify-content: start;
-
+  align-items: start;
   height: 100%;
 }
 
@@ -42,25 +30,21 @@
   width: 100%;
   padding: 8px 16px;
   border-bottom: 1px solid #e0e3eb;
-
   font-weight: 600;
   line-height: 22px;
 }
 
 #info-wrapper .body {
   display: flex;
-  overflow-y: auto;
-
   flex-direction: column;
   align-items: start;
-
-  height: 100%;
+  overflow-y: auto;
   width: 100%;
+  height: 100%;
 }
 
 #placeholder-4 {
   margin: auto;
-
   text-align: center;
 }
 
@@ -68,14 +52,13 @@
   width: 100%;
   padding: 8px 16px;
   border-bottom: 1px solid #edf0f7;
-
-  color: #212529;
   font-size: 16px;
-  text-align: start;
   line-height: 22px;
+  color: #212529;
+  text-align: start;
 }
 
-#strategies-list button[data-status="active"] {
+#strategies-list button[data-status='active'] {
   color: #2962ff;
 }
 
@@ -87,22 +70,18 @@
   width: 100%;
   padding: 8px 16px;
   border-bottom: 1px solid #edf0f7;
-
-  color: #6a6d78;
   font-size: 14px;
   font-weight: 400;
+  color: #6a6d78;
   text-align: start;
 }
 
 #strategy-description .info {
   display: flex;
-
-  align-items: center;
   justify-content: space-between;
-
+  align-items: center;
   width: 100%;
   padding: 8px 16px;
-
   font-size: 14px;
 }
 
@@ -118,19 +97,16 @@
   width: 70px;
   height: 29px;
   padding: 4px 6px;
-
   border: 1px solid #d1d4dc;
   border-radius: 4px;
-
-  color: #212529;
   font-size: 14px;
+  color: #212529;
 }
 
 #parameter-values input:focus {
+  outline: none;
   padding-left: 5px;
   border: 2px solid #2962ff;
-
-  outline: none;
 }
 
 @keyframes borderAnimation {
@@ -155,22 +131,18 @@
 
 #alerts-list .body .header {
   display: flex;
-
-  align-items: center;
   justify-content: space-between;
-
+  align-items: center;
   width: 100%;
   padding: 5px 16px;
   border-bottom: 1px solid #edf0f7;
-
   font-size: 16px;
   font-weight: 400;
 }
 
 #alerts-list .target {
-  border-radius: 6px;
-
   content: url(../images/target-strategy.svg);
+  border-radius: 6px;
 }
 
 #alerts-list .body .header:hover {
@@ -183,24 +155,18 @@
 
 #alerts-list .hidden-content {
   display: none;
-
   flex-direction: column;
   align-items: start;
-
   width: 100%;
   border-bottom: 1px solid #edf0f7;
-
   font-size: 14px;
 }
 
 #alerts-list .tr {
   display: flex;
-
   justify-content: space-between;
-
   width: 100%;
   padding: 8px 16px;
-
   border-bottom: 1px solid #edf0f7;
 }
 
@@ -214,57 +180,52 @@
 
 #toolbar-buttons {
   display: flex;
-
   flex-direction: column;
-  align-items: center;
   justify-content: start;
-
+  align-items: center;
   min-width: 46px;
-
   background-color: #fff;
 }
 
 #toolbar-buttons button {
   display: flex;
-
-  align-items: center;
   justify-content: center;
-
+  align-items: center;
   width: 38px;
   height: 38px;
   margin-top: 4px;
   border-radius: 6px;
 }
 
-#strategies-button[data-status="opened"] div {
+#strategies-button[data-status='opened'] div {
   content: url(../images/strategies-opened.svg);
 }
 
-#strategies-button[data-status="closed"] div {
+#strategies-button[data-status='closed'] div {
   content: url(../images/strategies-closed.svg);
 }
 
-#description-button[data-status="opened"] div {
+#description-button[data-status='opened'] div {
   content: url(../images/info-opened.svg);
 }
 
-#description-button[data-status="closed"] div {
+#description-button[data-status='closed'] div {
   content: url(../images/info-closed.svg);
 }
 
-#alerts-button[data-status="opened"] div {
+#alerts-button[data-status='opened'] div {
   content: url(../images/alerts-opened.svg);
 }
 
-#alerts-button[data-status="closed"] div {
+#alerts-button[data-status='closed'] div {
   content: url(../images/alerts-closed.svg);
 }
 
-html[data-status="TESTING"] #placeholder-4 {
+html[data-status='TESTING'] #placeholder-4 {
   display: flex;
 }
 
-html[data-status="AUTOMATION"] #placeholder-4 {
+html[data-status='AUTOMATION'] #placeholder-4 {
   display: none;
 }
 
@@ -273,7 +234,6 @@ html[data-status="AUTOMATION"] #placeholder-4 {
 }
 
 #right-toolbar ::-webkit-scrollbar-thumb {
-  border-radius: 2px;
-
   background-color: #d3cdcd;
+  border-radius: 2px;
 }

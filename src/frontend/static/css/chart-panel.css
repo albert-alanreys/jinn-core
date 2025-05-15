@@ -1,37 +1,29 @@
 #chart-panel {
   display: block;
+  flex: 1 1 100%;
   position: relative;
   overflow: hidden;
-
-  flex: 1 1 100%;
-
   min-height: 30%;
   padding: 0 2px 2px;
-  border-radius: 0 0 6px 6px;
-
   background-color: #fff;
-
   cursor: crosshair;
+  border-radius: 0 0 6px 6px;
 }
 
 #scroll-button {
-  display: flex;
-  position: absolute;
-  right: 80px;
-  bottom: 60px;
-  z-index: 3;
   box-shadow: 0 0 5px 1px #0000002f;
-
-  align-items: center;
+  display: flex;
   justify-content: center;
-
+  align-items: center;
+  position: absolute;
+  z-index: 3;
+  bottom: 60px;
+  right: 80px;
   width: 24px;
   height: 24px;
-  border-radius: 6px;
-
   background-color: #fff;
-
   cursor: default;
+  border-radius: 6px;
 }
 
 #scroll-button div {

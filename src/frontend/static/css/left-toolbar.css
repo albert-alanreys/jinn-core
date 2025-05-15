@@ -1,22 +1,17 @@
 #left-toolbar {
   display: flex;
-
   flex-direction: column;
-  align-items: center;
   justify-content: start;
-
+  align-items: center;
   min-width: 46px;
   margin-right: 4px;
-
   background-color: #fff;
 }
 
 #left-toolbar button {
   display: flex;
-
-  align-items: center;
   justify-content: center;
-
+  align-items: center;
   width: 38px;
   height: 38px;
   margin-top: 4px;
@@ -26,70 +21,65 @@
 #left-toolbar hr {
   width: 38px;
   margin: 8px 4px 4px 4px;
-
   border-top: 0;
   border-color: #d1d4dc;
 }
 
 #ruler {
+  pointer-events: none;
   display: flex;
+  justify-content: center;
+  align-items: center;
   position: absolute;
   z-index: 3;
-
-  align-items: center;
-  justify-content: center;
-
-  pointer-events: none;
 }
 
-#ruler[data-direction="up"] {
+#ruler[data-direction='up'] {
   background-color: #2962ff4b;
 }
 
-#ruler[data-direction="down"] {
+#ruler[data-direction='down'] {
   background-color: #ff29294b;
 }
 
 #ruler-label {
   position: absolute;
   z-index: 4;
-
   height: 50px;
   padding: 6px 8px;
   border-radius: 4px;
-
-  color: #fff;
   font-size: 14px;
   font-weight: 500;
+  color: #fff;
   text-align: center;
   white-space: nowrap;
 }
 
-#ruler[data-direction="up"] #ruler-label {
+#ruler[data-direction='up'] #ruler-label {
   top: -60px;
 }
 
-#ruler[data-direction="down"] #ruler-label {
+#ruler[data-direction='down'] #ruler-label {
   bottom: -60px;
 }
 
 #arrow-horizontal,
 #arrow-vertical {
-  position: absolute;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  position: absolute;
 }
 
-#ruler[data-direction="up"] #ruler-label,
-#ruler[data-direction="up"] #arrow-horizontal,
-#ruler[data-direction="up"] #arrow-vertical {
+#ruler[data-direction='up'] #ruler-label,
+#ruler[data-direction='up'] #arrow-horizontal,
+#ruler[data-direction='up'] #arrow-vertical {
   background-color: #2962ff;
 }
 
-#ruler[data-direction="down"] #ruler-label,
-#ruler[data-direction="down"] #arrow-horizontal,
-#ruler[data-direction="down"] #arrow-vertical {
+#ruler[data-direction='down'] #ruler-label,
+#ruler[data-direction='down'] #arrow-horizontal,
+#ruler[data-direction='down'] #arrow-vertical {
   background-color: #f7525f;
 }
 
@@ -109,46 +99,38 @@
   position: absolute;
 }
 
-#arrow-horizontal div[data-direction="right"] {
+#arrow-horizontal div[data-direction='right'] {
   right: 2px;
-
-  padding: 4px;
-
   transform: rotate(-45deg);
+  padding: 4px;
 }
 
-#arrow-horizontal div[data-direction="left"] {
+#arrow-horizontal div[data-direction='left'] {
   left: 2px;
-
-  padding: 4px;
-
   transform: rotate(135deg);
+  padding: 4px;
 }
 
-#arrow-vertical div[data-direction="up"] {
+#arrow-vertical div[data-direction='up'] {
   top: 2px;
-
-  padding: 4px;
-
   transform: rotate(225deg);
-}
-
-#arrow-vertical div[data-direction="down"] {
-  bottom: 2px;
-
   padding: 4px;
-
-  transform: rotate(45deg);
 }
 
-#ruler[data-direction="up"] #arrow-horizontal div,
-#ruler[data-direction="up"] #arrow-vertical div {
+#arrow-vertical div[data-direction='down'] {
+  bottom: 2px;
+  transform: rotate(45deg);
+  padding: 4px;
+}
+
+#ruler[data-direction='up'] #arrow-horizontal div,
+#ruler[data-direction='up'] #arrow-vertical div {
   border: solid #2962ff;
   border-width: 0 1px 1px 0;
 }
 
-#ruler[data-direction="down"] #arrow-horizontal div,
-#ruler[data-direction="down"] #arrow-vertical div {
+#ruler[data-direction='down'] #arrow-horizontal div,
+#ruler[data-direction='down'] #arrow-vertical div {
   border: solid #f7525f;
   border-width: 0 1px 1px 0;
 }
@@ -161,27 +143,27 @@
   content: url(../images/full-screen.svg);
 }
 
-#line-button[data-status="active"] div {
+#line-button[data-status='active'] div {
   content: url(../images/line-active.svg);
 }
 
-#line-button[data-status="inactive"] div {
+#line-button[data-status='inactive'] div {
   content: url(../images/line-inactive.svg);
 }
 
-#ruler-button[data-status="active"] div {
+#ruler-button[data-status='active'] div {
   content: url(../images/ruler-active.svg);
 }
 
-#ruler-button[data-status="inactive"] div {
+#ruler-button[data-status='inactive'] div {
   content: url(../images/ruler-inactive.svg);
 }
 
-#hider-button[data-status="active"] div {
+#hider-button[data-status='active'] div {
   content: url(../images/hider-active.svg);
 }
 
-#hider-button[data-status="inactive"] div {
+#hider-button[data-status='inactive'] div {
   content: url(../images/hider-inactive.svg);
 }
 

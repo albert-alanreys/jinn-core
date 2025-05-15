@@ -1,38 +1,31 @@
 #report-panel {
   display: flex;
-
   flex-direction: column;
-
   min-height: auto;
   max-height: 70%;
 }
 
 #report-panel-handle {
-  min-height: 4px;
-
-  cursor: ns-resize;
   pointer-events: none;
+  min-height: 4px;
+  cursor: ns-resize;
 }
 
 #report-buttons {
   display: flex;
-
-  align-items: center;
   justify-content: space-between;
-
+  align-items: center;
   min-height: 38px;
+  background-color: #fff;
   border-bottom: 1px solid #e0e3eb;
   border-radius: 6px 6px 0 0;
-
-  background-color: #fff;
 }
 
 #report-tab-buttons,
 #report-size-buttons {
   display: flex;
-
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 }
 
 #report-tab-buttons button {
@@ -40,52 +33,46 @@
   margin-left: 2px;
   padding: 0 8px;
   border-radius: 6px;
-
-  color: #212529;
   font-size: 14px;
+  color: #212529;
 }
 
-#report-tab-buttons button[data-status="active"] {
+#report-tab-buttons button[data-status='active'] {
   color: #2962ff;
 }
 
 #report-size-buttons button {
   display: flex;
-
-  align-items: center;
   justify-content: center;
-
+  align-items: center;
   width: 34px;
   height: 34px;
   margin-right: 2px;
   border-radius: 6px;
 }
 
-#hide-button[data-status="opened"] div {
+#hide-button[data-status='opened'] div {
   content: url(../images/report-panel-opened.svg);
 }
 
-#hide-button[data-status="closed"] div {
+#hide-button[data-status='closed'] div {
   content: url(../images/report-panel-closed.svg);
 }
 
-#stretch-button[data-status="packed"] div {
+#stretch-button[data-status='packed'] div {
   content: url(../images/report-panel-packed.svg);
 }
 
-#stretch-button[data-status="stretched"] div {
+#stretch-button[data-status='stretched'] div {
   content: url(../images/report-panel-stretched.svg);
 }
 
 #report-wrapper {
   display: none;
-
-  flex-grow: 1;
-  align-items: center;
   justify-content: center;
-
+  align-items: center;
+  flex-grow: 1;
   height: 0px;
-
   background-color: #fff;
 }
 
@@ -93,31 +80,25 @@
 #performance-report,
 #trades-report {
   display: flex;
-
   flex-direction: column;
-  align-items: center;
   justify-content: start;
-
-  height: 100%;
+  align-items: center;
   width: 100%;
+  height: 100%;
 }
 
 #metrics-container {
   display: flex;
-
-  align-items: center;
   justify-content: space-between;
-
+  align-items: center;
   width: 100%;
   height: 60px;
   padding: 0 16px;
-
   font-size: 14px;
 }
 
 #chart-container {
   flex-grow: 1;
-
   width: 100%;
   height: 0px;
   padding: 0 16px 10px;
@@ -138,22 +119,19 @@
   display: none;
 }
 
-html[data-status="AUTOMATION"] #overview-report,
-html[data-status="AUTOMATION"] #performance-report,
-html[data-status="AUTOMATION"] #trades-report {
+html[data-status='AUTOMATION'] #overview-report,
+html[data-status='AUTOMATION'] #performance-report,
+html[data-status='AUTOMATION'] #trades-report {
   display: none;
 }
 
 .table {
   display: flex;
-  overflow-y: auto;
-
   flex-direction: column;
-  align-items: center;
   justify-content: start;
-
+  align-items: center;
+  overflow-y: auto;
   width: 100%;
-
   font-size: 14px;
 }
 
@@ -165,19 +143,15 @@ html[data-status="AUTOMATION"] #trades-report {
 .thead {
   position: sticky;
   top: 0px;
-
   background-color: #fff;
 }
 
 .th {
   display: flex;
-
   flex-direction: column;
-
   padding: 10px 16px 6px 16px;
-
-  color: #6a6d78;
   font-weight: 400;
+  color: #6a6d78;
   text-align: start;
 }
 
@@ -188,21 +162,20 @@ html[data-status="AUTOMATION"] #trades-report {
 
 #trades-report .thead .tr :first-child {
   display: flex;
-
   flex-direction: row;
-  align-items: center;
   justify-content: start;
+  align-items: center;
 }
 
 #report-arrow {
   margin-left: 3px;
 }
 
-#report-arrow[data-status="arrow-up"] {
+#report-arrow[data-status='arrow-up'] {
   content: url(../images/arrow-up.svg);
 }
 
-#report-arrow[data-status="arrow-down"] {
+#report-arrow[data-status='arrow-down'] {
   content: url(../images/arrow-down.svg);
 }
 
@@ -236,7 +209,6 @@ html[data-status="AUTOMATION"] #trades-report {
 
 .td div {
   display: flex;
-
   flex-direction: column;
   justify-content: center;
 }
@@ -267,11 +239,10 @@ html[data-status="AUTOMATION"] #trades-report {
 
 #report-wrapper .placeholder {
   display: none;
-
   margin: auto;
 }
 
-html[data-status="AUTOMATION"] #placeholder-1 {
+html[data-status='AUTOMATION'] #placeholder-1 {
   display: flex;
 }
 
@@ -285,7 +256,6 @@ html[data-status="AUTOMATION"] #placeholder-1 {
 }
 
 #report-panel ::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-
   background-color: #d3cdcd;
+  border-radius: 3px;
 }

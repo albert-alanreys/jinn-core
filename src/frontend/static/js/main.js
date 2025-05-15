@@ -4,10 +4,10 @@ import LeftToolbarManager from './LeftToolbarManager.js';
 import RightToolbarManager from './RightToolbarManager.js';
 import { getLiteData, getMainData } from './fetchClient.js';
 
-const liteData = await getLiteData();
-const chartManager = new ChartManager();
-const reportManager = new ReportManager();
-const leftToolbarManager = new LeftToolbarManager();
+var liteData = await getLiteData();
+var chartManager = new ChartManager();
+var reportManager = new ReportManager();
+var leftToolbarManager = new LeftToolbarManager();
 new RightToolbarManager(liteData, renderUI);
 
 function renderUI(id) {

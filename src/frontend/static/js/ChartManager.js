@@ -44,13 +44,13 @@ export default class ChartManager {
     },
     localization: {
       timeFormatter: (time) => {
-        const date = new Date(time * 1000);
-        const dayOfWeek = this.daysOfWeek[date.getUTCDay()];
-        const day = date.getUTCDate();
-        const month = this.months[date.getUTCMonth()];
-        const year = date.getUTCFullYear();
-        const hours = String(date.getUTCHours()).padStart(2, '0');
-        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+        var date = new Date(time * 1000);
+        var dayOfWeek = this.daysOfWeek[date.getUTCDay()];
+        var day = date.getUTCDate();
+        var month = this.months[date.getUTCMonth()];
+        var year = date.getUTCFullYear();
+        var hours = String(date.getUTCHours()).padStart(2, '0');
+        var minutes = String(date.getUTCMinutes()).padStart(2, '0');
         return `${dayOfWeek} ${day} ${month} ${year}   ${hours}:${minutes}`;
       },
     },
@@ -61,12 +61,12 @@ export default class ChartManager {
       borderVisible: false,
       rightBarStaysOnScroll: true,
       tickMarkFormatter: (time) => {
-        let date = new Date(time * 1000);
-        let day = date.getUTCDate();
-        let month = date.getUTCMonth();
-        let year = date.getUTCFullYear();
-        let hours = date.getUTCHours();
-        let minutes = date.getUTCMinutes();
+        var date = new Date(time * 1000);
+        var day = date.getUTCDate();
+        var month = date.getUTCMonth();
+        var year = date.getUTCFullYear();
+        var hours = date.getUTCHours();
+        var minutes = date.getUTCMinutes();
 
         if (month == 0 && day == 1 && hours == 0 && minutes == 0) {
           return String(year);
@@ -132,8 +132,8 @@ export default class ChartManager {
     this.lineSeriesGroup = {};
     this.visibleRange = this.chartOptions.visibleRange;
 
-    for (let key in data.indicators) {
-      const lineSeries = this.chart.addSeries(
+    for (var key in data.indicators) {
+      var lineSeries = this.chart.addSeries(
         LightweightCharts.LineSeries,
         data.indicators[key].options
       );
@@ -164,8 +164,8 @@ export default class ChartManager {
 
     this.candlestickSeries.setData(data.klines.slice(-this.visibleRange));
 
-    const startTime = this.candlestickSeries.data()[0].time;
-    const markers = data.markers.filter((item) => {
+    var startTime = this.candlestickSeries.data()[0].time;
+    var markers = data.markers.filter((item) => {
       if (item.time >= startTime) {
         return item;
       }
@@ -175,7 +175,7 @@ export default class ChartManager {
       markers
     );
 
-    for (let key in this.lineSeriesGroup) {
+    for (var key in this.lineSeriesGroup) {
       this.lineSeriesGroup[key].setData(
         data.indicators[key].values.slice(-this.visibleRange)
       );
@@ -183,7 +183,7 @@ export default class ChartManager {
   }
 
   createLegends(data) {
-    const mainLegend = document.createElement('div');
+    var mainLegend = document.createElement('div');
     mainLegend.setAttribute('id', 'main-legend');
     mainLegend.style.position = 'absolute';
     mainLegend.style.left = '12px';
@@ -191,7 +191,7 @@ export default class ChartManager {
     mainLegend.style.zIndex = 2;
     document.getElementById('chart-panel').appendChild(mainLegend);
 
-    const strategyLegend = document.createElement('div');
+    var strategyLegend = document.createElement('div');
     strategyLegend.setAttribute('id', 'strategy-legend');
     strategyLegend.style.position = 'absolute';
     strategyLegend.style.left = '12px';
@@ -200,10 +200,10 @@ export default class ChartManager {
     strategyLegend.style.fontSize = '14px';
     document.getElementById('chart-panel').appendChild(strategyLegend);
 
-    let o = data.klines.at(-1).open;
-    let h = data.klines.at(-1).high;
-    let l = data.klines.at(-1).low;
-    let c = data.klines.at(-1).close;
+    var o = data.klines.at(-1).open;
+    var h = data.klines.at(-1).high;
+    var l = data.klines.at(-1).low;
+    var c = data.klines.at(-1).close;
 
     mainLegend.innerHTML = getMainLegendText(o, h, l, c);
     strategyLegend.innerHTML =
@@ -218,13 +218,13 @@ export default class ChartManager {
         })
         .join(' ');
 
-    const crosshairMoveHandler = (crosshairPosition) => {
+    var crosshairMoveHandler = (crosshairPosition) => {
       if (crosshairPosition.time) {
         if (crosshairPosition.logical >= data.klines.length) {
           this.chart.unsubscribeCrosshairMove(crosshairMoveHandler);
           this.chart.subscribeCrosshairMove(crosshairMoveHandler);
         } else {
-          const mainData = crosshairPosition.seriesData.get(
+          var mainData = crosshairPosition.seriesData.get(
             this.candlestickSeries
           );
           o = mainData.open;
@@ -249,7 +249,7 @@ export default class ChartManager {
     this.chart.subscribeCrosshairMove(crosshairMoveHandler);
 
     function getMainLegendText(o, h, l, c) {
-      let color = c > o ? '#008984' : '#f23645';
+      var color = c > o ? '#008984' : '#f23645';
       return `${data.symbol} • ${data.market} •
           ${data.interval} • ${data.exchange.toUpperCase()}
           &nbsp;
@@ -260,8 +260,8 @@ export default class ChartManager {
     }
 
     function getStrategyLegendText(point, baseColor, o) {
-      let color = point.color;
-      let value = point.value;
+      var color = point.color;
+      var value = point.value;
 
       if (point.color == 'transparent' && value == o) {
         value = '∅';
@@ -275,8 +275,8 @@ export default class ChartManager {
   }
 
   createScrollButton() {
-    const button = document.createElement('button');
-    const div = document.createElement('div');
+    var button = document.createElement('button');
+    var div = document.createElement('div');
 
     div.setAttribute('unselectable', 'on');
     button.setAttribute('id', 'scroll-button');
@@ -307,7 +307,7 @@ export default class ChartManager {
     try {
       this.chart.remove();
 
-      for (let item of Array.from(
+      for (var item of Array.from(
         document.getElementById('chart-panel').children
       )) {
         item.remove();

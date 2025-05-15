@@ -12,7 +12,6 @@ export default class RightToolbarManager {
 
     this.manageStrategies();
     this.manageButtons();
-    this.manageCursor();
 
     if (MODE == 'AUTOMATION') {
       this.manageAlerts();
@@ -20,15 +19,15 @@ export default class RightToolbarManager {
   }
 
   manageStrategies() {
-    const body = document.querySelector('#strategies-list .body');
+    var body = document.querySelector('#strategies-list .body');
 
-    for (let key in this.data) {
-      const button = document.createElement('button');
+    for (var key in this.data) {
+      var button = document.createElement('button');
       button.setAttribute('data-strategy', key);
       button.setAttribute('data-status', 'inactive');
       body.appendChild(button);
 
-      const div = document.createElement('div');
+      var div = document.createElement('div');
       div.setAttribute('unselectable', 'on');
       div.innerHTML = `${this.data[key].name}
       ${this.data[key].symbol}
@@ -56,12 +55,12 @@ export default class RightToolbarManager {
   }
 
   createDescription() {
-    const body = document.querySelector('#strategy-description .body');
-    const strategyData = this.data[this.currentStrategy];
-    const oldData = Array.from(body.children);
+    var body = document.querySelector('#strategy-description .body');
+    var strategyData = this.data[this.currentStrategy];
+    var oldData = Array.from(body.children);
 
     if (oldData.length > 0) {
-      for (let item of oldData) {
+      for (var item of oldData) {
         item.remove();
       }
     }
@@ -156,11 +155,11 @@ export default class RightToolbarManager {
     section.setAttribute('id', 'parameter-values');
     body.appendChild(section);
 
-    for (let key in strategyData.parameters) {
+    for (var key in strategyData.parameters) {
       var parameter = strategyData.parameters[key];
 
       if (Array.isArray(parameter)) {
-        for (let i = 0; i < parameter.length; i++) {
+        for (var i = 0; i < parameter.length; i++) {
           var outerDiv = document.createElement('div');
           outerDiv.classList.add('info');
           section.appendChild(outerDiv);
@@ -199,10 +198,10 @@ export default class RightToolbarManager {
   }
 
   changeParameter(target) {
-    let parameter;
+    var parameter;
 
     if (target.hasAttribute('data-group')) {
-      const inputs = document.querySelectorAll(
+      var inputs = document.querySelectorAll(
         `input[data-group="${target.dataset.group}"]`
       );
       parameter = JSON.stringify({
@@ -229,22 +228,20 @@ export default class RightToolbarManager {
       });
 
     function overwrite() {
-      const strategyData = this.data[this.currentStrategy];
+      var strategyData = this.data[this.currentStrategy];
 
-      for (let key in strategyData.parameters) {
-        const parameter = strategyData.parameters[key];
+      for (var key in strategyData.parameters) {
+        var parameter = strategyData.parameters[key];
 
         if (Array.isArray(parameter)) {
-          for (let i = 0; i < parameter.length; i++) {
-            const input = document.querySelector(
+          for (var i = 0; i < parameter.length; i++) {
+            var input = document.querySelector(
               `input[data-parameter="${key} #${i + 1}"]`
             );
             input.value = parameter[i];
           }
         } else {
-          const input = document.querySelector(
-            `input[data-parameter="${key}"]`
-          );
+          var input = document.querySelector(`input[data-parameter="${key}"]`);
           input.value = parameter;
         }
       }
@@ -252,22 +249,20 @@ export default class RightToolbarManager {
   }
 
   manageButtons() {
-    const rightToolbar = document.getElementById('right-toolbar');
-    const rightToolHandle = document.getElementById('right-toolbar-handle');
-    const infoWrapper = document.getElementById('info-wrapper');
-    const strategiesList = document.getElementById('strategies-list');
-    const strategyDescription = document.getElementById(
-      'strategy-description'
-    );
-    const alertsList = document.getElementById('alerts-list');
-    const strategiesButton = document.getElementById('strategies-button');
-    const descriptionButton = document.getElementById('description-button');
-    const alertsButton = document.getElementById('alerts-button');
-    const rightToolbarDefaultMinWidth = window
+    var rightToolbar = document.getElementById('right-toolbar');
+    var rightToolHandle = document.getElementById('right-toolbar-handle');
+    var infoWrapper = document.getElementById('info-wrapper');
+    var strategiesList = document.getElementById('strategies-list');
+    var strategyDescription = document.getElementById('strategy-description');
+    var alertsList = document.getElementById('alerts-list');
+    var strategiesButton = document.getElementById('strategies-button');
+    var descriptionButton = document.getElementById('description-button');
+    var alertsButton = document.getElementById('alerts-button');
+    var rightToolbarDefaultMinWidth = window
       .getComputedStyle(rightToolbar)
       .getPropertyValue('min-width');
 
-    let rightToolbarLastFlex = window
+    var rightToolbarLastFlex = window
       .getComputedStyle(rightToolbar)
       .getPropertyValue('flex');
 
@@ -371,37 +366,6 @@ export default class RightToolbarManager {
     });
   }
 
-  manageCursor() {
-    const rightToolbar = document.getElementById('right-toolbar');
-    const rightToolHandle = document.getElementById('right-toolbar-handle');
-
-    let startOffset = NaN;
-    let moving = false;
-
-    rightToolHandle.addEventListener('mousedown', (event) => {
-      startOffset = rightToolbar.offsetLeft - event.clientX;
-      document.addEventListener('mousemove', onMouseMove);
-      document.body.style.cursor = 'ns-resize';
-      moving = true;
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (moving) {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.body.style.cursor = 'default';
-        moving = false;
-      }
-    });
-
-    const onMouseMove = (event) => {
-      const currentOffset = rightToolbar.offsetLeft - event.clientX;
-      const newInfoPanelSize = `0 0 ${
-        rightToolbar.offsetWidth + (currentOffset - startOffset)
-      }px`;
-      rightToolbar.style.flex = newInfoPanelSize;
-    };
-  }
-
   manageAlerts() {
     getAlerts().then((alerts) => {
       if (alerts.length > 0) {
@@ -418,9 +382,9 @@ export default class RightToolbarManager {
     }, 5000);
 
     function addAlerts(alerts) {
-      const body = document.querySelector('#alerts-list .body');
+      var body = document.querySelector('#alerts-list .body');
 
-      for (let alert of alerts) {
+      for (var alert of alerts) {
         var outerDiv = document.createElement('div');
         outerDiv.classList.add('alert');
         body.prepend(outerDiv);
@@ -573,7 +537,7 @@ export default class RightToolbarManager {
 
         outerDiv.addEventListener('click', (event) => {
           if (!event.target.classList.contains('target')) {
-            const container = event.target.closest('.alert');
+            var container = event.target.closest('.alert');
 
             if (
               window

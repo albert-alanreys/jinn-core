@@ -121,7 +121,7 @@ export default class ReportManager {
   }
 
   createOverviewReport(data) {
-    const metricsContainer = document.createElement('div');
+    var metricsContainer = document.createElement('div');
     metricsContainer.setAttribute('id', 'metrics-container');
     document.getElementById('overview-report').appendChild(metricsContainer);
 
@@ -233,7 +233,7 @@ export default class ReportManager {
     }</span>`;
     outerDiv.appendChild(innerDiv2);
 
-    const chartContainer = document.createElement('div');
+    var chartContainer = document.createElement('div');
     chartContainer.setAttribute('id', 'chart-container');
     document.getElementById('overview-report').appendChild(chartContainer);
 
@@ -256,12 +256,12 @@ export default class ReportManager {
   }
 
   createPerformanceReport(data) {
-    const table = document.createElement('div');
+    var table = document.createElement('div');
     table.setAttribute('id', 'performance-container');
     table.classList.add('table');
     document.getElementById('performance-report').appendChild(table);
 
-    const thead = document.createElement('div');
+    var thead = document.createElement('div');
     thead.classList.add('thead');
     table.appendChild(thead);
 
@@ -297,7 +297,7 @@ export default class ReportManager {
     th.classList.add('th');
     tr.appendChild(th);
 
-    const tbody = document.createElement('div');
+    var tbody = document.createElement('div');
     tbody.classList.add('tbody');
     table.appendChild(tbody);
 
@@ -315,7 +315,7 @@ export default class ReportManager {
     div.innerText = 'Чистая прибыль';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -347,7 +347,7 @@ export default class ReportManager {
     div.innerText = 'Валовая прибыль';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -379,7 +379,7 @@ export default class ReportManager {
     div.innerText = 'Валовой убыток';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -411,7 +411,7 @@ export default class ReportManager {
     div.innerText = 'Фактор прибыли';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -437,7 +437,7 @@ export default class ReportManager {
     div.innerText = 'Выплаченная комиссия';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -463,7 +463,7 @@ export default class ReportManager {
     div.innerText = 'Всего закрытых сделок';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -489,7 +489,7 @@ export default class ReportManager {
     div.innerText = 'Количество прибыльных сделок';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -515,7 +515,7 @@ export default class ReportManager {
     div.innerText = 'Количество убыточных сделок';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -541,7 +541,7 @@ export default class ReportManager {
     div.innerText = 'Процент прибыльных сделок';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -568,7 +568,7 @@ export default class ReportManager {
     div.innerText = 'Средняя по сделке';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -604,7 +604,7 @@ export default class ReportManager {
     div.innerText = 'Средняя прибыль по сделке';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -640,7 +640,7 @@ export default class ReportManager {
     div.innerText = 'Средний убыток по сделке';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -676,7 +676,7 @@ export default class ReportManager {
     div.innerText = 'Коэффициент средней прибыли / среднего убытка';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -702,7 +702,7 @@ export default class ReportManager {
     div.innerText = 'Самая прибыльная сделка';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -738,7 +738,7 @@ export default class ReportManager {
     div.innerText = 'Самая убыточная сделка';
     td.appendChild(div);
 
-    for (let i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
@@ -820,14 +820,14 @@ export default class ReportManager {
   }
 
   createTradesReport(data) {
-    let reverse = false;
+    var reverse = false;
 
-    const table = document.createElement('div');
+    var table = document.createElement('div');
     table.setAttribute('id', 'trades-container');
     table.classList.add('table');
     document.getElementById('trades-report').appendChild(table);
 
-    const thead = document.createElement('div');
+    var thead = document.createElement('div');
     thead.classList.add('thead');
     table.appendChild(thead);
 
@@ -864,7 +864,7 @@ export default class ReportManager {
           .setAttribute('data-status', 'arrow-up');
       }
 
-      for (let item of Array.from(
+      for (var item of Array.from(
         document.querySelector('#trades-container .tbody').children
       )) {
         item.remove();
@@ -922,14 +922,14 @@ export default class ReportManager {
     th.innerText = 'Совокупная прибыль';
     tr.appendChild(th);
 
-    const tbody = document.createElement('div');
+    var tbody = document.createElement('div');
     tbody.classList.add('tbody');
     table.appendChild(tbody);
     fillBody();
 
     function fillBody() {
-      let dealNumber;
-      const step = !reverse ? 1 : -1;
+      var dealNumber;
+      var step = !reverse ? 1 : -1;
 
       if (!reverse) {
         dealNumber = 1;
@@ -937,7 +937,7 @@ export default class ReportManager {
         dealNumber = data.completedDealsLog.length;
       }
 
-      for (let deal of data.completedDealsLog) {
+      for (var deal of data.completedDealsLog) {
         var tr = document.createElement('div');
         tr.classList.add('tr');
         tbody.appendChild(tr);
@@ -1282,19 +1282,19 @@ export default class ReportManager {
   }
 
   manageTabs() {
-    const overviewButton = document.getElementById('overview-button');
-    const performanceButton = document.getElementById('performance-button');
-    const tradesButton = document.getElementById('trades-button');
-    const overviewReport = document.getElementById('overview-report');
-    const performanceReport = document.getElementById('performance-report');
-    const tradesReport = document.getElementById('trades-report');
+    var overviewButton = document.getElementById('overview-button');
+    var performanceButton = document.getElementById('performance-button');
+    var tradesButton = document.getElementById('trades-button');
+    var overviewReport = document.getElementById('overview-report');
+    var performanceReport = document.getElementById('performance-report');
+    var tradesReport = document.getElementById('trades-report');
 
     overviewButton.addEventListener('click', () => {
       overviewButton.dataset.status = 'active';
       performanceButton.dataset.status = 'inactive';
       tradesButton.dataset.status = 'inactive';
 
-      if (document.documentElement.dataset.status == 'TESTING') {
+      if (MODE == 'TESTING') {
         overviewReport.style.display = 'flex';
         performanceReport.style.display = 'none';
         tradesReport.style.display = 'none';
@@ -1306,7 +1306,7 @@ export default class ReportManager {
       performanceButton.dataset.status = 'active';
       tradesButton.dataset.status = 'inactive';
 
-      if (document.documentElement.dataset.status == 'TESTING') {
+      if (MODE == 'TESTING') {
         overviewReport.style.display = 'none';
         performanceReport.style.display = 'flex';
         tradesReport.style.display = 'none';
@@ -1318,7 +1318,7 @@ export default class ReportManager {
       performanceButton.dataset.status = 'inactive';
       tradesButton.dataset.status = 'active';
 
-      if (document.documentElement.dataset.status == 'TESTING') {
+      if (MODE == 'TESTING') {
         overviewReport.style.display = 'none';
         performanceReport.style.display = 'none';
         tradesReport.style.display = 'flex';
@@ -1327,16 +1327,16 @@ export default class ReportManager {
   }
 
   manageSize() {
-    const chartPanel = document.getElementById('chart-panel');
-    const reportPanel = document.getElementById('report-panel');
-    const reportPanelHandle = document.getElementById('report-panel-handle');
-    const reportWrapper = document.getElementById('report-wrapper');
+    var chartPanel = document.getElementById('chart-panel');
+    var reportPanel = document.getElementById('report-panel');
+    var reportPanelHandle = document.getElementById('report-panel-handle');
+    var reportWrapper = document.getElementById('report-wrapper');
 
-    const hideButton = document.getElementById('hide-button');
-    const stretchButton = document.getElementById('stretch-button');
+    var hideButton = document.getElementById('hide-button');
+    var stretchButton = document.getElementById('stretch-button');
 
-    let reportPanelLastFlex = null;
-    let startOffset = NaN;
+    var reportPanelLastFlex = null;
+    var startOffset = NaN;
 
     hideButton.addEventListener('click', () => {
       if (hideButton.dataset.status == 'opened') {
@@ -1420,8 +1420,8 @@ export default class ReportManager {
     });
 
     function onMouseMove(event) {
-      const currentOffset = reportPanel.offsetTop - event.clientY;
-      const newReportPanelSize = `0 0 ${
+      var currentOffset = reportPanel.offsetTop - event.clientY;
+      var newReportPanelSize = `0 0 ${
         reportPanel.offsetHeight + (currentOffset - startOffset)
       }px`;
       reportPanel.style.flex = newReportPanelSize;
