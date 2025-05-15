@@ -111,24 +111,24 @@ class NuggetV4():
     }
 
     # For frontend
-    indicator_options = {
-        'Stop-loss': {'color': '#FF0000'},
-        'Take-profit #1': {'color': '#008000'},
-        'Take-profit #2': {'color': '#008000'},
-        'Take-profit #3': {'color': '#008000'},
-        'Take-profit #4': {'color': '#008000'},
-        'Take-profit #5': {'color': '#008000'},
-        'Take-profit #6': {'color': '#008000'},
-        'Take-profit #7': {'color': '#008000'},
-        'Take-profit #8': {'color': '#008000'},
-        'Take-profit #9': {'color': '#008000'},
-        'Take-profit #10': {'color': '#008000'}
+    line_options = {
+        'SL': {'color': '#FF0000'},
+        'TP #1': {'color': '#008000'},
+        'TP #2': {'color': '#008000'},
+        'TP #3': {'color': '#008000'},
+        'TP #4': {'color': '#008000'},
+        'TP #5': {'color': '#008000'},
+        'TP #6': {'color': '#008000'},
+        'TP #7': {'color': '#008000'},
+        'TP #8': {'color': '#008000'},
+        'TP #9': {'color': '#008000'},
+        'TP #10': {'color': '#008000'}
     }
 
     # Class attributes
     class_attributes = (
         'opt_params',
-        'indicator_options',
+        'line_options',
         'class_attributes',
         'start',
         'calculate',
@@ -367,49 +367,49 @@ class NuggetV4():
                 self.alert_cancel
         )
 
-        self.indicators = {
-            'Stop-loss': {
-                'options': self.indicator_options['Stop-loss'],
+        self.lines = {
+            'SL': {
+                'options': self.line_options['SL'],
                 'values': self.stop_price
             },
-            'Take-profit #1': {
-                'options': self.indicator_options['Take-profit #1'],
+            'TP #1': {
+                'options': self.line_options['TP #1'],
                 'values': self.take_price[0]
             },
-            'Take-profit #2': {
-                'options': self.indicator_options['Take-profit #2'],
+            'TP #2': {
+                'options': self.line_options['TP #2'],
                 'values': self.take_price[1]
             },
-            'Take-profit #3': {
-                'options': self.indicator_options['Take-profit #3'],
+            'TP #3': {
+                'options': self.line_options['TP #3'],
                 'values': self.take_price[2]
             },
-            'Take-profit #4': {
-                'options': self.indicator_options['Take-profit #4'],
+            'TP #4': {
+                'options': self.line_options['TP #4'],
                 'values': self.take_price[3]
             },
-            'Take-profit #5': {
-                'options': self.indicator_options['Take-profit #5'],
+            'TP #5': {
+                'options': self.line_options['TP #5'],
                 'values': self.take_price[4]
             },
-            'Take-profit #6': {
-                'options': self.indicator_options['Take-profit #6'],
+            'TP #6': {
+                'options': self.line_options['TP #6'],
                 'values': self.take_price[5]
             },
-            'Take-profit #7': {
-                'options': self.indicator_options['Take-profit #7'],
+            'TP #7': {
+                'options': self.line_options['TP #7'],
                 'values': self.take_price[6]
             },
-            'Take-profit #8': {
-                'options': self.indicator_options['Take-profit #8'],
+            'TP #8': {
+                'options': self.line_options['TP #8'],
                 'values': self.take_price[7]
             },
-            'Take-profit #9': {
-                'options': self.indicator_options['Take-profit #9'],
+            'TP #9': {
+                'options': self.line_options['TP #9'],
                 'values': self.take_price[8]
             },
-            'Take-profit #10': {
-                'options': self.indicator_options['Take-profit #10'],
+            'TP #10': {
+                'options': self.line_options['TP #10'],
                 'values': self.take_price[9]
             }
         }

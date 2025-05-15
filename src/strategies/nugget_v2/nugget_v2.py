@@ -108,19 +108,19 @@ class NuggetV2():
     }
 
     # For frontend
-    indicator_options = {
-        'Stop-loss': {'color': '#FF0000'},
-        'Take-profit #1': {'color': '#008000'},
-        'Take-profit #2': {'color': '#008000'},
-        'Take-profit #3': {'color': '#008000'},
-        'Take-profit #4': {'color': '#008000'},
-        'Take-profit #5': {'color': '#008000'}
+    line_options = {
+        'SL': {'color': '#FF0000'},
+        'TP #1': {'color': '#008000'},
+        'TP #2': {'color': '#008000'},
+        'TP #3': {'color': '#008000'},
+        'TP #4': {'color': '#008000'},
+        'TP #5': {'color': '#008000'}
     }
 
     # Class attributes
     class_attributes = (
         'opt_params',
-        'indicator_options',
+        'line_options',
         'class_attributes',
         'start',
         'calculate',
@@ -331,29 +331,29 @@ class NuggetV2():
                 self.alert_cancel
         )
 
-        self.indicators = {
-            'Stop-loss': {
-                'options': self.indicator_options['Stop-loss'],
+        self.lines = {
+            'SL': {
+                'options': self.line_options['SL'],
                 'values': self.stop_price
             },
-            'Take-profit #1': {
-                'options': self.indicator_options['Take-profit #1'],
+            'TP #1': {
+                'options': self.line_options['TP #1'],
                 'values': self.take_price[0]
             },
-            'Take-profit #2': {
-                'options': self.indicator_options['Take-profit #2'],
+            'TP #2': {
+                'options': self.line_options['TP #2'],
                 'values': self.take_price[1]
             },
-            'Take-profit #3': {
-                'options': self.indicator_options['Take-profit #3'],
+            'TP #3': {
+                'options': self.line_options['TP #3'],
                 'values': self.take_price[2]
             },
-            'Take-profit #4': {
-                'options': self.indicator_options['Take-profit #4'],
+            'TP #4': {
+                'options': self.line_options['TP #4'],
                 'values': self.take_price[3]
             },
-            'Take-profit #5': {
-                'options': self.indicator_options['Take-profit #5'],
+            'TP #5': {
+                'options': self.line_options['TP #5'],
                 'values': self.take_price[4]
             }
         }

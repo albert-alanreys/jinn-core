@@ -84,7 +84,7 @@ export default class ChartManager {
     },
     visibleRange: 1000,
   };
-  klineOptions = {
+  candlestickOptions = {
     upColor: '#008984',
     downColor: '#f23645',
     borderVisible: false,
@@ -117,10 +117,13 @@ export default class ChartManager {
       document.getElementById('chart-panel'),
       this.chartOptions
     );
+
+    this.visibleRange = this.chartOptions.visibleRange;
     this.timeScale = this.chart.timeScale();
+
     this.candlestickSeries = this.chart.addSeries(
       LightweightCharts.CandlestickSeries,
-      this.klineOptions
+      this.candlestickOptions
     );
     this.candlestickSeries.applyOptions({
       priceFormat: {
@@ -129,29 +132,42 @@ export default class ChartManager {
         minMove: data.mintick,
       },
     });
-    this.lineSeriesGroup = {};
-    this.visibleRange = this.chartOptions.visibleRange;
+    this.candlestickSeries.setData(data.klines.slice(-this.visibleRange));
 
-    for (var key in data.indicators) {
+    var startTime = this.candlestickSeries.data()[0].time;
+    var markers = data.markers.filter((marker) => {
+      if (marker.time >= startTime) {
+        return marker;
+      }
+    });
+
+    this.seriesMarkers = LightweightCharts.createSeriesMarkers(
+      this.candlestickSeries,
+      markers
+    );
+
+    this.lineSeriesGroup = {};
+
+    for (var name in data.lines) {
       var lineSeries = this.chart.addSeries(
         LightweightCharts.LineSeries,
-        data.indicators[key].options
+        data.lines[name].options
       );
       lineSeries.applyOptions(this.lineOptions);
 
-      this.lineSeriesGroup[key] = lineSeries;
+      this.lineSeriesGroup[name] = lineSeries;
     }
 
     this.visibleLogicalRangeChangeHandler = (newVisibleTimeRange) => {
-      if (newVisibleTimeRange.from < 50) {
+      if (newVisibleTimeRange.from < 100) {
         this.visibleRange += this.chartOptions.visibleRange;
         this.setChartData(data);
       }
     };
-
     this.timeScale.subscribeVisibleLogicalRangeChange(
       this.visibleLogicalRangeChangeHandler
     );
+
     this.setChartData(data);
   }
 
@@ -165,58 +181,52 @@ export default class ChartManager {
     this.candlestickSeries.setData(data.klines.slice(-this.visibleRange));
 
     var startTime = this.candlestickSeries.data()[0].time;
-    var markers = data.markers.filter((item) => {
-      if (item.time >= startTime) {
-        return item;
+    var markers = data.markers.filter((marker) => {
+      if (marker.time >= startTime) {
+        return marker;
       }
     });
-    this.seriesMarkers = LightweightCharts.createSeriesMarkers(
-      this.candlestickSeries,
-      markers
-    );
 
-    for (var key in this.lineSeriesGroup) {
-      this.lineSeriesGroup[key].setData(
-        data.indicators[key].values.slice(-this.visibleRange)
+    this.seriesMarkers.setMarkers(markers);
+
+    for (var name in this.lineSeriesGroup) {
+      this.lineSeriesGroup[name].setData(
+        data.lines[name].values.slice(-this.visibleRange)
       );
     }
   }
 
   createLegends(data) {
     var mainLegend = document.createElement('div');
-    mainLegend.setAttribute('id', 'main-legend');
-    mainLegend.style.position = 'absolute';
-    mainLegend.style.left = '12px';
-    mainLegend.style.top = '12px';
-    mainLegend.style.zIndex = 2;
-    document.getElementById('chart-panel').appendChild(mainLegend);
-
-    var strategyLegend = document.createElement('div');
-    strategyLegend.setAttribute('id', 'strategy-legend');
-    strategyLegend.style.position = 'absolute';
-    strategyLegend.style.left = '12px';
-    strategyLegend.style.top = '40px';
-    strategyLegend.style.zIndex = 2;
-    strategyLegend.style.fontSize = '14px';
-    document.getElementById('chart-panel').appendChild(strategyLegend);
-
     var o = data.klines.at(-1).open;
     var h = data.klines.at(-1).high;
     var l = data.klines.at(-1).low;
     var c = data.klines.at(-1).close;
 
+    mainLegend.setAttribute('id', 'main-legend');
+    mainLegend.style.position = 'absolute';
+    mainLegend.style.left = '12px';
+    mainLegend.style.top = '12px';
+    mainLegend.style.zIndex = 2;
     mainLegend.innerHTML = getMainLegendText(o, h, l, c);
-    strategyLegend.innerHTML =
-      `${data.name} &nbsp;` +
-      Object.values(this.lineSeriesGroup)
-        .map((item) => {
-          return getStrategyLegendText(
-            item.data().at(-1),
-            item.options().color,
-            o
-          );
-        })
-        .join(' ');
+
+    document.getElementById('chart-panel').appendChild(mainLegend);
+
+    var linesLegend = document.createElement('div');
+    linesLegend.setAttribute('id', 'strategy-legend');
+    linesLegend.style.position = 'absolute';
+    linesLegend.style.left = '12px';
+    linesLegend.style.top = '40px';
+    linesLegend.style.zIndex = 2;
+    linesLegend.style.fontSize = '14px';
+    linesLegend.innerHTML = Object.entries(this.lineSeriesGroup)
+      .map(([name, series]) => {
+        var point = series.data().at(-1);
+        return getLineLegendText(name, point, data.lines[name].options);
+      })
+      .join(' ');
+
+    document.getElementById('chart-panel').appendChild(linesLegend);
 
     var crosshairMoveHandler = (crosshairPosition) => {
       if (crosshairPosition.time) {
@@ -227,22 +237,19 @@ export default class ChartManager {
           var mainData = crosshairPosition.seriesData.get(
             this.candlestickSeries
           );
-          o = mainData.open;
-          h = mainData.high;
-          l = mainData.low;
-          c = mainData.close;
+          var o = mainData.open;
+          var h = mainData.high;
+          var l = mainData.low;
+          var c = mainData.close;
+
           mainLegend.innerHTML = getMainLegendText(o, h, l, c);
-          strategyLegend.innerHTML =
-            `${data.name} &nbsp;` +
-            Object.values(this.lineSeriesGroup)
-              .map((item) => {
-                return getStrategyLegendText(
-                  crosshairPosition.seriesData.get(item),
-                  item.options().color,
-                  o
-                );
-              })
-              .join(' ');
+
+          linesLegend.innerHTML = Object.entries(this.lineSeriesGroup)
+            .map(([name, series]) => {
+              const point = crosshairPosition.seriesData.get(series);
+              return getLineLegendText(name, point, data.lines[name].options);
+            })
+            .join(' ');
         }
       }
     };
@@ -259,18 +266,18 @@ export default class ChartManager {
           C <span style="color:${color};">${c}</span>`;
     }
 
-    function getStrategyLegendText(point, baseColor, o) {
-      var color = point.color;
-      var value = point.value;
-
-      if (point.color == 'transparent' && value == o) {
-        value = '∅';
-        color = '#000000';
-      } else if (color == 'transparent') {
-        color = baseColor;
+    function getLineLegendText(name, point, options) {
+      if (!point) {
+        var value = '∅';
+        var color = '#000000';
+      } else {
+        var value = point.value;
+        var color = point.color ? '#000000' : options.color;
       }
 
-      return `<span style="color:${color};">${value}</span>`;
+      return `<span>${name}</span>
+          <span style="color:${color};">${value}</span>
+          &nbsp;`;
     }
   }
 

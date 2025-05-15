@@ -37,9 +37,9 @@ class DataFormatter:
             'interval': strategy_data['interval'],
             'mintick': strategy_data['p_precision'],
             'klines': self.format_klines(strategy_data['klines']),
-            'indicators': self.format_indicators(
+            'lines': self.format_lines(
                 strategy_data['klines'],
-                strategy_data['instance'].indicators
+                strategy_data['instance'].lines
             ),
             'markers': self.format_deal_markers(
                 strategy_data['instance'].completed_deals_log,
@@ -81,33 +81,31 @@ class DataFormatter:
         ]
         return result
 
-    def format_indicators(self, klines: np.ndarray, indicators: dict) -> dict:
-        result = deepcopy(indicators)
+    def format_lines(self, klines: np.ndarray, lines: dict) -> dict:
+        result = deepcopy(lines)
 
-        for key in result.keys():
-            values = result[key]['values'].tolist()
-            options = result[key]['options']
-            indicator = []
+        for name in result.keys():
+            raw_values = result[name]['values'].tolist()
+            line_data = []
 
             for i in range(klines.shape[0]):
-                if not np.isnan(values[i]):
-                    indicator.append({
-                        'time': klines[i][0] / 1000,
-                        'value': values[i],
-                        'color': options['color'],
-                    })
+                timestamp = klines[i][0] / 1000
 
-                    if i < klines.shape[0] - 1:
-                        if np.isnan(values[i + 1]):
-                            indicator[-1]['color'] = 'transparent'
+                if not np.isnan(raw_values[i]):
+                    point = {
+                        'time': timestamp,
+                        'value': raw_values[i]
+                    }
                 else:
-                    indicator.append({
-                        'time': klines[i][0] / 1000,
-                        'value': klines[i][1],
-                        'color': 'transparent',
-                    })
+                    point = {
+                        'time': timestamp,
+                        'value': '∅',
+                        'color': 't'
+                    }
 
-            result[key]['values'] = indicator
+                line_data.append(point)
+
+            result[name]['values'] = line_data
 
         return result
 

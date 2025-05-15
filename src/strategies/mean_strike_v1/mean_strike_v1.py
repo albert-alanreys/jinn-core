@@ -59,17 +59,17 @@ class MeanStrike():
     }
 
     # For frontend
-    indicator_options = {
-        'Entry price #2': {'color': '#311b92'},
-        'Entry price #3': {'color': '#311b92'},
-        'Entry price #4': {'color': '#311b92'},
-        'Take-Profit': {'color': '#4caf50'}
+    line_options = {
+        'EP #2': {'color': '#311b92'},
+        'EP #3': {'color': '#311b92'},
+        'EP #4': {'color': '#311b92'},
+        'TP': {'color': '#4caf50'}
     }
 
     # Class attributes
     class_attributes = (
         'opt_params',
-        'indicator_options',
+        'line_options',
         'class_attributes',
         'start',
         'calculate',
@@ -198,21 +198,21 @@ class MeanStrike():
                 self.alert_new_take
         )
 
-        self.indicators = {
-            'Entry price #2': {
-                'options': self.indicator_options['Entry price #2'],
+        self.lines = {
+            'EP #2': {
+                'options': self.line_options['EP #2'],
                 'values': self.entry_price_2
             },
-            'Entry price #3': {
-                'options': self.indicator_options['Entry price #3'],
+            'EP #3': {
+                'options': self.line_options['EP #3'],
                 'values': self.entry_price_3
             },
-            'Entry price #4': {
-                'options': self.indicator_options['Entry price #4'],
+            'EP #4': {
+                'options': self.line_options['EP #4'],
                 'values': self.entry_price_4
             },
-            'Take-Profit': {
-                'options': self.indicator_options['Take-Profit'],
+            'TP': {
+                'options': self.line_options['TP'],
                 'values': self.take_price
             }
         }

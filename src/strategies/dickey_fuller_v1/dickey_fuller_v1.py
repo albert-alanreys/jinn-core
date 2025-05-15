@@ -62,15 +62,15 @@ class DickeyFullerV1():
     }
 
     # For frontend
-    indicator_options = {
-        'Stop-loss': {'color': '#FF0000'},
-        'Take-profit': {'color': '#008000'}
+    line_options = {
+        'SL': {'color': '#FF0000'},
+        'TP': {'color': '#008000'}
     }
 
     # Class attributes
     class_attributes = (
         'opt_params',
-        'indicator_options',
+        'line_options',
         'class_attributes',
         'start',
         'calculate',
@@ -249,13 +249,13 @@ class DickeyFullerV1():
                 self.alert_cancel
         )
 
-        self.indicators = {
-            'Stop-loss': {
-                'options': self.indicator_options['Stop-loss'],
+        self.lines = {
+            'SL': {
+                'options': self.line_options['SL'],
                 'values': self.stop_price
             },
-            'Take-profit': {
-                'options': self.indicator_options['Take-profit'],
+            'TP': {
+                'options': self.line_options['TP'],
                 'values': self.take_price
             }
         }
