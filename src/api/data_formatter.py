@@ -220,7 +220,7 @@ class DataFormatter:
                 }
                 result.append(marker)
 
-        return result
+        return sorted(result, key=lambda x: x['time'])
 
     def format_equity(self, equity: np.ndarray) -> list:
         result = [

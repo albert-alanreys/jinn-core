@@ -62,5 +62,5 @@ TESTING_INFO = {
     'interval': '1h',
     'start': '2017-01-01',
     'end': '2020-01-01',
-    'strategy': enums.Strategy.NUGGET_V2,
+    'strategy': enums.Strategy.MEAN_STRIKE_V1,
 }
