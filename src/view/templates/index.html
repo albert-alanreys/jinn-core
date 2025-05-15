@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-status="{{ mode }}">
   <head>
     <title>TV Lite</title>
     <meta charset="UTF-8" />
@@ -153,6 +153,7 @@
     </div>
     <script>
       const API_URL = '{{ api_url }}';
+      const MODE = '{{ mode }}';
     </script>
     <script src="../static/js/lightweight-charts.js"></script>
     <script type="module" src="../static/js/main.js"></script>

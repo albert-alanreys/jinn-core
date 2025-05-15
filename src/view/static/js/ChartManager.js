@@ -1,26 +1,26 @@
-import { getDataUpdates, getMainData } from "./fetchClient.js";
+import { getDataUpdates, getMainData } from './fetchClient.js';
 
 export default class ChartManager {
-  daysOfWeek = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+  daysOfWeek = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
   months = [
-    "Янв",
-    "Фев",
-    "Мар",
-    "Апр",
-    "Май",
-    "Июн",
-    "Июл",
-    "Авг",
-    "Сен",
-    "Окт",
-    "Ноя",
-    "Дек",
+    'Янв',
+    'Фев',
+    'Мар',
+    'Апр',
+    'Май',
+    'Июн',
+    'Июл',
+    'Авг',
+    'Сен',
+    'Окт',
+    'Ноя',
+    'Дек',
   ];
   chartOptions = {
     autoSize: true,
     layout: {
-      background: { type: "solid", color: "#ffffff" },
-      textColor: "black",
+      background: { type: 'solid', color: '#ffffff' },
+      textColor: 'black',
       fontSize: 12,
     },
     rightPriceScale: {
@@ -30,17 +30,17 @@ export default class ChartManager {
     crosshair: {
       mode: 0,
       vertLine: {
-        color: "#a5a5a5",
+        color: '#a5a5a5',
         style: 3,
       },
       horzLine: {
-        color: "#a5a5a5",
+        color: '#a5a5a5',
         style: 3,
       },
     },
     grid: {
-      vertLines: { color: "#edf0ee" },
-      horzLines: { color: "#edf0ee" },
+      vertLines: { color: '#edf0ee' },
+      horzLines: { color: '#edf0ee' },
     },
     localization: {
       timeFormatter: (time) => {
@@ -49,8 +49,8 @@ export default class ChartManager {
         const day = date.getUTCDate();
         const month = this.months[date.getUTCMonth()];
         const year = date.getUTCFullYear();
-        const hours = String(date.getUTCHours()).padStart(2, "0");
-        const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+        const hours = String(date.getUTCHours()).padStart(2, '0');
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
         return `${dayOfWeek} ${day} ${month} ${year}   ${hours}:${minutes}`;
       },
     },
@@ -76,8 +76,8 @@ export default class ChartManager {
         } else if (hours == 0 && minutes == 0) {
           return String(day);
         } else {
-          hours = String(hours).padStart(2, "0");
-          minutes = String(minutes).padStart(2, "0");
+          hours = String(hours).padStart(2, '0');
+          minutes = String(minutes).padStart(2, '0');
           return `${hours}:${minutes}`;
         }
       },
@@ -85,11 +85,11 @@ export default class ChartManager {
     visibleRange: 1000,
   };
   klineOptions = {
-    upColor: "#008984",
-    downColor: "#f23645",
+    upColor: '#008984',
+    downColor: '#f23645',
     borderVisible: false,
-    wickUpColor: "#008984",
-    wickDownColor: "#f23645",
+    wickUpColor: '#008984',
+    wickDownColor: '#f23645',
   };
   lineOptions = {
     lineWidth: 2,
@@ -98,8 +98,7 @@ export default class ChartManager {
     crosshairMarkerVisible: false,
   };
 
-  constructor(mode) {
-    this.mode = mode;
+  constructor() {
     this.updateTimerId = NaN;
   }
 
@@ -108,14 +107,14 @@ export default class ChartManager {
     this.createLegends(data);
     this.createScrollButton();
 
-    if (this.mode == "AUTOMATION") {
+    if (MODE == 'AUTOMATION') {
       this.manageChartUpdates(id);
     }
   }
 
   createCanvas(data) {
     this.chart = LightweightCharts.createChart(
-      document.getElementById("chart-panel"),
+      document.getElementById('chart-panel'),
       this.chartOptions
     );
     this.timeScale = this.chart.timeScale();
@@ -124,7 +123,7 @@ export default class ChartManager {
     );
     this.candlestickSeries.applyOptions({
       priceFormat: {
-        type: "price",
+        type: 'price',
         precision: String(data.mintick).match(/.\d+$/g)[0].length - 1,
         minMove: data.mintick,
       },
@@ -179,22 +178,22 @@ export default class ChartManager {
   }
 
   createLegends(data) {
-    const mainLegend = document.createElement("div");
-    mainLegend.setAttribute("id", "main-legend");
-    mainLegend.style.position = "absolute";
-    mainLegend.style.left = "12px";
-    mainLegend.style.top = "12px";
+    const mainLegend = document.createElement('div');
+    mainLegend.setAttribute('id', 'main-legend');
+    mainLegend.style.position = 'absolute';
+    mainLegend.style.left = '12px';
+    mainLegend.style.top = '12px';
     mainLegend.style.zIndex = 2;
-    document.getElementById("chart-panel").appendChild(mainLegend);
+    document.getElementById('chart-panel').appendChild(mainLegend);
 
-    const strategyLegend = document.createElement("div");
-    strategyLegend.setAttribute("id", "strategy-legend");
-    strategyLegend.style.position = "absolute";
-    strategyLegend.style.left = "12px";
-    strategyLegend.style.top = "40px";
+    const strategyLegend = document.createElement('div');
+    strategyLegend.setAttribute('id', 'strategy-legend');
+    strategyLegend.style.position = 'absolute';
+    strategyLegend.style.left = '12px';
+    strategyLegend.style.top = '40px';
     strategyLegend.style.zIndex = 2;
-    strategyLegend.style.fontSize = "14px";
-    document.getElementById("chart-panel").appendChild(strategyLegend);
+    strategyLegend.style.fontSize = '14px';
+    document.getElementById('chart-panel').appendChild(strategyLegend);
 
     let o = data.klines.at(-1).open;
     let h = data.klines.at(-1).high;
@@ -212,7 +211,7 @@ export default class ChartManager {
             o
           );
         })
-        .join(" ");
+        .join(' ');
 
     const crosshairMoveHandler = (crosshairPosition) => {
       if (crosshairPosition.time) {
@@ -238,14 +237,14 @@ export default class ChartManager {
                   o
                 );
               })
-              .join(" ");
+              .join(' ');
         }
       }
     };
     this.chart.subscribeCrosshairMove(crosshairMoveHandler);
 
     function getMainLegendText(o, h, l, c) {
-      let color = c > o ? "#008984" : "#f23645";
+      let color = c > o ? '#008984' : '#f23645';
       return `${data.symbol} • ${data.market} •
           ${data.interval} • ${data.exchange.toUpperCase()}
           &nbsp;
@@ -259,10 +258,10 @@ export default class ChartManager {
       let color = point.color;
       let value = point.value;
 
-      if (point.color == "transparent" && value == o) {
-        value = "∅";
-        color = "#000000";
-      } else if (color == "transparent") {
+      if (point.color == 'transparent' && value == o) {
+        value = '∅';
+        color = '#000000';
+      } else if (color == 'transparent') {
         color = baseColor;
       }
 
@@ -271,16 +270,16 @@ export default class ChartManager {
   }
 
   createScrollButton() {
-    const button = document.createElement("button");
-    const div = document.createElement("div");
+    const button = document.createElement('button');
+    const div = document.createElement('div');
 
-    div.setAttribute("unselectable", "on");
-    button.setAttribute("id", "scroll-button");
-    button.setAttribute("title", "Прокрутить до текущего бара");
+    div.setAttribute('unselectable', 'on');
+    button.setAttribute('id', 'scroll-button');
+    button.setAttribute('title', 'Прокрутить до текущего бара');
 
-    document.getElementById("chart-panel").appendChild(button);
+    document.getElementById('chart-panel').appendChild(button);
     button.appendChild(div);
-    button.addEventListener("click", () => {
+    button.addEventListener('click', () => {
       this.timeScale.scrollToRealTime();
     });
   }
@@ -304,7 +303,7 @@ export default class ChartManager {
       this.chart.remove();
 
       for (let item of Array.from(
-        document.getElementById("chart-panel").children
+        document.getElementById('chart-panel').children
       )) {
         item.remove();
       }

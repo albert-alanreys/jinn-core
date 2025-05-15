@@ -1,19 +1,3 @@
-export async function getMode() {
-  try {
-    const response = await fetch(`${API_URL}/mode`);
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} - ${response.statusText}`);
-    }
-
-    const result = await response.text();
-    return result;
-  } catch (error) {
-    console.error('Failed to fetch mode:', error);
-    throw error;
-  }
-}
-
 export async function getAlerts() {
   try {
     const response = await fetch(`${API_URL}/alerts`);

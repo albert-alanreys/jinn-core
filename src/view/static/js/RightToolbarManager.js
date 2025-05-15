@@ -3,10 +3,10 @@ import {
   updateData,
   getAlerts,
   getAlertUpdates,
-} from "./fetchClient.js";
+} from './fetchClient.js';
 
 export default class RightToolbarManager {
-  constructor(data, mode, renderUI) {
+  constructor(data, renderUI) {
     this.data = data;
     this.renderUI = renderUI;
 
@@ -14,22 +14,22 @@ export default class RightToolbarManager {
     this.manageButtons();
     this.manageCursor();
 
-    if (mode == "AUTOMATION") {
+    if (MODE == 'AUTOMATION') {
       this.manageAlerts();
     }
   }
 
   manageStrategies() {
-    const body = document.querySelector("#strategies-list .body");
+    const body = document.querySelector('#strategies-list .body');
 
     for (let key in this.data) {
-      const button = document.createElement("button");
-      button.setAttribute("data-strategy", key);
-      button.setAttribute("data-status", "inactive");
+      const button = document.createElement('button');
+      button.setAttribute('data-strategy', key);
+      button.setAttribute('data-status', 'inactive');
       body.appendChild(button);
 
-      const div = document.createElement("div");
-      div.setAttribute("unselectable", "on");
+      const div = document.createElement('div');
+      div.setAttribute('unselectable', 'on');
       div.innerHTML = `${this.data[key].name}
       ${this.data[key].symbol}
       ${this.data[key].interval}`;
@@ -37,16 +37,16 @@ export default class RightToolbarManager {
 
       if (body.children.length == 1) {
         this.currentStrategy = key;
-        button.setAttribute("data-status", "active");
+        button.setAttribute('data-status', 'active');
         this.createDescription();
       }
 
-      button.addEventListener("click", (event) => {
+      button.addEventListener('click', (event) => {
         if (event.target.dataset.strategy != this.currentStrategy) {
           document
             .querySelector(`button[data-strategy="${this.currentStrategy}"]`)
-            .setAttribute("data-status", "inactive");
-          event.target.setAttribute("data-status", "active");
+            .setAttribute('data-status', 'inactive');
+          event.target.setAttribute('data-status', 'active');
           this.currentStrategy = event.target.dataset.strategy;
           this.renderUI(this.currentStrategy);
           this.createDescription();
@@ -56,7 +56,7 @@ export default class RightToolbarManager {
   }
 
   createDescription() {
-    const body = document.querySelector("#strategy-description .body");
+    const body = document.querySelector('#strategy-description .body');
     const strategyData = this.data[this.currentStrategy];
     const oldData = Array.from(body.children);
 
@@ -66,94 +66,94 @@ export default class RightToolbarManager {
       }
     }
 
-    var div = document.createElement("div");
-    div.classList.add("title");
-    div.innerText = "Общая информация";
+    var div = document.createElement('div');
+    div.classList.add('title');
+    div.innerText = 'Общая информация';
     body.appendChild(div);
 
-    var section = document.createElement("section");
-    section.setAttribute("id", "general-info");
+    var section = document.createElement('section');
+    section.setAttribute('id', 'general-info');
     body.appendChild(section);
 
-    var outerDiv = document.createElement("div");
-    outerDiv.classList.add("info");
+    var outerDiv = document.createElement('div');
+    outerDiv.classList.add('info');
     section.appendChild(outerDiv);
 
-    var innerDiv1 = document.createElement("div");
-    innerDiv1.innerText = "Стратегия";
+    var innerDiv1 = document.createElement('div');
+    innerDiv1.innerText = 'Стратегия';
     outerDiv.appendChild(innerDiv1);
 
-    var innerDiv2 = document.createElement("div");
+    var innerDiv2 = document.createElement('div');
     innerDiv2.innerText = strategyData.name;
     outerDiv.appendChild(innerDiv2);
 
-    var outerDiv = document.createElement("div");
-    outerDiv.classList.add("info");
+    var outerDiv = document.createElement('div');
+    outerDiv.classList.add('info');
     section.appendChild(outerDiv);
 
-    var innerDiv1 = document.createElement("div");
-    innerDiv1.innerText = "Биржа";
+    var innerDiv1 = document.createElement('div');
+    innerDiv1.innerText = 'Биржа';
     outerDiv.appendChild(innerDiv1);
 
-    var innerDiv2 = document.createElement("div");
+    var innerDiv2 = document.createElement('div');
     innerDiv2.innerText = strategyData.exchange.toUpperCase();
     outerDiv.appendChild(innerDiv2);
 
-    var outerDiv = document.createElement("div");
-    outerDiv.classList.add("info");
+    var outerDiv = document.createElement('div');
+    outerDiv.classList.add('info');
     section.appendChild(outerDiv);
 
-    var innerDiv1 = document.createElement("div");
-    innerDiv1.innerText = "Символ";
+    var innerDiv1 = document.createElement('div');
+    innerDiv1.innerText = 'Символ';
     outerDiv.appendChild(innerDiv1);
 
-    var innerDiv2 = document.createElement("div");
+    var innerDiv2 = document.createElement('div');
     innerDiv2.innerText = strategyData.symbol;
     outerDiv.appendChild(innerDiv2);
 
-    var outerDiv = document.createElement("div");
-    outerDiv.classList.add("info");
+    var outerDiv = document.createElement('div');
+    outerDiv.classList.add('info');
     section.appendChild(outerDiv);
 
-    var innerDiv1 = document.createElement("div");
-    innerDiv1.innerText = "Рынок";
+    var innerDiv1 = document.createElement('div');
+    innerDiv1.innerText = 'Рынок';
     outerDiv.appendChild(innerDiv1);
 
-    var innerDiv2 = document.createElement("div");
+    var innerDiv2 = document.createElement('div');
     innerDiv2.innerText = strategyData.market;
     outerDiv.appendChild(innerDiv2);
 
-    var outerDiv = document.createElement("div");
-    outerDiv.classList.add("info");
+    var outerDiv = document.createElement('div');
+    outerDiv.classList.add('info');
     section.appendChild(outerDiv);
 
-    var innerDiv1 = document.createElement("div");
-    innerDiv1.innerText = "Таймфрейм";
+    var innerDiv1 = document.createElement('div');
+    innerDiv1.innerText = 'Таймфрейм';
     outerDiv.appendChild(innerDiv1);
 
-    var innerDiv2 = document.createElement("div");
+    var innerDiv2 = document.createElement('div');
     innerDiv2.innerText = strategyData.interval;
     outerDiv.appendChild(innerDiv2);
 
-    var outerDiv = document.createElement("div");
-    outerDiv.classList.add("info");
+    var outerDiv = document.createElement('div');
+    outerDiv.classList.add('info');
     section.appendChild(outerDiv);
 
-    var innerDiv1 = document.createElement("div");
-    innerDiv1.innerText = "Размер тика";
+    var innerDiv1 = document.createElement('div');
+    innerDiv1.innerText = 'Размер тика';
     outerDiv.appendChild(innerDiv1);
 
-    var innerDiv2 = document.createElement("div");
+    var innerDiv2 = document.createElement('div');
     innerDiv2.innerText = strategyData.mintick;
     outerDiv.appendChild(innerDiv2);
 
-    var div = document.createElement("div");
-    div.classList.add("title");
-    div.innerText = "Параметры стратегии";
+    var div = document.createElement('div');
+    div.classList.add('title');
+    div.innerText = 'Параметры стратегии';
     body.appendChild(div);
 
-    var section = document.createElement("section");
-    section.setAttribute("id", "parameter-values");
+    var section = document.createElement('section');
+    section.setAttribute('id', 'parameter-values');
     body.appendChild(section);
 
     for (let key in strategyData.parameters) {
@@ -161,36 +161,36 @@ export default class RightToolbarManager {
 
       if (Array.isArray(parameter)) {
         for (let i = 0; i < parameter.length; i++) {
-          var outerDiv = document.createElement("div");
-          outerDiv.classList.add("info");
+          var outerDiv = document.createElement('div');
+          outerDiv.classList.add('info');
           section.appendChild(outerDiv);
 
-          var innerDiv = document.createElement("div");
+          var innerDiv = document.createElement('div');
           innerDiv.innerText = `${key} #${i + 1}`;
           outerDiv.appendChild(innerDiv);
 
-          var input = document.createElement("input");
-          input.setAttribute("value", parameter[i]);
-          input.setAttribute("data-parameter", `${key} #${i + 1}`);
-          input.setAttribute("data-group", key);
-          input.addEventListener("change", (event) => {
+          var input = document.createElement('input');
+          input.setAttribute('value', parameter[i]);
+          input.setAttribute('data-parameter', `${key} #${i + 1}`);
+          input.setAttribute('data-group', key);
+          input.addEventListener('change', (event) => {
             this.changeParameter(event.target);
           });
           outerDiv.appendChild(input);
         }
       } else {
-        var outerDiv = document.createElement("div");
-        outerDiv.classList.add("info");
+        var outerDiv = document.createElement('div');
+        outerDiv.classList.add('info');
         section.appendChild(outerDiv);
 
-        var innerDiv = document.createElement("div");
+        var innerDiv = document.createElement('div');
         innerDiv.innerText = key;
         outerDiv.appendChild(innerDiv);
 
-        var input = document.createElement("input");
-        input.setAttribute("value", parameter);
-        input.setAttribute("data-parameter", key);
-        input.addEventListener("change", (event) => {
+        var input = document.createElement('input');
+        input.setAttribute('value', parameter);
+        input.setAttribute('data-parameter', key);
+        input.addEventListener('change', (event) => {
           this.changeParameter(event.target);
         });
         outerDiv.appendChild(input);
@@ -201,7 +201,7 @@ export default class RightToolbarManager {
   changeParameter(target) {
     let parameter;
 
-    if (target.hasAttribute("data-group")) {
+    if (target.hasAttribute('data-group')) {
       const inputs = document.querySelectorAll(
         `input[data-group="${target.dataset.group}"]`
       );
@@ -224,8 +224,8 @@ export default class RightToolbarManager {
       })
       .catch(() => {
         overwrite.bind(this)();
-        target.classList.add("animate-border");
-        setTimeout(() => target.removeAttribute("class"), 1000);
+        target.classList.add('animate-border');
+        setTimeout(() => target.removeAttribute('class'), 1000);
       });
 
     function overwrite() {
@@ -252,143 +252,143 @@ export default class RightToolbarManager {
   }
 
   manageButtons() {
-    const rightToolbar = document.getElementById("right-toolbar");
-    const rightToolHandle = document.getElementById("right-toolbar-handle");
-    const infoWrapper = document.getElementById("info-wrapper");
-    const strategiesList = document.getElementById("strategies-list");
+    const rightToolbar = document.getElementById('right-toolbar');
+    const rightToolHandle = document.getElementById('right-toolbar-handle');
+    const infoWrapper = document.getElementById('info-wrapper');
+    const strategiesList = document.getElementById('strategies-list');
     const strategyDescription = document.getElementById(
-      "strategy-description"
+      'strategy-description'
     );
-    const alertsList = document.getElementById("alerts-list");
-    const strategiesButton = document.getElementById("strategies-button");
-    const descriptionButton = document.getElementById("description-button");
-    const alertsButton = document.getElementById("alerts-button");
+    const alertsList = document.getElementById('alerts-list');
+    const strategiesButton = document.getElementById('strategies-button');
+    const descriptionButton = document.getElementById('description-button');
+    const alertsButton = document.getElementById('alerts-button');
     const rightToolbarDefaultMinWidth = window
       .getComputedStyle(rightToolbar)
-      .getPropertyValue("min-width");
+      .getPropertyValue('min-width');
 
     let rightToolbarLastFlex = window
       .getComputedStyle(rightToolbar)
-      .getPropertyValue("flex");
+      .getPropertyValue('flex');
 
-    strategiesButton.addEventListener("click", () => {
-      if (strategiesButton.dataset.status == "opened") {
+    strategiesButton.addEventListener('click', () => {
+      if (strategiesButton.dataset.status == 'opened') {
         rightToolbarLastFlex = window
           .getComputedStyle(rightToolbar)
-          .getPropertyValue("flex");
+          .getPropertyValue('flex');
 
-        rightToolbar.style.flex = "1 1 0%";
-        rightToolbar.style.minWidth = "auto";
-        rightToolHandle.style.pointerEvents = "none";
-        infoWrapper.style.display = "none";
+        rightToolbar.style.flex = '1 1 0%';
+        rightToolbar.style.minWidth = 'auto';
+        rightToolHandle.style.pointerEvents = 'none';
+        infoWrapper.style.display = 'none';
 
-        strategiesButton.setAttribute("data-status", "closed");
-      } else if (strategiesButton.dataset.status == "closed") {
+        strategiesButton.setAttribute('data-status', 'closed');
+      } else if (strategiesButton.dataset.status == 'closed') {
         if (
-          descriptionButton.dataset.status == "closed" &&
-          alertsButton.dataset.status == "closed"
+          descriptionButton.dataset.status == 'closed' &&
+          alertsButton.dataset.status == 'closed'
         ) {
           rightToolbar.style.flex = rightToolbarLastFlex;
         }
 
         rightToolbar.style.minWidth = rightToolbarDefaultMinWidth;
-        rightToolHandle.style.pointerEvents = "auto";
-        infoWrapper.style.display = "block";
-        strategiesList.style.display = "flex";
-        strategyDescription.style.display = "none";
-        alertsList.style.display = "none";
+        rightToolHandle.style.pointerEvents = 'auto';
+        infoWrapper.style.display = 'block';
+        strategiesList.style.display = 'flex';
+        strategyDescription.style.display = 'none';
+        alertsList.style.display = 'none';
 
-        strategiesButton.setAttribute("data-status", "opened");
-        descriptionButton.setAttribute("data-status", "closed");
-        alertsButton.setAttribute("data-status", "closed");
+        strategiesButton.setAttribute('data-status', 'opened');
+        descriptionButton.setAttribute('data-status', 'closed');
+        alertsButton.setAttribute('data-status', 'closed');
       }
     });
 
-    descriptionButton.addEventListener("click", () => {
-      if (descriptionButton.dataset.status == "opened") {
+    descriptionButton.addEventListener('click', () => {
+      if (descriptionButton.dataset.status == 'opened') {
         rightToolbarLastFlex = window
           .getComputedStyle(rightToolbar)
-          .getPropertyValue("flex");
+          .getPropertyValue('flex');
 
-        rightToolbar.style.flex = "1 1 0%";
-        rightToolbar.style.minWidth = "auto";
-        rightToolHandle.style.pointerEvents = "none";
-        infoWrapper.style.display = "none";
+        rightToolbar.style.flex = '1 1 0%';
+        rightToolbar.style.minWidth = 'auto';
+        rightToolHandle.style.pointerEvents = 'none';
+        infoWrapper.style.display = 'none';
 
-        descriptionButton.setAttribute("data-status", "closed");
-      } else if (descriptionButton.dataset.status == "closed") {
+        descriptionButton.setAttribute('data-status', 'closed');
+      } else if (descriptionButton.dataset.status == 'closed') {
         if (
-          strategiesButton.dataset.status == "closed" &&
-          alertsButton.dataset.status == "closed"
+          strategiesButton.dataset.status == 'closed' &&
+          alertsButton.dataset.status == 'closed'
         ) {
           rightToolbar.style.flex = rightToolbarLastFlex;
         }
 
         rightToolbar.style.minWidth = rightToolbarDefaultMinWidth;
-        rightToolHandle.style.pointerEvents = "auto";
-        infoWrapper.style.display = "block";
-        strategiesList.style.display = "none";
-        strategyDescription.style.display = "flex";
-        alertsList.style.display = "none";
+        rightToolHandle.style.pointerEvents = 'auto';
+        infoWrapper.style.display = 'block';
+        strategiesList.style.display = 'none';
+        strategyDescription.style.display = 'flex';
+        alertsList.style.display = 'none';
 
-        strategiesButton.setAttribute("data-status", "closed");
-        descriptionButton.setAttribute("data-status", "opened");
-        alertsButton.setAttribute("data-status", "closed");
+        strategiesButton.setAttribute('data-status', 'closed');
+        descriptionButton.setAttribute('data-status', 'opened');
+        alertsButton.setAttribute('data-status', 'closed');
       }
     });
 
-    alertsButton.addEventListener("click", () => {
-      if (alertsButton.dataset.status == "opened") {
+    alertsButton.addEventListener('click', () => {
+      if (alertsButton.dataset.status == 'opened') {
         rightToolbarLastFlex = window
           .getComputedStyle(rightToolbar)
-          .getPropertyValue("flex");
+          .getPropertyValue('flex');
 
-        rightToolbar.style.flex = "1 1 0%";
-        rightToolbar.style.minWidth = "auto";
-        rightToolHandle.style.pointerEvents = "none";
-        infoWrapper.style.display = "none";
+        rightToolbar.style.flex = '1 1 0%';
+        rightToolbar.style.minWidth = 'auto';
+        rightToolHandle.style.pointerEvents = 'none';
+        infoWrapper.style.display = 'none';
 
-        alertsButton.setAttribute("data-status", "closed");
-      } else if (alertsButton.dataset.status == "closed") {
+        alertsButton.setAttribute('data-status', 'closed');
+      } else if (alertsButton.dataset.status == 'closed') {
         if (
-          strategiesButton.dataset.status == "closed" &&
-          descriptionButton.dataset.status == "closed"
+          strategiesButton.dataset.status == 'closed' &&
+          descriptionButton.dataset.status == 'closed'
         ) {
           rightToolbar.style.flex = rightToolbarLastFlex;
         }
 
         rightToolbar.style.minWidth = rightToolbarDefaultMinWidth;
-        rightToolHandle.style.pointerEvents = "auto";
-        infoWrapper.style.display = "block";
-        strategiesList.style.display = "none";
-        strategyDescription.style.display = "none";
-        alertsList.style.display = "flex";
+        rightToolHandle.style.pointerEvents = 'auto';
+        infoWrapper.style.display = 'block';
+        strategiesList.style.display = 'none';
+        strategyDescription.style.display = 'none';
+        alertsList.style.display = 'flex';
 
-        strategiesButton.setAttribute("data-status", "closed");
-        descriptionButton.setAttribute("data-status", "closed");
-        alertsButton.setAttribute("data-status", "opened");
+        strategiesButton.setAttribute('data-status', 'closed');
+        descriptionButton.setAttribute('data-status', 'closed');
+        alertsButton.setAttribute('data-status', 'opened');
       }
     });
   }
 
   manageCursor() {
-    const rightToolbar = document.getElementById("right-toolbar");
-    const rightToolHandle = document.getElementById("right-toolbar-handle");
+    const rightToolbar = document.getElementById('right-toolbar');
+    const rightToolHandle = document.getElementById('right-toolbar-handle');
 
     let startOffset = NaN;
     let moving = false;
 
-    rightToolHandle.addEventListener("mousedown", (event) => {
+    rightToolHandle.addEventListener('mousedown', (event) => {
       startOffset = rightToolbar.offsetLeft - event.clientX;
-      document.addEventListener("mousemove", onMouseMove);
-      document.body.style.cursor = "ns-resize";
+      document.addEventListener('mousemove', onMouseMove);
+      document.body.style.cursor = 'ns-resize';
       moving = true;
     });
 
-    document.addEventListener("mouseup", () => {
+    document.addEventListener('mouseup', () => {
       if (moving) {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.body.style.cursor = "default";
+        document.removeEventListener('mousemove', onMouseMove);
+        document.body.style.cursor = 'default';
         moving = false;
       }
     });
@@ -418,184 +418,184 @@ export default class RightToolbarManager {
     }, 5000);
 
     function addAlerts(alerts) {
-      const body = document.querySelector("#alerts-list .body");
+      const body = document.querySelector('#alerts-list .body');
 
       for (let alert of alerts) {
-        var outerDiv = document.createElement("div");
-        outerDiv.classList.add("alert");
+        var outerDiv = document.createElement('div');
+        outerDiv.classList.add('alert');
         body.prepend(outerDiv);
 
-        var header = document.createElement("div");
-        header.classList.add("header");
+        var header = document.createElement('div');
+        header.classList.add('header');
         outerDiv.appendChild(header);
 
-        var innerDiv1 = document.createElement("div");
+        var innerDiv1 = document.createElement('div');
         innerDiv1.innerText = alert.time;
         header.appendChild(innerDiv1);
 
-        var innerDiv2 = document.createElement("div");
-        innerDiv2.classList.add("target");
-        innerDiv2.setAttribute("title", "Открыть стратегию");
-        innerDiv2.setAttribute("data-strategy", alert.id);
+        var innerDiv2 = document.createElement('div');
+        innerDiv2.classList.add('target');
+        innerDiv2.setAttribute('title', 'Открыть стратегию');
+        innerDiv2.setAttribute('data-strategy', alert.id);
         header.appendChild(innerDiv2);
 
-        var hiddenСontent = document.createElement("div");
-        hiddenСontent.classList.add("hidden-content");
+        var hiddenСontent = document.createElement('div');
+        hiddenСontent.classList.add('hidden-content');
         outerDiv.appendChild(hiddenСontent);
 
-        var tr = document.createElement("div");
-        tr.classList.add("tr");
+        var tr = document.createElement('div');
+        tr.classList.add('tr');
         hiddenСontent.appendChild(tr);
 
-        var td1 = document.createElement("div");
-        td1.classList.add("td");
-        td1.innerText = "Биржа";
+        var td1 = document.createElement('div');
+        td1.classList.add('td');
+        td1.innerText = 'Биржа';
         tr.appendChild(td1);
 
-        var td2 = document.createElement("div");
-        td2.classList.add("td");
+        var td2 = document.createElement('div');
+        td2.classList.add('td');
         td2.innerText = alert.message.exchange;
         tr.appendChild(td2);
 
-        if (!alert.message.hasOwnProperty("error")) {
-          var tr = document.createElement("div");
-          tr.classList.add("tr");
+        if (!alert.message.hasOwnProperty('error')) {
+          var tr = document.createElement('div');
+          tr.classList.add('tr');
           hiddenСontent.appendChild(tr);
 
-          var td1 = document.createElement("div");
-          td1.classList.add("td");
-          td1.innerText = "Тип";
+          var td1 = document.createElement('div');
+          td1.classList.add('td');
+          td1.innerText = 'Тип';
           tr.appendChild(td1);
 
-          var td2 = document.createElement("div");
-          td2.classList.add("td");
+          var td2 = document.createElement('div');
+          td2.classList.add('td');
           td2.innerText = alert.message.type;
           tr.appendChild(td2);
 
-          var tr = document.createElement("div");
-          tr.classList.add("tr");
+          var tr = document.createElement('div');
+          tr.classList.add('tr');
           hiddenСontent.appendChild(tr);
 
-          var td1 = document.createElement("div");
-          td1.classList.add("td");
-          td1.innerText = "Статус";
+          var td1 = document.createElement('div');
+          td1.classList.add('td');
+          td1.innerText = 'Статус';
           tr.appendChild(td1);
 
-          var td2 = document.createElement("div");
-          td2.classList.add("td");
+          var td2 = document.createElement('div');
+          td2.classList.add('td');
 
-          if (alert.message.status == "исполнен") {
-            var color = "#089981";
-          } else if (alert.message.status == "ожидает исполнения") {
-            var color = "#6a6d78";
-          } else if (alert.message.status == "отменён") {
-            var color = "#f23645";
+          if (alert.message.status == 'исполнен') {
+            var color = '#089981';
+          } else if (alert.message.status == 'ожидает исполнения') {
+            var color = '#6a6d78';
+          } else if (alert.message.status == 'отменён') {
+            var color = '#f23645';
           }
 
           td2.innerHTML = `<span style="color:
             ${color};">${alert.message.status}</span>`;
           tr.appendChild(td2);
 
-          var tr = document.createElement("div");
-          tr.classList.add("tr");
+          var tr = document.createElement('div');
+          tr.classList.add('tr');
           hiddenСontent.appendChild(tr);
 
-          var td1 = document.createElement("div");
-          td1.classList.add("td");
-          td1.innerText = "Направление";
+          var td1 = document.createElement('div');
+          td1.classList.add('td');
+          td1.innerText = 'Направление';
           tr.appendChild(td1);
 
-          var td2 = document.createElement("div");
-          td2.classList.add("td");
+          var td2 = document.createElement('div');
+          td2.classList.add('td');
 
-          if (alert.message.side == "покупка") {
-            var color = "#089981";
-          } else if (alert.message.side == "продажа") {
-            var color = "#f23645";
+          if (alert.message.side == 'покупка') {
+            var color = '#089981';
+          } else if (alert.message.side == 'продажа') {
+            var color = '#f23645';
           }
 
           td2.innerHTML = `<span style="color:
             ${color};">${alert.message.side}</span>`;
           tr.appendChild(td2);
 
-          var tr = document.createElement("div");
-          tr.classList.add("tr");
+          var tr = document.createElement('div');
+          tr.classList.add('tr');
           hiddenСontent.appendChild(tr);
 
-          var td1 = document.createElement("div");
-          td1.classList.add("td");
-          td1.innerText = "Символ";
+          var td1 = document.createElement('div');
+          td1.classList.add('td');
+          td1.innerText = 'Символ';
           tr.appendChild(td1);
 
-          var td2 = document.createElement("div");
-          td2.classList.add("td");
+          var td2 = document.createElement('div');
+          td2.classList.add('td');
           td2.innerText = alert.message.symbol;
           tr.appendChild(td2);
 
-          var tr = document.createElement("div");
-          tr.classList.add("tr");
+          var tr = document.createElement('div');
+          tr.classList.add('tr');
           hiddenСontent.appendChild(tr);
 
-          var td1 = document.createElement("div");
-          td1.classList.add("td");
-          td1.innerText = "Количество";
+          var td1 = document.createElement('div');
+          td1.classList.add('td');
+          td1.innerText = 'Количество';
           tr.appendChild(td1);
 
-          var td2 = document.createElement("div");
-          td2.classList.add("td");
+          var td2 = document.createElement('div');
+          td2.classList.add('td');
           td2.innerText = alert.message.qty;
           tr.appendChild(td2);
 
-          var tr = document.createElement("div");
-          tr.classList.add("tr");
+          var tr = document.createElement('div');
+          tr.classList.add('tr');
           hiddenСontent.appendChild(tr);
 
-          var td1 = document.createElement("div");
-          td1.classList.add("td");
-          td1.innerText = "Цена";
+          var td1 = document.createElement('div');
+          td1.classList.add('td');
+          td1.innerText = 'Цена';
           tr.appendChild(td1);
 
-          var td2 = document.createElement("div");
-          td2.classList.add("td");
+          var td2 = document.createElement('div');
+          td2.classList.add('td');
           td2.innerText = alert.message.price;
           tr.appendChild(td2);
         } else {
-          var tr = document.createElement("div");
-          tr.classList.add("tr");
+          var tr = document.createElement('div');
+          tr.classList.add('tr');
           hiddenСontent.appendChild(tr);
 
-          var td = document.createElement("div");
-          td.classList.add("td");
+          var td = document.createElement('div');
+          td.classList.add('td');
           td.innerHTML = `<span style="color:#f23645;">
             ${alert.message.error}</span>`;
           tr.appendChild(td);
         }
 
-        outerDiv.addEventListener("click", (event) => {
-          if (!event.target.classList.contains("target")) {
-            const container = event.target.closest(".alert");
+        outerDiv.addEventListener('click', (event) => {
+          if (!event.target.classList.contains('target')) {
+            const container = event.target.closest('.alert');
 
             if (
               window
                 .getComputedStyle(container.lastChild)
-                .getPropertyValue("display") == "none"
+                .getPropertyValue('display') == 'none'
             ) {
-              container.lastChild.style.display = "flex";
+              container.lastChild.style.display = 'flex';
             } else {
-              container.lastChild.style.display = "none";
+              container.lastChild.style.display = 'none';
             }
           }
         });
 
-        innerDiv2.addEventListener("click", (event) => {
+        innerDiv2.addEventListener('click', (event) => {
           if (event.target.dataset.strategy != this.currentStrategy) {
             document
               .querySelector(`button[data-strategy="${this.currentStrategy}"]`)
-              .setAttribute("data-status", "inactive");
+              .setAttribute('data-status', 'inactive');
             this.currentStrategy = event.target.dataset.strategy;
             document
               .querySelector(`button[data-strategy="${this.currentStrategy}"]`)
-              .setAttribute("data-status", "active");
+              .setAttribute('data-status', 'active');
 
             this.renderUI(this.currentStrategy, true);
             this.createDescription();
