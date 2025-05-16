@@ -8,7 +8,7 @@ from src.services.optimization.optimizer import Optimizer
 from src.services.testing.tester import Tester
 
 
-class Delegator:
+class Controller:
     def __init__(
         self,
         mode: Mode,

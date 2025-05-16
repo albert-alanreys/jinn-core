@@ -1,19 +1,19 @@
 import logging
 
 import config
-from src.core.delegator import Delegator
+from src.core.controller import Controller
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
-    delegator = Delegator(
+    controller = Controller(
         mode=config.MODE,
         automation_info=config.AUTOMATION_INFO,
         optimization_info=config.OPTIMIZATION_INFO,
         testing_info=config.TESTING_INFO  
     )
-    delegator.delegate()
+    controller.delegate()
 
 
 if __name__ == '__main__':
