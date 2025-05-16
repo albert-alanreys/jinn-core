@@ -1,8 +1,7 @@
 Переменная MODE (режим):
-  1. enums.Mode.INGESTION — режим загрузки данных
-  2. enums.Mode.OPTIMIZATION — режим оптимизации стратегий
-  3. enums.Mode.TESTING — режим тестирования
-  4. enums.Mode.AUTOMATION — режим автоматизации
+  1. enums.Mode.OPTIMIZATION — режим оптимизации стратегий
+  2. enums.Mode.TESTING — режим тестирования
+  3. enums.Mode.AUTOMATION — режим автоматизации
 
 Ключ exchange (биржа):
   1. enums.Exchange.BINANCE — Binance
@@ -39,6 +38,7 @@
 Ключ strategy (стратегия):
   1. enums.Strategy.DEVOURER_V3 — стратегия Devourer версии 3
   2. enums.Strategy.DICKEY_FULLER_V1 — стратегия Dickey-Fuller версии 1
-  3. enums.Strategy.NUGGET_V2 — стратегия Nugget версии 2
-  4. enums.Strategy.NUGGET_V4 — стратегия Nugget версии 4
-  5. enums.Strategy.NUGGET_V5 — стратегия Nugget версии 5
+  3. enums.Strategy.MEAN_STRIKE_V1 — стратегия MeanStrike версии 1
+  4. enums.Strategy.NUGGET_V2 — стратегия Nugget версии 2
+  5. enums.Strategy.NUGGET_V4 — стратегия Nugget версии 4
+  6. enums.Strategy.NUGGET_V5 — стратегия Nugget версии 5

@@ -33,16 +33,6 @@ AUTOMATION_INFO = {
     'strategy': enums.Strategy.DEVOURER_V3,
 }
 
-# Режим INGESTION (сбор данных)
-INGESTION_INFO = {
-    'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'start': '2017-01-01',
-    'end': '2025-01-01',
-}
-
 # Режим OPTIMIZATION (оптимизация)
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,
@@ -58,9 +48,9 @@ OPTIMIZATION_INFO = {
 TESTING_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'start': '2017-01-01',
-    'end': '2020-01-01',
+    'symbol': 'ETHUSDT',
+    'interval': '1d',
+    'start': '2010-01-01',
+    'end': '2026-02-01',
     'strategy': enums.Strategy.NUGGET_V2,
 }

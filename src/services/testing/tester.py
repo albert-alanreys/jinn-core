@@ -1,15 +1,14 @@
 import ast
 import glob
 import logging
-import numpy as np
 import os
 import re
 import warnings
 
 import src.core.enums as enums
+from src.core.storage.data_manager import DataManager
 from src.services.automation.api_clients.binance import BinanceClient
 from src.services.automation.api_clients.bybit import BybitClient
-from src.services.storage.db_manager import DBManager
 from .performance_metrics import get_performance_metrics
 
 
@@ -24,7 +23,7 @@ class Tester:
         self.strategy = testing_info['strategy']
 
         self.strategies = {}
-        self.db_manager = DBManager()
+        self.data_manager = DataManager()
         self.binance_client = BinanceClient()
         self.bybit_client = BybitClient()
         self.logger = logging.getLogger(__name__)
@@ -55,6 +54,11 @@ class Tester:
                     client = self.binance_client
                 elif exchange.upper() == enums.Exchange.BYBIT.name:
                     client = self.bybit_client
+
+                if market.upper() == enums.Market.FUTURES.name:
+                    market = enums.Market.FUTURES
+                elif market.upper() == enums.Market.SPOT.name:
+                    market = enums.Market.SPOT
 
                 target_line = False
                 opt_params = []
@@ -88,13 +92,14 @@ class Tester:
                     interval = client.get_valid_interval(interval)
 
                     try:
-                        rows, _ = self.db_manager.fetch_data(
-                            db_name=f'{exchange.lower()}.db',
-                            table=f'{symbol}_{market}_{interval}',
+                        klines = self.data_manager.get_data(
+                            client=client,
+                            market=market,
+                            symbol=symbol,
+                            interval=interval,
                             start=start,
                             end=end
                         )
-                        klines = np.array(rows)
                         p_precision = client.get_price_precision(symbol)
                         q_precision = client.get_qty_precision(symbol)
                         instance = strategy.value(opt_params=parameters)
@@ -117,7 +122,7 @@ class Tester:
                         strategy_data['metrics'] = metrics
                         self.strategies[str(id(strategy_data))] = strategy_data
                     except Exception as e:
-                        self.logger.error(f'Error: {e}')
+                        self.logger.error(e)
 
         if len(self.strategies) == 0:
             match self.exchange:
@@ -126,22 +131,17 @@ class Tester:
                 case enums.Exchange.BYBIT:
                     client = self.bybit_client
 
-            match self.market:
-                case enums.Market.SPOT:
-                    market = 'SPOT'
-                case enums.Market.FUTURES:
-                    market = 'FUTURES'
-
             self.interval = client.get_valid_interval(self.interval)
 
             try:
-                rows, _ = self.db_manager.fetch_data(
-                    db_name=f'{self.exchange.value.lower()}.db',
-                    table=f'{self.symbol}_{market}_{self.interval}',
+                klines = self.data_manager.get_data(
+                    client=client,
+                    market=self.market,
+                    symbol=self.symbol,
+                    interval=self.interval,
                     start=self.start,
                     end=self.end
                 )
-                klines = np.array(rows)
                 p_precision = client.get_price_precision(self.symbol)
                 q_precision = client.get_qty_precision(self.symbol)
                 instance = self.strategy.value()
@@ -153,7 +153,7 @@ class Tester:
                     'client': client,
                     'exchange': self.exchange.value,
                     'symbol': self.symbol,
-                    'market': market,
+                    'market': self.market.value,
                     'interval': self.interval,
                     'klines': klines,
                     'p_precision': p_precision,
@@ -164,7 +164,7 @@ class Tester:
                 strategy_data['metrics'] = metrics
                 self.strategies[str(id(strategy_data))] = strategy_data
             except Exception as e:
-                self.logger.error(f'Error: {e}')
+                self.logger.error(e)
 
     def calculate_strategy(self, strategy_data: dict) -> tuple:
         strategy_data['instance'].start(

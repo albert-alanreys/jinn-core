@@ -10,7 +10,6 @@ def main() -> None:
     delegator = Delegator(
         mode=config.MODE,
         automation_info=config.AUTOMATION_INFO,
-        ingestion_info=config.INGESTION_INFO,
         optimization_info=config.OPTIMIZATION_INFO,
         testing_info=config.TESTING_INFO  
     )

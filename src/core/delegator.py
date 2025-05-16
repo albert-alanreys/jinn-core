@@ -5,7 +5,6 @@ from src.api.server import Server
 from src.core.enums import Mode
 from src.services.automation.automizer import Automizer
 from src.services.optimization.optimizer import Optimizer
-from src.services.storage.ingester import Ingester
 from src.services.testing.tester import Tester
 
 
@@ -14,13 +13,11 @@ class Delegator:
         self,
         mode: Mode,
         automation_info: dict,
-        ingestion_info: dict,
         optimization_info: dict,
         testing_info: dict
     ) -> None:
         self.mode = mode
         self.automation_info = automation_info
-        self.ingestion_info = ingestion_info
         self.optimization_info = optimization_info
         self.testing_info = testing_info
 
@@ -36,9 +33,6 @@ class Delegator:
 
                 data_to_format = (None, automizer.strategies)
                 self.create_server(data_to_format)
-            case Mode.INGESTION:
-                ingester = Ingester(self.ingestion_info)
-                ingester.ingeste()
             case Mode.OPTIMIZATION:
                 optimizer = Optimizer(self.optimization_info)
                 optimizer.optimize()

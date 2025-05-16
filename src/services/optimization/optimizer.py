@@ -6,9 +6,9 @@ import os
 import numpy as np
 
 import src.core.enums as enums
+from src.core.storage.data_manager import DataManager
 from src.services.automation.api_clients.binance import BinanceClient
 from src.services.automation.api_clients.bybit import BybitClient
-from src.services.storage.db_manager import DBManager
 from .ga import GA
 
 
@@ -25,7 +25,7 @@ class Optimizer:
         self.strategies = {}
         self.binance_client = BinanceClient()
         self.bybit_client = BybitClient()
-        self.db_manager = DBManager()
+        self.data_manager = DataManager()
         self.logger = logging.getLogger(__name__)
 
     def optimize(self) -> None:

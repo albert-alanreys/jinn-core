@@ -1,5 +1,4 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
 from functools import lru_cache
 
 import src.core.enums as enums
@@ -37,22 +36,12 @@ class MarketClient(BaseClient):
 
     def get_historical_klines(
         self,
-        symbol: str,
         market: enums.Market,
+        symbol: str,
         interval: str,
-        start: str,
-        end: str
+        start: int,
+        end: int
     ) -> list:
-        start = int(
-            datetime.strptime(start, '%Y-%m-%d')
-            .replace(tzinfo=timezone.utc)
-            .timestamp() * 1000
-        )
-        end = int(
-            datetime.strptime(end, '%Y-%m-%d')
-            .replace(tzinfo=timezone.utc)
-            .timestamp() * 1000
-        )
         interval_ms = self.interval_ms[interval]
         step = interval_ms * 1000
         time_ranges = [

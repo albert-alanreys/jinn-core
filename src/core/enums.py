@@ -10,7 +10,6 @@ from src.strategies import NuggetV5
 
 class Mode(Enum):
     AUTOMATION = 'AUTOMATION'
-    INGESTION = 'INGESTION'
     OPTIMIZATION = 'OPTIMIZATION'
     TESTING = 'TESTING'
 
