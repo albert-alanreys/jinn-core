@@ -250,7 +250,6 @@ export default class RightToolbarManager {
 
   manageButtons() {
     var rightToolbar = document.getElementById('right-toolbar');
-    var rightToolHandle = document.getElementById('right-toolbar-handle');
     var infoWrapper = document.getElementById('info-wrapper');
     var strategiesList = document.getElementById('strategies-list');
     var strategyDescription = document.getElementById('strategy-description');
@@ -274,7 +273,6 @@ export default class RightToolbarManager {
 
         rightToolbar.style.flex = '1 1 0%';
         rightToolbar.style.minWidth = 'auto';
-        rightToolHandle.style.pointerEvents = 'none';
         infoWrapper.style.display = 'none';
 
         strategiesButton.setAttribute('data-status', 'closed');
@@ -287,7 +285,6 @@ export default class RightToolbarManager {
         }
 
         rightToolbar.style.minWidth = rightToolbarDefaultMinWidth;
-        rightToolHandle.style.pointerEvents = 'auto';
         infoWrapper.style.display = 'block';
         strategiesList.style.display = 'flex';
         strategyDescription.style.display = 'none';
@@ -307,7 +304,6 @@ export default class RightToolbarManager {
 
         rightToolbar.style.flex = '1 1 0%';
         rightToolbar.style.minWidth = 'auto';
-        rightToolHandle.style.pointerEvents = 'none';
         infoWrapper.style.display = 'none';
 
         descriptionButton.setAttribute('data-status', 'closed');
@@ -320,7 +316,6 @@ export default class RightToolbarManager {
         }
 
         rightToolbar.style.minWidth = rightToolbarDefaultMinWidth;
-        rightToolHandle.style.pointerEvents = 'auto';
         infoWrapper.style.display = 'block';
         strategiesList.style.display = 'none';
         strategyDescription.style.display = 'flex';
@@ -340,7 +335,6 @@ export default class RightToolbarManager {
 
         rightToolbar.style.flex = '1 1 0%';
         rightToolbar.style.minWidth = 'auto';
-        rightToolHandle.style.pointerEvents = 'none';
         infoWrapper.style.display = 'none';
 
         alertsButton.setAttribute('data-status', 'closed');
@@ -353,7 +347,6 @@ export default class RightToolbarManager {
         }
 
         rightToolbar.style.minWidth = rightToolbarDefaultMinWidth;
-        rightToolHandle.style.pointerEvents = 'auto';
         infoWrapper.style.display = 'block';
         strategiesList.style.display = 'none';
         strategyDescription.style.display = 'none';
