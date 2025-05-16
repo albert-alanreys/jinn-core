@@ -49,13 +49,14 @@ button div {
   display: flex;
   flex-direction: row;
   height: 100vh;
+  overflow-x: hidden;
 }
 
 #vertical-container {
   display: flex;
   flex-direction: column;
   flex: 1 1 100%;
-  width: 70vw;
+  min-width: 0;
 }
 
 .placeholder {

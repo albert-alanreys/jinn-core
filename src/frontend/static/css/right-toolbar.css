@@ -1,7 +1,8 @@
 #right-toolbar {
   display: flex;
   flex-direction: row;
-  min-width: 350px;
+  flex: 0 0 350px;
+  max-width: 100%;
   margin-left: 4px;
 }
 
@@ -14,14 +15,20 @@
 #strategies-list,
 #strategy-description,
 #alerts-list {
-  display: flex;
   flex-direction: column;
   justify-content: start;
   align-items: start;
   height: 100%;
 }
 
-#strategy-description,
+#strategies-list {
+  display: flex;
+}
+
+#strategy-description {
+  display: none;
+}
+
 #alerts-list {
   display: none;
 }
@@ -44,7 +51,10 @@
 }
 
 #placeholder-4 {
-  margin: auto;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
   text-align: center;
 }
 
