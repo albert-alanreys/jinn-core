@@ -46,13 +46,13 @@ class DataManager:
         start_to_request_ms = start_ms
         end_to_request_ms = end_ms
 
-        data = self.db_manager.fetch_data(database_name, table_name)
+        data = self.db_manager.load_many(database_name, table_name)
 
         if not data or len(data) < 2:
             request_required = True
 
         if not request_required and start_ms < data[0][0]:
-            availability = self.db_manager.fetch_row_by_key(
+            availability = self.db_manager.load_one(
                 database_name=database_name,
                 table_name='data_availability',
                 key_column='data_name',
@@ -94,7 +94,7 @@ class DataManager:
                 'close': 'REAL',
                 'volume': 'REAL',
             }
-            self.db_manager.load_data(
+            self.db_manager.save(
                 database_name=database_name,
                 table_name=table_name,
                 columns=columns,
@@ -109,7 +109,7 @@ class DataManager:
                 }
                 table_data = [[table_name, True]]
 
-                self.db_manager.load_data(
+                self.db_manager.save(
                     database_name=database_name,
                     table_name='data_availability',
                     columns=columns,

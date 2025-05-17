@@ -7,7 +7,7 @@ class DBManager():
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
-    def load_data(
+    def save(
         self,
         database_name: str,
         table_name: str,
@@ -47,13 +47,13 @@ class DBManager():
             self.connection.commit()
         except Exception as e:
             self.logger.error(
-                f'Failed to load data into {table_name}: '
+                f'Failed to save data into {table_name}: '
                 f'{type(e).__name__} - {e}'
             )
         finally:
             self._disconnect()
 
-    def fetch_data(self, database_name: str, table_name: str) -> list:
+    def load_many(self, database_name: str, table_name: str) -> list:
         try:
             self._connect(database_name)
 
@@ -70,7 +70,7 @@ class DBManager():
             return self.cursor.fetchall()
         except Exception as e:
             self.logger.error(
-                f'Failed to fetch data from {table_name}: '
+                f'Failed to load data from {table_name}: '
                 f'{type(e).__name__} - {e}'
             )
             return []
@@ -91,7 +91,7 @@ class DBManager():
         if self.connection:
             self.connection.close()
 
-    def fetch_row_by_key(
+    def load_one(
         self,
         database_name: str,
         table_name: str,
@@ -122,7 +122,7 @@ class DBManager():
             return row
         except Exception as e:
             self.logger.error(
-                f'Failed to fetch row from {table_name}: '
+                f'Failed to load row from {table_name}: '
                 f'{type(e).__name__} - {e}'
             )
             return []
