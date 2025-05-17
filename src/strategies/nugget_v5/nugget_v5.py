@@ -1,9 +1,11 @@
-import random as rand
+import os
+import random
 
 import numpy as np
 import numba as nb
 
 import src.core.lib.ta as ta
+from src.core.strategy.order_cache import OrderCache
 
 
 class NuggetV5():
@@ -45,11 +47,11 @@ class NuggetV5():
         'atr_length': [i for i in range(1, 21)],
         'take_value': [   
             sorted([
-                float(rand.randint(2, 6)),
-                float(rand.randint(7, 10)),
-                float(rand.randint(11, 16)),
-                float(rand.randint(17, 21)),
-                float(rand.randint(22, 30))
+                float(random.randint(2, 6)),
+                float(random.randint(7, 10)),
+                float(random.randint(11, 16)),
+                float(random.randint(17, 21)),
+                float(random.randint(22, 30))
             ])
             for _ in range(100)
         ],
@@ -1050,45 +1052,32 @@ class NuggetV5():
         )
     
     def trade(self, symbol: str) -> None:
-        if not hasattr(self, 'pending_order_ids'):
-            self.pending_order_ids = {
-                'market_stop_ids': [],
-                'limit_ids': [],
-            }
+        if not hasattr(self, 'order_ids'):
+            self.cache = OrderCache(
+                os.path.join(
+                    os.path.dirname(__file__), '__cache__'
+                )
+            )
+            self.order_ids = self.cache.load(symbol)
 
         if self.alert_cancel:
             self.client.cancel_all_orders(symbol)
 
-        order_ids = self.client.check_stop_orders(
+        self.order_ids['stop_ids'] = self.client.check_stop_orders(
             symbol=symbol,
-            order_ids=self.pending_order_ids['market_stop_ids']
+            order_ids=self.order_ids['stop_ids']
         )
-
-        if order_ids:
-            self.pending_order_ids['market_stop_ids'] = order_ids
-
-        order_ids = self.client.check_limit_orders(
+        self.order_ids['limit_ids'] = self.client.check_limit_orders(
             symbol=symbol,
-            order_ids=self.pending_order_ids['limit_ids']
+            order_ids=self.order_ids['limit_ids']
         )
-
-        if order_ids:
-            self.pending_order_ids['limit_ids'] = order_ids
 
         if self.alert_long_new_stop:
-            self.client.cancel_stop(
-                symbol=symbol, 
-                side='Sell'
-            )
-
-            order_ids = self.client.check_stop_orders(
+            self.client.cancel_stop(symbol=symbol, side='Sell')
+            self.order_ids['stop_ids'] = self.client.check_stop_orders(
                 symbol=symbol,
-                order_ids=self.pending_order_ids['market_stop_ids']
+                order_ids=self.order_ids['stop_ids']
             )
-
-            if order_ids:
-                self.pending_order_ids['market_stop_ids'] = order_ids
-
             order_id = self.client.market_stop_sell(
                 symbol=symbol, 
                 size='100%', 
@@ -1097,22 +1086,14 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['market_stop_ids'].append(order_id)
+                self.order_ids['stop_ids'].append(order_id)
         
         if self.alert_short_new_stop:
-            self.client.cancel_stop(
-                symbol=symbol, 
-                side='Buy'
-            )
-
-            order_ids = self.client.check_stop_orders(
+            self.client.cancel_stop(symbol=symbol,  side='Buy')
+            self.order_ids['stop_ids'] = self.client.check_stop_orders(
                 symbol=symbol,
-                order_ids=self.pending_order_ids['market_stop_ids']
+                order_ids=self.order_ids['stop_ids']
             )
-
-            if order_ids:
-                self.pending_order_ids['market_stop_ids'] = order_ids
-
             order_id = self.client.market_stop_buy(
                 symbol=symbol, 
                 size='100%', 
@@ -1121,7 +1102,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['market_stop_ids'].append(order_id)
+                self.order_ids['stop_ids'].append(order_id)
 
         if self.alert_long:
             self.client.market_open_buy(
@@ -1142,7 +1123,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['market_stop_ids'].append(order_id)
+                self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
                 symbol=symbol,
@@ -1152,7 +1133,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
                 symbol=symbol,
@@ -1162,7 +1143,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
                 symbol=symbol,
@@ -1172,7 +1153,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
                 symbol=symbol,
@@ -1182,7 +1163,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
                 symbol=symbol,
@@ -1192,7 +1173,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
         
         if self.alert_short:
             self.client.market_open_sell(
@@ -1213,7 +1194,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['market_stop_ids'].append(order_id)
+                self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
                 symbol=symbol,
@@ -1223,7 +1204,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
                 symbol=symbol,
@@ -1233,7 +1214,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
                 symbol=symbol,
@@ -1243,7 +1224,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
                 symbol=symbol,
@@ -1253,7 +1234,7 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
                 symbol=symbol,
@@ -1263,4 +1244,6 @@ class NuggetV5():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
+
+        self.cache.save(symbol, self.order_ids)

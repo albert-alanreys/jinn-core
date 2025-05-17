@@ -5,21 +5,21 @@ import src.core.enums as enums
 API_URL = "http://127.0.0.1:5000"
 
 # API-ключи
-BYBIT_API_KEY = "ваш_BYBIT_API_KEY"
-BYBIT_API_SECRET = "ваш_BYBIT_API_SECRET"
+BYBIT_API_KEY = "zSDmv5EJF2c0Zbn8ZA"
+BYBIT_API_SECRET = "RmyMBuF74zUrlvE8las6Mu05qbpUYCzRzrIC"
 
 BINANCE_API_KEY = "ваш_BINANCE_API_KEY"
 BINANCE_API_SECRET = "ваш_BINANCE_API_SECRET"
 
 # Телеграм-бот
-TELEGRAM_BOT_TOKEN = "ваш_TELEGRAM_BOT_TOKEN"
-TELEGRAM_CHAT_ID = "ваш_TELEGRAM_CHAT_ID"
+TELEGRAM_BOT_TOKEN = "5831439822:AAGPGeISSm5lAKyMW6H1w43J-U9b3uhAhwo"
+TELEGRAM_CHAT_ID = "342956167"
 
 # Режим работы программы:
 #   OPTIMIZATION - оптимизация
 #   TESTING - тестирование
 #   AUTOMATION - автоматизация
-MODE = enums.Mode.TESTING
+MODE = enums.Mode.AUTOMATION
 
 # Настройки для различных режимов
 # ---------------------------------------

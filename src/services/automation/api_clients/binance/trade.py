@@ -473,11 +473,14 @@ class TradeClient(BaseClient):
             self.send_exception(e)
 
     def check_stop_orders(self, symbol: str, order_ids: list) -> list:
+        active_order_ids = []
+
         try:
-            for order_id in order_ids.copy():
+            for order_id in order_ids:
                 order_info = self._get_order(symbol, order_id)
 
                 if order_info['status'] == 'NEW':
+                    active_order_ids.append(order_id)
                     continue
 
                 if order_info['status'] == 'FILLED':
@@ -493,8 +496,6 @@ class TradeClient(BaseClient):
                     side = 'покупка'
                 else:
                     side = 'продажа'
-
-                order_ids.remove(order_id)
 
                 alert = {
                     'message': {
@@ -513,17 +514,21 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
                 self.send_telegram_alert(alert)
 
-            return order_ids
+            return active_order_ids
         except Exception as e:
             self.logger.error(e)
             self.send_exception(e)
+            return order_ids
 
     def check_limit_orders(self, symbol: str, order_ids: list) -> list:
+        active_order_ids = []
+
         try:
-            for order_id in order_ids.copy():
+            for order_id in order_ids:
                 order_info = self._get_order(symbol, order_id)
 
                 if order_info['status'] == 'NEW':
+                    active_order_ids.append(order_id)
                     continue
 
                 if order_info['status'] == 'FILLED':
@@ -535,8 +540,6 @@ class TradeClient(BaseClient):
                     side = 'покупка'
                 else:
                     side = 'продажа'
-
-                order_ids.remove(order_id)
 
                 alert = {
                     'message': {
@@ -555,10 +558,11 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
                 self.send_telegram_alert(alert)
 
-            return order_ids
+            return active_order_ids
         except Exception as e:
             self.logger.error(e)
             self.send_exception(e)
+            return order_ids
 
     def _cancel_all_orders(self, symbol: str) -> dict:
         url = f'{self.futures_endpoint}/fapi/v1/allOpenOrders'

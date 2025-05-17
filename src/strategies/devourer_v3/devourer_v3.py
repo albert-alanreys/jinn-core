@@ -1,7 +1,10 @@
+import os
+
 import numpy as np
 import numba as nb
 
 import src.core.lib.ta as ta
+from src.core.strategy.order_cache import OrderCache
 
 
 class DevourerV3():
@@ -975,30 +978,25 @@ class DevourerV3():
         )
 
     def trade(self, symbol: str) -> None:
-        if not hasattr(self, 'pending_order_ids'):
-            self.pending_order_ids = {
-                'market_stop_ids': [],
-                'limit_ids': [],
-            }
+        if not hasattr(self, 'order_ids'):
+            self.cache = OrderCache(
+                os.path.join(
+                    os.path.dirname(__file__), '__cache__'
+                )
+            )
+            self.order_ids = self.cache.load(symbol)
 
         if self.alert_cancel:
             self.client.cancel_all_orders(symbol)
 
-        order_ids = self.client.check_stop_orders(
+        self.order_ids['stop_ids'] = self.client.check_stop_orders(
             symbol=symbol,
-            order_ids=self.pending_order_ids['market_stop_ids']
+            order_ids=self.order_ids['stop_ids']
         )
-
-        if order_ids:
-            self.pending_order_ids['market_stop_ids'] = order_ids
-
-        order_ids = self.client.check_limit_orders(
+        self.order_ids['limit_ids'] = self.client.check_limit_orders(
             symbol=symbol,
-            order_ids=self.pending_order_ids['limit_ids']
+            order_ids=self.order_ids['limit_ids']
         )
-
-        if order_ids:
-            self.pending_order_ids['limit_ids'] = order_ids
 
         if self.alert_exit_long:
             self.client.market_close_sell(
@@ -1032,7 +1030,7 @@ class DevourerV3():
                 )
 
                 if order_id:
-                    self.pending_order_ids['market_stop_ids'].append(order_id)
+                    self.order_ids['stop_ids'].append(order_id)
 
         if self.alert_entry_short:
             self.client.market_open_sell(
@@ -1051,7 +1049,7 @@ class DevourerV3():
             )
 
             if order_id:
-                self.pending_order_ids['market_stop_ids'].append(order_id)
+                self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
                 symbol=symbol,
@@ -1061,4 +1059,6 @@ class DevourerV3():
             )
 
             if order_id:
-                self.pending_order_ids['limit_ids'].append(order_id)
+                self.order_ids['limit_ids'].append(order_id)
+
+        self.cache.save(symbol, self.order_ids)
