@@ -5,7 +5,7 @@ from decimal import Decimal
 import numpy as np
 
 from src.core.enums import Mode
-from src.core.deal_keywords import DealKeywords
+from .deal_keywords import DealKeywords
 
 
 class DataFormatter:

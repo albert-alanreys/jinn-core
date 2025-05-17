@@ -3,7 +3,7 @@ import random as rand
 import numpy as np
 import numba as nb
 
-import src.core.ta as ta
+import src.core.lib.ta as ta
 
 
 class NuggetV2():

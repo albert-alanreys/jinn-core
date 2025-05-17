@@ -3,8 +3,8 @@ import threading
 from flask import Flask
 
 from src.core.enums import Mode
-from .data_formatter import DataFormatter
-from .strategy_manager import StrategyManager
+from src.core.strategies.strategy_manager import StrategyManager
+from .formatting.data_formatter import DataFormatter
 from .routes import register_routes
 
 
