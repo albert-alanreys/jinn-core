@@ -1,9 +1,7 @@
-import logging
 import json
+import logging
 import multiprocessing
 import os
-
-import numpy as np
 
 import src.core.enums as enums
 from src.core.storage.data_manager import DataManager
@@ -23,9 +21,9 @@ class Optimizer:
         self.strategy = optimization_info['strategy']
 
         self.strategies = {}
+        self.data_manager = DataManager()
         self.binance_client = BinanceClient()
         self.bybit_client = BybitClient()
-        self.data_manager = DataManager()
         self.logger = logging.getLogger(__name__)
 
     def optimize(self) -> None:
@@ -59,39 +57,48 @@ class Optimizer:
                     elif exchange == enums.Exchange.BYBIT.name.lower():
                         client = self.bybit_client
 
+                    if market == enums.Market.FUTURES.name:
+                        market = enums.Market.FUTURES
+                    elif market == enums.Market.SPOT.name:
+                        market = enums.Market.SPOT
+
                     interval = client.get_valid_interval(interval)
-                    rows, _ = self.db_manager.fetch_data(
-                        db_name=f'{exchange.lower()}.db',
-                        table=f'{symbol}_{market}_{interval}',
-                        start=start,
-                        end=end
-                    )
-                    klines = np.array(rows)
 
-                    fold_size = len(klines) // 3
-                    fold_1 = klines[:fold_size]
-                    fold_2 = klines[fold_size : 2 * fold_size]
-                    fold_3 = klines[2 * fold_size :]
+                    try:
+                        klines = self.data_manager.get_data(
+                            client=client,
+                            market=market,
+                            symbol=symbol,
+                            interval=interval,
+                            start=start,
+                            end=end
+                        )
+                        p_precision = client.get_price_precision(symbol)
+                        q_precision = client.get_qty_precision(symbol)
 
-                    p_precision = client.get_price_precision(symbol)
-                    q_precision = client.get_qty_precision(symbol)
+                        fold_size = len(klines) // 3
+                        fold_1 = klines[:fold_size]
+                        fold_2 = klines[fold_size : 2 * fold_size]
+                        fold_3 = klines[2 * fold_size :]
 
-                    strategy_data = {
-                        'name': strategy.name.lower(),
-                        'exchange': exchange,
-                        'market': market,
-                        'symbol': symbol,
-                        'interval': interval,
-                        'start': start,
-                        'end': end,
-                        'type': strategy.value,
-                        'fold_1': fold_1,
-                        'fold_2': fold_2,
-                        'fold_3': fold_3,
-                        'p_precision': p_precision,
-                        'q_precision': q_precision,
-                    }
-                    self.strategies[id(strategy_data)] = strategy_data
+                        strategy_data = {
+                            'name': strategy.name.lower(),
+                            'exchange': exchange,
+                            'market': market.value,
+                            'symbol': symbol,
+                            'interval': interval,
+                            'start': start,
+                            'end': end,
+                            'type': strategy.value,
+                            'fold_1': fold_1,
+                            'fold_2': fold_2,
+                            'fold_3': fold_3,
+                            'p_precision': p_precision,
+                            'q_precision': q_precision,
+                        }
+                        self.strategies[id(strategy_data)] = strategy_data
+                    except Exception as e:
+                        self.logger.error(e)
 
         if len(self.strategies) == 0:
             match self.exchange:
@@ -107,68 +114,79 @@ class Optimizer:
                     market = 'FUTURES'
 
             self.interval = client.get_valid_interval(self.interval)
-            rows, _ = self.db_manager.fetch_data(
-                db_name=f'{self.exchange.value.lower()}.db',
-                table=f'{self.symbol}_{market}_{self.interval}',
-                start=self.start,
-                end=self.end
-            )
-            klines = np.array(rows)
 
-            fold_size = len(klines) // 3
-            fold_1 = klines[:fold_size]
-            fold_2 = klines[fold_size : 2 * fold_size]
-            fold_3 = klines[2 * fold_size :]
+            try:
+                klines = self.data_manager.get_data(
+                    client=client,
+                    market=self.market,
+                    symbol=self.symbol,
+                    interval=self.interval,
+                    start=self.start,
+                    end=self.end
+                )
+                p_precision = client.get_price_precision(self.symbol)
+                q_precision = client.get_qty_precision(self.symbol)
 
-            p_precision = client.get_price_precision(self.symbol)
-            q_precision = client.get_qty_precision(self.symbol)
+                fold_size = len(klines) // 3
+                fold_1 = klines[:fold_size]
+                fold_2 = klines[fold_size : 2 * fold_size]
+                fold_3 = klines[2 * fold_size :]
 
-            strategy_data = {
-                'name': self.strategy.name.lower(),
-                'exchange': self.exchange.value,
-                'market': self.market.value,
-                'symbol': self.symbol,
-                'interval': self.interval,
-                'start': self.start,
-                'end': self.end,
-                'type': self.strategy.value,
-                'fold_1': fold_1,
-                'fold_2': fold_2,
-                'fold_3': fold_3,
-                'p_precision': p_precision,
-                'q_precision': q_precision,
-            }
-            self.strategies[id(strategy_data)] = strategy_data
+                strategy_data = {
+                    'name': self.strategy.name.lower(),
+                    'exchange': self.exchange.value,
+                    'market': self.market.value,
+                    'symbol': self.symbol,
+                    'interval': self.interval,
+                    'start': self.start,
+                    'end': self.end,
+                    'type': self.strategy.value,
+                    'fold_1': fold_1,
+                    'fold_2': fold_2,
+                    'fold_3': fold_3,
+                    'p_precision': p_precision,
+                    'q_precision': q_precision,
+                }
+                self.strategies[id(strategy_data)] = strategy_data
+            except Exception as e:
+                self.logger.error(e)
 
         strategies_info = [
-            ' • '.join(
-                [
-                    item['name'], item['exchange'], item['market'],
-                    item['symbol'], str(item['interval']),
-                    item['start'], item['end']
-                ]
-            )
+            ' | '.join([
+                item['name'].capitalize(),
+                item['exchange'].capitalize(),
+                item['market'],
+                item['symbol'],
+                str(item['interval']),
+                f"{item['start']} → {item['end']}"
+            ])
             for item in self.strategies.values()
         ]
         self.logger.info(
-            f'Optimization started for:\n{'\n'.join(strategies_info)}'
+            'Optimization started for:\n' +
+            '\n'.join(strategies_info)
         )
 
         with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
-            delattr(self, 'db_manager')
-            best_samples_list = p.map(self.run_ga, self.strategies.values())
+            if hasattr(self, 'data_manager'):
+                delattr(self, 'data_manager')
+
+            best_samples_list = p.map(
+                func=self._run_optimization,
+                iterable=self.strategies.values()
+            )
 
         for key, samples in zip(self.strategies, best_samples_list):
             self.strategies[key]['best_samples'] = samples
 
-        self.save_params()
+        self._save_params()
 
-    def run_ga(self, strategy_data: dict) -> list:
+    def _run_optimization(self, strategy_data: dict) -> list:
         ga = GA(strategy_data)
         ga.fit()
         return ga.best_samples
 
-    def save_params(self) -> None:
+    def _save_params(self) -> None:
         for strategy in self.strategies.values():
             filename = (
                 f'{strategy['exchange']}_'

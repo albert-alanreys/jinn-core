@@ -4,7 +4,7 @@ from numpy import ndarray
 
 
 class GA:
-    iterations = 10000
+    iterations = 500
     population_size = 50
     max_population_size = 300
 
@@ -26,20 +26,20 @@ class GA:
             self.train_folds = [folds[j] for j in range(3) if j != i]
             self.validation_fold = folds[i]
 
-            self.create()
+            self._create()
 
             for _ in range(self.iterations):
-                self.select()
-                self.recombine()
-                self.mutate()
-                self.expand()
-                self.kill()
-                self.destroy()
+                self._select()
+                self._recombine()
+                self._mutate()
+                self._expand()
+                self._kill()
+                self._destroy()
 
-            self.elect()
+            self._elect()
             self.population.clear()
 
-    def create(self) -> None:
+    def _create(self) -> None:
         samples = [
             [               
                 random.choice(values)
@@ -50,14 +50,14 @@ class GA:
 
         for sample in samples:
             fitness = (
-                self.evaluate(sample, self.train_folds[0]) +
-                self.evaluate(sample, self.train_folds[1])
+                self._evaluate(sample, self.train_folds[0]) +
+                self._evaluate(sample, self.train_folds[1])
             )
             self.population[fitness] = sample
 
         self.sample_len = len(self.strategy.opt_params)
 
-    def evaluate(self, sample: list, fold: ndarray) -> float:
+    def _evaluate(self, sample: list, fold: ndarray) -> float:
         instance = self.strategy(opt_params=sample)
         instance.start(
             {
@@ -74,7 +74,7 @@ class GA:
         )
         return score
 
-    def select(self) -> None:
+    def _select(self) -> None:
         if random.randint(0, 1) == 0:
             best_score = max(self.population)
             parent_1 = self.population[best_score]
@@ -87,7 +87,7 @@ class GA:
         else:
             self.parents = random.sample(list(self.population.values()), 2)
 
-    def recombine(self) -> None:
+    def _recombine(self) -> None:
         r_number = random.randint(0, 1)
 
         if r_number == 0:
@@ -107,7 +107,7 @@ class GA:
                 self.parents[0][delimiter_2:]
             )
 
-    def mutate(self) -> None:
+    def _mutate(self) -> None:
         if random.random() <= 0.9:
             gene_num = random.randint(0, self.sample_len - 1)
             gene_value = random.choice(
@@ -120,18 +120,18 @@ class GA:
                     list(self.strategy.opt_params.values())[i]
                 )
 
-    def expand(self) -> None:
+    def _expand(self) -> None:
         fitness = (
-            self.evaluate(self.child, self.train_folds[0]) +
-            self.evaluate(self.child, self.train_folds[1])
+            self._evaluate(self.child, self.train_folds[0]) +
+            self._evaluate(self.child, self.train_folds[1])
         )
         self.population[fitness] = self.child
 
-    def kill(self) -> None:
+    def _kill(self) -> None:
         while len(self.population) > self.max_population_size:
             self.population.pop(min(self.population))
 
-    def destroy(self) -> None:
+    def _destroy(self) -> None:
         if random.random() > 0.001:
             return
 
@@ -143,14 +143,14 @@ class GA:
         for i in range(int(len(self.population) * 0.5)):
             self.population.pop(sorted_population[i][0])
 
-    def elect(self) -> None:
+    def _elect(self) -> None:
         best_score = float('-inf')
         best_sample = None
 
         for score, sample in self.population.items():
             fitness = (
                 score * 0.3 +
-                self.evaluate(sample, self.validation_fold) * 0.7
+                self._evaluate(sample, self.validation_fold) * 0.7
             )
 
             if fitness > best_score:

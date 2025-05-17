@@ -16,7 +16,6 @@ TELEGRAM_BOT_TOKEN = "ваш_TELEGRAM_BOT_TOKEN"
 TELEGRAM_CHAT_ID = "ваш_TELEGRAM_CHAT_ID"
 
 # Режим работы программы:
-#   INGESTION - сбор данных
 #   OPTIMIZATION - оптимизация
 #   TESTING - тестирование
 #   AUTOMATION - автоматизация

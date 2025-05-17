@@ -111,7 +111,7 @@ class Tester:
                             'client': client,
                             'exchange': exchange,
                             'symbol': symbol,
-                            'market': market,
+                            'market': market.value,
                             'interval': interval,
                             'klines': klines,
                             'p_precision': p_precision,

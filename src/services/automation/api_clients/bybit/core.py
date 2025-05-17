@@ -21,16 +21,11 @@ class BybitClient():
         )
 
     def __getattr__(self, name: str) -> Any:
-        if hasattr(self.account, name):
-            return getattr(self.account, name)
-
-        if hasattr(self.market, name):
-            return getattr(self.market, name)
-        
-        if hasattr(self.position, name):
-            return getattr(self.position, name)
-        
-        if hasattr(self.trade, name):
-            return getattr(self.trade, name)
+        for subclient_name in ('account', 'market', 'position', 'trade'):
+            try:
+                subclient = object.__getattribute__(self, subclient_name)
+                return getattr(subclient, name)
+            except AttributeError:
+                continue
 
         raise AttributeError(f'BybitClient has no attribute "{name}"')

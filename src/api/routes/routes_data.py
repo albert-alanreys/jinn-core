@@ -22,8 +22,6 @@ def register_data_routes(app):
     @app.route('/data/update/<string:strategy_id>', methods=['PATCH'])
     def update_data(strategy_id):
         try:
-            print(request.get_json())
-
             data = request.get_json()
             param = data.get('param')
             value = data.get('value')

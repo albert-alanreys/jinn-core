@@ -36,12 +36,12 @@ class DataFormatter:
             'market': strategy_data['market'],
             'interval': strategy_data['interval'],
             'mintick': strategy_data['p_precision'],
-            'klines': self.format_klines(strategy_data['klines']),
-            'lines': self.format_lines(
+            'klines': self._format_klines(strategy_data['klines']),
+            'lines': self._format_lines(
                 strategy_data['klines'],
                 strategy_data['instance'].lines
             ),
-            'markers': self.format_deal_markers(
+            'markers': self._format_deal_markers(
                 strategy_data['instance'].completed_deals_log,
                 strategy_data['instance'].open_deals_log
             )
@@ -49,12 +49,12 @@ class DataFormatter:
 
         if self.mode is Mode.TESTING:
             self.main_data[strategy_id]['reportData'] = {
-                'equity': self.format_equity(strategy_data['equity']),
+                'equity': self._format_equity(strategy_data['equity']),
                 'metrics': strategy_data['metrics'],
-                'completedDealsLog': self.format_completed_deals(
+                'completedDealsLog': self._format_completed_deals(
                     strategy_data['instance'].completed_deals_log
                 ),
-                'openDealsLog': self.format_open_deals(
+                'openDealsLog': self._format_open_deals(
                     strategy_data['instance'].open_deals_log
                 )
             }
@@ -69,7 +69,7 @@ class DataFormatter:
             'parameters': strategy_data['parameters']
         }
 
-    def format_klines(self, klines: np.ndarray) -> list:
+    def _format_klines(self, klines: np.ndarray) -> list:
         result = [
             {
                 'time': kline[0] / 1000,
@@ -81,7 +81,7 @@ class DataFormatter:
         ]
         return result
 
-    def format_lines(self, klines: np.ndarray, lines: dict) -> dict:
+    def _format_lines(self, klines: np.ndarray, lines: dict) -> dict:
         result = deepcopy(lines)
 
         for name in result.keys():
@@ -109,7 +109,7 @@ class DataFormatter:
 
         return result
 
-    def format_deal_markers(
+    def _format_deal_markers(
         self,
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
@@ -222,7 +222,7 @@ class DataFormatter:
 
         return sorted(result, key=lambda x: x['time'])
 
-    def format_equity(self, equity: np.ndarray) -> list:
+    def _format_equity(self, equity: np.ndarray) -> list:
         result = [
             {
                 'time': i + 1,
@@ -231,7 +231,7 @@ class DataFormatter:
         ]
         return result
 
-    def format_completed_deals(self, completed_deals_log: np.ndarray) -> list:
+    def _format_completed_deals(self, completed_deals_log: np.ndarray) -> list:
         result = completed_deals_log.reshape((-1, 13)).tolist()
 
         for deal in result:
@@ -247,7 +247,7 @@ class DataFormatter:
 
         return result
 
-    def format_open_deals(self, open_deals_log: np.ndarray) -> list:
+    def _format_open_deals(self, open_deals_log: np.ndarray) -> list:
         result = list(
             filter(
                 lambda deal: not np.isnan(deal[0]),
