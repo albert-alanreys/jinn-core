@@ -1,3 +1,5 @@
+import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 
@@ -19,20 +21,21 @@ class MarketClient(BaseClient):
         'D': 'D', 'd': 'D', '1d': 'D',
     }
     interval_ms = {
-        1: 60 * 1000,
-        5: 5 * 60 * 1000,
-        15: 15 * 60 * 1000,
-        30: 30 * 60 * 1000,
-        60: 60 * 60 * 1000,
-        120: 2 * 60 * 60 * 1000,
-        240: 4 * 60 * 60 * 1000,
-        360: 6 * 60 * 60 * 1000,
-        720: 12 * 60 * 60 * 1000,
-        'D': 24 * 60 * 60 * 1000,
+        1: 60000,
+        5: 300000,
+        15: 900000,
+        30: 1800000,
+        60: 3600000,
+        120: 7200000,
+        240: 14400000,
+        360: 21600000,
+        720: 43200000,
+        'D': 86400000,
     }
 
     def __init__(self, alerts: list) -> None:
         super().__init__(alerts)
+        self.logger = logging.getLogger(__name__)
 
     def get_historical_klines(
         self,
@@ -42,30 +45,44 @@ class MarketClient(BaseClient):
         start: int,
         end: int
     ) -> list:
-        interval_ms = self.interval_ms[interval]
-        step = interval_ms * 1000
-        time_ranges = [
-            (start, min(start + step - interval_ms, end))
-            for start in range(start, end, step)
-        ]
-        klines = []
+        try:
+            valid_interval = self.get_valid_interval(interval)
+            interval_ms = self.interval_ms[valid_interval]
+            step = interval_ms * 1000
 
-        with ThreadPoolExecutor(max_workers=7) as executor:
-            results = executor.map(
-                lambda time_range: self._get_klines(
-                    market=market,
-                    symbol=symbol,
-                    interval=interval,
-                    start=time_range[0],
-                    end=time_range[1]
-                ),
-                time_ranges
+            time_ranges = [
+                (start, min(start + step - interval_ms, end))
+                for start in range(start, end, step)
+            ]
+            klines = []
+
+            with ThreadPoolExecutor(max_workers=7) as executor:
+                results = executor.map(
+                    lambda time_range: self._get_klines(
+                        market=market,
+                        symbol=symbol,
+                        interval=valid_interval,
+                        start=time_range[0],
+                        end=time_range[1]
+                    ),
+                    time_ranges
+                )
+
+                for result in results:
+                    klines.extend(result)
+
+            return klines
+        except Exception as e:
+            self.logger.error(
+                f'Failed to request data | '
+                f'Bybit | '
+                f'{market.value} | '
+                f'{symbol} | '
+                f'{interval} | '
+                f'{type(e).__name__} - {e}'
+
             )
-
-            for result in results:
-                klines.extend(result)
-
-        return klines
+            return []
 
     def get_last_klines(
         self,
@@ -73,31 +90,83 @@ class MarketClient(BaseClient):
         interval: str,
         limit: int = 1000
     ) -> list:
-        klines = self._get_klines(
-            market=enums.Market.FUTURES,
-            symbol=symbol,
-            interval=interval,
-            limit=limit
-        )
+        try:
+            valid_interval = self.get_valid_interval(interval)
 
-        if klines is None:
+            if limit <= 1000:
+                return self._get_klines(
+                    market=enums.Market.FUTURES,
+                    symbol=symbol,
+                    interval=valid_interval,
+                    limit=limit
+                )
+
+            interval_ms = self.interval_ms[valid_interval]
+            end = int(time.time() * 1000)
+            start = end - interval_ms * limit
+            step = interval_ms * 1000
+
+            time_ranges = [
+                (start, min(start + step - interval_ms, end))
+                for start in range(start, end, step)
+            ]
+            klines = []
+
+            with ThreadPoolExecutor(max_workers=7) as executor:
+                results = executor.map(
+                    lambda time_range: self._get_klines(
+                        market=enums.Market.FUTURES,
+                        symbol=symbol,
+                        interval=valid_interval,
+                        start=time_range[0],
+                        end=time_range[1]
+                    ),
+                    time_ranges
+                )
+
+                for result in results:
+                    klines.extend(result)
+
+            return klines[-limit:]
+        except Exception as e:
+            self.logger.error(
+                f'Failed to request data | '
+                f'Bybit | '
+                f'{enums.Market.FUTURES.value} | '
+                f'{symbol} | '
+                f'{interval} | '
+                f'{type(e).__name__} - {e}'
+
+            )
             return []
-
-        return klines
 
     @lru_cache
     def get_price_precision(self, symbol: str) -> float:
-        symbol_info = (
-            self._get_symbol_info(symbol)['result']['list'][0]
-        )
-        return float(symbol_info['priceFilter']['tickSize'])
+        try:
+            symbol_info = (
+                self._get_symbol_info(symbol)['result']['list'][0]
+            )
+            return float(symbol_info['priceFilter']['tickSize'])
+        except Exception as e:
+            self.logger.error(
+                f'Failed to get price precision for {symbol} | '
+                f'{type(e).__name__} - {e}'
+            )
+            return 0.0
 
     @lru_cache
     def get_qty_precision(self, symbol: str) -> float:
-        symbol_info = (
-            self._get_symbol_info(symbol)['result']['list'][0]
-        )
-        return float(symbol_info['lotSizeFilter']['qtyStep'])
+        try:
+            symbol_info = (
+                self._get_symbol_info(symbol)['result']['list'][0]
+            )
+            return float(symbol_info['lotSizeFilter']['qtyStep'])
+        except Exception as e:
+            self.logger.error(
+                f'Failed to get qty precision for {symbol} | '
+                f'{type(e).__name__} - {e}'
+            )
+            return 0.0
 
     def get_tickers(self, symbol: str) -> dict:
         url = f'{self.base_endpoint}/v5/market/tickers'

@@ -28,8 +28,8 @@ MODE = enums.Mode.TESTING
 AUTOMATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
-    'interval': 1,
-    'strategy': enums.Strategy.DEVOURER_V3,
+    'interval': 60,
+    'strategy': enums.Strategy.NUGGET_V2,
 }
 
 # Режим OPTIMIZATION (оптимизация)

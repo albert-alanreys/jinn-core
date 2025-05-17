@@ -67,26 +67,70 @@ class Automizer():
                         )
 
                 interval = client.get_valid_interval(interval)
-                raw_klines = client.get_last_klines(symbol, interval)
 
-                if not raw_klines:
-                    self.logger.error(f'No klines for {symbol} • {interval}')
-                    continue
+                try:
+                    raw_klines = client.get_last_klines(symbol, interval)
+                    klines = np.array(raw_klines)[:-1, :6].astype(float)
+                    p_precision = client.get_price_precision(symbol)
+                    q_precision = client.get_qty_precision(symbol)
+                    instance = strategy.value(all_params=parameters)
+                    strategy_data = {
+                        'name': strategy.name,
+                        'type': strategy.value,
+                        'instance': instance,
+                        'parameters': instance.__dict__.copy(),
+                        'client': client,
+                        'exchange': exchange,
+                        'symbol': symbol,
+                        'market': 'FUTURES',
+                        'interval': interval,
+                        'klines': klines,
+                        'p_precision': p_precision,
+                        'q_precision': q_precision,
+                        'alerts': self.alerts,
+                        'updated': False
+                    }
+                    instance.start(
+                        {
+                            'client': client,
+                            'klines': klines,
+                            'p_precision': p_precision,
+                            'q_precision': q_precision,
+                        }
+                    )
+                    self.strategies[str(id(strategy_data))] = strategy_data
+                except Exception as e:
+                    self.logger.error(e)
 
-                klines = np.array(raw_klines)[:-1, :6].astype(float)
-                p_precision = client.get_price_precision(symbol)
-                q_precision = client.get_qty_precision(symbol)
-                instance = strategy.value(all_params=parameters)
+        if len(self.strategies) == 0:
+            match self.exchange:
+                case enums.Exchange.BINANCE:
+                    client = self.binance_client
+                case enums.Exchange.BYBIT:
+                    client = self.bybit_client
+
+            self.interval = client.get_valid_interval(self.interval)
+
+            try:
+                raw_klines = client.get_last_klines(
+                    symbol=self.symbol,
+                    interval=self.interval,
+                    limit=5000
+                )
+                klines = np.array(raw_klines)[:, :6].astype(float)
+                p_precision = client.get_price_precision(self.symbol)
+                q_precision = client.get_qty_precision(self.symbol)
+                instance = self.strategy.value()
                 strategy_data = {
-                    'name': strategy.name,
-                    'type': strategy.value,
+                    'name': self.strategy.name,
+                    'type': self.strategy.value,
                     'instance': instance,
                     'parameters': instance.__dict__.copy(),
                     'client': client,
-                    'exchange': exchange,
-                    'symbol': symbol,
+                    'exchange': self.exchange.value,
+                    'symbol': self.symbol,
                     'market': 'FUTURES',
-                    'interval': interval,
+                    'interval': self.interval,
                     'klines': klines,
                     'p_precision': p_precision,
                     'q_precision': q_precision,
@@ -102,57 +146,13 @@ class Automizer():
                     }
                 )
                 self.strategies[str(id(strategy_data))] = strategy_data
+            except Exception as e:
+                self.logger.error(e)
 
-        if len(self.strategies) == 0:
-            match self.exchange:
-                case enums.Exchange.BINANCE:
-                    client = self.binance_client
-                case enums.Exchange.BYBIT:
-                    client = self.bybit_client
-
-            self.interval = client.get_valid_interval(self.interval)
-            raw_klines = client.get_last_klines(self.symbol, self.interval)
-
-            if not raw_klines:
-                self.logger.error(
-                    f'No klines for {self.symbol} • {self.interval}'
-                )
-                raise Exception
-
-            klines = np.array(raw_klines)[:-1, :6].astype(float)
-            p_precision = client.get_price_precision(self.symbol)
-            q_precision = client.get_qty_precision(self.symbol)
-            instance = self.strategy.value()
-            strategy_data = {
-                'name': self.strategy.name,
-                'type': self.strategy.value,
-                'instance': instance,
-                'parameters': instance.__dict__.copy(),
-                'client': client,
-                'exchange': self.exchange.value,
-                'symbol': self.symbol,
-                'market': 'FUTURES',
-                'interval': self.interval,
-                'klines': klines,
-                'p_precision': p_precision,
-                'q_precision': q_precision,
-                'alerts': self.alerts,
-                'updated': False
-            }
-            instance.start(
-                {
-                    'client': client,
-                    'klines': klines,
-                    'p_precision': p_precision,
-                    'q_precision': q_precision,
-                }
-            )
-            self.strategies[str(id(strategy_data))] = strategy_data
-
-        thread = threading.Thread(target=self.run, daemon=True)
+        thread = threading.Thread(target=self._run_automation, daemon=True)
         thread.start()
 
-    def run(self) -> None:
+    def _run_automation(self) -> None:
         while True:
             for strategy_id, strategy_data in self.strategies.items():
                 raw_klines = strategy_data['client'].get_last_klines(
@@ -161,9 +161,9 @@ class Automizer():
                     limit=2
                 )
 
-                if not raw_klines:
+                if len(raw_klines) < 2:
                     continue
-                
+
                 new_klines = np.array(raw_klines)[:-1, :6].astype(float)
                 last_kline_time = strategy_data['klines'][-1, 0]
                 new_kline_time = new_klines[-1, 0]
