@@ -27,13 +27,13 @@ def register_data_routes(app):
             value = data.get('value')
 
             app.manager.update_strategy(
-                strategy_id=strategy_id,
+                id=strategy_id,
                 param_name=param,
                 new_value=value
             )
             app.formatter.format_strategy_data(
-                strategy_id=strategy_id,
-                strategy_data=app.data_to_format[strategy_id]
+                id=strategy_id,
+                data=app.data_to_format[strategy_id]
             )
             return json.dumps({'status': 'success'}), 200
         except (ValueError, KeyError, TypeError):

@@ -1,48 +1,54 @@
-import os
-
 import numpy as np
 import numba as nb
 
 import src.core.lib.ta as ta
-from src.core.strategy.order_cache import OrderCache
+from src.core.strategy.base_strategy import BaseStrategy
 
 
-class NuggetV4():
+class NuggetV4(BaseStrategy):
     # Strategy parameters
+    # Names must be in double quotes
+
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
-    margin_type = 0
-    # direction: 0 - 'all', 1 — 'longs', 2 — 'shorts'
-    direction = 0
-    initial_capital = 10000.0
-    min_capital = 100.0
-    commission = 0.075
-    # order_size_type: 0 — 'PERCENT', 1 — 'CURRENCY'
-    order_size_type = 0
-    order_size = 100.0
-    leverage = 1
-    stop_type = 1
-    stop = 1.0
-    trail_stop = 4
-    trail_percent = 0.0
-    take_volume_1 = [10.0, 10.0, 10.0, 10.0, 60.0]
-    take_volume_2 = [10.0, 5.0, 5.0, 5.0, 5.0, 5.0, 10.0, 15.0, 10.0, 30.0]
-    st_atr_period = 7
-    st_factor = 10.5
-    st_upper_band = 4.8
-    st_lower_band = 2.2
-    rsi_length = 7
-    rsi_long_upper_bound = 47.0
-    rsi_long_lower_bound = 1.0
-    rsi_short_upper_bound = 100.0
-    rsi_short_lower_bound = 58.0
-    bb_filter = False
-    ma_length = 6
-    bb_mult = 2.5
-    bb_long_bound = 44.0
-    bb_short_bound = 55.0
-    pivot_bars = 2
-    look_back = 35
-    channel_range = 7.0
+    # direction: 0 - "all", 1 — "longs", 2 — "shorts"
+    # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
+
+    params = {
+        "margin_type": 0,
+        "direction": 0,
+        "initial_capital": 10000.0,
+        "min_capital": 100.0,
+        "commission": 0.075,
+        "order_size_type": 0,
+        "order_size": 100.0,
+        "leverage": 1,
+        "stop_type": 1,
+        "stop": 1.0,
+        "trail_stop": 4,
+        "trail_percent": 0.0,
+        "take_volume_1": [10.0, 10.0, 10.0, 10.0, 60.0],
+        "take_volume_2": [
+            10.0, 5.0, 5.0, 5.0, 5.0,
+            5.0, 10.0, 15.0, 10.0, 30.0
+        ],
+        "st_atr_period": 7,
+        "st_factor": 10.5,
+        "st_upper_band": 4.8,
+        "st_lower_band": 2.2,
+        "rsi_length": 7,
+        "rsi_long_upper_limit": 47.0,
+        "rsi_long_lower_limit": 1.0,
+        "rsi_short_upper_limit": 100.0,
+        "rsi_short_lower_limit": 58.0,
+        "bb_filter": False,
+        "ma_length": 6,
+        "bb_mult": 2.5,
+        "bb_long_limit": 44.0,
+        "bb_short_limit": 55.0,
+        "pivot_bars": 2,
+        "look_back": 35,
+        "channel_range": 7.0
+    }
 
     # Parameters to be optimized and their possible values
     opt_params = {
@@ -99,22 +105,22 @@ class NuggetV4():
         'st_upper_band': [i / 10 for i in range(46, 71)],
         'st_lower_band': [i / 10 for i in range(10, 41)],
         'rsi_length': [i for i in range(3, 22)],
-        'rsi_long_upper_bound': [float(i) for i in range(29, 51)],
-        'rsi_long_lower_bound': [float(i) for i in range(1, 29)],
-        'rsi_short_upper_bound': [float(i) for i in range(68, 101)],
-        'rsi_short_lower_bound': [float(i) for i in range(50, 68)],
+        'rsi_long_upper_limit': [float(i) for i in range(29, 51)],
+        'rsi_long_lower_limit': [float(i) for i in range(1, 29)],
+        'rsi_short_upper_limit': [float(i) for i in range(68, 101)],
+        'rsi_short_lower_limit': [float(i) for i in range(50, 68)],
         'bb_filter': [True, False],
         'ma_length': [i for i in range(3, 26)],
         'bb_mult': [i / 10 for i in range(10, 31)],
-        'bb_long_bound': [float(i) for i in range(20, 51)],
-        'bb_short_bound': [float(i) for i in range(50, 81)],
+        'bb_long_limit': [float(i) for i in range(20, 51)],
+        'bb_short_limit': [float(i) for i in range(50, 81)],
         'pivot_bars': [i for i in range(1, 21)],
         'look_back': [i for i in range(10, 101, 5)],
         'channel_range': [float(i) for i in range(3, 21)]
     }
 
     # For frontend
-    line_options = {
+    indicator_options = {
         'SL': {'color': '#FF0000'},
         'TP #1': {'color': '#008000'},
         'TP #2': {'color': '#008000'},
@@ -128,85 +134,10 @@ class NuggetV4():
         'TP #10': {'color': '#008000'}
     }
 
-    # Class attributes
-    class_attributes = (
-        'opt_params',
-        'line_options',
-        'class_attributes',
-        'start',
-        'calculate',
-        'trade'
-    )
+    def __init__(self, all_params = None, opt_params = None) -> None:
+        super().__init__(all_params=all_params, opt_params=opt_params)
 
-    def __init__(
-        self,
-        opt_params: list | None = None,
-        all_params: list | None = None
-    ) -> None:
-        for key, value in NuggetV4.__dict__.items():
-            if (not key.startswith('__') and
-                    key not in NuggetV4.class_attributes):
-                self.__dict__[key] = value
-
-        if opt_params is not None:
-            self.stop_type = opt_params[0]
-            self.stop = opt_params[1]
-            self.trail_stop = opt_params[2]
-            self.trail_percent = opt_params[3]
-            self.take_volume_1 = opt_params[4]
-            self.take_volume_2 = opt_params[5]
-            self.st_atr_period = opt_params[6]
-            self.st_factor = opt_params[7]
-            self.st_upper_band = opt_params[8]
-            self.st_lower_band = opt_params[9]
-            self.rsi_length = opt_params[10]
-            self.rsi_long_upper_bound = opt_params[11]
-            self.rsi_long_lower_bound = opt_params[12]
-            self.rsi_short_upper_bound = opt_params[13]
-            self.rsi_short_lower_bound = opt_params[14]
-            self.bb_filter = opt_params[15]
-            self.ma_length = opt_params[16]
-            self.bb_mult = opt_params[17]
-            self.bb_long_bound = opt_params[18]
-            self.bb_short_bound = opt_params[19]
-            self.pivot_bars = opt_params[20]
-            self.look_back = opt_params[21]
-            self.channel_range = opt_params[22]
-
-        if all_params is not None:
-            self.margin_type = all_params[0]
-            self.direction = all_params[1]
-            self.initial_capital = all_params[2]
-            self.min_capital = all_params[3]
-            self.commission = all_params[4]
-            self.order_size_type = all_params[5]
-            self.order_size = all_params[6]
-            self.leverage = all_params[7]
-            self.stop_type = all_params[8]
-            self.stop = all_params[9]
-            self.trail_stop = all_params[10]
-            self.trail_percent = all_params[11]
-            self.take_volume_1 = all_params[12]
-            self.take_volume_2 = all_params[13]
-            self.st_atr_period = all_params[14]
-            self.st_factor = all_params[15]
-            self.st_upper_band = all_params[16]
-            self.st_lower_band = all_params[17]
-            self.rsi_length = all_params[18]
-            self.rsi_long_upper_bound = all_params[19]
-            self.rsi_long_lower_bound = all_params[20]
-            self.rsi_short_upper_bound = all_params[21]
-            self.rsi_short_lower_bound = all_params[22]
-            self.bb_filter = all_params[23]
-            self.ma_length = all_params[24]
-            self.bb_mult = all_params[25]
-            self.bb_long_bound = all_params[26]
-            self.bb_short_bound = all_params[27]
-            self.pivot_bars = all_params[28]
-            self.look_back = all_params[29]
-            self.channel_range = all_params[30]
-
-    def start(self, exchange_data: dict) -> None:
+    def start(self, client, market_data) -> None:
         self.open_deals_log = np.full(5, np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -215,15 +146,16 @@ class NuggetV4():
         self.entry_date = np.nan
         self.deal_type = np.nan
 
-        self.client = exchange_data.get('client', None)
-        self.time = exchange_data['klines'][:, 0]
-        self.high = exchange_data['klines'][:, 2]
-        self.low = exchange_data['klines'][:, 3]
-        self.close = exchange_data['klines'][:, 4]
-        self.p_precision = exchange_data['p_precision']
-        self.q_precision = exchange_data['q_precision']
+        self.client = client
+        self.symbol = market_data['symbol']
+        self.time = market_data['klines'][:, 0]
+        self.high = market_data['klines'][:, 2]
+        self.low = market_data['klines'][:, 3]
+        self.close = market_data['klines'][:, 4]
+        self.p_precision = market_data['p_precision']
+        self.q_precision = market_data['q_precision']
 
-        self.equity = self.initial_capital
+        self.equity = self.params['initial_capital']
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.array(
             [
@@ -252,22 +184,38 @@ class NuggetV4():
         self.last_pivot = np.nan
         self.pivot_HH = np.nan
         self.pivot_LL = np.nan
-        self.ds = ta.ds(self.high, self.low, self.close,
-                        self.st_factor, self.st_atr_period)
-        self.change_upper_band = ta.change(self.ds[0], 1)
-        self.change_lower_band = ta.change(self.ds[1], 1)
-        self.rsi = ta.rsi(self.close, self.rsi_length)
 
-        if self.bb_filter:
+        self.ds = ta.ds(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            factor=self.params['st_factor'],
+            atr_length=self.params['st_atr_period']
+        )
+        self.change_upper_band = ta.change(source=self.ds[0], length=1)
+        self.change_lower_band = ta.change(source=self.ds[1], length=1)
+        self.rsi = ta.rsi(source=self.close, length=self.params['rsi_length'])
+
+        if self.params['bb_filter']:
             self.bb_rsi = ta.bb(
-                self.rsi, self.ma_length, self.bb_mult)
+                source=self.rsi,
+                length=self.params['ma_length'],
+                mult=self.params['bb_mult']
+            )
         else:
             self.bb_rsi = np.full(self.time.shape[0], np.nan)
 
         self.pivot_LH = ta.pivothigh(
-            self.high, self.pivot_bars, self.pivot_bars)
+            source=self.high,
+            leftbars=self.params['pivot_bars'],
+            rightbars=self.params['pivot_bars']
+        )
         self.pivot_HL = ta.pivotlow(
-            self.low, self.pivot_bars, self.pivot_bars)
+            source=self.low,
+            leftbars=self.params['pivot_bars'],
+            rightbars=self.params['pivot_bars']
+        )
+
         self.fibo_values = np.array(
             [
                 0.0, 0.236, 0.382, 0.5, 0.618, 0.8, 1.0,
@@ -295,32 +243,32 @@ class NuggetV4():
             self.alert_long_new_stop,
             self.alert_short_new_stop,
             self.alert_cancel
-        ) = self.calculate(
-                self.direction,
-                self.initial_capital,
-                self.min_capital,
-                self.commission,
-                self.order_size_type,
-                self.order_size,
-                self.leverage,
-                self.stop_type,
-                self.stop,
-                self.trail_stop,
-                self.trail_percent,
-                self.take_volume_1,
-                self.take_volume_2,
-                self.st_upper_band,
-                self.st_lower_band,
-                self.rsi_long_upper_bound,
-                self.rsi_long_lower_bound,
-                self.rsi_short_upper_bound,
-                self.rsi_short_lower_bound,
-                self.bb_filter,
-                self.bb_long_bound,
-                self.bb_short_bound,
-                self.pivot_bars,
-                self.look_back,
-                self.channel_range,
+        ) = self._calculate(
+                self.params['direction'],
+                self.params['initial_capital'],
+                self.params['min_capital'],
+                self.params['commission'],
+                self.params['order_size_type'],
+                self.params['order_size'],
+                self.params['leverage'],
+                self.params['stop_type'],
+                self.params['stop'],
+                self.params['trail_stop'],
+                self.params['trail_percent'],
+                self.params['take_volume_1'],
+                self.params['take_volume_2'],
+                self.params['st_upper_band'],
+                self.params['st_lower_band'],
+                self.params['rsi_long_upper_limit'],
+                self.params['rsi_long_lower_limit'],
+                self.params['rsi_short_upper_limit'],
+                self.params['rsi_short_lower_limit'],
+                self.params['bb_filter'],
+                self.params['bb_long_limit'],
+                self.params['bb_short_limit'],
+                self.params['pivot_bars'],
+                self.params['look_back'],
+                self.params['channel_range'],
                 self.p_precision,
                 self.q_precision,
                 self.time,
@@ -355,8 +303,8 @@ class NuggetV4():
                 self.change_upper_band,
                 self.change_lower_band,
                 self.rsi,
-                self.bb_rsi[1] if self.bb_filter else self.bb_rsi,
-                self.bb_rsi[2] if self.bb_filter else self.bb_rsi,
+                self.bb_rsi[1] if self.params['bb_filter'] else self.bb_rsi,
+                self.bb_rsi[2] if self.params['bb_filter'] else self.bb_rsi,
                 self.pivot_LH,
                 self.pivot_HL,
                 self.fibo_values,
@@ -370,146 +318,56 @@ class NuggetV4():
                 self.alert_cancel
         )
 
-        self.lines = {
+        self.indicators = {
             'SL': {
-                'options': self.line_options['SL'],
+                'options': self.indicator_options['SL'],
                 'values': self.stop_price
             },
             'TP #1': {
-                'options': self.line_options['TP #1'],
+                'options': self.indicator_options['TP #1'],
                 'values': self.take_price[0]
             },
             'TP #2': {
-                'options': self.line_options['TP #2'],
+                'options': self.indicator_options['TP #2'],
                 'values': self.take_price[1]
             },
             'TP #3': {
-                'options': self.line_options['TP #3'],
+                'options': self.indicator_options['TP #3'],
                 'values': self.take_price[2]
             },
             'TP #4': {
-                'options': self.line_options['TP #4'],
+                'options': self.indicator_options['TP #4'],
                 'values': self.take_price[3]
             },
             'TP #5': {
-                'options': self.line_options['TP #5'],
+                'options': self.indicator_options['TP #5'],
                 'values': self.take_price[4]
             },
             'TP #6': {
-                'options': self.line_options['TP #6'],
+                'options': self.indicator_options['TP #6'],
                 'values': self.take_price[5]
             },
             'TP #7': {
-                'options': self.line_options['TP #7'],
+                'options': self.indicator_options['TP #7'],
                 'values': self.take_price[6]
             },
             'TP #8': {
-                'options': self.line_options['TP #8'],
+                'options': self.indicator_options['TP #8'],
                 'values': self.take_price[7]
             },
             'TP #9': {
-                'options': self.line_options['TP #9'],
+                'options': self.indicator_options['TP #9'],
                 'values': self.take_price[8]
             },
             'TP #10': {
-                'options': self.line_options['TP #10'],
+                'options': self.indicator_options['TP #10'],
                 'values': self.take_price[9]
             }
         }
 
     @staticmethod
-    @nb.jit(
-        nb.types.Tuple((
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:, :],
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean
-        ))(
-            nb.int8,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.int8,
-            nb.float64,
-            nb.int8,
-            nb.int8,
-            nb.float64,
-            nb.int8,
-            nb.float64,
-            nb.types.List(nb.float64, reflected=True),
-            nb.types.List(nb.float64, reflected=True),
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.boolean,
-            nb.float64,
-            nb.float64,
-            nb.int16,
-            nb.int16,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:, :],
-            nb.float64[:],
-            nb.float64[:],
-            nb.int8,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean
-        ),
-        cache=True,
-        nopython=True,
-        nogil=True
-    )
-    def calculate(
+    @nb.jit(cache=True, nopython=True, nogil=True)
+    def _calculate(
         direction: int,
         initial_capital: float,
         min_capital: float,
@@ -525,13 +383,13 @@ class NuggetV4():
         take_volume_2: list,
         st_upper_band: float,
         st_lower_band: float,
-        rsi_long_upper_bound: float,
-        rsi_long_lower_bound: float,
-        rsi_short_upper_bound: float,
-        rsi_short_lower_bound: float,
+        rsi_long_upper_limit: float,
+        rsi_long_lower_limit: float,
+        rsi_short_upper_limit: float,
+        rsi_short_lower_limit: float,
         bb_filter: bool,
-        bb_long_bound: float,
-        bb_short_bound: float,
+        bb_long_limit: float,
+        bb_short_limit: float,
         pivot_bars: int,
         look_back: int,
         channel_range: float,
@@ -583,7 +441,7 @@ class NuggetV4():
         alert_short_new_stop: bool,
         alert_cancel: bool
     ) -> tuple:
-        def round_to_minqty_or_mintick(number: float, precision: float) -> float:
+        def round_step(number: float, precision: float) -> float:
             return round(round(number / precision) * precision, 8)
 
         def update_log(
@@ -821,7 +679,7 @@ class NuggetV4():
                         change_lower_band[i] and
                         ((ds_lower_band[i] * (100 - stop)
                         / 100) > stop_price[i])):
-                    stop_price[i] = round_to_minqty_or_mintick(
+                    stop_price[i] = round_step(
                         ds_lower_band[i] * (100 - stop) / 100,
                         p_precision
                     )
@@ -873,7 +731,7 @@ class NuggetV4():
 
                     if take is not None:
                         stop_moved = True
-                        stop_price[i] = round_to_minqty_or_mintick(
+                        stop_price[i] = round_step(
                             (take - entry_price) * (trail_percent / 100)
                                 + entry_price,
                             p_precision
@@ -1230,10 +1088,10 @@ class NuggetV4():
             pre_entry_long = (
                 (close[i] / ds_lower_band[i] - 1) * 100 > st_lower_band and
                 (close[i] / ds_lower_band[i] - 1) * 100 < st_upper_band and
-                rsi[i] < rsi_long_upper_bound and
-                rsi[i] > rsi_long_lower_bound and
+                rsi[i] < rsi_long_upper_limit and
+                rsi[i] > rsi_long_lower_limit and
                 np.isnan(deal_type) and
-                (bb_rsi_upper[i] < bb_long_bound
+                (bb_rsi_upper[i] < bb_long_limit
                     if bb_filter else True) and
                 last_pivot == 1 and
                 (equity > min_capital) and
@@ -1275,10 +1133,10 @@ class NuggetV4():
                         / entry_price
                     )
                     
-                position_size = round_to_minqty_or_mintick(
+                position_size = round_step(
                     position_size, q_precision
                 )
-                liquidation_price = round_to_minqty_or_mintick(
+                liquidation_price = round_step(
                     entry_price * (1 - (1 / leverage)), p_precision
                 )
                 open_deals_log = np.array(
@@ -1289,12 +1147,12 @@ class NuggetV4():
                 )
 
                 if stop_type == 1 or stop_type == 2:
-                    stop_price[i] = round_to_minqty_or_mintick(
+                    stop_price[i] = round_step(
                         ds_lower_band[i] * (100 - stop) / 100,
                         p_precision
                     )
                 elif stop_type == 3:
-                    stop_price[i] = round_to_minqty_or_mintick(
+                    stop_price[i] = round_step(
                         fibo_levels[0] * (100 - stop) / 100, p_precision
                     )
 
@@ -1302,51 +1160,51 @@ class NuggetV4():
                     grid_type = 0
 
                     if close[i] >= fibo_levels[0] and close[i] < fibo_levels[1]:
-                        take_price[0][i] = round_to_minqty_or_mintick(
+                        take_price[0][i] = round_step(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = round_to_minqty_or_mintick(
+                        take_price[1][i] = round_step(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = round_to_minqty_or_mintick(
+                        take_price[2][i] = round_step(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = round_to_minqty_or_mintick(
+                        take_price[3][i] = round_step(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = round_to_minqty_or_mintick(
+                        take_price[4][i] = round_step(
                             fibo_levels[6], p_precision
                         )
                     elif close[i] >= fibo_levels[1]:
-                        take_price[0][i] = round_to_minqty_or_mintick(
+                        take_price[0][i] = round_step(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = round_to_minqty_or_mintick(
+                        take_price[1][i] = round_step(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = round_to_minqty_or_mintick(
+                        take_price[2][i] = round_step(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = round_to_minqty_or_mintick(
+                        take_price[3][i] = round_step(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = round_to_minqty_or_mintick(
+                        take_price[4][i] = round_step(
                             fibo_levels[7], p_precision
                         )
 
-                    qty_take_1[0] = round_to_minqty_or_mintick(
+                    qty_take_1[0] = round_step(
                         position_size * take_volume_1[0] / 100, q_precision
                     )
-                    qty_take_1[1] = round_to_minqty_or_mintick(
+                    qty_take_1[1] = round_step(
                         position_size * take_volume_1[1] / 100, q_precision
                     )
-                    qty_take_1[2] = round_to_minqty_or_mintick(
+                    qty_take_1[2] = round_step(
                         position_size * take_volume_1[2] / 100, q_precision
                     )
-                    qty_take_1[3] = round_to_minqty_or_mintick(
+                    qty_take_1[3] = round_step(
                         position_size * take_volume_1[3] / 100, q_precision
                     )
-                    qty_take_1[4] = round_to_minqty_or_mintick(
+                    qty_take_1[4] = round_step(
                         position_size * take_volume_1[4] / 100, q_precision
                     )
                     alert_long_1 = True
@@ -1354,96 +1212,96 @@ class NuggetV4():
                     grid_type = 1
 
                     if close[i] >= fibo_levels[0] and close[i] < fibo_levels[1]:
-                        take_price[0][i] = round_to_minqty_or_mintick(
+                        take_price[0][i] = round_step(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = round_to_minqty_or_mintick(
+                        take_price[1][i] = round_step(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = round_to_minqty_or_mintick(
+                        take_price[2][i] = round_step(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = round_to_minqty_or_mintick(
+                        take_price[3][i] = round_step(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = round_to_minqty_or_mintick(
+                        take_price[4][i] = round_step(
                             fibo_levels[6], p_precision
                         )
-                        take_price[5][i] = round_to_minqty_or_mintick(
+                        take_price[5][i] = round_step(
                             fibo_levels[7], p_precision
                         )
-                        take_price[6][i] = round_to_minqty_or_mintick(
+                        take_price[6][i] = round_step(
                             fibo_levels[8], p_precision
                         )
-                        take_price[7][i] = round_to_minqty_or_mintick(
+                        take_price[7][i] = round_step(
                             fibo_levels[9], p_precision
                         )
-                        take_price[8][i] = round_to_minqty_or_mintick(
+                        take_price[8][i] = round_step(
                             fibo_levels[10], p_precision
                         )
-                        take_price[9][i] = round_to_minqty_or_mintick(
+                        take_price[9][i] = round_step(
                             fibo_levels[11], p_precision
                         )
                     elif close[i] >= fibo_levels[1]:
-                        take_price[0][i] = round_to_minqty_or_mintick(
+                        take_price[0][i] = round_step(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = round_to_minqty_or_mintick(
+                        take_price[1][i] = round_step(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = round_to_minqty_or_mintick(
+                        take_price[2][i] = round_step(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = round_to_minqty_or_mintick(
+                        take_price[3][i] = round_step(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = round_to_minqty_or_mintick(
+                        take_price[4][i] = round_step(
                             fibo_levels[7], p_precision
                         )
-                        take_price[5][i] = round_to_minqty_or_mintick(
+                        take_price[5][i] = round_step(
                             fibo_levels[8], p_precision
                         )
-                        take_price[6][i] = round_to_minqty_or_mintick(
+                        take_price[6][i] = round_step(
                             fibo_levels[9], p_precision
                         )
-                        take_price[7][i] = round_to_minqty_or_mintick(
+                        take_price[7][i] = round_step(
                             fibo_levels[10], p_precision
                         )
-                        take_price[8][i] = round_to_minqty_or_mintick(
+                        take_price[8][i] = round_step(
                             fibo_levels[11], p_precision
                         )
-                        take_price[9][i] = round_to_minqty_or_mintick(
+                        take_price[9][i] = round_step(
                             fibo_levels[12], p_precision
                         )
 
-                    qty_take_2[0] = round_to_minqty_or_mintick(
+                    qty_take_2[0] = round_step(
                         position_size * take_volume_2[0] / 100, q_precision
                     )
-                    qty_take_2[1] = round_to_minqty_or_mintick(
+                    qty_take_2[1] = round_step(
                         position_size * take_volume_2[1] / 100, q_precision
                     )
-                    qty_take_2[2] = round_to_minqty_or_mintick(
+                    qty_take_2[2] = round_step(
                         position_size * take_volume_2[2] / 100, q_precision
                     )
-                    qty_take_2[3] = round_to_minqty_or_mintick(
+                    qty_take_2[3] = round_step(
                         position_size * take_volume_2[3] / 100, q_precision
                     )
-                    qty_take_2[4] = round_to_minqty_or_mintick(
+                    qty_take_2[4] = round_step(
                         position_size * take_volume_2[4] / 100, q_precision
                     )
-                    qty_take_2[5] = round_to_minqty_or_mintick(
+                    qty_take_2[5] = round_step(
                         position_size * take_volume_2[5] / 100, q_precision
                     )
-                    qty_take_2[6] = round_to_minqty_or_mintick(
+                    qty_take_2[6] = round_step(
                         position_size * take_volume_2[6] / 100, q_precision
                     )
-                    qty_take_2[7] = round_to_minqty_or_mintick(
+                    qty_take_2[7] = round_step(
                         position_size * take_volume_2[7] / 100, q_precision
                     )
-                    qty_take_2[8] = round_to_minqty_or_mintick(
+                    qty_take_2[8] = round_step(
                         position_size * take_volume_2[8] / 100, q_precision
                     )
-                    qty_take_2[9] = round_to_minqty_or_mintick(
+                    qty_take_2[9] = round_step(
                         position_size * take_volume_2[9] / 100, q_precision
                     )
                     alert_long_2 = True
@@ -1485,7 +1343,7 @@ class NuggetV4():
                         change_upper_band[i] and
                         ((ds_upper_band[i] * (100 + stop)
                         / 100) < stop_price[i])):
-                    stop_price[i] = round_to_minqty_or_mintick(
+                    stop_price[i] = round_step(
                         (ds_upper_band[i] * (100 + stop) / 100), 
                         p_precision
                     )
@@ -1537,7 +1395,7 @@ class NuggetV4():
 
                     if take is not None:
                         stop_moved = True
-                        stop_price[i] = round_to_minqty_or_mintick(
+                        stop_price[i] = round_step(
                             (take - entry_price) * (trail_percent / 100)
                                 + entry_price,
                             p_precision
@@ -1894,10 +1752,10 @@ class NuggetV4():
             pre_entry_short = (
                 (ds_upper_band[i] / close[i] - 1) * 100 > st_lower_band and
                 (ds_upper_band[i] / close[i] - 1) * 100 < st_upper_band and
-                rsi[i] < rsi_short_upper_bound and
-                rsi[i] > rsi_short_lower_bound and
+                rsi[i] < rsi_short_upper_limit and
+                rsi[i] > rsi_short_lower_limit and
                 np.isnan(deal_type) and
-                (bb_rsi_lower[i] > bb_short_bound
+                (bb_rsi_lower[i] > bb_short_limit
                     if bb_filter else True) and
                 last_pivot == 0 and
                 (equity > min_capital) and
@@ -1939,10 +1797,10 @@ class NuggetV4():
                         / entry_price
                     )
                     
-                position_size = round_to_minqty_or_mintick(
+                position_size = round_step(
                     position_size, q_precision
                 )
-                liquidation_price = round_to_minqty_or_mintick(
+                liquidation_price = round_step(
                     entry_price * (1 + (1 / leverage)), p_precision
                 )
                 open_deals_log = np.array(
@@ -1953,12 +1811,12 @@ class NuggetV4():
                 )
 
                 if stop_type == 1 or stop_type == 2:
-                    stop_price[i] = round_to_minqty_or_mintick(
+                    stop_price[i] = round_step(
                         ds_upper_band[i] * (100 + stop) / 100,
                         p_precision
                     )
                 elif stop_type == 3:
-                    stop_price[i] = round_to_minqty_or_mintick(
+                    stop_price[i] = round_step(
                         fibo_levels[0] * (100 + stop) / 100, p_precision
                     )
 
@@ -1966,51 +1824,51 @@ class NuggetV4():
                     grid_type = 0
 
                     if close[i] <= fibo_levels[0] and close[i] > fibo_levels[1]:
-                        take_price[0][i] = round_to_minqty_or_mintick(
+                        take_price[0][i] = round_step(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = round_to_minqty_or_mintick(
+                        take_price[1][i] = round_step(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = round_to_minqty_or_mintick(
+                        take_price[2][i] = round_step(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = round_to_minqty_or_mintick(
+                        take_price[3][i] = round_step(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = round_to_minqty_or_mintick(
+                        take_price[4][i] = round_step(
                             fibo_levels[6], p_precision
                         )
                     elif close[i] <= fibo_levels[1]:
-                        take_price[0][i] = round_to_minqty_or_mintick(
+                        take_price[0][i] = round_step(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = round_to_minqty_or_mintick(
+                        take_price[1][i] = round_step(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = round_to_minqty_or_mintick(
+                        take_price[2][i] = round_step(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = round_to_minqty_or_mintick(
+                        take_price[3][i] = round_step(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = round_to_minqty_or_mintick(
+                        take_price[4][i] = round_step(
                             fibo_levels[7], p_precision
                         )
 
-                    qty_take_1[0] = round_to_minqty_or_mintick(
+                    qty_take_1[0] = round_step(
                         position_size * take_volume_1[0] / 100, q_precision
                     )
-                    qty_take_1[1] = round_to_minqty_or_mintick(
+                    qty_take_1[1] = round_step(
                         position_size * take_volume_1[1] / 100, q_precision
                     )
-                    qty_take_1[2] = round_to_minqty_or_mintick(
+                    qty_take_1[2] = round_step(
                         position_size * take_volume_1[2] / 100, q_precision
                     )
-                    qty_take_1[3] = round_to_minqty_or_mintick(
+                    qty_take_1[3] = round_step(
                         position_size * take_volume_1[3] / 100, q_precision
                     )
-                    qty_take_1[4] = round_to_minqty_or_mintick(
+                    qty_take_1[4] = round_step(
                         position_size * take_volume_1[4] / 100, q_precision
                     )
                     alert_short_1 = True
@@ -2018,96 +1876,96 @@ class NuggetV4():
                     grid_type = 1
 
                     if close[i] <= fibo_levels[0] and close[i] > fibo_levels[1]:
-                        take_price[0][i] = round_to_minqty_or_mintick(
+                        take_price[0][i] = round_step(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = round_to_minqty_or_mintick(
+                        take_price[1][i] = round_step(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = round_to_minqty_or_mintick(
+                        take_price[2][i] = round_step(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = round_to_minqty_or_mintick(
+                        take_price[3][i] = round_step(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = round_to_minqty_or_mintick(
+                        take_price[4][i] = round_step(
                             fibo_levels[6], p_precision
                         )
-                        take_price[5][i] = round_to_minqty_or_mintick(
+                        take_price[5][i] = round_step(
                             fibo_levels[7], p_precision
                         )
-                        take_price[6][i] = round_to_minqty_or_mintick(
+                        take_price[6][i] = round_step(
                             fibo_levels[8], p_precision
                         )
-                        take_price[7][i] = round_to_minqty_or_mintick(
+                        take_price[7][i] = round_step(
                             fibo_levels[9], p_precision
                         )
-                        take_price[8][i] = round_to_minqty_or_mintick(
+                        take_price[8][i] = round_step(
                             fibo_levels[10], p_precision
                         )
-                        take_price[9][i] = round_to_minqty_or_mintick(
+                        take_price[9][i] = round_step(
                             fibo_levels[11], p_precision
                         )
                     elif close[i] <= fibo_levels[1]:
-                        take_price[0][i] = round_to_minqty_or_mintick(
+                        take_price[0][i] = round_step(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = round_to_minqty_or_mintick(
+                        take_price[1][i] = round_step(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = round_to_minqty_or_mintick(
+                        take_price[2][i] = round_step(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = round_to_minqty_or_mintick(
+                        take_price[3][i] = round_step(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = round_to_minqty_or_mintick(
+                        take_price[4][i] = round_step(
                             fibo_levels[7], p_precision
                         )
-                        take_price[5][i] = round_to_minqty_or_mintick(
+                        take_price[5][i] = round_step(
                             fibo_levels[8], p_precision
                         )
-                        take_price[6][i] = round_to_minqty_or_mintick(
+                        take_price[6][i] = round_step(
                             fibo_levels[9], p_precision
                         )
-                        take_price[7][i] = round_to_minqty_or_mintick(
+                        take_price[7][i] = round_step(
                             fibo_levels[10], p_precision
                         )
-                        take_price[8][i] = round_to_minqty_or_mintick(
+                        take_price[8][i] = round_step(
                             fibo_levels[11], p_precision
                         )
-                        take_price[9][i] = round_to_minqty_or_mintick(
+                        take_price[9][i] = round_step(
                             fibo_levels[12], p_precision
                         )
 
-                    qty_take_2[0] = round_to_minqty_or_mintick(
+                    qty_take_2[0] = round_step(
                         position_size * take_volume_2[0] / 100, q_precision
                     )
-                    qty_take_2[1] = round_to_minqty_or_mintick(
+                    qty_take_2[1] = round_step(
                         position_size * take_volume_2[1] / 100, q_precision
                     )
-                    qty_take_2[2] = round_to_minqty_or_mintick(
+                    qty_take_2[2] = round_step(
                         position_size * take_volume_2[2] / 100, q_precision
                     )
-                    qty_take_2[3] = round_to_minqty_or_mintick(
+                    qty_take_2[3] = round_step(
                         position_size * take_volume_2[3] / 100, q_precision
                     )
-                    qty_take_2[4] = round_to_minqty_or_mintick(
+                    qty_take_2[4] = round_step(
                         position_size * take_volume_2[4] / 100, q_precision
                     )
-                    qty_take_2[5] = round_to_minqty_or_mintick(
+                    qty_take_2[5] = round_step(
                         position_size * take_volume_2[5] / 100, q_precision
                     )
-                    qty_take_2[6] = round_to_minqty_or_mintick(
+                    qty_take_2[6] = round_step(
                         position_size * take_volume_2[6] / 100, q_precision
                     )
-                    qty_take_2[7] = round_to_minqty_or_mintick(
+                    qty_take_2[7] = round_step(
                         position_size * take_volume_2[7] / 100, q_precision
                     )
-                    qty_take_2[8] = round_to_minqty_or_mintick(
+                    qty_take_2[8] = round_step(
                         position_size * take_volume_2[8] / 100, q_precision
                     )
-                    qty_take_2[9] = round_to_minqty_or_mintick(
+                    qty_take_2[9] = round_step(
                         position_size * take_volume_2[9] / 100, q_precision
                     )
                     alert_short_2 = True
@@ -2125,36 +1983,31 @@ class NuggetV4():
             alert_short_new_stop,
             alert_cancel
         )
-    
-    def trade(self, symbol: str) -> None:
-        if not hasattr(self, 'order_ids'):
-            self.cache = OrderCache(
-                os.path.join(
-                    os.path.dirname(__file__), '__cache__'
-                )
-            )
-            self.order_ids = self.cache.load(symbol)
+
+    def trade(self) -> None:
+        if self.order_ids is None:
+            self.order_ids = self.cache.load(self.symbol)
 
         if self.alert_cancel:
-            self.client.cancel_all_orders(symbol)
+            self.client.cancel_all_orders(self.symbol)
 
         self.order_ids['stop_ids'] = self.client.check_stop_orders(
-            symbol=symbol,
+            symbol=self.symbol,
             order_ids=self.order_ids['stop_ids']
         )
         self.order_ids['limit_ids'] = self.client.check_limit_orders(
-            symbol=symbol,
+            symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
         if self.alert_long_new_stop:
-            self.client.cancel_stop(symbol=symbol, side='Sell')
+            self.client.cancel_stop(symbol=self.symbol, side='Sell')
             self.order_ids['stop_ids'] = self.client.check_stop_orders(
-                symbol=symbol,
+                symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
             )
             order_id = self.client.market_stop_sell(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge=False
@@ -2164,13 +2017,13 @@ class NuggetV4():
                 self.order_ids['stop_ids'].append(order_id)
 
         if self.alert_short_new_stop:
-            self.client.cancel_stop(symbol=symbol, side='Buy')
+            self.client.cancel_stop(symbol=self.symbol, side='Buy')
             self.order_ids['stop_ids'] = self.client.check_stop_orders(
-                symbol=symbol,
+                symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
             )
             order_id = self.client.market_stop_buy(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge=False
@@ -2181,17 +2034,19 @@ class NuggetV4():
 
         if self.alert_long_1:
             self.client.market_open_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size=(
-                    f'{self.order_size}'
-                    f'{'%' if self.order_size_type == 0 else 'u'}'
+                    f'{self.params['order_size']}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 hedge=False
             )
             order_id = self.client.market_stop_sell(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge=False
@@ -2201,8 +2056,8 @@ class NuggetV4():
                 self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_1[0]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_1'][0]}%',
                 price=self.take_price[0][-1],
                 hedge=False
             )
@@ -2211,8 +2066,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_1[1]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_1'][1]}%',
                 price=self.take_price[1][-1],
                 hedge=False
             )
@@ -2221,8 +2076,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_1[2]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_1'][2]}%',
                 price=self.take_price[2][-1],
                 hedge=False
             )
@@ -2231,8 +2086,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_1[3]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_1'][3]}%',
                 price=self.take_price[3][-1],
                 hedge=False
             )
@@ -2241,7 +2096,7 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 price=self.take_price[4][-1],
                 hedge=False
@@ -2252,17 +2107,19 @@ class NuggetV4():
 
         if self.alert_long_2:
             self.client.market_open_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size=(
-                    f'{self.order_size}'
-                    f'{'%' if self.order_size_type == 0 else 'u'}'
+                    f'{self.params['order_size']}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 hedge=False
             )
             order_id = self.client.market_stop_sell(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge=False
@@ -2272,8 +2129,8 @@ class NuggetV4():
                 self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[0]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][0]}%',
                 price=self.take_price[0][-1],
                 hedge=False
             )
@@ -2282,8 +2139,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[1]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][1]}%',
                 price=self.take_price[1][-1],
                 hedge=False
             )
@@ -2292,8 +2149,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[2]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][2]}%',
                 price=self.take_price[2][-1],
                 hedge=False
             )
@@ -2302,8 +2159,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[3]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][3]}%',
                 price=self.take_price[3][-1],
                 hedge=False
             )
@@ -2312,8 +2169,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[4]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][4]}%',
                 price=self.take_price[4][-1],
                 hedge=False
             )
@@ -2322,8 +2179,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[5]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][5]}%',
                 price=self.take_price[5][-1],
                 hedge=False
             )
@@ -2332,8 +2189,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[6]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][6]}%',
                 price=self.take_price[6][-1],
                 hedge=False
             )
@@ -2342,8 +2199,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[7]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][7]}%',
                 price=self.take_price[7][-1],
                 hedge=False
             )
@@ -2352,8 +2209,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
-                size=f'{self.take_volume_2[8]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][8]}%',
                 price=self.take_price[8][-1],
                 hedge=False
             )
@@ -2362,7 +2219,7 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 price=self.take_price[9][-1],
                 hedge=False
@@ -2373,17 +2230,19 @@ class NuggetV4():
 
         if self.alert_short_1:
             self.client.market_open_sell(
-                symbol=symbol,
+                symbol=self.symbol,
                 size=(
-                    f'{self.order_size}'
-                    f'{'%' if self.order_size_type == 0 else 'u'}'
+                    f'{self.params['order_size']}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 hedge=False
             )
             order_id = self.client.market_stop_buy(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge=False
@@ -2393,8 +2252,8 @@ class NuggetV4():
                 self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_1[0]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_1'][0]}%',
                 price=self.take_price[0][-1],
                 hedge=False
             )
@@ -2403,8 +2262,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_1[1]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_1'][1]}%',
                 price=self.take_price[1][-1],
                 hedge=False
             )
@@ -2413,8 +2272,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_1[2]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_1'][2]}%',
                 price=self.take_price[2][-1],
                 hedge=False
             )
@@ -2423,8 +2282,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_1[3]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_1'][3]}%',
                 price=self.take_price[3][-1],
                 hedge=False
             )
@@ -2433,7 +2292,7 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 price=self.take_price[4][-1],
                 hedge=False
@@ -2444,17 +2303,19 @@ class NuggetV4():
 
         if self.alert_short_2:
             self.client.market_open_sell(
-                symbol=symbol,
+                symbol=self.symbol,
                 size=(
-                    f'{self.order_size}'
-                    f'{'%' if self.order_size_type == 0 else 'u'}'
+                    f'{self.params['order_size']}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 hedge=False
             )
             order_id = self.client.market_stop_buy(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge=False
@@ -2464,8 +2325,8 @@ class NuggetV4():
                 self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[0]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][0]}%',
                 price=self.take_price[0][-1],
                 hedge=False
             )
@@ -2474,8 +2335,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[1]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][1]}%',
                 price=self.take_price[1][-1],
                 hedge=False
             )
@@ -2484,8 +2345,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[2]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][2]}%',
                 price=self.take_price[2][-1],
                 hedge=False
             )
@@ -2494,8 +2355,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[3]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][3]}%',
                 price=self.take_price[3][-1],
                 hedge=False
             )
@@ -2504,8 +2365,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[4]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][4]}%',
                 price=self.take_price[4][-1],
                 hedge=False
             )
@@ -2514,8 +2375,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[5]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][5]}%',
                 price=self.take_price[5][-1],
                 hedge=False
             )
@@ -2524,8 +2385,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[6]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][6]}%',
                 price=self.take_price[6][-1],
                 hedge=False
             )
@@ -2534,8 +2395,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[7]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][7]}%',
                 price=self.take_price[7][-1],
                 hedge=False
             )
@@ -2544,8 +2405,8 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
-                size=f'{self.take_volume_2[8]}%',
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2'][8]}%',
                 price=self.take_price[8][-1],
                 hedge=False
             )
@@ -2554,7 +2415,7 @@ class NuggetV4():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 price=self.take_price[9][-1],
                 hedge=False
@@ -2563,4 +2424,4 @@ class NuggetV4():
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-        self.cache.save(symbol, self.order_ids)
+        self.cache.save(self.symbol, self.order_ids)

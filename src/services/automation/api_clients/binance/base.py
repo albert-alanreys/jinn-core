@@ -4,11 +4,13 @@ import time
 from datetime import datetime, timezone
 
 import config
+from src.core.enums import Exchange
 from src.services.automation.api_clients.http_client import HttpClient
 from src.services.automation.api_clients.telegram_client import TelegramClient
 
 
 class BaseClient(HttpClient):
+    exchange = Exchange.BINANCE
     futures_endpoint = 'https://fapi.binance.com'
     spot_endpoint = 'https://api.binance.com'
 

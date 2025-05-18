@@ -155,8 +155,8 @@ export default class RightToolbarManager {
     section.setAttribute('id', 'parameter-values');
     body.appendChild(section);
 
-    for (var key in strategyData.parameters) {
-      var parameter = strategyData.parameters[key];
+    for (var key in strategyData.params) {
+      var parameter = strategyData.params[key];
 
       if (Array.isArray(parameter)) {
         for (var i = 0; i < parameter.length; i++) {
@@ -230,8 +230,8 @@ export default class RightToolbarManager {
     function overwrite() {
       var strategyData = this.data[this.currentStrategy];
 
-      for (var key in strategyData.parameters) {
-        var parameter = strategyData.parameters[key];
+      for (var key in strategyData.params) {
+        var parameter = strategyData.params[key];
 
         if (Array.isArray(parameter)) {
           for (var i = 0; i < parameter.length; i++) {

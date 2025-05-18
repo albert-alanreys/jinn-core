@@ -3,7 +3,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 
-import src.core.enums as enums
+from src.core.enums import Market
 from .base import BaseClient
 
 
@@ -39,15 +39,14 @@ class MarketClient(BaseClient):
 
     def get_historical_klines(
         self,
-        market: enums.Market,
+        market: Market,
         symbol: str,
         interval: str,
         start: int,
         end: int
     ) -> list:
         try:
-            valid_interval = self.get_valid_interval(interval)
-            interval_ms = self.interval_ms[valid_interval]
+            interval_ms = self.interval_ms[interval]
             step = interval_ms * 1000
 
             time_ranges = [
@@ -61,7 +60,7 @@ class MarketClient(BaseClient):
                     lambda time_range: self._get_klines(
                         market=market,
                         symbol=symbol,
-                        interval=valid_interval,
+                        interval=interval,
                         start=time_range[0],
                         end=time_range[1]
                     ),
@@ -91,17 +90,15 @@ class MarketClient(BaseClient):
         limit: int = 1000
     ) -> list:
         try:
-            valid_interval = self.get_valid_interval(interval)
-
             if limit <= 1000:
                 return self._get_klines(
-                    market=enums.Market.FUTURES,
+                    market=Market.FUTURES,
                     symbol=symbol,
-                    interval=valid_interval,
+                    interval=interval,
                     limit=limit
                 )
 
-            interval_ms = self.interval_ms[valid_interval]
+            interval_ms = self.interval_ms[interval]
             end = int(time.time() * 1000)
             start = end - interval_ms * limit
             step = interval_ms * 1000
@@ -115,9 +112,9 @@ class MarketClient(BaseClient):
             with ThreadPoolExecutor(max_workers=7) as executor:
                 results = executor.map(
                     lambda time_range: self._get_klines(
-                        market=enums.Market.FUTURES,
+                        market=Market.FUTURES,
                         symbol=symbol,
-                        interval=valid_interval,
+                        interval=interval,
                         start=time_range[0],
                         end=time_range[1]
                     ),
@@ -132,7 +129,7 @@ class MarketClient(BaseClient):
             self.logger.error(
                 f'Failed to request data | '
                 f'Binance | '
-                f'{enums.Market.FUTURES.value} | '
+                f'{Market.FUTURES.value} | '
                 f'{symbol} | '
                 f'{interval} | '
                 f'{type(e).__name__} - {e}'
@@ -186,7 +183,7 @@ class MarketClient(BaseClient):
 
     def _get_klines(
         self,
-        market: enums.Market,
+        market: Market,
         symbol: str,
         interval: str,
         start: int = None,
@@ -194,9 +191,9 @@ class MarketClient(BaseClient):
         limit: int = 1000
     ) -> list:
         match market:
-            case enums.Market.FUTURES:
+            case Market.FUTURES:
                 url = f'{self.futures_endpoint}/fapi/v1/klines'
-            case enums.Market.SPOT:
+            case Market.SPOT:
                 url = f'{self.spot_endpoint}/api/v3/klines'
 
         params = {'symbol': symbol, 'interval': interval, 'limit': limit}

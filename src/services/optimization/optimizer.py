@@ -28,7 +28,7 @@ class Optimizer:
 
     def optimize(self) -> None:
         for strategy in enums.Strategy:
-            path_to_file = os.path.abspath(
+            file_path = os.path.abspath(
                 os.path.join(
                     'src',
                     'strategies',
@@ -38,67 +38,74 @@ class Optimizer:
                 )
             )
 
-            if not os.path.exists(path_to_file):
+            if not os.path.exists(file_path):
                 continue
 
-            with open(path_to_file, 'r') as file:
-                configs = json.load(file)
-                
-                for config in configs:
-                    exchange = config['exchange'].lower()
-                    market = config['market'].upper()
-                    symbol = config['symbol'].upper()
-                    interval = config['interval']
-                    start = config['start']
-                    end = config['end']
+            with open(file_path, 'r') as file:
+                try:
+                    configs = json.load(file)
+                except json.JSONDecodeError:
+                    self.logger.error(f'Failed to parse JSON {file_path}')
+                    continue
 
-                    if exchange == enums.Exchange.BINANCE.name.lower():
+            for config in configs:
+                exchange = config['exchange'].upper()
+                market = config['market'].upper()
+                symbol = config['symbol'].upper()
+                interval = config['interval']
+                start = config['start']
+                end = config['end']
+
+                match exchange:
+                    case enums.Exchange.BINANCE.name:
                         client = self.binance_client
-                    elif exchange == enums.Exchange.BYBIT.name.lower():
+                    case enums.Exchange.BYBIT.name:
                         client = self.bybit_client
 
-                    if market == enums.Market.FUTURES.name:
+                match market:
+                    case enums.Market.FUTURES.name:
                         market = enums.Market.FUTURES
-                    elif market == enums.Market.SPOT.name:
+                    case enums.Market.SPOT.name:
                         market = enums.Market.SPOT
 
-                    interval = client.get_valid_interval(interval)
+                valid_interval = client.get_valid_interval(interval)
 
-                    try:
-                        klines = self.data_manager.get_data(
-                            client=client,
-                            market=market,
-                            symbol=symbol,
-                            interval=interval,
-                            start=start,
-                            end=end
-                        )
-                        p_precision = client.get_price_precision(symbol)
-                        q_precision = client.get_qty_precision(symbol)
+                try:
+                    klines = self.data_manager.get_data(
+                        client=client,
+                        market=market,
+                        symbol=symbol,
+                        interval=valid_interval,
+                        start=start,
+                        end=end
+                    )
+                    p_precision = client.get_price_precision(symbol)
+                    q_precision = client.get_qty_precision(symbol)
 
-                        fold_size = len(klines) // 3
-                        fold_1 = klines[:fold_size]
-                        fold_2 = klines[fold_size : 2 * fold_size]
-                        fold_3 = klines[2 * fold_size :]
+                    fold_size = len(klines) // 3
+                    fold_1 = klines[:fold_size]
+                    fold_2 = klines[fold_size : 2 * fold_size]
+                    fold_3 = klines[2 * fold_size :]
 
-                        strategy_data = {
-                            'name': strategy.name.lower(),
-                            'exchange': exchange,
-                            'market': market.value,
-                            'symbol': symbol,
-                            'interval': interval,
-                            'start': start,
-                            'end': end,
-                            'type': strategy.value,
-                            'fold_1': fold_1,
-                            'fold_2': fold_2,
-                            'fold_3': fold_3,
-                            'p_precision': p_precision,
-                            'q_precision': q_precision,
-                        }
-                        self.strategies[id(strategy_data)] = strategy_data
-                    except Exception as e:
-                        self.logger.error(e)
+                    strategy_data = {
+                        'name': strategy.name,
+                        'type': strategy.value,
+                        'client': client,
+                        'exchange': exchange,
+                        'market': market,
+                        'symbol': symbol,
+                        'interval': valid_interval,
+                        'start': start,
+                        'end': end,
+                        'fold_1': fold_1,
+                        'fold_2': fold_2,
+                        'fold_3': fold_3,
+                        'p_precision': p_precision,
+                        'q_precision': q_precision,
+                    }
+                    self.strategies[id(strategy_data)] = strategy_data
+                except Exception as e:
+                    self.logger.error(f'{type(e).__name__} - {e}')
 
         if len(self.strategies) == 0:
             match self.exchange:
@@ -107,20 +114,14 @@ class Optimizer:
                 case enums.Exchange.BYBIT:
                     client = self.bybit_client
 
-            match self.market:
-                case enums.Market.SPOT:
-                    market = 'SPOT'
-                case enums.Market.FUTURES:
-                    market = 'FUTURES'
-
-            self.interval = client.get_valid_interval(self.interval)
+            self.valid_interval = client.get_valid_interval(self.interval)
 
             try:
                 klines = self.data_manager.get_data(
                     client=client,
                     market=self.market,
                     symbol=self.symbol,
-                    interval=self.interval,
+                    interval=self.valid_interval,
                     start=self.start,
                     end=self.end
                 )
@@ -133,14 +134,15 @@ class Optimizer:
                 fold_3 = klines[2 * fold_size :]
 
                 strategy_data = {
-                    'name': self.strategy.name.lower(),
+                    'name': self.strategy.name,
+                    'type': self.strategy.value,
+                    'client': client,
                     'exchange': self.exchange.value,
-                    'market': self.market.value,
+                    'market': self.market,
                     'symbol': self.symbol,
-                    'interval': self.interval,
+                    'interval': self.valid_interval,
                     'start': self.start,
                     'end': self.end,
-                    'type': self.strategy.value,
                     'fold_1': fold_1,
                     'fold_2': fold_2,
                     'fold_3': fold_3,
@@ -149,13 +151,13 @@ class Optimizer:
                 }
                 self.strategies[id(strategy_data)] = strategy_data
             except Exception as e:
-                self.logger.error(e)
+                self.logger.error(f'{type(e).__name__} - {e}')
 
         strategies_info = [
             ' | '.join([
-                item['name'].capitalize(),
-                item['exchange'].capitalize(),
-                item['market'],
+                item['name'],
+                item['exchange'],
+                item['market'].value,
                 item['symbol'],
                 str(item['interval']),
                 f"{item['start']} → {item['end']}"
@@ -191,31 +193,39 @@ class Optimizer:
             filename = (
                 f'{strategy['exchange']}_'
                 f'{strategy['symbol']}_'
-                f'{strategy['market']}_'
-                f'{strategy['interval']}.txt'
+                f'{strategy['market'].value}_'
+                f'{strategy['interval']}.json'
             )
-            path_to_file = os.path.abspath(
+            file_path = os.path.abspath(
                 os.path.join(
                     'src',
                     'strategies',
-                    strategy['name'],
+                    strategy['name'].lower(),
                     'optimization',
                     filename
                 )
             )
 
-            for sample in strategy['best_samples']:
-                file_text = (
-                    f'Period: {strategy['start']} - {strategy['end']}\n'
-                    f'{'=' * 50}\n'
-                    + ''.join(
-                        f'{param} = {sample[idx]}\n'
-                            for idx, param in enumerate(
-                                strategy['type'].opt_params.keys()
-                            )
+            new_items = [
+                {
+                    'period': {
+                        'start': strategy['start'],
+                        'end': strategy['end']
+                    },
+                    'params': dict(
+                        zip(strategy['type'].opt_params.keys(), sample)
                     )
-                    + f'{'=' * 50}\n'
-                )
+                }
+                for sample in strategy['best_samples']
+            ]
+            existing_items = []
 
-                with open(path_to_file, 'a') as file:
-                    print(file_text, file=file)
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    try:
+                        existing_items = json.load(file)
+                    except json.JSONDecodeError:
+                        pass
+
+            with open(file_path, 'w', encoding='utf-8') as file:
+                json.dump(existing_items + new_items, file, indent=4)

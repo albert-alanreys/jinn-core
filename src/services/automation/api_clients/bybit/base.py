@@ -5,12 +5,15 @@ import time
 from datetime import datetime, timezone
 
 import config
+from src.core.enums import Exchange
 from src.services.automation.api_clients.http_client import HttpClient
 from src.services.automation.api_clients.telegram_client import TelegramClient
 
 
 class BaseClient(HttpClient):
+    exchange = Exchange.BYBIT
     base_endpoint = 'https://api.bybit.com'
+    # base_endpoint = 'https://api-testnet.bybit.com'
 
     def __init__(self, alerts: list) -> None:
         self.telegram = TelegramClient()

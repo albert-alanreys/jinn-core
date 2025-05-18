@@ -20,53 +20,55 @@ class DataFormatter:
         self.lite_data = {}
 
     def format(self) -> None:
-        for strategy_id, strategy_data in self.data_to_format.items():
-            self.format_strategy_data(strategy_id, strategy_data)
+        for id, data in self.data_to_format.items():
+            self.format_strategy_data(id, data)
 
-    def format_strategy_data(
-        self,
-        strategy_id: str,
-        strategy_data: dict
-    ) -> None:
-        self.main_data[strategy_id] = {}
-        self.main_data[strategy_id]['chartData'] = {
-            'name': strategy_data['name'].capitalize().replace('_', '-'),
-            'exchange': strategy_data['exchange'],
-            'symbol': strategy_data['symbol'],
-            'market': strategy_data['market'],
-            'interval': strategy_data['interval'],
-            'mintick': strategy_data['p_precision'],
-            'klines': self._format_klines(strategy_data['klines']),
-            'lines': self._format_lines(
-                strategy_data['klines'],
-                strategy_data['instance'].lines
+    def format_strategy_data(self, id: str, data: dict) -> None:
+        self.main_data[id] = {}
+        self.main_data[id]['chartData'] = {
+            'name': '-'.join(
+                word.capitalize()
+                for word in data['name'].split('_')
+            ),
+            'exchange': data['exchange'],
+            'symbol': data['symbol'],
+            'market': data['market'].value,
+            'interval': data['interval'],
+            'mintick': data['p_precision'],
+            'klines': self._format_klines(data['klines']),
+            'indicators': self._format_indicators(
+                data['klines'],
+                data['instance'].indicators
             ),
             'markers': self._format_deal_markers(
-                strategy_data['instance'].completed_deals_log,
-                strategy_data['instance'].open_deals_log
+                data['instance'].completed_deals_log,
+                data['instance'].open_deals_log
             )
         }
 
         if self.mode is Mode.TESTING:
-            self.main_data[strategy_id]['reportData'] = {
-                'equity': self._format_equity(strategy_data['equity']),
-                'metrics': strategy_data['metrics'],
+            self.main_data[id]['reportData'] = {
+                'equity': self._format_equity(data['equity']),
+                'metrics': data['metrics'],
                 'completedDealsLog': self._format_completed_deals(
-                    strategy_data['instance'].completed_deals_log
+                    data['instance'].completed_deals_log
                 ),
                 'openDealsLog': self._format_open_deals(
-                    strategy_data['instance'].open_deals_log
+                    data['instance'].open_deals_log
                 )
             }
 
-        self.lite_data[strategy_id] = {
-            'name': strategy_data['name'].capitalize().replace('_', '-'),
-            'exchange': strategy_data['exchange'],
-            'symbol': strategy_data['symbol'],
-            'market': strategy_data['market'],
-            'interval': strategy_data['interval'],
-            'mintick': strategy_data['p_precision'],
-            'parameters': strategy_data['parameters']
+        self.lite_data[id] = {
+            'name': '-'.join(
+                word.capitalize()
+                for word in data['name'].split('_')
+            ),
+            'exchange': data['exchange'],
+            'symbol': data['symbol'],
+            'market': data['market'].value,
+            'interval': data['interval'],
+            'mintick': data['p_precision'],
+            'params': data['params']
         }
 
     def _format_klines(self, klines: np.ndarray) -> list:
@@ -81,8 +83,12 @@ class DataFormatter:
         ]
         return result
 
-    def _format_lines(self, klines: np.ndarray, lines: dict) -> dict:
-        result = deepcopy(lines)
+    def _format_indicators(
+        self,
+        klines: np.ndarray,
+        indicators: dict
+    ) -> dict:
+        result = deepcopy(indicators)
 
         for name in result.keys():
             raw_values = result[name]['values'].tolist()

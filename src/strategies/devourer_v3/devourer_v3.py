@@ -1,43 +1,47 @@
-import os
-
 import numpy as np
 import numba as nb
 
 import src.core.lib.ta as ta
-from src.core.strategy.order_cache import OrderCache
+from src.core.strategy.base_strategy import BaseStrategy
 
 
-class DevourerV3():
+class DevourerV3(BaseStrategy):
     # Strategy parameters
+    # Names must be in double quotes
+
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
-    margin_type = 0
-    # direction: 0 - 'all', 1 — 'longs', 2 — 'shorts'
-    direction = 0
-    initial_capital = 10000.0
-    commission = 0.05
-    order_size_type = 0
-    order_size = 100.0
-    leverage = 1
-    stop_atr_p2 = 0.5
-    stop_atr_p3 = 1.0
-    take_atr_p3 = 3.0
-    fast_len_p1 = 12
-    slow_len_p1 = 26
-    sig_len_p1 = 14
-    k_len_p1 = 14
-    d_len_p1 = 3
-    kd_limit_p1 = 70.0
-    atr_len_p1 = 10
-    factor_p1 = 2.0
-    body_atr_coef_p1 = 2.0
-    ema_len_p1 = 20
-    atr_len_p2 = 14
-    highest_len_p2 = 10
-    correction_p2 = 37.0
-    ema_len_p2 = 5
-    atr_len_p3 = 14
-    ema_len_p3 = 55
-    close_under_ema_p3 = 3
+    # direction: 0 - "all", 1 — "longs", 2 — "shorts"
+    # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
+
+    params = {
+        "margin_type": 0,
+        "direction": 0,
+        "initial_capital": 10000.0,
+        "commission": 0.05,
+        "order_size_type": 0,
+        "order_size": 100.0,
+        "leverage": 1,
+        "stop_atr_p2": 0.5,
+        "stop_atr_p3": 1.0,
+        "take_atr_p3": 3.0,
+        "fast_len_p1": 12,
+        "slow_len_p1": 26,
+        "sig_len_p1": 14,
+        "k_len_p1": 14,
+        "d_len_p1": 3,
+        "kd_limit_p1": 70.0,
+        "atr_len_p1": 10,
+        "factor_p1": 2.0,
+        "body_atr_coef_p1": 2.0,
+        "ema_len_p1": 20,
+        "atr_len_p2": 14,
+        "highest_len_p2": 10,
+        "correction_p2": 37.0,
+        "ema_len_p2": 5,
+        "atr_len_p3": 14,
+        "ema_len_p3": 55,
+        "close_under_ema_p3": 3
+    }
 
     # Parameters to be optimized and their possible values
     opt_params = {
@@ -64,83 +68,15 @@ class DevourerV3():
     }
 
     # For frontend
-    line_options = {
+    indicator_options = {
         'SL': {'color': '#FF0000'},
         'TP': {'color': '#008000'}
     }
 
-    # Class attributes
-    class_attributes = (
-        'opt_params',
-        'line_options',
-        'class_attributes',
-        'start',
-        'calculate',
-        'trade'
-    )
+    def __init__(self, all_params = None, opt_params = None) -> None:
+        super().__init__(all_params=all_params, opt_params=opt_params)
 
-    def __init__(
-        self,
-        opt_params: list | None = None,
-        all_params: list | None = None
-    ) -> None:
-        for key, value in DevourerV3.__dict__.items():
-            if (not key.startswith('__') and
-                    key not in DevourerV3.class_attributes):
-                self.__dict__[key] = value
-
-        if opt_params is not None:
-            self.stop_atr_p2 = opt_params[0]
-            self.stop_atr_p3 = opt_params[1]
-            self.take_atr_p3 = opt_params[2]
-            self.fast_len_p1 = opt_params[3]
-            self.slow_len_p1 = opt_params[4]
-            self.sig_len_p1 = opt_params[5]
-            self.k_len_p1 = opt_params[6]
-            self.d_len_p1 = opt_params[7]
-            self.kd_limit_p1 = opt_params[8]
-            self.atr_len_p1 = opt_params[9]
-            self.factor_p1 = opt_params[10]
-            self.body_atr_coef_p1 = opt_params[11]
-            self.ema_len_p1 = opt_params[12]
-            self.atr_len_p2 = opt_params[13]
-            self.highest_len_p2 = opt_params[14]
-            self.correction_p2 = opt_params[15]
-            self.ema_len_p2 = opt_params[16]
-            self.atr_len_p3 = opt_params[17]
-            self.ema_len_p3 = opt_params[18]
-            self.close_under_ema_p3 = opt_params[19]
-
-        if all_params is not None:
-            self.margin_type = all_params[0]
-            self.direction = all_params[1]
-            self.initial_capital = all_params[2]
-            self.commission = all_params[3]
-            self.order_size_type = all_params[4]
-            self.order_size = all_params[5]
-            self.leverage = all_params[6]
-            self.stop_atr_p2 = all_params[7]
-            self.stop_atr_p3 = all_params[8]
-            self.take_atr_p3 = all_params[9]
-            self.fast_len_p1 = all_params[10]
-            self.slow_len_p1 = all_params[11]
-            self.sig_len_p1 = all_params[12]
-            self.k_len_p1 = all_params[13]
-            self.d_len_p1 = all_params[14]
-            self.kd_limit_p1 = all_params[15]
-            self.atr_len_p1 = all_params[16]
-            self.factor_p1 = all_params[17]
-            self.body_atr_coef_p1 = all_params[18]
-            self.ema_len_p1 = all_params[19]
-            self.atr_len_p2 = all_params[20]
-            self.highest_len_p2 = all_params[21]
-            self.correction_p2 = all_params[22]
-            self.ema_len_p2 = all_params[23]
-            self.atr_len_p3 = all_params[24]
-            self.ema_len_p3 = all_params[25]
-            self.close_under_ema_p3 = all_params[26]
-
-    def start(self, exchange_data: dict) -> None:
+    def start(self, client, market_data) -> None:
         self.open_deals_log = np.full(5, np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -149,16 +85,17 @@ class DevourerV3():
         self.entry_date = np.nan
         self.deal_type = np.nan
 
-        self.client = exchange_data.get('client', None)
-        self.time = exchange_data['klines'][:, 0]
-        self.open = exchange_data['klines'][:, 1]
-        self.high = exchange_data['klines'][:, 2]
-        self.low = exchange_data['klines'][:, 3]
-        self.close = exchange_data['klines'][:, 4]
-        self.p_precision = exchange_data['p_precision']
-        self.q_precision = exchange_data['q_precision']
+        self.client = client
+        self.symbol = market_data['symbol']
+        self.time = market_data['klines'][:, 0]
+        self.open = market_data['klines'][:, 1]
+        self.high = market_data['klines'][:, 2]
+        self.low = market_data['klines'][:, 3]
+        self.close = market_data['klines'][:, 4]
+        self.p_precision = market_data['p_precision']
+        self.q_precision = market_data['q_precision']
 
-        self.equity = self.initial_capital
+        self.equity = self.params['initial_capital']
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
@@ -172,34 +109,92 @@ class DevourerV3():
         self.close_under_ema_counter_p3 = 0
 
         self.macd_p1 = (
-            ta.ema(self.close, self.fast_len_p1) -
-            ta.ema(self.close, self.slow_len_p1)
+            ta.ema(
+                source=self.close,
+                length=self.params['fast_len_p1']
+            ) -
+            ta.ema(
+                source=self.close,
+                length=self.params['slow_len_p1']
+            )
         )
-        self.signal_p1 = ta.ema(self.macd_p1, self.sig_len_p1)
-        self.k_p1 = ta.stoch(self.close, self.high, self.low, self.k_len_p1)
-        self.d_p1 = ta.sma(self.k_p1, self.d_len_p1)
-        self.direction_p1 = ta.supertrend(
-            self.high, self.low, self.close, self.factor_p1, self.atr_len_p1
-        )[1]
-        self.atr_p1 = ta.atr(self.high, self.low, self.close, self.atr_len_p1)
+        self.signal_p1 = ta.ema(
+            source=self.macd_p1,
+            length=self.params['sig_len_p1']
+        )
+        self.k_p1 = ta.stoch(
+            source=self.close,
+            high=self.high,
+            low=self.low,
+            length=self.params['k_len_p1']
+        )
+        self.d_p1 = ta.sma(source=self.k_p1, length=self.params['d_len_p1'])
+        supertrend = ta.supertrend(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            factor=self.params['factor_p1'],
+            atr_length=self.params['atr_len_p1']
+        )
+        self.direction_p1 = supertrend[1]
+        self.atr_p1 = ta.atr(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            length=self.params['atr_len_p1']
+        )
         self.ema_p1 = ta.ema(
-            ta.highest(self.close, self.ema_len_p1), self.ema_len_p1
+            source=ta.highest(
+                source=self.close,
+                length=self.params['ema_len_p1']
+            ),
+            length=self.params['ema_len_p1']
         )
-        self.cross_up1_p1 = ta.crossover(self.macd_p1, self.signal_p1)
-        self.cross_down_p1 = ta.crossunder(self.macd_p1, self.signal_p1)
-        self.cross_up2_p1 = ta.crossover(self.close, self.ema_p1)
+        self.cross_up1_p1 = ta.crossover(
+            source1=self.macd_p1,
+            source2=self.signal_p1
+        )
+        self.cross_down_p1 = ta.crossunder(
+            source1=self.macd_p1,
+            source2=self.signal_p1
+        )
+        self.cross_up2_p1 = ta.crossover(
+            source1=self.close,
+            source2=self.ema_p1
+        )
         self.lower_band_p2 = (
-            ta.highest(self.high, self.highest_len_p2) *
-            (self.correction_p2 - 100) / -100
+            ta.highest(
+                source=self.high,
+                length=self.params['highest_len_p2']
+            ) * (self.params['correction_p2'] - 100) / -100
         )
-        self.signal_p2 = ta.ema(self.macd_p1, self.ema_len_p2)
-        self.cross_p2 = ta.cross(self.signal_p2, self.macd_p1)
-        self.atr_p2 = ta.atr(self.high, self.low, self.close, self.atr_len_p2)
+        self.signal_p2 = ta.ema(
+            source=self.macd_p1,
+            length=self.params['ema_len_p2']
+        )
+        self.cross_p2 = ta.cross(source1=self.signal_p2, source2=self.macd_p1)
+        self.atr_p2 = ta.atr(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            length=self.params['atr_len_p2']
+        )
         self.ema_p3 = ta.ema(
-            ta.ema(ta.ema(self.close, self.ema_len_p3), self.ema_len_p3),
-            self.ema_len_p3
+            source=ta.ema(
+                source=ta.ema(
+                    source=self.close,
+                    length=self.params['ema_len_p3']
+                ),
+                length=self.params['ema_len_p3']
+            ),
+            length=self.params['ema_len_p3']
         )
-        self.atr_p3 = ta.atr(self.high, self.low, self.close, self.atr_len_p3)
+        self.atr_p3 = ta.atr(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            length=self.params['atr_len_p3']
+        )
 
         self.alert_entry_long = False
         self.alert_exit_long = False
@@ -217,19 +212,19 @@ class DevourerV3():
             self.alert_entry_short,
             self.alert_exit_short,
             self.alert_cancel
-        ) = self.calculate(
-                self.direction,
-                self.initial_capital,
-                self.commission,
-                self.order_size_type,
-                self.order_size,
-                self.leverage,
-                self.stop_atr_p2,
-                self.stop_atr_p3,
-                self.take_atr_p3,
-                self.kd_limit_p1,
-                self.body_atr_coef_p1,
-                self.close_under_ema_p3,
+        ) = self._calculate(
+                self.params['direction'],
+                self.params['initial_capital'],
+                self.params['commission'],
+                self.params['order_size_type'],
+                self.params['order_size'],
+                self.params['leverage'],
+                self.params['stop_atr_p2'],
+                self.params['stop_atr_p3'],
+                self.params['take_atr_p3'],
+                self.params['kd_limit_p1'],
+                self.params['body_atr_coef_p1'],
+                self.params['close_under_ema_p3'],
                 self.p_precision,
                 self.q_precision,
                 self.time,
@@ -277,93 +272,20 @@ class DevourerV3():
                 self.alert_cancel
         )
 
-        self.lines = {
+        self.indicators = {
             'SL': {
-                'options': self.line_options['SL'],
+                'options': self.indicator_options['SL'],
                 'values': self.stop_price
             },
             'TP': {
-                'options': self.line_options['TP'],
+                'options': self.indicator_options['TP'],
                 'values': self.take_price
             }
         }
 
     @staticmethod
-    @nb.jit(
-        nb.types.Tuple((
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean 
-        ))(
-            nb.int8,
-            nb.float64,
-            nb.float64,
-            nb.int8,
-            nb.float64,
-            nb.int8,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.int16,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.int16,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.boolean[:],
-            nb.boolean[:],
-            nb.boolean[:],
-            nb.float64[:],
-            nb.boolean[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean
-        ),
-        cache=True,
-        nopython=True,
-        nogil=True
-    )
-    def calculate(
+    @nb.jit(cache=True, nopython=True, nogil=True)
+    def _calculate(
         direction: int,
         initial_capital: float,
         commission: float,
@@ -422,7 +344,7 @@ class DevourerV3():
         alert_exit_short: bool,
         alert_cancel: bool
     ) -> tuple:
-        def round_to_minqty_or_mintick(number: float, precision: float) -> float:
+        def round_step(number: float, precision: float) -> float:
             return round(round(number / precision) * precision, 8)
 
         def update_log(
@@ -503,7 +425,7 @@ class DevourerV3():
                 stop_price[i] = stop_price[i - 1]
                 take_price[i] = take_price[i - 1]
 
-            # Pattern #3 — lines
+            # Pattern #3 — indicators
             if close[i] > ema_p3[i]:
                 short_allowed_p3 = True
 
@@ -720,10 +642,10 @@ class DevourerV3():
                         )
                         
                     entry_date = time[i]
-                    liquidation_price = round_to_minqty_or_mintick(
+                    liquidation_price = round_step(
                         entry_price * (1 - (1 / leverage)), p_precision
                     )
-                    position_size = round_to_minqty_or_mintick(
+                    position_size = round_step(
                         position_size, q_precision
                     )
                     open_deals_log = np.array(
@@ -829,13 +751,13 @@ class DevourerV3():
                     )
                     
                 entry_date = time[i]
-                stop_price[i] = round_to_minqty_or_mintick(
+                stop_price[i] = round_step(
                     close[i] - atr_p2[i] * stop_atr_p2, p_precision
                 )
-                liquidation_price = round_to_minqty_or_mintick(
+                liquidation_price = round_step(
                     entry_price * (1 - (1 / leverage)), p_precision
                 )
-                position_size = round_to_minqty_or_mintick(
+                position_size = round_step(
                     position_size, q_precision
                 )
                 open_deals_log = np.array(
@@ -945,16 +867,16 @@ class DevourerV3():
                     )
 
                 entry_date = time[i]
-                stop_price[i] = round_to_minqty_or_mintick(
+                stop_price[i] = round_step(
                     close[i] + atr_p3[i] * stop_atr_p3, p_precision
                 )
-                take_price[i] = round_to_minqty_or_mintick(
+                take_price[i] = round_step(
                     close[i] - atr_p3[i] * take_atr_p3, p_precision
                 )
-                liquidation_price = round_to_minqty_or_mintick(
+                liquidation_price = round_step(
                     entry_price * (1 + (1 / leverage)), p_precision
                 )
-                position_size = round_to_minqty_or_mintick(
+                position_size = round_step(
                     position_size, q_precision
                 )
                 open_deals_log = np.array(
@@ -977,53 +899,50 @@ class DevourerV3():
             alert_cancel
         )
 
-    def trade(self, symbol: str) -> None:
-        if not hasattr(self, 'order_ids'):
-            self.cache = OrderCache(
-                os.path.join(
-                    os.path.dirname(__file__), '__cache__'
-                )
-            )
-            self.order_ids = self.cache.load(symbol)
+    def trade(self) -> None:
+        if self.order_ids is None:
+            self.order_ids = self.cache.load(self.symbol)
 
         if self.alert_cancel:
-            self.client.cancel_all_orders(symbol)
+            self.client.cancel_all_orders(self.symbol)
 
         self.order_ids['stop_ids'] = self.client.check_stop_orders(
-            symbol=symbol,
+            symbol=self.symbol,
             order_ids=self.order_ids['stop_ids']
         )
         self.order_ids['limit_ids'] = self.client.check_limit_orders(
-            symbol=symbol,
+            symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
         if self.alert_exit_long:
             self.client.market_close_sell(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
 
         if self.alert_exit_short:
             self.client.market_close_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
 
         if self.alert_entry_long:
             self.client.market_open_buy(
-                symbol=symbol,
-                size=f'{self.order_size}%',
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                symbol=self.symbol,
+                size=f'{self.params['order_size']}%',
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 hedge=False
             )
 
             if not np.isnan(self.stop_price[-1]):
                 order_id = self.client.market_stop_sell(
-                    symbol=symbol, 
+                    symbol=self.symbol, 
                     size='100%', 
                     price=self.stop_price[-1], 
                     hedge=False
@@ -1034,15 +953,17 @@ class DevourerV3():
 
         if self.alert_entry_short:
             self.client.market_open_sell(
-                symbol=symbol,
-                size=f'{self.order_size}%',
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                symbol=self.symbol,
+                size=f'{self.params['order_size']}%',
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 hedge=False
             )
 
             order_id = self.client.market_stop_buy(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%',
                 price=self.stop_price[-1], 
                 hedge=False
@@ -1052,7 +973,7 @@ class DevourerV3():
                 self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],
                 hedge=False
@@ -1061,4 +982,4 @@ class DevourerV3():
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-        self.cache.save(symbol, self.order_ids)
+        self.cache.save(self.symbol, self.order_ids)

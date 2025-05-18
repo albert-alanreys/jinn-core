@@ -1,12 +1,15 @@
 import logging
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-import src.core.enums as enums
-from src.services.automation.api_clients.binance import BinanceClient
-from src.services.automation.api_clients.bybit import BybitClient
 from .db_manager import DBManager
+
+if TYPE_CHECKING:
+    from src.core.enums import Market
+    from src.services.automation.api_clients.binance import BinanceClient
+    from src.services.automation.api_clients.bybit import BybitClient
 
 
 class DataManager:
@@ -16,8 +19,8 @@ class DataManager:
 
     def get_data(
         self,
-        client: BinanceClient | BybitClient,
-        market: enums.Market,
+        client: 'BinanceClient | BybitClient',
+        market: 'Market',
         symbol: str,
         interval: str,
         start: str,
@@ -25,12 +28,7 @@ class DataManager:
     ) -> np.ndarray:
         request_required = False
 
-        if isinstance(client, BinanceClient):
-            exchange = enums.Exchange.BINANCE.value.lower()
-        elif isinstance(client, BybitClient):
-            exchange = enums.Exchange.BYBIT.value.lower()
-
-        database_name = f'{exchange}.db'
+        database_name = f'{client.exchange.value.lower()}.db'
         table_name = f'{symbol}_{market.value}_{interval}'
 
         start_ms = int(
@@ -75,7 +73,6 @@ class DataManager:
         if request_required:
             data = self._get_data_from_exchange(
                 client=client,
-                exchange=exchange,
                 market=market,
                 symbol=symbol,
                 interval=interval,
@@ -134,7 +131,7 @@ class DataManager:
             )
             raise ValueError(
                 f'No data available | '
-                f'{exchange.capitalize()} | '
+                f'{client.exchange.value} | '
                 f'{market.value} | '
                 f'{symbol} | '
                 f'{interval} | '
@@ -145,9 +142,8 @@ class DataManager:
 
     def _get_data_from_exchange(
         self,
-        client: BinanceClient | BybitClient,
-        exchange: str,
-        market: enums.Market,
+        client: 'BinanceClient | BybitClient',
+        market: 'Market',
         symbol: str,
         interval: str,
         start: int,
@@ -155,7 +151,7 @@ class DataManager:
     ) -> np.ndarray:
         self.logger.info(
             f'Requesting data | '
-            f'{exchange.capitalize()} | '
+            f'{client.exchange.value} | '
             f'{market.value} | '
             f'{symbol} | '
             f'{interval}'

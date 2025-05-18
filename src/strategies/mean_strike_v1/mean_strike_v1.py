@@ -1,31 +1,35 @@
-import os
-
 import numpy as np
 import numba as nb
 
 import src.core.lib.ta as ta
-from src.core.strategy.order_cache import OrderCache
+from src.core.strategy.base_strategy import BaseStrategy
 
 
-class MeanStrike():
+class MeanStrike(BaseStrategy):
     # Strategy parameters
+    # Names must be in double quotes
+
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
-    margin_type = 0
-    initial_capital = 10000.0
-    commission = 0.075
-    # order_size_type: 0 — 'PERCENT', 1 — 'CURRENCY'
-    order_size_type = 0
-    order_size = 50
-    leverage = 1
-    entry_volume = [10.0, 15.0, 25.0, 50.0]
-    entry_percent_2 = 2.0
-    entry_percent_3 = 6.0
-    entry_percent_4 = 8.0
-    take_profit = 1.0
-    lookback = 1
-    ma_length = 20
-    mult = 2.0
-    range_threshold = 30.0
+    # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
+
+    params = {
+        "margin_type":  0,
+        "initial_capital":  10000.0,
+        "commission":  0.075,
+        "order_size_type":  0,
+        "order_size":  50,
+        "leverage":  1,
+        "entry_volume":  [10.0, 15.0, 25.0, 50.0],
+        "entry_percent_2":  2.0,
+        "entry_percent_3":  6.0,
+        "entry_percent_4":  8.0,
+        "take_profit":  1.0,
+        "lookback":  1,
+        "ma_length":  20,
+        "mult":  2.0,
+        "range_threshold":  30.0
+    }
+
 
     # Parameters to be optimized and their possible values
     opt_params = {
@@ -62,62 +66,17 @@ class MeanStrike():
     }
 
     # For frontend
-    line_options = {
+    indicator_options = {
         'EP #2': {'color': '#311b92'},
         'EP #3': {'color': '#311b92'},
         'EP #4': {'color': '#311b92'},
         'TP': {'color': '#4caf50'}
     }
 
-    # Class attributes
-    class_attributes = (
-        'opt_params',
-        'line_options',
-        'class_attributes',
-        'start',
-        'calculate',
-        'trade'
-    )
+    def __init__(self, all_params = None, opt_params = None) -> None:
+        super().__init__(all_params=all_params, opt_params=opt_params)
 
-    def __init__(
-        self,
-        opt_params: list | None = None,
-        all_params: list | None = None
-    ) -> None:
-        for key, value in MeanStrike.__dict__.items():
-            if (not key.startswith('__') and
-                    key not in MeanStrike.class_attributes):
-                self.__dict__[key] = value
-
-        if opt_params is not None:
-            self.entry_volume = opt_params[0]
-            self.entry_percent_2 = opt_params[1]
-            self.entry_percent_3 = opt_params[2]
-            self.entry_percent_4 = opt_params[3]
-            self.take_profit = opt_params[4]
-            self.lookback = opt_params[5]
-            self.ma_length = opt_params[6]
-            self.mult = opt_params[7]
-            self.range_threshold = opt_params[8]
-
-        if all_params is not None:
-            self.margin_type = all_params[0]
-            self.initial_capital = all_params[1]
-            self.commission = all_params[2]
-            self.order_size_type = all_params[3]
-            self.order_size = all_params[4]
-            self.leverage = all_params[5]
-            self.entry_volume = all_params[6]
-            self.entry_percent_2 = all_params[7]
-            self.entry_percent_3 = all_params[8]
-            self.entry_percent_4 = all_params[9]
-            self.take_profit = all_params[10]
-            self.lookback = all_params[11]
-            self.ma_length = all_params[12]
-            self.mult = all_params[13]
-            self.range_threshold = all_params[14]
-
-    def start(self, exchange_data: dict) -> None:
+    def start(self, client, market_data) -> None:
         self.open_deals_log = np.full((4, 5), np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -125,17 +84,18 @@ class MeanStrike():
         self.entry_price = np.nan
         self.entry_date = np.nan
         self.deal_type = np.nan
-        
-        self.client = exchange_data.get('client', None)
-        self.time = exchange_data['klines'][:, 0]
-        self.open = exchange_data['klines'][:, 1]
-        self.high = exchange_data['klines'][:, 2]
-        self.low = exchange_data['klines'][:, 3]
-        self.close = exchange_data['klines'][:, 4]
-        self.p_precision = exchange_data['p_precision']
-        self.q_precision = exchange_data['q_precision']
 
-        self.equity = self.initial_capital
+        self.client = client
+        self.symbol = market_data['symbol']
+        self.time = market_data['klines'][:, 0]
+        self.open = market_data['klines'][:, 1]
+        self.high = market_data['klines'][:, 2]
+        self.low = market_data['klines'][:, 3]
+        self.close = market_data['klines'][:, 4]
+        self.p_precision = market_data['p_precision']
+        self.q_precision = market_data['q_precision']
+
+        self.equity = self.params['initial_capital']
         self.qty_entry = np.full(4, np.nan)
         self.entry_price_2 = np.full(self.time.shape[0], np.nan)
         self.entry_price_3 = np.full(self.time.shape[0], np.nan)
@@ -143,8 +103,14 @@ class MeanStrike():
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
 
-        self.lowest = ta.lowest(np.roll(self.low, 1), self.lookback)
-        self.sma = ta.sma(self.high - self.low, self.ma_length)
+        self.lowest = ta.lowest(
+            source=np.roll(self.low, 1),
+            length=self.params['lookback']
+        )
+        self.sma = ta.sma(
+            source=(self.high - self.low), 
+            length=self.params['ma_length']
+        )
 
         self.alert_long = False
         self.alert_cancel = False
@@ -160,19 +126,19 @@ class MeanStrike():
             self.alert_long,
             self.alert_cancel,
             self.alert_new_take
-        ) = self.calculate(
-                self.initial_capital,
-                self.commission,
-                self.order_size_type,
-                self.order_size,
-                self.leverage,
-                self.entry_volume,
-                self.entry_percent_2,
-                self.entry_percent_3,
-                self.entry_percent_4,
-                self.take_profit,
-                self.mult,
-                self.range_threshold,
+        ) = self._calculate(
+                self.params['initial_capital'],
+                self.params['commission'],
+                self.params['order_size_type'],
+                self.params['order_size'],
+                self.params['leverage'],
+                self.params['entry_volume'],
+                self.params['entry_percent_2'],
+                self.params['entry_percent_3'],
+                self.params['entry_percent_4'],
+                self.params['take_profit'],
+                self.params['mult'],
+                self.params['range_threshold'],
                 self.p_precision,
                 self.q_precision,
                 self.time,
@@ -201,82 +167,28 @@ class MeanStrike():
                 self.alert_new_take
         )
 
-        self.lines = {
+        self.indicators = {
             'EP #2': {
-                'options': self.line_options['EP #2'],
+                'options': self.indicator_options['EP #2'],
                 'values': self.entry_price_2
             },
             'EP #3': {
-                'options': self.line_options['EP #3'],
+                'options': self.indicator_options['EP #3'],
                 'values': self.entry_price_3
             },
             'EP #4': {
-                'options': self.line_options['EP #4'],
+                'options': self.indicator_options['EP #4'],
                 'values': self.entry_price_4
             },
             'TP': {
-                'options': self.line_options['TP'],
+                'options': self.indicator_options['TP'],
                 'values': self.take_price
             }
         }
 
     @staticmethod
-    @nb.jit(
-        nb.types.Tuple((
-            nb.float64[:],
-            nb.float64[:, :],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.boolean,
-            nb.boolean,
-            nb.boolean
-        ))(
-            nb.float64,
-            nb.float64,
-            nb.int8,
-            nb.float64,
-            nb.int8,
-            nb.types.List(nb.float64, reflected=True),
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:, :],
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.boolean,
-            nb.boolean,
-            nb.boolean
-        ),
-        cache=True,
-        nopython=True,
-        nogil=True
-    )
-    def calculate(
+    @nb.jit(cache=True, nopython=True, nogil=True)
+    def _calculate(
         initial_capital: float,
         commission: float,
         order_size_type: int,
@@ -316,7 +228,7 @@ class MeanStrike():
         alert_cancel: bool,
         alert_new_take: bool
     ) -> tuple:
-        def round_to_minqty_or_mintick(number: float, precision: float) -> float:
+        def round_step(number: float, precision: float) -> float:
             return round(round(number / precision) * precision, 8)
 
         def update_log(
@@ -478,11 +390,11 @@ class MeanStrike():
                     avg_entry_price = np.nansum(
                         open_deals_log[:2, 3] * open_deals_log[:2, 4]
                     ) / np.nansum(open_deals_log[:2, 4])
-                    liquidation_price = round_to_minqty_or_mintick(
+                    liquidation_price = round_step(
                         avg_entry_price * (1 - (1 / leverage)),
                         p_precision
                     )
-                    take_price[i] = round_to_minqty_or_mintick(
+                    take_price[i] = round_step(
                         avg_entry_price * (100 + take_profit) / 100,
                         p_precision
                     )
@@ -505,11 +417,11 @@ class MeanStrike():
                     avg_entry_price = np.nansum(
                         open_deals_log[:3, 3] * open_deals_log[:3, 4]
                     ) / np.nansum(open_deals_log[:3, 4])
-                    liquidation_price = round_to_minqty_or_mintick(
+                    liquidation_price = round_step(
                         avg_entry_price * (1 - (1 / leverage)),
                         p_precision
                     )
-                    take_price[i] = round_to_minqty_or_mintick(
+                    take_price[i] = round_step(
                         avg_entry_price * (100 + take_profit) / 100,
                         p_precision
                     )
@@ -532,11 +444,11 @@ class MeanStrike():
                     avg_entry_price = np.nansum(
                         open_deals_log[:, 3] * open_deals_log[:, 4]
                     ) / np.nansum(open_deals_log[:, 4])
-                    liquidation_price = round_to_minqty_or_mintick(
+                    liquidation_price = round_step(
                         avg_entry_price * (1 - (1 / leverage)),
                         p_precision
                     )
-                    take_price[i] = round_to_minqty_or_mintick(
+                    take_price[i] = round_step(
                         avg_entry_price * (100 + take_profit) / 100,
                         p_precision
                     )
@@ -607,34 +519,34 @@ class MeanStrike():
                         / entry_price
                     )
                     
-                liquidation_price = round_to_minqty_or_mintick(
+                liquidation_price = round_step(
                     entry_price * (1 - (1 / leverage)), p_precision
                 )
-                entry_price_2[i] = round_to_minqty_or_mintick(
+                entry_price_2[i] = round_step(
                     close[i] * (100 - entry_percent_2) / 100, p_precision
                 )
-                entry_price_3[i] = round_to_minqty_or_mintick(
+                entry_price_3[i] = round_step(
                     entry_price_2[i] * (100 - entry_percent_3) / 100, p_precision
                 )
-                entry_price_4[i] = round_to_minqty_or_mintick(
+                entry_price_4[i] = round_step(
                     entry_price_3[i] * (100 - entry_percent_4) / 100, p_precision
                 )
-                take_price[i] = round_to_minqty_or_mintick(
+                take_price[i] = round_step(
                     close[i] * (100 + take_profit) / 100, p_precision
                 )
-                position_size = round_to_minqty_or_mintick(
+                position_size = round_step(
                     position_size, q_precision
                 )
-                qty_entry[0] = round_to_minqty_or_mintick(
+                qty_entry[0] = round_step(
                     position_size * entry_volume[0] / 100, q_precision
                 )
-                qty_entry[1] = round_to_minqty_or_mintick(
+                qty_entry[1] = round_step(
                     position_size * entry_volume[1] / 100, q_precision
                 )
-                qty_entry[2] = round_to_minqty_or_mintick(
+                qty_entry[2] = round_step(
                     position_size * entry_volume[2] / 100, q_precision
                 )
-                qty_entry[3] = round_to_minqty_or_mintick(
+                qty_entry[3] = round_step(
                     position_size * entry_volume[3] / 100, q_precision
                 )
                 open_deals_log[0] = np.array(
@@ -657,33 +569,28 @@ class MeanStrike():
             alert_new_take
         )
     
-    def trade(self, symbol: str) -> None:
-        if not hasattr(self, 'order_ids'):
-            self.cache = OrderCache(
-                os.path.join(
-                    os.path.dirname(__file__), '__cache__'
-                )
-            )
-            self.order_ids = self.cache.load(symbol)
+    def trade(self) -> None:
+        if self.order_ids is None:
+            self.order_ids = self.cache.load(self.symbol)
 
         if self.alert_cancel:
-            self.client.cancel_orders(symbol=symbol, side='Buy')
+            self.client.cancel_orders(symbol=self.symbol, side='Buy')
 
         self.order_ids['limit_ids'] = self.client.check_limit_orders(
-            symbol=symbol,
+            symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
         if self.alert_new_take:
-            self.client.cancel_orders(symbol=symbol, side='Sell')
+            self.client.cancel_orders(symbol=self.symbol, side='Sell')
 
             self.order_ids['limit_ids'] = self.client.check_limit_orders(
-                symbol=symbol,
+                symbol=self.symbol,
                 order_ids=self.order_ids['limit_ids']
             )
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],
                 hedge=False
@@ -693,21 +600,23 @@ class MeanStrike():
                 self.order_ids['limit_ids'].append(order_id)
 
         if self.alert_long:
-            self.client.cancel_all_orders(symbol)
+            self.client.cancel_all_orders(self.symbol)
 
             self.order_ids['limit_ids'] = self.client.check_limit_orders(
-                symbol=symbol,
+                symbol=self.symbol,
                 order_ids=self.order_ids['limit_ids']
             )
 
             order_id = self.client.limit_open_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size=(
-                    f'{self.order_size * self.entry_volume[1] / 100}'
-                    f'{'%' if self.order_size_type == 0 else 'u'}'
+                    f'{self.params['order_size'] * self.entry_volume[1] / 100}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 price=self.entry_price_2[-1],
                 hedge=False
             )
@@ -716,13 +625,15 @@ class MeanStrike():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_open_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size=(
-                    f'{self.order_size * self.entry_volume[2] / 100}'
-                    f'{'%' if self.order_size_type == 0 else 'u'}'
+                    f'{self.params['order_size'] * self.entry_volume[2] / 100}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 price=self.entry_price_3[-1],
                 hedge=False
             )
@@ -731,13 +642,15 @@ class MeanStrike():
                 self.order_ids['limit_ids'].append(order_id)
 
             order_id = self.client.limit_open_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size=(
-                    f'{self.order_size * self.entry_volume[3] / 100}'
-                    f'{'%' if self.order_size_type == 0 else 'u'}'
+                    f'{self.params['order_size'] * self.entry_volume[3] / 100}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 price=self.entry_price_4[-1],
                 hedge=False
             )
@@ -746,18 +659,20 @@ class MeanStrike():
                 self.order_ids['limit_ids'].append(order_id)
 
             self.client.market_open_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size=(
-                    f'{self.order_size * self.entry_volume[0] / 100}'
-                    f'{'%' if self.order_size_type == 0 else 'u'}'
+                    f'{self.params['order_size'] * self.entry_volume[0] / 100}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage,
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
                 hedge=False
             )
 
             order_id = self.client.limit_take_sell(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],
                 hedge=False
@@ -766,4 +681,4 @@ class MeanStrike():
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-        self.cache.save(symbol, self.order_ids)
+        self.cache.save(self.symbol, self.order_ids)

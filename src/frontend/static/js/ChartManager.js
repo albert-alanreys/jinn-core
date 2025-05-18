@@ -91,7 +91,7 @@ export default class ChartManager {
     wickUpColor: '#008984',
     wickDownColor: '#f23645',
   };
-  lineOptions = {
+  indicatorOptions = {
     lineWidth: 2,
     lastValueVisible: false,
     priceLineVisible: false,
@@ -133,16 +133,16 @@ export default class ChartManager {
       },
     });
 
-    this.lineSeriesGroup = {};
+    this.indicatorSeriesGroup = {};
 
-    for (var name in data.lines) {
-      var lineSeries = this.chart.addSeries(
+    for (var name in data.indicators) {
+      var indicatorSeries = this.chart.addSeries(
         LightweightCharts.LineSeries,
-        data.lines[name].options
+        data.indicators[name].options
       );
-      lineSeries.applyOptions(this.lineOptions);
+      indicatorSeries.applyOptions(this.indicatorOptions);
 
-      this.lineSeriesGroup[name] = lineSeries;
+      this.indicatorSeriesGroup[name] = indicatorSeries;
     }
 
     this.visibleLogicalRangeChangeHandler = (newVisibleTimeRange) => {
@@ -184,9 +184,9 @@ export default class ChartManager {
       this.seriesMarkers.setMarkers(markers);
     }
 
-    for (var name in this.lineSeriesGroup) {
-      this.lineSeriesGroup[name].setData(
-        data.lines[name].values.slice(-this.visibleRange)
+    for (var name in this.indicatorSeriesGroup) {
+      this.indicatorSeriesGroup[name].setData(
+        data.indicators[name].values.slice(-this.visibleRange)
       );
     }
   }
@@ -207,21 +207,25 @@ export default class ChartManager {
 
     document.getElementById('chart-panel').appendChild(mainLegend);
 
-    var linesLegend = document.createElement('div');
-    linesLegend.setAttribute('id', 'strategy-legend');
-    linesLegend.style.position = 'absolute';
-    linesLegend.style.left = '12px';
-    linesLegend.style.top = '40px';
-    linesLegend.style.zIndex = 2;
-    linesLegend.style.fontSize = '14px';
-    linesLegend.innerHTML = Object.entries(this.lineSeriesGroup)
+    var indicatorsLegend = document.createElement('div');
+    indicatorsLegend.setAttribute('id', 'strategy-legend');
+    indicatorsLegend.style.position = 'absolute';
+    indicatorsLegend.style.left = '12px';
+    indicatorsLegend.style.top = '40px';
+    indicatorsLegend.style.zIndex = 2;
+    indicatorsLegend.style.fontSize = '14px';
+    indicatorsLegend.innerHTML = Object.entries(this.indicatorSeriesGroup)
       .map(([name, series]) => {
         var point = series.data().at(-1);
-        return getLineLegendText(name, point, data.lines[name].options);
+        return getIndicatorLegendText(
+          name,
+          point,
+          data.indicators[name].options
+        );
       })
       .join(' ');
 
-    document.getElementById('chart-panel').appendChild(linesLegend);
+    document.getElementById('chart-panel').appendChild(indicatorsLegend);
 
     var crosshairMoveHandler = (crosshairPosition) => {
       if (crosshairPosition.time) {
@@ -239,10 +243,16 @@ export default class ChartManager {
 
           mainLegend.innerHTML = getMainLegendText(o, h, l, c);
 
-          linesLegend.innerHTML = Object.entries(this.lineSeriesGroup)
+          indicatorsLegend.innerHTML = Object.entries(
+            this.indicatorSeriesGroup
+          )
             .map(([name, series]) => {
               const point = crosshairPosition.seriesData.get(series);
-              return getLineLegendText(name, point, data.lines[name].options);
+              return getIndicatorLegendText(
+                name,
+                point,
+                data.indicators[name].options
+              );
             })
             .join(' ');
         }
@@ -261,7 +271,7 @@ export default class ChartManager {
           C <span style="color:${color};">${c}</span>`;
     }
 
-    function getLineLegendText(name, point, options) {
+    function getIndicatorLegendText(name, point, options) {
       if (!point) {
         var value = '∅';
         var color = '#000000';

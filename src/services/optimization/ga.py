@@ -4,17 +4,22 @@ from numpy import ndarray
 
 
 class GA:
-    iterations = 500
+    iterations = 10000
     population_size = 50
     max_population_size = 300
 
     def __init__(self, strategy_data: dict) -> None:
         self.strategy = strategy_data['type']
+        self.client = strategy_data['client']
         self.fold_1 = strategy_data['fold_1']
         self.fold_2 = strategy_data['fold_2']
         self.fold_3 = strategy_data['fold_3']
-        self.p_precision = strategy_data['p_precision']
-        self.q_precision = strategy_data['q_precision']
+        self.market_data = {
+            'market': strategy_data['market'],
+            'symbol': strategy_data['symbol'],
+            'p_precision': strategy_data['p_precision'],
+            'q_precision': strategy_data['q_precision']
+        }
 
         self.population = {}
         self.best_samples = []
@@ -43,7 +48,7 @@ class GA:
         samples = [
             [               
                 random.choice(values)
-                    for values in self.strategy.opt_params.values()
+                for values in self.strategy.opt_params.values()
             ]
             for _ in range(self.population_size)
         ]
@@ -58,18 +63,15 @@ class GA:
         self.sample_len = len(self.strategy.opt_params)
 
     def _evaluate(self, sample: list, fold: ndarray) -> float:
+        market_data = self.market_data.copy()
+        market_data['klines'] = fold
+
         instance = self.strategy(opt_params=sample)
-        instance.start(
-            {
-                'klines': fold,
-                'p_precision': self.p_precision,
-                'q_precision': self.q_precision,
-            }
-        )
+        instance.start(client=self.client, market_data=market_data)
 
         score = round(
             instance.completed_deals_log[8::13].sum() /
-                instance.initial_capital * 100,
+                instance.params['initial_capital'] * 100,
             2
         )
         return score

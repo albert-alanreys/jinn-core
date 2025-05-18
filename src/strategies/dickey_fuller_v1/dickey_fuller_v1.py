@@ -1,44 +1,47 @@
-import os
-
 import numpy as np
 import numba as nb
 
 import src.core.lib.ta as ta
-from src.core.strategy.order_cache import OrderCache
+from src.core.strategy.base_strategy import BaseStrategy
 
 
-class DickeyFullerV1():
+class DickeyFullerV1(BaseStrategy):
     # Strategy parameters
+    # Names must be in double quotes
+
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
-    margin_type = 0
-    # direction: 0 - 'all', 1 — 'longs', 2 — 'shorts'
-    direction = 0
-    initial_capital = 10000.0
-    commission = 0.05
-    leverage_p1 = 1
-    order_size_p1 = 100.0
-    leverage_p2 = 1
-    order_size_p2 = 50.0
-    stop_loss_p1 = 11.9
-    ema_length_p1 = 77
-    adf_length_1_p1 = 26
-    adf_length_2_p1 = 7
-    n_lag_1_p1 = 1
-    n_lag_2_p1 = 2
-    adf_level_1_p1 = 0.7
-    adf_level_2_p1 = -1.0
-    stop_loss_p2 = 7.5
-    take_profit_p2 = 11.8
-    entry_bar_p2 = 1
-    ema_length_p2 = 148
-    bb_length_p2 = 11
-    bb_mult_p2 = 1.3
-    adf_length_1_p2 = 25
-    adf_length_2_p2 = 53
-    n_lag_1_p2 = 2
-    n_lag_2_p2 = 0
-    adf_level_1_p2 = 1.5
-    adf_level_2_p2 = 1.1
+    # direction: 0 - "all", 1 — "longs", 2 — "shorts"
+
+    params = {
+        "margin_type": 0,
+        "direction": 0,
+        "initial_capital": 10000.0,
+        "commission": 0.05,
+        "leverage_p1": 1,
+        "order_size_p1": 100.0,
+        "leverage_p2": 1,
+        "order_size_p2": 50.0,
+        "stop_loss_p1": 11.9,
+        "ema_length_p1": 77,
+        "adf_length_1_p1": 26,
+        "adf_length_2_p1": 7,
+        "n_lag_1_p1": 1,
+        "n_lag_2_p1": 2,
+        "adf_level_1_p1": 0.7,
+        "adf_level_2_p1": -1.0,
+        "stop_loss_p2": 7.5,
+        "take_profit_p2": 11.8,
+        "entry_bar_p2": 1,
+        "ema_length_p2": 148,
+        "bb_length_p2": 11,
+        "bb_mult_p2": 1.3,
+        "adf_length_1_p2": 25,
+        "adf_length_2_p2": 53,
+        "n_lag_1_p2": 2,
+        "n_lag_2_p2": 0,
+        "adf_level_1_p2": 1.5,
+        "adf_level_2_p2": 1.1
+    }
 
     # Parameters to be optimized and their possible values
     opt_params = {
@@ -65,84 +68,15 @@ class DickeyFullerV1():
     }
 
     # For frontend
-    line_options = {
+    indicator_options = {
         'SL': {'color': '#FF0000'},
         'TP': {'color': '#008000'}
     }
 
-    # Class attributes
-    class_attributes = (
-        'opt_params',
-        'line_options',
-        'class_attributes',
-        'start',
-        'calculate',
-        'trade'
-    )
+    def __init__(self, all_params = None, opt_params = None) -> None:
+        super().__init__(all_params=all_params, opt_params=opt_params)
 
-    def __init__(
-        self,
-        opt_params: list | None = None,
-        all_params: list | None = None
-    ) -> None:
-        for key, value in DickeyFullerV1.__dict__.items():
-            if (not key.startswith('__') and
-                    key not in DickeyFullerV1.class_attributes):
-                self.__dict__[key] = value
-
-        if opt_params is not None:
-            self.stop_loss_p1 = opt_params[0]
-            self.ema_length_p1 = opt_params[1]
-            self.adf_length_1_p1 = opt_params[2]
-            self.adf_length_2_p1 = opt_params[3]
-            self.n_lag_1_p1 = opt_params[4]
-            self.n_lag_2_p1 = opt_params[5]
-            self.adf_level_1_p1 = opt_params[6]
-            self.adf_level_2_p1 = opt_params[7]
-            self.stop_loss_p2 = opt_params[8]
-            self.take_profit_p2 = opt_params[9]
-            self.entry_bar_p2 = opt_params[10]
-            self.ema_length_p2 = opt_params[11]
-            self.bb_length_p2 = opt_params[12]
-            self.bb_mult_p2 = opt_params[13]
-            self.adf_length_1_p2 = opt_params[14]
-            self.adf_length_2_p2 = opt_params[15]
-            self.n_lag_1_p2 = opt_params[16]
-            self.n_lag_2_p2 = opt_params[17]
-            self.adf_level_1_p2 = opt_params[18]
-            self.adf_level_2_p2 = opt_params[19]
-
-        if all_params is not None:
-            self.margin_type = all_params[0]
-            self.direction = all_params[1]
-            self.initial_capital = all_params[2]
-            self.commission = all_params[3]
-            self.leverage_p1 = all_params[4]
-            self.order_size_p1 = all_params[5]
-            self.leverage_p2 = all_params[6]
-            self.order_size_p2 = all_params[7]
-            self.stop_loss_p1 = all_params[8]
-            self.ema_length_p1 = all_params[9]
-            self.adf_length_1_p1 = all_params[10]
-            self.adf_length_2_p1 = all_params[11]
-            self.n_lag_1_p1 = all_params[12]
-            self.n_lag_2_p1 = all_params[13]
-            self.adf_level_1_p1 = all_params[14]
-            self.adf_level_2_p1 = all_params[15]
-            self.stop_loss_p2 = all_params[16]
-            self.take_profit_p2 = all_params[17]
-            self.entry_bar_p2 = all_params[18]
-            self.ema_length_p2 = all_params[19]
-            self.bb_length_p2 = all_params[20]
-            self.bb_mult_p2 = all_params[21]
-            self.adf_length_1_p2 = all_params[22]
-            self.adf_length_2_p2 = all_params[23]
-            self.n_lag_1_p2 = all_params[24]
-            self.n_lag_2_p2 = all_params[25]
-            self.adf_level_1_p2 = all_params[26]
-            self.adf_level_2_p2 = all_params[27]
-
-    def start(self, exchange_data: dict) -> None:
+    def start(self, client, market_data) -> None:
         self.open_deals_log = np.full(5, np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -151,37 +85,54 @@ class DickeyFullerV1():
         self.entry_date = np.nan
         self.deal_type = np.nan
 
-        self.client = exchange_data.get('client', None)
-        self.time = exchange_data['klines'][:, 0]
-        self.open = exchange_data['klines'][:, 1]
-        self.high = exchange_data['klines'][:, 2]
-        self.low = exchange_data['klines'][:, 3]
-        self.close = exchange_data['klines'][:, 4]
-        self.p_precision = exchange_data['p_precision']
-        self.q_precision = exchange_data['q_precision']
+        self.client = client
+        self.symbol = market_data['symbol']
+        self.time = market_data['klines'][:, 0]
+        self.open = market_data['klines'][:, 1]
+        self.high = market_data['klines'][:, 2]
+        self.low = market_data['klines'][:, 3]
+        self.close = market_data['klines'][:, 4]
+        self.p_precision = market_data['p_precision']
+        self.q_precision = market_data['q_precision']
 
-        self.equity = self.initial_capital
+        self.equity = self.params['initial_capital']
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
         self.entry_short_stage_p2 = np.nan
 
         self.adf_1_p1 = ta.adftest(
-            self.close, self.adf_length_1_p1, self.n_lag_1_p1
+            source=self.close,
+            length=self.params['adf_length_1_p1'],
+            lags=self.params['n_lag_1_p1']
         )
         self.adf_2_p1 = ta.adftest(
-            self.close, self.adf_length_2_p1, self.n_lag_2_p1
+            source=self.close,
+            length=self.params['adf_length_2_p1'],
+            lags=self.params['n_lag_2_p1']
         )
         self.adf_1_p2 = ta.adftest(
-            self.close, self.adf_length_1_p2, self.n_lag_1_p2
+            source=self.close,
+            length=self.params['adf_length_1_p2'],
+            lags=self.params['n_lag_1_p2']
         )
         self.adf_2_p2 = ta.adftest(
-            self.close, self.adf_length_2_p2, self.n_lag_2_p2
+            source=self.close,
+            length=self.params['adf_length_2_p2'],
+            lags=self.params['n_lag_2_p2']
         )
-        self.ema_p1 = ta.ema(self.close, self.ema_length_p1)
-        self.ema_p2 = ta.ema(self.close, self.ema_length_p2)
+        self.ema_p1 = ta.ema(
+            source=self.close,
+            length=self.params['ema_length_p1']
+        )
+        self.ema_p2 = ta.ema(
+            source=self.close,
+            length=self.params['ema_length_p2']
+        )
         self.bb = ta.bb(
-            self.close, self.bb_length_p2, self.bb_mult_p2
+            source=self.close,
+            length=self.params['bb_length_p2'],
+            mult=self.params['bb_mult_p2']
         )
         self.bb_upper_p2 = self.bb[1]
         self.bb_lower_p2 = self.bb[2]
@@ -202,22 +153,22 @@ class DickeyFullerV1():
             self.alert_entry_short,
             self.alert_exit_short,
             self.alert_cancel
-        ) = self.calculate(
-                self.direction,
-                self.initial_capital,
-                self.commission,
-                self.leverage_p1,
-                self.order_size_p1,
-                self.leverage_p2,
-                self.order_size_p2,
-                self.stop_loss_p1,
-                self.adf_level_1_p1,
-                self.adf_level_2_p1,
-                self.stop_loss_p2,
-                self.take_profit_p2,
-                self.entry_bar_p2,
-                self.adf_level_1_p2,
-                self.adf_level_2_p2,
+        ) = self._calculate(
+                self.params['direction'],
+                self.params['initial_capital'],
+                self.params['commission'],
+                self.params['leverage_p1'],
+                self.params['order_size_p1'],
+                self.params['leverage_p2'],
+                self.params['order_size_p2'],
+                self.params['stop_loss_p1'],
+                self.params['adf_level_1_p1'],
+                self.params['adf_level_2_p1'],
+                self.params['stop_loss_p2'],
+                self.params['take_profit_p2'],
+                self.params['entry_bar_p2'],
+                self.params['adf_level_1_p2'],
+                self.params['adf_level_2_p2'],
                 self.p_precision,
                 self.q_precision,
                 self.time,
@@ -252,83 +203,20 @@ class DickeyFullerV1():
                 self.alert_cancel
         )
 
-        self.lines = {
+        self.indicators = {
             'SL': {
-                'options': self.line_options['SL'],
+                'options': self.indicator_options['SL'],
                 'values': self.stop_price
             },
             'TP': {
-                'options': self.line_options['TP'],
+                'options': self.indicator_options['TP'],
                 'values': self.take_price
             }
         }
 
     @staticmethod
-    @nb.jit(
-        nb.types.Tuple((
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean 
-        ))(
-            nb.int8,
-            nb.float64,
-            nb.float64,
-            nb.int8,
-            nb.float64,
-            nb.int8,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.int8,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64,
-            nb.float64,
-            nb.float64,
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.float64[:],
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean,
-            nb.boolean
-        ),
-        cache=True,
-        nopython=True,
-        nogil=True
-    )
-    def calculate(
+    @nb.jit(cache=True, nopython=True, nogil=True)
+    def _calculate(
         direction: int,
         initial_capital: float,
         commission: float,
@@ -377,7 +265,7 @@ class DickeyFullerV1():
         alert_exit_short: bool,
         alert_cancel: bool
     ) -> tuple:
-        def round_to_minqty_or_mintick(number: float, precision: float) -> float:
+        def round_step(number: float, precision: float) -> float:
             return round(round(number / precision) * precision, 8)
 
         def update_log(
@@ -772,16 +660,16 @@ class DickeyFullerV1():
                 initial_position =  (
                     equity * leverage_p1 * (order_size_p1 / 100.0)
                 )
-                position_size = round_to_minqty_or_mintick(
+                position_size = round_step(
                     initial_position * (1 - commission / 100) / entry_price,
                     q_precision
                 )
                 entry_date = time[i]
-                liquidation_price = round_to_minqty_or_mintick(
+                liquidation_price = round_step(
                     entry_price * (1 - 1 / leverage_p1),
                     p_precision
                 )
-                stop_price[i] = round_to_minqty_or_mintick(
+                stop_price[i] = round_step(
                     close[i] * (100 - stop_loss_p1) / 100,
                     p_precision
                 )
@@ -818,20 +706,20 @@ class DickeyFullerV1():
                 initial_position =  (
                     equity * leverage_p2 * (order_size_p2 / 100.0)
                 )
-                position_size = round_to_minqty_or_mintick(
+                position_size = round_step(
                     initial_position * (1 - commission / 100) / entry_price,
                     q_precision
                 )
                 entry_date = time[i]
-                liquidation_price = round_to_minqty_or_mintick(
+                liquidation_price = round_step(
                     entry_price * (1 + 1 / leverage_p2),
                     p_precision
                 )
-                stop_price[i] = round_to_minqty_or_mintick(
+                stop_price[i] = round_step(
                     close[i] * (100 + stop_loss_p2) / 100,
                     p_precision
                 )
-                take_price[i] = round_to_minqty_or_mintick(
+                take_price[i] = round_step(
                     close[i] * (100 - take_profit_p2) / 100,
                     p_precision
                 )
@@ -856,51 +744,48 @@ class DickeyFullerV1():
             alert_cancel
         )
     
-    def trade(self, symbol: str) -> None:
-        if not hasattr(self, 'order_ids'):
-            self.cache = OrderCache(
-                os.path.join(
-                    os.path.dirname(__file__), '__cache__'
-                )
-            )
-            self.order_ids = self.cache.load(symbol)
+    def trade(self) -> None:
+        if self.order_ids is None:
+            self.order_ids = self.cache.load(self.symbol)
 
         if self.alert_cancel:
-            self.client.cancel_all_orders(symbol)
+            self.client.cancel_all_orders(self.symbol)
 
         self.order_ids['stop_ids'] = self.client.check_stop_orders(
-            symbol=symbol,
+            symbol=self.symbol,
             order_ids=self.order_ids['stop_ids']
         )
         self.order_ids['limit_ids'] = self.client.check_limit_orders(
-            symbol=symbol,
+            symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
         if self.alert_exit_long:
             self.client.market_close_sell(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
 
         if self.alert_exit_short:
             self.client.market_close_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
 
         if self.alert_entry_long:
             self.client.market_open_buy(
-                symbol=symbol,
-                size=f'{self.order_size_p1}%',
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage_p1,
+                symbol=self.symbol,
+                size=f'{self.params['order_size_p1']}%',
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage_p1'],
                 hedge=False
             )
             order_id = self.client.market_stop_sell(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
                 hedge=False
@@ -911,14 +796,16 @@ class DickeyFullerV1():
 
         if self.alert_entry_short:
             self.client.market_open_sell(
-                symbol=symbol,
-                size=f'{self.order_size_p2}%',
-                margin=('isolated' if self.margin_type == 0 else 'cross'),
-                leverage=self.leverage_p2,
+                symbol=self.symbol,
+                size=f'{self.params['order_size_p2']}%',
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage_p2'],
                 hedge=False
             )
             order_id = self.client.market_stop_buy(
-                symbol=symbol, 
+                symbol=self.symbol, 
                 size='100%',
                 price=self.stop_price[-1], 
                 hedge=False
@@ -928,7 +815,7 @@ class DickeyFullerV1():
                 self.order_ids['stop_ids'].append(order_id)
 
             order_id = self.client.limit_take_buy(
-                symbol=symbol,
+                symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],
                 hedge=False
@@ -937,4 +824,4 @@ class DickeyFullerV1():
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-        self.cache.save(symbol, self.order_ids)
+        self.cache.save(self.symbol, self.order_ids)

@@ -26,7 +26,6 @@ class Server(Flask):
 
         self.formatter = DataFormatter(mode, data_to_format)
         self.manager = StrategyManager(mode, data_to_format)
-
         self.formatter.format()
 
         super().__init__(
