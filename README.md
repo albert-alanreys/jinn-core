@@ -21,7 +21,7 @@ TVLite — это фреймворк для алгоритмических то�
 
 1. Python версии **3.12**.
 2. Установленные зависимости из файла `requirements.txt`.
-3. Действующие API-токены от Binance и/или Bybit.
+3. Действующие API-ключи от Binance и/или Bybit.
 4. Telegram-бот для уведомлений.
 
 ### Шаги для начала работы
@@ -65,20 +65,20 @@ pip install "имя_пакета"
 Откройте файл `config.py` в любом текстовом редакторе и укажите API-ключи:
 
 ```python
-BYBIT_API_KEY = "ваш_BYBIT_API_KEY"
-BYBIT_API_SECRET = "ваш_BYBIT_API_SECRET"
+BYBIT_API_KEY = 'ваш_BYBIT_API_KEY'
+BYBIT_API_SECRET = 'ваш_BYBIT_API_SECRET'
 
-BINANCE_API_KEY = "ваш_BINANCE_API_KEY"
-BINANCE_API_SECRET = "ваш_BINANCE_API_SECRET"
+BINANCE_API_KEY = 'ваш_BINANCE_API_KEY'
+BINANCE_API_SECRET = 'ваш_BINANCE_API_SECRET'
 ```
 
 #### 4. Настройка Telegram-бота
 
-**a) Получение API-токена:**
+**a) Получение API-ключа:**
 
 1. Напишите [@BotFather](https://t.me/BotFather) команду `/start`.
 2. Создайте бота через команду `/newbot`.
-3. Сохраните полученный API-токен.
+3. Сохраните полученный API-ключ.
 
 **b) Получение chat ID:**
 
@@ -88,8 +88,8 @@ BINANCE_API_SECRET = "ваш_BINANCE_API_SECRET"
 Добавьте данные в `config.py`:
 
 ```python
-TELEGRAM_BOT_TOKEN = "ваш_TELEGRAM_BOT_TOKEN"
-TELEGRAM_CHAT_ID = "ваш_TELEGRAM_CHAT_ID"
+TELEGRAM_BOT_TOKEN = 'ваш_TELEGRAM_BOT_TOKEN'
+TELEGRAM_CHAT_ID = 'ваш_TELEGRAM_CHAT_ID'
 ```
 
 ## Запуск программы
