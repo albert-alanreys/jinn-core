@@ -317,6 +317,9 @@ export default class ChartManager {
 
   removeChart() {
     try {
+      this.seriesMarkers.setMarkers([]);
+      this.seriesMarkers = null;
+
       this.chart.remove();
 
       for (var item of Array.from(

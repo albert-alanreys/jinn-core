@@ -19,7 +19,7 @@ TELEGRAM_CHAT_ID = '342956167'
 #   OPTIMIZATION - оптимизация
 #   TESTING - тестирование
 #   AUTOMATION - автоматизация
-MODE = enums.Mode.AUTOMATION
+MODE = enums.Mode.TESTING
 
 # Настройки для различных режимов
 AUTOMATION_INFO = {
