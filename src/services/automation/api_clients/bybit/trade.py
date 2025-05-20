@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from logging import getLogger
 
+from src.core.utils.rounding import adjust
 from .account import AccountClient
 from .base import BaseClient
 from .market import MarketClient
@@ -213,10 +214,7 @@ class TradeClient(BaseClient):
     ) -> str | None:
         try:
             p_precision = self.market.get_price_precision(symbol)
-            adjusted_price = round(
-                round(price / p_precision) * p_precision,
-                8
-            )
+            adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_close(
                 side='Buy',
                 symbol=symbol,
@@ -269,10 +267,7 @@ class TradeClient(BaseClient):
     ) -> str | None:
         try:
             p_precision = self.market.get_price_precision(symbol)
-            adjusted_price = round(
-                round(price / p_precision) * p_precision,
-                8
-            )
+            adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_close(
                 side='Sell',
                 symbol=symbol,
@@ -358,11 +353,8 @@ class TradeClient(BaseClient):
             q_precision = self.market.get_qty_precision(symbol)
             p_precision = self.market.get_price_precision(symbol)
 
-            adjusted_qty = round(round(qty / q_precision) * q_precision, 8)
-            adjusted_price = round(
-                round(price / p_precision) * p_precision,
-                8
-            )
+            adjusted_qty = adjust(qty, q_precision)
+            adjusted_price = adjust(price, p_precision)
 
             order = self._create_order(
                 symbol=symbol,
@@ -442,11 +434,8 @@ class TradeClient(BaseClient):
             q_precision = self.market.get_qty_precision(symbol)
             p_precision = self.market.get_price_precision(symbol)
 
-            adjusted_qty = round(round(qty / q_precision) * q_precision, 8)
-            adjusted_price = round(
-                round(price / p_precision) * p_precision,
-                8
-            )
+            adjusted_qty = adjust(qty, q_precision)
+            adjusted_price = adjust(price, p_precision)
 
             order = self._create_order(
                 symbol=symbol,
@@ -700,7 +689,7 @@ class TradeClient(BaseClient):
             qty = size_val / effective_price
 
         q_precision = self.market.get_qty_precision(symbol)
-        return round(round(qty / q_precision) * q_precision, 8)
+        return adjust(qty, q_precision)
 
     def _get_quantity_to_open(
         self,
@@ -721,7 +710,7 @@ class TradeClient(BaseClient):
             qty = leverage * size_val / last_price
 
         q_precision = self.market.get_qty_precision(symbol)
-        return round(round(qty / q_precision) * q_precision, 8)
+        return adjust(qty, q_precision)
 
     def _get_position_size(self, side: str, symbol: str) -> float:
         try:

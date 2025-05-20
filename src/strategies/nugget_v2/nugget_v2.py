@@ -358,8 +358,8 @@ class NuggetV2(BaseStrategy):
         alert_short_new_stop: bool,
         alert_cancel: bool
     ) -> tuple:
-        def round_step(number: float, precision: float) -> float:
-            return round(round(number / precision) * precision, 8)
+        def adjust(number: float, precision: float, digits: int = 8) -> float:
+            return round(round(number / precision) * precision, digits)
 
         def update_log(
             log: np.ndarray,
@@ -533,7 +533,7 @@ class NuggetV2(BaseStrategy):
                         change_lower_band[i] and
                         ((ds_lower_band[i] * (100 - stop)
                         / 100) > stop_price[i])):
-                    stop_price[i] = round_step(
+                    stop_price[i] = adjust(
                         ds_lower_band[i] * (100 - stop) / 100,
                         p_precision
                     )
@@ -556,7 +556,7 @@ class NuggetV2(BaseStrategy):
 
                     if take is not None:
                         stop_moved = True
-                        stop_price[i] = round_step(
+                        stop_price[i] = adjust(
                             (take - entry_price) * (trail_percent / 100)
                                 + entry_price,
                             p_precision
@@ -713,43 +713,43 @@ class NuggetV2(BaseStrategy):
                     )
                     
                 entry_date = time[i]
-                liquidation_price = round_step(
+                liquidation_price = adjust(
                     entry_price * (1 - (1 / leverage)), p_precision
                 )
-                stop_price[i] = round_step(
+                stop_price[i] = adjust(
                     ds_lower_band[i] * (100 - stop) / 100, p_precision
                 )
-                take_price[0][i] = round_step(
+                take_price[0][i] = adjust(
                     close[i] * (100 + take_percent[0]) / 100, p_precision
                 )
-                take_price[1][i] = round_step(
+                take_price[1][i] = adjust(
                     close[i] * (100 + take_percent[1]) / 100, p_precision
                 )
-                take_price[2][i] = round_step(
+                take_price[2][i] = adjust(
                     close[i] * (100 + take_percent[2]) / 100, p_precision
                 )
-                take_price[3][i] = round_step(
+                take_price[3][i] = adjust(
                     close[i] * (100 + take_percent[3]) / 100, p_precision
                 )
-                take_price[4][i] = round_step(
+                take_price[4][i] = adjust(
                     close[i] * (100 + take_percent[4]) / 100, p_precision
                 )
-                position_size = round_step(
+                position_size = adjust(
                     position_size, q_precision
                 )
-                qty_take[0] = round_step(
+                qty_take[0] = adjust(
                     position_size * take_volume[0] / 100, q_precision
                 )
-                qty_take[1] = round_step(
+                qty_take[1] = adjust(
                     position_size * take_volume[1] / 100, q_precision
                 )
-                qty_take[2] = round_step(
+                qty_take[2] = adjust(
                     position_size * take_volume[2] / 100, q_precision
                 )
-                qty_take[3] = round_step(
+                qty_take[3] = adjust(
                     position_size * take_volume[3] / 100, q_precision
                 )
-                qty_take[4] = round_step(
+                qty_take[4] = adjust(
                     position_size * take_volume[4] / 100, q_precision
                 )
                 open_deals_log = np.array(
@@ -795,7 +795,7 @@ class NuggetV2(BaseStrategy):
                         change_upper_band[i] and
                         ((ds_upper_band[i] * (100 + stop)
                         / 100) < stop_price[i])):
-                    stop_price[i] = round_step(
+                    stop_price[i] = adjust(
                         (ds_upper_band[i] * (100 + stop) / 100), 
                         p_precision
                     )
@@ -818,7 +818,7 @@ class NuggetV2(BaseStrategy):
 
                     if take is not None:
                         stop_moved = True
-                        stop_price[i] = round_step(
+                        stop_price[i] = adjust(
                             (take - entry_price) * (trail_percent / 100)
                                 + entry_price,
                             p_precision
@@ -975,43 +975,43 @@ class NuggetV2(BaseStrategy):
                     )
 
                 entry_date = time[i]
-                liquidation_price = round_step(
+                liquidation_price = adjust(
                     entry_price * (1 + (1 / leverage)), p_precision
                 )
-                stop_price[i] = round_step(
+                stop_price[i] = adjust(
                     ds_upper_band[i] * (100 + stop) / 100, p_precision
                 )
-                take_price[0][i] = round_step(
+                take_price[0][i] = adjust(
                     close[i] * (100 - take_percent[0]) / 100, p_precision
                 )
-                take_price[1][i] = round_step(
+                take_price[1][i] = adjust(
                     close[i] * (100 - take_percent[1]) / 100, p_precision
                 )
-                take_price[2][i] = round_step(
+                take_price[2][i] = adjust(
                     close[i] * (100 - take_percent[2]) / 100, p_precision
                 )
-                take_price[3][i] = round_step(
+                take_price[3][i] = adjust(
                     close[i] * (100 - take_percent[3]) / 100, p_precision
                 )
-                take_price[4][i] = round_step(
+                take_price[4][i] = adjust(
                     close[i] * (100 - take_percent[4]) / 100, p_precision
                 )
-                position_size = round_step(
+                position_size = adjust(
                     position_size, q_precision
                 )
-                qty_take[0] = round_step(
+                qty_take[0] = adjust(
                     position_size * take_volume[0] / 100, q_precision
                 )
-                qty_take[1] = round_step(
+                qty_take[1] = adjust(
                     position_size * take_volume[1] / 100, q_precision
                 )
-                qty_take[2] = round_step(
+                qty_take[2] = adjust(
                     position_size * take_volume[2] / 100, q_precision
                 )
-                qty_take[3] = round_step(
+                qty_take[3] = adjust(
                     position_size * take_volume[3] / 100, q_precision
                 )
-                qty_take[4] = round_step(
+                qty_take[4] = adjust(
                     position_size * take_volume[4] / 100, q_precision
                 )
                 open_deals_log = np.array(

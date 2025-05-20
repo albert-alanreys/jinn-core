@@ -227,8 +227,8 @@ class MeanStrikeV1(BaseStrategy):
         alert_cancel: bool,
         alert_new_take: bool
     ) -> tuple:
-        def round_step(number: float, precision: float) -> float:
-            return round(round(number / precision) * precision, 8)
+        def adjust(number: float, precision: float, digits: int = 8) -> float:
+            return round(round(number / precision) * precision, digits)
 
         def update_log(
             log: np.ndarray,
@@ -389,11 +389,11 @@ class MeanStrikeV1(BaseStrategy):
                     avg_entry_price = np.nansum(
                         open_deals_log[:2, 3] * open_deals_log[:2, 4]
                     ) / np.nansum(open_deals_log[:2, 4])
-                    liquidation_price = round_step(
+                    liquidation_price = adjust(
                         avg_entry_price * (1 - (1 / leverage)),
                         p_precision
                     )
-                    take_price[i] = round_step(
+                    take_price[i] = adjust(
                         avg_entry_price * (100 + take_profit) / 100,
                         p_precision
                     )
@@ -416,11 +416,11 @@ class MeanStrikeV1(BaseStrategy):
                     avg_entry_price = np.nansum(
                         open_deals_log[:3, 3] * open_deals_log[:3, 4]
                     ) / np.nansum(open_deals_log[:3, 4])
-                    liquidation_price = round_step(
+                    liquidation_price = adjust(
                         avg_entry_price * (1 - (1 / leverage)),
                         p_precision
                     )
-                    take_price[i] = round_step(
+                    take_price[i] = adjust(
                         avg_entry_price * (100 + take_profit) / 100,
                         p_precision
                     )
@@ -443,11 +443,11 @@ class MeanStrikeV1(BaseStrategy):
                     avg_entry_price = np.nansum(
                         open_deals_log[:, 3] * open_deals_log[:, 4]
                     ) / np.nansum(open_deals_log[:, 4])
-                    liquidation_price = round_step(
+                    liquidation_price = adjust(
                         avg_entry_price * (1 - (1 / leverage)),
                         p_precision
                     )
-                    take_price[i] = round_step(
+                    take_price[i] = adjust(
                         avg_entry_price * (100 + take_profit) / 100,
                         p_precision
                     )
@@ -518,34 +518,34 @@ class MeanStrikeV1(BaseStrategy):
                         / entry_price
                     )
                     
-                liquidation_price = round_step(
+                liquidation_price = adjust(
                     entry_price * (1 - (1 / leverage)), p_precision
                 )
-                entry_price_2[i] = round_step(
+                entry_price_2[i] = adjust(
                     close[i] * (100 - entry_percent_2) / 100, p_precision
                 )
-                entry_price_3[i] = round_step(
+                entry_price_3[i] = adjust(
                     entry_price_2[i] * (100 - entry_percent_3) / 100, p_precision
                 )
-                entry_price_4[i] = round_step(
+                entry_price_4[i] = adjust(
                     entry_price_3[i] * (100 - entry_percent_4) / 100, p_precision
                 )
-                take_price[i] = round_step(
+                take_price[i] = adjust(
                     close[i] * (100 + take_profit) / 100, p_precision
                 )
-                position_size = round_step(
+                position_size = adjust(
                     position_size, q_precision
                 )
-                qty_entry[0] = round_step(
+                qty_entry[0] = adjust(
                     position_size * entry_volume[0] / 100, q_precision
                 )
-                qty_entry[1] = round_step(
+                qty_entry[1] = adjust(
                     position_size * entry_volume[1] / 100, q_precision
                 )
-                qty_entry[2] = round_step(
+                qty_entry[2] = adjust(
                     position_size * entry_volume[2] / 100, q_precision
                 )
-                qty_entry[3] = round_step(
+                qty_entry[3] = adjust(
                     position_size * entry_volume[3] / 100, q_precision
                 )
                 open_deals_log[0] = np.array(

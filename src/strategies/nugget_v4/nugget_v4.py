@@ -440,8 +440,8 @@ class NuggetV4(BaseStrategy):
         alert_short_new_stop: bool,
         alert_cancel: bool
     ) -> tuple:
-        def round_step(number: float, precision: float) -> float:
-            return round(round(number / precision) * precision, 8)
+        def adjust(number: float, precision: float, digits: int = 8) -> float:
+            return round(round(number / precision) * precision, digits)
 
         def update_log(
             log: np.ndarray,
@@ -678,7 +678,7 @@ class NuggetV4(BaseStrategy):
                         change_lower_band[i] and
                         ((ds_lower_band[i] * (100 - stop)
                         / 100) > stop_price[i])):
-                    stop_price[i] = round_step(
+                    stop_price[i] = adjust(
                         ds_lower_band[i] * (100 - stop) / 100,
                         p_precision
                     )
@@ -730,7 +730,7 @@ class NuggetV4(BaseStrategy):
 
                     if take is not None:
                         stop_moved = True
-                        stop_price[i] = round_step(
+                        stop_price[i] = adjust(
                             (take - entry_price) * (trail_percent / 100)
                                 + entry_price,
                             p_precision
@@ -1132,10 +1132,10 @@ class NuggetV4(BaseStrategy):
                         / entry_price
                     )
                     
-                position_size = round_step(
+                position_size = adjust(
                     position_size, q_precision
                 )
-                liquidation_price = round_step(
+                liquidation_price = adjust(
                     entry_price * (1 - (1 / leverage)), p_precision
                 )
                 open_deals_log = np.array(
@@ -1146,12 +1146,12 @@ class NuggetV4(BaseStrategy):
                 )
 
                 if stop_type == 1 or stop_type == 2:
-                    stop_price[i] = round_step(
+                    stop_price[i] = adjust(
                         ds_lower_band[i] * (100 - stop) / 100,
                         p_precision
                     )
                 elif stop_type == 3:
-                    stop_price[i] = round_step(
+                    stop_price[i] = adjust(
                         fibo_levels[0] * (100 - stop) / 100, p_precision
                     )
 
@@ -1159,51 +1159,51 @@ class NuggetV4(BaseStrategy):
                     grid_type = 0
 
                     if close[i] >= fibo_levels[0] and close[i] < fibo_levels[1]:
-                        take_price[0][i] = round_step(
+                        take_price[0][i] = adjust(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = round_step(
+                        take_price[1][i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = round_step(
+                        take_price[2][i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = round_step(
+                        take_price[3][i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = round_step(
+                        take_price[4][i] = adjust(
                             fibo_levels[6], p_precision
                         )
                     elif close[i] >= fibo_levels[1]:
-                        take_price[0][i] = round_step(
+                        take_price[0][i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = round_step(
+                        take_price[1][i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = round_step(
+                        take_price[2][i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = round_step(
+                        take_price[3][i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = round_step(
+                        take_price[4][i] = adjust(
                             fibo_levels[7], p_precision
                         )
 
-                    qty_take_1[0] = round_step(
+                    qty_take_1[0] = adjust(
                         position_size * take_volume_1[0] / 100, q_precision
                     )
-                    qty_take_1[1] = round_step(
+                    qty_take_1[1] = adjust(
                         position_size * take_volume_1[1] / 100, q_precision
                     )
-                    qty_take_1[2] = round_step(
+                    qty_take_1[2] = adjust(
                         position_size * take_volume_1[2] / 100, q_precision
                     )
-                    qty_take_1[3] = round_step(
+                    qty_take_1[3] = adjust(
                         position_size * take_volume_1[3] / 100, q_precision
                     )
-                    qty_take_1[4] = round_step(
+                    qty_take_1[4] = adjust(
                         position_size * take_volume_1[4] / 100, q_precision
                     )
                     alert_long_1 = True
@@ -1211,96 +1211,96 @@ class NuggetV4(BaseStrategy):
                     grid_type = 1
 
                     if close[i] >= fibo_levels[0] and close[i] < fibo_levels[1]:
-                        take_price[0][i] = round_step(
+                        take_price[0][i] = adjust(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = round_step(
+                        take_price[1][i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = round_step(
+                        take_price[2][i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = round_step(
+                        take_price[3][i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = round_step(
+                        take_price[4][i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[5][i] = round_step(
+                        take_price[5][i] = adjust(
                             fibo_levels[7], p_precision
                         )
-                        take_price[6][i] = round_step(
+                        take_price[6][i] = adjust(
                             fibo_levels[8], p_precision
                         )
-                        take_price[7][i] = round_step(
+                        take_price[7][i] = adjust(
                             fibo_levels[9], p_precision
                         )
-                        take_price[8][i] = round_step(
+                        take_price[8][i] = adjust(
                             fibo_levels[10], p_precision
                         )
-                        take_price[9][i] = round_step(
+                        take_price[9][i] = adjust(
                             fibo_levels[11], p_precision
                         )
                     elif close[i] >= fibo_levels[1]:
-                        take_price[0][i] = round_step(
+                        take_price[0][i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = round_step(
+                        take_price[1][i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = round_step(
+                        take_price[2][i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = round_step(
+                        take_price[3][i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = round_step(
+                        take_price[4][i] = adjust(
                             fibo_levels[7], p_precision
                         )
-                        take_price[5][i] = round_step(
+                        take_price[5][i] = adjust(
                             fibo_levels[8], p_precision
                         )
-                        take_price[6][i] = round_step(
+                        take_price[6][i] = adjust(
                             fibo_levels[9], p_precision
                         )
-                        take_price[7][i] = round_step(
+                        take_price[7][i] = adjust(
                             fibo_levels[10], p_precision
                         )
-                        take_price[8][i] = round_step(
+                        take_price[8][i] = adjust(
                             fibo_levels[11], p_precision
                         )
-                        take_price[9][i] = round_step(
+                        take_price[9][i] = adjust(
                             fibo_levels[12], p_precision
                         )
 
-                    qty_take_2[0] = round_step(
+                    qty_take_2[0] = adjust(
                         position_size * take_volume_2[0] / 100, q_precision
                     )
-                    qty_take_2[1] = round_step(
+                    qty_take_2[1] = adjust(
                         position_size * take_volume_2[1] / 100, q_precision
                     )
-                    qty_take_2[2] = round_step(
+                    qty_take_2[2] = adjust(
                         position_size * take_volume_2[2] / 100, q_precision
                     )
-                    qty_take_2[3] = round_step(
+                    qty_take_2[3] = adjust(
                         position_size * take_volume_2[3] / 100, q_precision
                     )
-                    qty_take_2[4] = round_step(
+                    qty_take_2[4] = adjust(
                         position_size * take_volume_2[4] / 100, q_precision
                     )
-                    qty_take_2[5] = round_step(
+                    qty_take_2[5] = adjust(
                         position_size * take_volume_2[5] / 100, q_precision
                     )
-                    qty_take_2[6] = round_step(
+                    qty_take_2[6] = adjust(
                         position_size * take_volume_2[6] / 100, q_precision
                     )
-                    qty_take_2[7] = round_step(
+                    qty_take_2[7] = adjust(
                         position_size * take_volume_2[7] / 100, q_precision
                     )
-                    qty_take_2[8] = round_step(
+                    qty_take_2[8] = adjust(
                         position_size * take_volume_2[8] / 100, q_precision
                     )
-                    qty_take_2[9] = round_step(
+                    qty_take_2[9] = adjust(
                         position_size * take_volume_2[9] / 100, q_precision
                     )
                     alert_long_2 = True
@@ -1342,7 +1342,7 @@ class NuggetV4(BaseStrategy):
                         change_upper_band[i] and
                         ((ds_upper_band[i] * (100 + stop)
                         / 100) < stop_price[i])):
-                    stop_price[i] = round_step(
+                    stop_price[i] = adjust(
                         (ds_upper_band[i] * (100 + stop) / 100), 
                         p_precision
                     )
@@ -1394,7 +1394,7 @@ class NuggetV4(BaseStrategy):
 
                     if take is not None:
                         stop_moved = True
-                        stop_price[i] = round_step(
+                        stop_price[i] = adjust(
                             (take - entry_price) * (trail_percent / 100)
                                 + entry_price,
                             p_precision
@@ -1796,10 +1796,10 @@ class NuggetV4(BaseStrategy):
                         / entry_price
                     )
                     
-                position_size = round_step(
+                position_size = adjust(
                     position_size, q_precision
                 )
-                liquidation_price = round_step(
+                liquidation_price = adjust(
                     entry_price * (1 + (1 / leverage)), p_precision
                 )
                 open_deals_log = np.array(
@@ -1810,12 +1810,12 @@ class NuggetV4(BaseStrategy):
                 )
 
                 if stop_type == 1 or stop_type == 2:
-                    stop_price[i] = round_step(
+                    stop_price[i] = adjust(
                         ds_upper_band[i] * (100 + stop) / 100,
                         p_precision
                     )
                 elif stop_type == 3:
-                    stop_price[i] = round_step(
+                    stop_price[i] = adjust(
                         fibo_levels[0] * (100 + stop) / 100, p_precision
                     )
 
@@ -1823,51 +1823,51 @@ class NuggetV4(BaseStrategy):
                     grid_type = 0
 
                     if close[i] <= fibo_levels[0] and close[i] > fibo_levels[1]:
-                        take_price[0][i] = round_step(
+                        take_price[0][i] = adjust(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = round_step(
+                        take_price[1][i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = round_step(
+                        take_price[2][i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = round_step(
+                        take_price[3][i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = round_step(
+                        take_price[4][i] = adjust(
                             fibo_levels[6], p_precision
                         )
                     elif close[i] <= fibo_levels[1]:
-                        take_price[0][i] = round_step(
+                        take_price[0][i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = round_step(
+                        take_price[1][i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = round_step(
+                        take_price[2][i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = round_step(
+                        take_price[3][i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = round_step(
+                        take_price[4][i] = adjust(
                             fibo_levels[7], p_precision
                         )
 
-                    qty_take_1[0] = round_step(
+                    qty_take_1[0] = adjust(
                         position_size * take_volume_1[0] / 100, q_precision
                     )
-                    qty_take_1[1] = round_step(
+                    qty_take_1[1] = adjust(
                         position_size * take_volume_1[1] / 100, q_precision
                     )
-                    qty_take_1[2] = round_step(
+                    qty_take_1[2] = adjust(
                         position_size * take_volume_1[2] / 100, q_precision
                     )
-                    qty_take_1[3] = round_step(
+                    qty_take_1[3] = adjust(
                         position_size * take_volume_1[3] / 100, q_precision
                     )
-                    qty_take_1[4] = round_step(
+                    qty_take_1[4] = adjust(
                         position_size * take_volume_1[4] / 100, q_precision
                     )
                     alert_short_1 = True
@@ -1875,96 +1875,96 @@ class NuggetV4(BaseStrategy):
                     grid_type = 1
 
                     if close[i] <= fibo_levels[0] and close[i] > fibo_levels[1]:
-                        take_price[0][i] = round_step(
+                        take_price[0][i] = adjust(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = round_step(
+                        take_price[1][i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = round_step(
+                        take_price[2][i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = round_step(
+                        take_price[3][i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = round_step(
+                        take_price[4][i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[5][i] = round_step(
+                        take_price[5][i] = adjust(
                             fibo_levels[7], p_precision
                         )
-                        take_price[6][i] = round_step(
+                        take_price[6][i] = adjust(
                             fibo_levels[8], p_precision
                         )
-                        take_price[7][i] = round_step(
+                        take_price[7][i] = adjust(
                             fibo_levels[9], p_precision
                         )
-                        take_price[8][i] = round_step(
+                        take_price[8][i] = adjust(
                             fibo_levels[10], p_precision
                         )
-                        take_price[9][i] = round_step(
+                        take_price[9][i] = adjust(
                             fibo_levels[11], p_precision
                         )
                     elif close[i] <= fibo_levels[1]:
-                        take_price[0][i] = round_step(
+                        take_price[0][i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = round_step(
+                        take_price[1][i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = round_step(
+                        take_price[2][i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = round_step(
+                        take_price[3][i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = round_step(
+                        take_price[4][i] = adjust(
                             fibo_levels[7], p_precision
                         )
-                        take_price[5][i] = round_step(
+                        take_price[5][i] = adjust(
                             fibo_levels[8], p_precision
                         )
-                        take_price[6][i] = round_step(
+                        take_price[6][i] = adjust(
                             fibo_levels[9], p_precision
                         )
-                        take_price[7][i] = round_step(
+                        take_price[7][i] = adjust(
                             fibo_levels[10], p_precision
                         )
-                        take_price[8][i] = round_step(
+                        take_price[8][i] = adjust(
                             fibo_levels[11], p_precision
                         )
-                        take_price[9][i] = round_step(
+                        take_price[9][i] = adjust(
                             fibo_levels[12], p_precision
                         )
 
-                    qty_take_2[0] = round_step(
+                    qty_take_2[0] = adjust(
                         position_size * take_volume_2[0] / 100, q_precision
                     )
-                    qty_take_2[1] = round_step(
+                    qty_take_2[1] = adjust(
                         position_size * take_volume_2[1] / 100, q_precision
                     )
-                    qty_take_2[2] = round_step(
+                    qty_take_2[2] = adjust(
                         position_size * take_volume_2[2] / 100, q_precision
                     )
-                    qty_take_2[3] = round_step(
+                    qty_take_2[3] = adjust(
                         position_size * take_volume_2[3] / 100, q_precision
                     )
-                    qty_take_2[4] = round_step(
+                    qty_take_2[4] = adjust(
                         position_size * take_volume_2[4] / 100, q_precision
                     )
-                    qty_take_2[5] = round_step(
+                    qty_take_2[5] = adjust(
                         position_size * take_volume_2[5] / 100, q_precision
                     )
-                    qty_take_2[6] = round_step(
+                    qty_take_2[6] = adjust(
                         position_size * take_volume_2[6] / 100, q_precision
                     )
-                    qty_take_2[7] = round_step(
+                    qty_take_2[7] = adjust(
                         position_size * take_volume_2[7] / 100, q_precision
                     )
-                    qty_take_2[8] = round_step(
+                    qty_take_2[8] = adjust(
                         position_size * take_volume_2[8] / 100, q_precision
                     )
-                    qty_take_2[9] = round_step(
+                    qty_take_2[9] = adjust(
                         position_size * take_volume_2[9] / 100, q_precision
                     )
                     alert_short_2 = True

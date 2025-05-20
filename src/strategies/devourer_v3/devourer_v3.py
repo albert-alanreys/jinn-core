@@ -343,8 +343,8 @@ class DevourerV3(BaseStrategy):
         alert_exit_short: bool,
         alert_cancel: bool
     ) -> tuple:
-        def round_step(number: float, precision: float) -> float:
-            return round(round(number / precision) * precision, 8)
+        def adjust(number: float, precision: float, digits: int = 8) -> float:
+            return round(round(number / precision) * precision, digits)
 
         def update_log(
             log: np.ndarray,
@@ -641,10 +641,10 @@ class DevourerV3(BaseStrategy):
                         )
                         
                     entry_date = time[i]
-                    liquidation_price = round_step(
+                    liquidation_price = adjust(
                         entry_price * (1 - (1 / leverage)), p_precision
                     )
-                    position_size = round_step(
+                    position_size = adjust(
                         position_size, q_precision
                     )
                     open_deals_log = np.array(
@@ -750,13 +750,13 @@ class DevourerV3(BaseStrategy):
                     )
                     
                 entry_date = time[i]
-                stop_price[i] = round_step(
+                stop_price[i] = adjust(
                     close[i] - atr_p2[i] * stop_atr_p2, p_precision
                 )
-                liquidation_price = round_step(
+                liquidation_price = adjust(
                     entry_price * (1 - (1 / leverage)), p_precision
                 )
-                position_size = round_step(
+                position_size = adjust(
                     position_size, q_precision
                 )
                 open_deals_log = np.array(
@@ -866,16 +866,16 @@ class DevourerV3(BaseStrategy):
                     )
 
                 entry_date = time[i]
-                stop_price[i] = round_step(
+                stop_price[i] = adjust(
                     close[i] + atr_p3[i] * stop_atr_p3, p_precision
                 )
-                take_price[i] = round_step(
+                take_price[i] = adjust(
                     close[i] - atr_p3[i] * take_atr_p3, p_precision
                 )
-                liquidation_price = round_step(
+                liquidation_price = adjust(
                     entry_price * (1 + (1 / leverage)), p_precision
                 )
-                position_size = round_step(
+                position_size = adjust(
                     position_size, q_precision
                 )
                 open_deals_log = np.array(
