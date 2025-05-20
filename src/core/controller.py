@@ -1,5 +1,5 @@
-import logging
 import os
+from logging import getLogger
 
 from src.api.server import Server
 from src.core.enums import Mode
@@ -21,7 +21,7 @@ class Controller:
         self.optimization_info = optimization_info
         self.testing_info = testing_info
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
     def delegate(self) -> None:
         self.logger.info(f'TVLite started in "{self.mode}" mode')

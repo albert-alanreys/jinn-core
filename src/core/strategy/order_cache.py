@@ -1,6 +1,6 @@
-import logging
-import os
 import json
+import os
+from logging import getLogger
 
 
 class OrderCache:
@@ -8,7 +8,7 @@ class OrderCache:
         self.base_dir = base_dir
         os.makedirs(self.base_dir, exist_ok=True)
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
     def load(self, symbol: str) -> dict:
         path = self._get_cache_path(symbol)
@@ -24,11 +24,8 @@ class OrderCache:
                 'stop_ids': data.get('stop_ids', []),
                 'limit_ids': data.get('limit_ids', [])
             }
-        except Exception as e:
-            self.logger.error(
-                f'Failed to load cache from {path}: '
-                f'{type(e).__name__} - {e}'
-            )
+        except json.JSONDecodeError:
+            self.logger.error(f'Failed to load JSON from {path}')
             return {'stop_ids': [], 'limit_ids': []}
 
     def save(self, symbol: str, order_ids: dict) -> None:
@@ -43,7 +40,7 @@ class OrderCache:
                 json.dump(data, file, indent=4)
         except Exception as e:
             self.logger.error(
-                f'Failed to save cache into {path}: '
+                f'Failed to write JSON to {path}: '
                 f'{type(e).__name__} - {e}'
             )
 

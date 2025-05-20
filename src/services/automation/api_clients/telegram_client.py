@@ -1,4 +1,4 @@
-import config
+from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 from .http_client import HttpClient
 
 
@@ -13,8 +13,8 @@ class TelegramClient(HttpClient):
 
     def __init__(self) -> None:
         if not hasattr(self, '_initialized'):
-            self.token = config.TELEGRAM_BOT_TOKEN
-            self.chat = config.TELEGRAM_CHAT_ID
+            self.token = TELEGRAM_BOT_TOKEN
+            self.chat = TELEGRAM_CHAT_ID
             self._initialized = True
 
     def send_message(self, message: str) -> None:

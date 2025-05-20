@@ -34,9 +34,10 @@ class StrategyManager:
                 raise ValueError()
 
             params[param_name] = new_value
-            instance = (
-                self.data_to_format[id]['type'](params)
-            )
+            instance = self.data_to_format[id]['type'](
+                client=self.data_to_format[id]['client'],
+                all_params=params
+                )
             self.data_to_format[id]['instance'] = instance
 
             if self.mode is Mode.TESTING:
@@ -55,10 +56,7 @@ class StrategyManager:
                     'q_precision':
                         self.data_to_format[id]['q_precision'],
                 }
-                self.data_to_format[id]['instance'].start(
-                    client=self.data_to_format[id]['client'],
-                    market_data=market_data
-                )
+                self.data_to_format[id]['instance'].start(market_data)
         except ValueError:
             raise ValueError()
         except KeyError:

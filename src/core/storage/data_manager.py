@@ -1,5 +1,5 @@
-import logging
 from datetime import datetime, timezone
+from logging import getLogger
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class DataManager:
     def __init__(self) -> None:
         self.db_manager = DBManager()
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
     def get_data(
         self,

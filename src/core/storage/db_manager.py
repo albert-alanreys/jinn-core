@@ -1,11 +1,11 @@
-import logging
 import os
 import sqlite3
+from logging import getLogger
 
 
 class DBManager():
     def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
     def save(
         self,

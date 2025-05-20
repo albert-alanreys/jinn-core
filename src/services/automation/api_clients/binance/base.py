@@ -1,7 +1,7 @@
-import hashlib
 import hmac
-import time
 from datetime import datetime, timezone
+from hashlib import sha256
+from time import time
 
 import config
 from src.core.enums import Exchange
@@ -23,7 +23,7 @@ class BaseClient(HttpClient):
 
     def build_signed_request(self, params: dict) -> tuple:
         params['recvWindow'] = 5000
-        params['timestamp'] = int(time.time() * 1000)
+        params['timestamp'] = int(time() * 1000)
         params = self._add_signature(params)
         headers = {'X-MBX-APIKEY': self.api_key}
         return params, headers
@@ -59,7 +59,7 @@ class BaseClient(HttpClient):
         signature = hmac.new(
             key=self.api_secret.encode('utf-8'),
             msg=str_to_sign.encode('utf-8'),
-            digestmod=hashlib.sha256
+            digestmod=sha256
         ).hexdigest()
         params['signature'] = signature
         return params

@@ -1,7 +1,7 @@
 import json
-import logging
-import multiprocessing
 import os
+from logging import getLogger
+from multiprocessing import Pool, cpu_count
 
 import src.core.enums as enums
 from src.core.storage.data_manager import DataManager
@@ -24,7 +24,7 @@ class Optimizer:
         self.data_manager = DataManager()
         self.binance_client = BinanceClient()
         self.bybit_client = BybitClient()
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
     def optimize(self) -> None:
         for strategy in enums.Strategy:
@@ -45,7 +45,7 @@ class Optimizer:
                 try:
                     configs = json.load(file)
                 except json.JSONDecodeError:
-                    self.logger.error(f'Failed to parse JSON {file_path}')
+                    self.logger.error(f'Failed to load JSON from {file_path}')
                     continue
 
             for config in configs:
@@ -103,7 +103,8 @@ class Optimizer:
                         'p_precision': p_precision,
                         'q_precision': q_precision,
                     }
-                    self.strategies[id(strategy_data)] = strategy_data
+                    strategy_id = str(id(strategy_data))
+                    self.strategies[strategy_id] = strategy_data
                 except Exception as e:
                     self.logger.error(f'{type(e).__name__} - {e}')
 
@@ -149,7 +150,8 @@ class Optimizer:
                     'p_precision': p_precision,
                     'q_precision': q_precision,
                 }
-                self.strategies[id(strategy_data)] = strategy_data
+                strategy_id = str(id(strategy_data))
+                self.strategies[strategy_id] = strategy_data
             except Exception as e:
                 self.logger.error(f'{type(e).__name__} - {e}')
 
@@ -169,7 +171,7 @@ class Optimizer:
             '\n'.join(strategies_info)
         )
 
-        with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
+        with Pool(cpu_count()) as p:
             if hasattr(self, 'data_manager'):
                 delattr(self, 'data_manager')
 

@@ -1,5 +1,5 @@
-import logging
 from datetime import datetime, timezone
+from logging import getLogger
 
 from .account import AccountClient
 from .base import BaseClient
@@ -17,7 +17,7 @@ class TradeClient(BaseClient):
     ) -> None:
         super().__init__(alerts)
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
         self.account = account
         self.market = market

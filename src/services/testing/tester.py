@@ -1,9 +1,9 @@
-import glob
 import json
-import logging
 import os
-import re
 import warnings
+from glob import glob
+from logging import getLogger
+from re import match
 
 import src.core.enums as enums
 from src.core.storage.data_manager import DataManager
@@ -26,7 +26,7 @@ class Tester:
         self.data_manager = DataManager()
         self.binance_client = BinanceClient()
         self.bybit_client = BybitClient()
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
     def test(self) -> None:
         self.logger.info('Testing process started')
@@ -40,12 +40,12 @@ class Tester:
                     'backtesting'
                 )
             )
-            file_paths = glob.glob(f'{folder_path}/*.json')
+            file_paths = glob(f'{folder_path}/*.json')
 
             for file_path in file_paths:
                 basename = os.path.basename(file_path) 
                 pattern = r'(\w+)_(\w+)_(\w+)_(\w+)\.json'
-                groups = re.match(pattern, basename).groups()
+                groups = match(pattern, basename).groups()
                 exchange, symbol, market, interval = (
                     groups[0].upper(),
                     groups[1].upper(),
@@ -69,7 +69,9 @@ class Tester:
                     try:
                         params_dicts = json.load(file)
                     except json.JSONDecodeError:
-                        self.logger.error(f'Failed to parse JSON {file_path}')
+                        self.logger.error(
+                            f'Failed to load JSON from {file_path}'
+                        )
                         continue
 
                 for params in params_dicts:
@@ -87,6 +89,7 @@ class Tester:
                         p_precision = client.get_price_precision(symbol)
                         q_precision = client.get_qty_precision(symbol)
                         instance = strategy.value(
+                            client=client,
                             opt_params=params['params'].values()
                         )
 
@@ -104,13 +107,13 @@ class Tester:
                             'p_precision': p_precision,
                             'q_precision': q_precision,
                         }
-
                         equity, metrics = (
                             self.calculate_strategy(strategy_data)
                         )
                         strategy_data['equity'] = equity
                         strategy_data['metrics'] = metrics
-                        self.strategies[str(id(strategy_data))] = strategy_data
+                        strategy_id = str(id(strategy_data))
+                        self.strategies[strategy_id] = strategy_data
                     except Exception as e:
                         self.logger.error(f'{type(e).__name__} - {e}')
 
@@ -134,7 +137,7 @@ class Tester:
                 )
                 p_precision = client.get_price_precision(self.symbol)
                 q_precision = client.get_qty_precision(self.symbol)
-                instance = self.strategy.value()
+                instance = self.strategy.value(client)
 
                 strategy_data = {
                     'name': self.strategy.name,
@@ -150,11 +153,11 @@ class Tester:
                     'p_precision': p_precision,
                     'q_precision': q_precision,
                 }
-
                 equity, metrics = self.calculate_strategy(strategy_data)
                 strategy_data['equity'] = equity
                 strategy_data['metrics'] = metrics
-                self.strategies[str(id(strategy_data))] = strategy_data
+                strategy_id = str(id(strategy_data))
+                self.strategies[strategy_id] = strategy_data
             except Exception as e:
                 self.logger.error(f'{type(e).__name__} - {e}')
 
@@ -166,10 +169,7 @@ class Tester:
             'p_precision': strategy_data['p_precision'],
             'q_precision': strategy_data['q_precision']
         }
-        strategy_data['instance'].start(
-            client=strategy_data['client'],
-            market_data=market_data
-        )
+        strategy_data['instance'].start(market_data)
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)

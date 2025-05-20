@@ -1,8 +1,8 @@
-import hashlib
 import hmac
 import json
-import time
 from datetime import datetime, timezone
+from hashlib import sha256
+from time import time
 
 import config
 from src.core.enums import Exchange
@@ -23,7 +23,7 @@ class BaseClient(HttpClient):
         self.api_secret = config.BYBIT_API_SECRET
         
     def get_headers(self, params: dict, method: str) -> dict:
-        timestamp = str(int(time.time() * 1000))
+        timestamp = str(int(time() * 1000))
         recv_window = '5000'
 
         match method:
@@ -36,7 +36,7 @@ class BaseClient(HttpClient):
         signature = hmac.new(
             key=self.api_secret.encode('utf-8'),
             msg=str_to_sign.encode('utf-8'),
-            digestmod=hashlib.sha256
+            digestmod=sha256
         ).hexdigest()
         
         return {

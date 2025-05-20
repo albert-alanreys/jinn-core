@@ -1,10 +1,10 @@
-import logging
 import requests
-import time
+from logging import getLogger
+from time import sleep
 
 
 class HttpClient:
-    logger = logging.getLogger(__name__)
+    logger = getLogger(__name__)
 
     def get(
         self,
@@ -43,7 +43,7 @@ class HttpClient:
                 if logging:
                     self.logger.error(f'Request failed for {url}: {e}')
 
-            time.sleep(0.5)
+            sleep(0.5)
 
         return None
     
@@ -86,7 +86,7 @@ class HttpClient:
                 if logging:
                     self.logger.error(f'Request failed for {url}: {e}')
 
-            time.sleep(0.5)
+            sleep(0.5)
 
         return None
 
@@ -129,6 +129,6 @@ class HttpClient:
                 if logging:
                     self.logger.error(f'Request failed for {url}: {e}')
 
-            time.sleep(0.5)
+            sleep(0.5)
 
         return None

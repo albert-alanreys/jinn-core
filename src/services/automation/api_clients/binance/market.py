@@ -1,7 +1,7 @@
-import logging
-import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
+from logging import getLogger
+from time import time
 
 from src.core.enums import Market
 from .base import BaseClient
@@ -35,7 +35,7 @@ class MarketClient(BaseClient):
 
     def __init__(self, alerts: list) -> None:
         super().__init__(alerts)
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
     def get_historical_klines(
         self,
@@ -99,7 +99,7 @@ class MarketClient(BaseClient):
                 )
 
             interval_ms = self.interval_ms[interval]
-            end = int(time.time() * 1000)
+            end = int(time() * 1000)
             start = end - interval_ms * limit
             step = interval_ms * 1000
 

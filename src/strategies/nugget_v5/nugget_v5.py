@@ -1,4 +1,4 @@
-import random
+from random import randint
 
 import numpy as np
 import numba as nb
@@ -51,11 +51,11 @@ class NuggetV5(BaseStrategy):
         'atr_length': [i for i in range(1, 21)],
         'take_value': [   
             sorted([
-                float(random.randint(2, 6)),
-                float(random.randint(7, 10)),
-                float(random.randint(11, 16)),
-                float(random.randint(17, 21)),
-                float(random.randint(22, 30))
+                float(randint(2, 6)),
+                float(randint(7, 10)),
+                float(randint(11, 16)),
+                float(randint(17, 21)),
+                float(randint(22, 30))
             ])
             for _ in range(100)
         ],
@@ -108,10 +108,10 @@ class NuggetV5(BaseStrategy):
         'TP #5': {'color': '#008000', 'lineWidth': 2}
     }
 
-    def __init__(self, all_params = None, opt_params = None) -> None:
-        super().__init__(all_params=all_params, opt_params=opt_params)
+    def __init__(self, client, all_params = None, opt_params = None) -> None:
+        super().__init__(client, all_params=all_params, opt_params=opt_params)
 
-    def start(self, client, market_data) -> None:
+    def start(self, market_data) -> None:
         self.open_deals_log = np.full(5, np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -120,7 +120,6 @@ class NuggetV5(BaseStrategy):
         self.entry_date = np.nan
         self.deal_type = np.nan
 
-        self.client = client
         self.symbol = market_data['symbol']
         self.time = market_data['klines'][:, 0]
         self.high = market_data['klines'][:, 2]

@@ -1,9 +1,9 @@
-import glob
 import json
-import logging
 import os
-import re
-import threading
+from glob import glob
+from logging import getLogger
+from re import fullmatch
+from threading import Thread
 
 import numpy as np
 
@@ -24,7 +24,7 @@ class Automizer():
 
         self.binance_client = BinanceClient()
         self.bybit_client = BybitClient()
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
 
     def automate(self) -> None:
         self.logger.info('Automation process started')
@@ -38,7 +38,7 @@ class Automizer():
                     'automation'
                 )
             )
-            file_paths = glob.glob(f'{folder_path}/*.json')
+            file_paths = glob(f'{folder_path}/*.json')
 
             for file_path in file_paths:
                 basename = os.path.basename(file_path)
@@ -46,8 +46,8 @@ class Automizer():
                 pattern1 = r'^([^_]+)_([^_]+)_([^_]+)\.json$'
                 pattern2 = r'^([^_]+)_([^_]+)_([^_]+)_([^_]+)\.json$'
 
-                match1 = re.fullmatch(pattern1, basename)
-                match2 = re.fullmatch(pattern2, basename)
+                match1 = fullmatch(pattern1, basename)
+                match2 = fullmatch(pattern2, basename)
 
                 if match1:
                     exchange, symbol, interval = (
@@ -70,7 +70,7 @@ class Automizer():
                             }
                         except json.JSONDecodeError:
                             self.logger.error(
-                                f'Failed to parse JSON {file_path}'
+                                f'Failed to load JSON from {file_path}'
                             )
                             continue
                 elif match2:
@@ -88,7 +88,7 @@ class Automizer():
                             }
                         except json.JSONDecodeError:
                             self.logger.error(
-                                f'Failed to parse JSON {file_path}'
+                                f'Failed to load JSON from {file_path}'
                             )
                             continue
 
@@ -118,8 +118,8 @@ class Automizer():
                         'q_precision': q_precision
                     }
 
-                    instance = strategy.value(**params)
-                    instance.start(client=client, market_data=market_data)
+                    instance = strategy.value(client, **params)
+                    instance.start(market_data)
 
                     strategy_data = {
                         'name': strategy.name,
@@ -133,7 +133,8 @@ class Automizer():
                         'updated': False,
                         **market_data
                     }
-                    self.strategies[str(id(strategy_data))] = strategy_data
+                    strategy_id = str(id(strategy_data))
+                    self.strategies[strategy_id] = strategy_data
                 except Exception as e:
                     self.logger.error(f'{type(e).__name__} - {e}')
 
@@ -163,8 +164,8 @@ class Automizer():
                     'p_precision': p_precision,
                     'q_precision': q_precision
                 }
-                instance = self.strategy.value()
-                instance.start(client, market_data)
+                instance = self.strategy.value(client)
+                instance.start(market_data)
 
                 strategy_data = {
                     'name': self.strategy.name,
@@ -178,11 +179,12 @@ class Automizer():
                     'updated': False,
                     **market_data
                 }
-                self.strategies[str(id(strategy_data))] = strategy_data
+                strategy_id = str(id(strategy_data))
+                self.strategies[strategy_id] = strategy_data
             except Exception as e:
                 self.logger.error(f'{type(e).__name__} - {e}')
 
-        thread = threading.Thread(target=self._run_automation, daemon=True)
+        thread = Thread(target=self._run_automation, daemon=True)
         thread.start()
 
     def _run_automation(self) -> None:
@@ -212,10 +214,7 @@ class Automizer():
                         'p_precision': strategy_data['p_precision'],
                         'q_precision': strategy_data['q_precision']
                     }
-                    strategy_data['instance'].start(
-                        client=strategy_data['client'],
-                        market_data=market_data
-                    )
+                    strategy_data['instance'].start(market_data)
                     strategy_data['instance'].trade()
                     strategy_data['updated'] = True
 

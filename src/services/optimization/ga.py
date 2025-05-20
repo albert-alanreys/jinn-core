@@ -1,6 +1,8 @@
 import random
+from typing import TYPE_CHECKING
 
-from numpy import ndarray
+if TYPE_CHECKING:
+    from numpy import ndarray
 
 
 class GA:
@@ -62,12 +64,12 @@ class GA:
 
         self.sample_len = len(self.strategy.opt_params)
 
-    def _evaluate(self, sample: list, fold: ndarray) -> float:
+    def _evaluate(self, sample: list, fold: 'ndarray') -> float:
         market_data = self.market_data.copy()
         market_data['klines'] = fold
 
-        instance = self.strategy(opt_params=sample)
-        instance.start(client=self.client, market_data=market_data)
+        instance = self.strategy(self.client, opt_params=sample)
+        instance.start(market_data)
 
         score = round(
             instance.completed_deals_log[8::13].sum() /

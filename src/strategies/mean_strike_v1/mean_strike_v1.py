@@ -5,7 +5,7 @@ import src.core.lib.ta as ta
 from src.core.strategy.base_strategy import BaseStrategy
 
 
-class MeanStrike(BaseStrategy):
+class MeanStrikeV1(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
 
@@ -73,10 +73,10 @@ class MeanStrike(BaseStrategy):
         'TP': {'color': '#4caf50'}
     }
 
-    def __init__(self, all_params = None, opt_params = None) -> None:
-        super().__init__(all_params=all_params, opt_params=opt_params)
+    def __init__(self, client, all_params = None, opt_params = None) -> None:
+        super().__init__(client, all_params=all_params, opt_params=opt_params)
 
-    def start(self, client, market_data) -> None:
+    def start(self, market_data) -> None:
         self.open_deals_log = np.full((4, 5), np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -85,7 +85,6 @@ class MeanStrike(BaseStrategy):
         self.entry_date = np.nan
         self.deal_type = np.nan
 
-        self.client = client
         self.symbol = market_data['symbol']
         self.time = market_data['klines'][:, 0]
         self.open = market_data['klines'][:, 1]
