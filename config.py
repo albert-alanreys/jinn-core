@@ -43,6 +43,6 @@ TESTING_INFO = {
     'symbol': 'BTCUSDT',
     'interval': '1h',
     'start': '2022-01-01',
-    'end': '2026-02-01',
-    'strategy': enums.Strategy.NUGGET_V2,
+    'end': '2025-05-01',
+    'strategy': enums.Strategy.MEAN_STRIKE_V1,
 }
