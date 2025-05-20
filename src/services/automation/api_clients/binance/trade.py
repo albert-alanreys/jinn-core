@@ -199,7 +199,7 @@ class TradeClient(BaseClient):
             self.logger.error(f'{type(e).__name__} - {e}')
             self.send_exception(e)
 
-    def market_stop_loss_long(
+    def market_stop_close_long(
         self,
         symbol: str,
         size: str,
@@ -249,7 +249,7 @@ class TradeClient(BaseClient):
             self.logger.error(f'{type(e).__name__} - {e}')
             self.send_exception(e)
 
-    def market_stop_loss_short(
+    def market_stop_close_short(
         self,
         symbol: str,
         size: str,
@@ -299,7 +299,125 @@ class TradeClient(BaseClient):
             self.logger.error(f'{type(e).__name__} - {e}')
             self.send_exception(e)
 
-    def limit_take_profit_long(
+    def limit_open_long(
+        self,
+        symbol: str,
+        size: str,
+        margin: str,
+        leverage: int,
+        price: float,
+        hedge: bool
+    ) -> None:
+        if hedge:
+            self.position.switch_position_mode(True)
+        else:
+            self.position.switch_position_mode(False)
+
+        match margin:
+            case 'cross':
+                self.position.switch_margin_mode(symbol, 'CROSSED')
+            case 'isolated':
+                self.position.switch_margin_mode(symbol, 'ISOLATED')
+
+        self.position.set_leverage(symbol, leverage)
+ 
+        try:
+            p_precision = self.market.get_price_precision(symbol)
+            adjusted_price = adjust(price, p_precision)
+            qty = self._get_quantity_to_open(symbol, size, leverage, price)
+
+            order = self._create_order(
+                symbol=symbol,
+                side='BUY',
+                position_side=('LONG' if hedge else 'BOTH'),
+                order_type='LIMIT',
+                qty=str(qty),
+                time_in_force='GTC',
+                price=adjusted_price
+            )
+
+            alert = {
+                'message': {
+                    'exchange': 'BINANCE',
+                    'type': 'лимитный ордер',
+                    'status': 'ожидает исполнения',
+                    'side': 'покупка',
+                    'symbol': order['symbol'],
+                    'qty': order['origQty'],
+                    'price': order['price']
+                },
+                'time': datetime.fromtimestamp(
+                    timestamp=order['updateTime'] / 1000,
+                    tz=timezone.utc
+                ).strftime('%Y/%m/%d %H:%M:%S')
+            }
+            self.alerts.append(alert)
+            self.send_telegram_alert(alert)
+            return order['orderId']
+        except Exception as e:
+            self.logger.error(f'{type(e).__name__} - {e}')
+            self.send_exception(e)
+
+    def limit_open_short(
+        self,
+        symbol: str,
+        size: str,
+        margin: str,
+        leverage: int,
+        price: float,
+        hedge: bool
+    ) -> None:
+        if hedge:
+            self.position.switch_position_mode(True)
+        else:
+            self.position.switch_position_mode(False)
+
+        match margin:
+            case 'cross':
+                self.position.switch_margin_mode(symbol, 'CROSSED')
+            case 'isolated':
+                self.position.switch_margin_mode(symbol, 'ISOLATED')
+
+        self.position.set_leverage(symbol, leverage)
+ 
+        try:
+            p_precision = self.market.get_price_precision(symbol)
+            adjusted_price = adjust(price, p_precision)
+            qty = self._get_quantity_to_open(symbol, size, leverage, price)
+
+            order = self._create_order(
+                symbol=symbol,
+                side='SELL',
+                position_side=('SHORT' if hedge else 'BOTH'),
+                order_type='LIMIT',
+                qty=str(qty),
+                time_in_force='GTC',
+                price=adjusted_price
+            )
+
+            alert = {
+                'message': {
+                    'exchange': 'BINANCE',
+                    'type': 'лимитный ордер',
+                    'status': 'ожидает исполнения',
+                    'side': 'продажа',
+                    'symbol': order['symbol'],
+                    'qty': order['origQty'],
+                    'price': order['price']
+                },
+                'time': datetime.fromtimestamp(
+                    timestamp=order['updateTime'] / 1000,
+                    tz=timezone.utc
+                ).strftime('%Y/%m/%d %H:%M:%S')
+            }
+            self.alerts.append(alert)
+            self.send_telegram_alert(alert)
+            return order['orderId']
+        except Exception as e:
+            self.logger.error(f'{type(e).__name__} - {e}')
+            self.send_exception(e)
+
+    def limit_close_long(
         self,
         symbol: str,
         size: str,
@@ -374,7 +492,7 @@ class TradeClient(BaseClient):
             self.logger.error(f'{type(e).__name__} - {e}')
             self.send_exception(e)
 
-    def limit_take_profit_short(
+    def limit_close_short(
         self,
         symbol: str,
         size: str,
@@ -661,10 +779,9 @@ class TradeClient(BaseClient):
             qty = position_size * size_val * 0.01
         elif size.endswith('u'):
             size_val = float(size.rstrip('u'))
+            effective_price = price
 
-            if price is not None:
-                effective_price = price
-            else:
+            if price is None:
                 market_data = self.market.get_tickers(symbol)
                 effective_price = float(market_data['markPrice'])
 
@@ -677,9 +794,15 @@ class TradeClient(BaseClient):
         self,
         symbol: str,
         size: str,
-        leverage: int
+        leverage: int,
+        price: float | None = None
     ) -> float:
-        last_price = float(self.market.get_tickers(symbol)['markPrice'])
+        effective_price = price
+
+        if price is None:
+            market_data = self.market.get_tickers(symbol)
+            effective_price = float(market_data['markPrice'])
+
         balance_info = self.account.get_wallet_balance()['assets']
         balance = float(
             next(
@@ -692,10 +815,10 @@ class TradeClient(BaseClient):
 
         if size.endswith('%'):
             size_val = float(size.rstrip('%'))
-            qty = balance * leverage * size_val * 0.01 / last_price
+            qty = balance * leverage * size_val * 0.01 / effective_price
         elif size.endswith('u'):
             size_val = float(size.rstrip('u'))
-            qty = leverage * size_val / last_price
+            qty = leverage * size_val / effective_price
 
         q_precision = self.market.get_qty_precision(symbol)
         return adjust(qty, q_precision)

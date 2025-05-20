@@ -940,7 +940,7 @@ class DevourerV3(BaseStrategy):
             )
 
             if not np.isnan(self.stop_price[-1]):
-                order_id = self.client.market_stop_loss_long(
+                order_id = self.client.market_stop_close_long(
                     symbol=self.symbol, 
                     size='100%', 
                     price=self.stop_price[-1], 
@@ -961,7 +961,7 @@ class DevourerV3(BaseStrategy):
                 hedge=False
             )
 
-            order_id = self.client.market_stop_loss_short(
+            order_id = self.client.market_stop_close_short(
                 symbol=self.symbol, 
                 size='100%',
                 price=self.stop_price[-1], 
@@ -971,7 +971,7 @@ class DevourerV3(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-            order_id = self.client.limit_take_profit_short(
+            order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],

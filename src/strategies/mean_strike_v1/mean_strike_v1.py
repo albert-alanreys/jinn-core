@@ -588,7 +588,7 @@ class MeanStrikeV1(BaseStrategy):
                 order_ids=self.order_ids['limit_ids']
             )
 
-            order_id = self.client.limit_take_profit_long(
+            order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],
@@ -670,7 +670,7 @@ class MeanStrikeV1(BaseStrategy):
                 hedge=False
             )
 
-            order_id = self.client.limit_take_profit_long(
+            order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],
