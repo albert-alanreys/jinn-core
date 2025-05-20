@@ -4,8 +4,10 @@ from logging import getLogger
 
 
 class OrderCache:
-    def __init__(self, base_dir: str) -> None:
+    def __init__(self, base_dir: str, exchange: str) -> None:
         self.base_dir = base_dir
+        self.exchange = exchange
+
         os.makedirs(self.base_dir, exist_ok=True)
 
         self.logger = getLogger(__name__)
@@ -45,4 +47,6 @@ class OrderCache:
             )
 
     def _get_cache_path(self, symbol: str) -> str:
-        return os.path.join(self.base_dir, f'order_ids_{symbol}.json')
+        return os.path.join(
+            self.base_dir, f'{self.exchange}_{symbol}_ORDER_IDS.json'
+        )
