@@ -588,7 +588,7 @@ class MeanStrikeV1(BaseStrategy):
                 order_ids=self.order_ids['limit_ids']
             )
 
-            order_id = self.client.limit_take_sell(
+            order_id = self.client.limit_take_profit_long(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],
@@ -657,7 +657,7 @@ class MeanStrikeV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            self.client.market_open_buy(
+            self.client.market_open_long(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['order_size'] * self.entry_volume[0] / 100}'
@@ -670,7 +670,7 @@ class MeanStrikeV1(BaseStrategy):
                 hedge=False
             )
 
-            order_id = self.client.limit_take_sell(
+            order_id = self.client.limit_take_profit_long(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],

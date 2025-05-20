@@ -915,21 +915,21 @@ class DevourerV3(BaseStrategy):
         )
 
         if self.alert_exit_long:
-            self.client.market_close_sell(
+            self.client.market_close_long(
                 symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
 
         if self.alert_exit_short:
-            self.client.market_close_buy(
+            self.client.market_close_short(
                 symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
 
         if self.alert_entry_long:
-            self.client.market_open_buy(
+            self.client.market_open_long(
                 symbol=self.symbol,
                 size=f'{self.params['order_size']}%',
                 margin=(
@@ -940,7 +940,7 @@ class DevourerV3(BaseStrategy):
             )
 
             if not np.isnan(self.stop_price[-1]):
-                order_id = self.client.market_stop_sell(
+                order_id = self.client.market_stop_loss_long(
                     symbol=self.symbol, 
                     size='100%', 
                     price=self.stop_price[-1], 
@@ -951,7 +951,7 @@ class DevourerV3(BaseStrategy):
                     self.order_ids['stop_ids'].append(order_id)
 
         if self.alert_entry_short:
-            self.client.market_open_sell(
+            self.client.market_open_short(
                 symbol=self.symbol,
                 size=f'{self.params['order_size']}%',
                 margin=(
@@ -961,7 +961,7 @@ class DevourerV3(BaseStrategy):
                 hedge=False
             )
 
-            order_id = self.client.market_stop_buy(
+            order_id = self.client.market_stop_loss_short(
                 symbol=self.symbol, 
                 size='100%',
                 price=self.stop_price[-1], 
@@ -971,7 +971,7 @@ class DevourerV3(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-            order_id = self.client.limit_take_buy(
+            order_id = self.client.limit_take_profit_short(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_price[-1],
