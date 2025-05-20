@@ -177,73 +177,73 @@ class NuggetV5(BaseStrategy):
         else:
             self.adx = np.full(self.time.shape[0], np.nan)
 
-        self.alert_long = False
-        self.alert_short = False
+        self.alert_cancel = False
+        self.alert_open_long = False
+        self.alert_open_short = False
         self.alert_long_new_stop = False
         self.alert_short_new_stop = False
-        self.alert_cancel = False
 
         (
             self.completed_deals_log,
             self.open_deals_log,
             self.take_price,
             self.stop_price,
-            self.alert_long,
-            self.alert_short,
+            self.alert_cancel,
+            self.alert_open_long,
+            self.alert_open_short,
             self.alert_long_new_stop,
-            self.alert_short_new_stop,
-            self.alert_cancel
+            self.alert_short_new_stop
         ) = self._calculate(
-                self.params['direction'],
-                self.params['initial_capital'],
-                self.params['min_capital'],
-                self.params['commission'],
-                self.params['order_size_type'],
-                self.params['order_size'],
-                self.params['leverage'],
-                self.params['stop'],
-                self.params['take_value'],
-                self.params['take_volume'],
-                self.params['st_upper_limit'],
-                self.params['st_lower_limit'],
-                self.params['k_d_long_limit'],
-                self.params['k_d_short_limit'],
-                self.params['adx_filter'],
-                self.params['adx_long_upper_limit'],
-                self.params['adx_long_lower_limit'],
-                self.params['adx_short_upper_limit'],
-                self.params['adx_short_lower_limit'],
-                self.p_precision,
-                self.q_precision,
-                self.time,
-                self.high,
-                self.low,
-                self.close,
-                self.equity,
-                self.completed_deals_log,
-                self.open_deals_log,
-                self.deal_type,
-                self.entry_signal,
-                self.entry_date,
-                self.entry_price,
-                self.liquidation_price,
-                self.take_price,
-                self.stop_price,
-                self.position_size,
-                self.qty_take,
-                self.atr,
-                self.ds[0],
-                self.ds[1],
-                self.st_upper_band_changed,
-                self.st_lower_band_changed,
-                self.k,
-                self.d,
-                self.adx,
-                self.alert_long,
-                self.alert_short,
-                self.alert_long_new_stop,
-                self.alert_short_new_stop,
-                self.alert_cancel
+            self.params['direction'],
+            self.params['initial_capital'],
+            self.params['min_capital'],
+            self.params['commission'],
+            self.params['order_size_type'],
+            self.params['order_size'],
+            self.params['leverage'],
+            self.params['stop'],
+            self.params['take_value'],
+            self.params['take_volume'],
+            self.params['st_upper_limit'],
+            self.params['st_lower_limit'],
+            self.params['k_d_long_limit'],
+            self.params['k_d_short_limit'],
+            self.params['adx_filter'],
+            self.params['adx_long_upper_limit'],
+            self.params['adx_long_lower_limit'],
+            self.params['adx_short_upper_limit'],
+            self.params['adx_short_lower_limit'],
+            self.p_precision,
+            self.q_precision,
+            self.time,
+            self.high,
+            self.low,
+            self.close,
+            self.equity,
+            self.completed_deals_log,
+            self.open_deals_log,
+            self.deal_type,
+            self.entry_signal,
+            self.entry_date,
+            self.entry_price,
+            self.liquidation_price,
+            self.take_price,
+            self.stop_price,
+            self.position_size,
+            self.qty_take,
+            self.atr,
+            self.ds[0],
+            self.ds[1],
+            self.st_upper_band_changed,
+            self.st_lower_band_changed,
+            self.k,
+            self.d,
+            self.adx,
+            self.alert_cancel,
+            self.alert_open_long,
+            self.alert_open_short,
+            self.alert_long_new_stop,
+            self.alert_short_new_stop
         )
 
         self.indicators = {
@@ -321,11 +321,11 @@ class NuggetV5(BaseStrategy):
         k: np.ndarray,
         d: np.ndarray,
         adx: np.ndarray,
-        alert_long: bool,
-        alert_short: bool,
+        alert_cancel: bool,
+        alert_open_long: bool,
+        alert_open_short: bool,
         alert_long_new_stop: bool,
-        alert_short_new_stop: bool,
-        alert_cancel: bool
+        alert_short_new_stop: bool
     ) -> tuple:
         def adjust(number: float, precision: float, digits: int = 8) -> float:
             return round(round(number / precision) * precision, digits)
@@ -398,11 +398,11 @@ class NuggetV5(BaseStrategy):
             return log, equity
 
         for i in range(time.shape[0]):
-            alert_long = False
-            alert_short = False
+            alert_cancel = False
+            alert_open_long = False
+            alert_open_short = False
             alert_long_new_stop = False
             alert_short_new_stop = False
-            alert_cancel = False
 
             if i > 0:
                 stop_price[i] = stop_price[i - 1]
@@ -696,7 +696,7 @@ class NuggetV5(BaseStrategy):
                         entry_price, position_size
                     ]
                 )
-                alert_long = True
+                alert_open_long = True
 
             # Trading logic (shorts)
             if deal_type == 1:
@@ -929,18 +929,18 @@ class NuggetV5(BaseStrategy):
                         entry_price, position_size
                     ]
                 )
-                alert_short = True
+                alert_open_short = True
 
         return (
             completed_deals_log,
             open_deals_log,
             take_price,
             stop_price,
-            alert_long,
-            alert_short,
+            alert_cancel,
+            alert_open_long,
+            alert_open_short,
             alert_long_new_stop,
-            alert_short_new_stop,
-            alert_cancel
+            alert_short_new_stop
         )
 
     def trade(self) -> None:
@@ -991,7 +991,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-        if self.alert_long:
+        if self.alert_open_long:
             self.client.market_open_long(
                 symbol=self.symbol,
                 size=(
@@ -1064,7 +1064,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
         
-        if self.alert_short:
+        if self.alert_open_short:
             self.client.market_open_short(
                 symbol=self.symbol,
                 size=(

@@ -195,80 +195,80 @@ class DevourerV3(BaseStrategy):
             length=self.params['atr_len_p3']
         )
 
-        self.alert_entry_long = False
-        self.alert_exit_long = False
-        self.alert_entry_short = False
-        self.alert_exit_short = False
         self.alert_cancel = False
+        self.alert_open_long = False
+        self.alert_close_long = False
+        self.alert_open_short = False
+        self.alert_close_short = False
 
         (
             self.completed_deals_log,
             self.open_deals_log,
             self.take_price,
             self.stop_price,
-            self.alert_entry_long,
-            self.alert_exit_long,
-            self.alert_entry_short,
-            self.alert_exit_short,
-            self.alert_cancel
+            self.alert_cancel,
+            self.alert_open_long,
+            self.alert_close_long,
+            self.alert_open_short,
+            self.alert_close_short
         ) = self._calculate(
-                self.params['direction'],
-                self.params['initial_capital'],
-                self.params['commission'],
-                self.params['order_size_type'],
-                self.params['order_size'],
-                self.params['leverage'],
-                self.params['stop_atr_p2'],
-                self.params['stop_atr_p3'],
-                self.params['take_atr_p3'],
-                self.params['kd_limit_p1'],
-                self.params['body_atr_coef_p1'],
-                self.params['close_under_ema_p3'],
-                self.p_precision,
-                self.q_precision,
-                self.time,
-                self.open,
-                self.high,
-                self.low,
-                self.close,
-                self.equity,
-                self.completed_deals_log,
-                self.open_deals_log,
-                self.deal_type,
-                self.entry_signal,
-                self.entry_date,
-                self.entry_price,
-                self.take_price,
-                self.stop_price,
-                self.liquidation_price,
-                self.position_size,
-                self.deal_p1,
-                self.deal_p2,
-                self.deal_p3,
-                self.filter1_p1,
-                self.filter2_p1,
-                self.filter3_p1,
-                self.short_allowed_p3,
-                self.close_under_ema_counter_p3,
-                self.macd_p1,
-                self.signal_p1,
-                self.k_p1,
-                self.d_p1,
-                self.direction_p1,
-                self.atr_p1,
-                self.cross_up1_p1,
-                self.cross_down_p1,
-                self.cross_up2_p1,
-                self.lower_band_p2,
-                self.cross_p2,
-                self.atr_p2,
-                self.ema_p3,
-                self.atr_p3,
-                self.alert_entry_long,
-                self.alert_exit_long,
-                self.alert_entry_short,
-                self.alert_exit_short,
-                self.alert_cancel
+            self.params['direction'],
+            self.params['initial_capital'],
+            self.params['commission'],
+            self.params['order_size_type'],
+            self.params['order_size'],
+            self.params['leverage'],
+            self.params['stop_atr_p2'],
+            self.params['stop_atr_p3'],
+            self.params['take_atr_p3'],
+            self.params['kd_limit_p1'],
+            self.params['body_atr_coef_p1'],
+            self.params['close_under_ema_p3'],
+            self.p_precision,
+            self.q_precision,
+            self.time,
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            self.equity,
+            self.completed_deals_log,
+            self.open_deals_log,
+            self.deal_type,
+            self.entry_signal,
+            self.entry_date,
+            self.entry_price,
+            self.take_price,
+            self.stop_price,
+            self.liquidation_price,
+            self.position_size,
+            self.deal_p1,
+            self.deal_p2,
+            self.deal_p3,
+            self.filter1_p1,
+            self.filter2_p1,
+            self.filter3_p1,
+            self.short_allowed_p3,
+            self.close_under_ema_counter_p3,
+            self.macd_p1,
+            self.signal_p1,
+            self.k_p1,
+            self.d_p1,
+            self.direction_p1,
+            self.atr_p1,
+            self.cross_up1_p1,
+            self.cross_down_p1,
+            self.cross_up2_p1,
+            self.lower_band_p2,
+            self.cross_p2,
+            self.atr_p2,
+            self.ema_p3,
+            self.atr_p3,
+            self.alert_cancel,
+            self.alert_open_long,
+            self.alert_close_long,
+            self.alert_open_short,
+            self.alert_close_short
         )
 
         self.indicators = {
@@ -337,11 +337,11 @@ class DevourerV3(BaseStrategy):
         atr_p2: np.ndarray,
         ema_p3: np.ndarray,
         atr_p3: np.ndarray,
-        alert_entry_long: bool,
-        alert_exit_long: bool,
-        alert_entry_short: bool,
-        alert_exit_short: bool,
-        alert_cancel: bool
+        alert_cancel: bool,
+        alert_open_long: bool,
+        alert_close_long: bool,
+        alert_open_short: bool,
+        alert_close_short: bool
     ) -> tuple:
         def adjust(number: float, precision: float, digits: int = 8) -> float:
             return round(round(number / precision) * precision, digits)
@@ -414,11 +414,11 @@ class DevourerV3(BaseStrategy):
             return log, equity
 
         for i in range(2, time.shape[0]):
-            alert_entry_long = False
-            alert_exit_long = False
-            alert_entry_short = False
-            alert_exit_short = False
             alert_cancel = False
+            alert_open_long = False
+            alert_close_long = False
+            alert_open_short = False
+            alert_close_short = False
 
             if i > 0:
                 stop_price[i] = stop_price[i - 1]
@@ -581,7 +581,7 @@ class DevourerV3(BaseStrategy):
                 liquidation_price = np.nan
                 position_size = np.nan
                 deal_p1 = False
-                alert_exit_long = True
+                alert_close_long = True
             elif entry_long_p1:
                 deal_p1 = True
 
@@ -612,7 +612,7 @@ class DevourerV3(BaseStrategy):
                     position_size = np.nan
                     deal_p3 = False
                     short_allowed_p3 = False
-                    alert_exit_short = True
+                    alert_close_short = True
                     alert_cancel = True
 
                 if deal_p2:
@@ -653,7 +653,7 @@ class DevourerV3(BaseStrategy):
                             entry_price, position_size
                         ]
                     )
-                    alert_entry_long = True
+                    alert_open_long = True
 
             # Pattern #2
             exit_long_p2 = (
@@ -691,7 +691,7 @@ class DevourerV3(BaseStrategy):
                 liquidation_price = np.nan
                 position_size = np.nan
                 deal_p2 = False
-                alert_exit_long = True
+                alert_close_long = True
             elif entry_long_p2:
                 deal_p2 = True
 
@@ -725,7 +725,7 @@ class DevourerV3(BaseStrategy):
                     position_size = np.nan
                     deal_p3 = False
                     short_allowed_p3 = False
-                    alert_exit_short = True
+                    alert_close_short = True
                     alert_cancel = True
 
                 deal_type = 0
@@ -765,7 +765,7 @@ class DevourerV3(BaseStrategy):
                         entry_price, position_size
                     ]
                 )
-                alert_entry_long = True
+                alert_open_long = True
 
             # Pattern #3
             if deal_p3 and low[i] <= take_price[i]:
@@ -840,7 +840,7 @@ class DevourerV3(BaseStrategy):
                 position_size = np.nan
                 deal_p3 = False
                 short_allowed_p3 = False
-                alert_exit_short = True
+                alert_close_short = True
                 alert_cancel = True
             elif entry_short_p3:
                 deal_p3 = True
@@ -884,18 +884,18 @@ class DevourerV3(BaseStrategy):
                         entry_price, position_size
                     ]
                 )
-                alert_entry_short = True
+                alert_open_short = True
 
         return (
             completed_deals_log,
             open_deals_log,
             take_price,
             stop_price,
-            alert_entry_long,
-            alert_exit_long,
-            alert_entry_short,
-            alert_exit_short,
-            alert_cancel
+            alert_cancel,
+            alert_open_long,
+            alert_close_long,
+            alert_open_short,
+            alert_close_short
         )
 
     def trade(self) -> None:
@@ -914,21 +914,21 @@ class DevourerV3(BaseStrategy):
             order_ids=self.order_ids['limit_ids']
         )
 
-        if self.alert_exit_long:
+        if self.alert_close_long:
             self.client.market_close_long(
                 symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
 
-        if self.alert_exit_short:
+        if self.alert_close_short:
             self.client.market_close_short(
                 symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
 
-        if self.alert_entry_long:
+        if self.alert_open_long:
             self.client.market_open_long(
                 symbol=self.symbol,
                 size=f'{self.params['order_size']}%',
@@ -950,7 +950,7 @@ class DevourerV3(BaseStrategy):
                 if order_id:
                     self.order_ids['stop_ids'].append(order_id)
 
-        if self.alert_entry_short:
+        if self.alert_open_short:
             self.client.market_open_short(
                 symbol=self.symbol,
                 size=f'{self.params['order_size']}%',

@@ -111,9 +111,8 @@ class MeanStrikeV1(BaseStrategy):
             length=self.params['ma_length']
         )
 
-        self.alert_long = False
-        self.alert_cancel = False
-        self.alert_new_take = False
+        self.alert_open_long = False
+        self.alert_close_long = False
 
         (
             self.completed_deals_log,
@@ -122,48 +121,46 @@ class MeanStrikeV1(BaseStrategy):
             self.entry_price_3,
             self.entry_price_4,
             self.take_price,
-            self.alert_long,
-            self.alert_cancel,
-            self.alert_new_take
+            self.alert_open_long,
+            self.alert_close_long
         ) = self._calculate(
-                self.params['initial_capital'],
-                self.params['commission'],
-                self.params['order_size_type'],
-                self.params['order_size'],
-                self.params['leverage'],
-                self.params['entry_volume'],
-                self.params['entry_percent_2'],
-                self.params['entry_percent_3'],
-                self.params['entry_percent_4'],
-                self.params['take_profit'],
-                self.params['mult'],
-                self.params['range_threshold'],
-                self.p_precision,
-                self.q_precision,
-                self.time,
-                self.open,
-                self.high,
-                self.low,
-                self.close,
-                self.equity,
-                self.completed_deals_log,
-                self.open_deals_log,
-                self.position_size,
-                self.entry_signal,
-                self.entry_price,
-                self.entry_date,
-                self.deal_type,
-                self.liquidation_price,
-                self.take_price,
-                self.qty_entry,
-                self.entry_price_2,
-                self.entry_price_3,
-                self.entry_price_4,
-                self.lowest,
-                self.sma,
-                self.alert_long,
-                self.alert_cancel,
-                self.alert_new_take
+            self.params['initial_capital'],
+            self.params['commission'],
+            self.params['order_size_type'],
+            self.params['order_size'],
+            self.params['leverage'],
+            self.params['entry_volume'],
+            self.params['entry_percent_2'],
+            self.params['entry_percent_3'],
+            self.params['entry_percent_4'],
+            self.params['take_profit'],
+            self.params['mult'],
+            self.params['range_threshold'],
+            self.p_precision,
+            self.q_precision,
+            self.time,
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            self.equity,
+            self.completed_deals_log,
+            self.open_deals_log,
+            self.position_size,
+            self.entry_signal,
+            self.entry_price,
+            self.entry_date,
+            self.deal_type,
+            self.liquidation_price,
+            self.take_price,
+            self.qty_entry,
+            self.entry_price_2,
+            self.entry_price_3,
+            self.entry_price_4,
+            self.lowest,
+            self.sma,
+            self.alert_open_long,
+            self.alert_close_long
         )
 
         self.indicators = {
@@ -223,9 +220,8 @@ class MeanStrikeV1(BaseStrategy):
         entry_price_4: np.ndarray,
         lowest: np.ndarray,
         sma: np.ndarray,
-        alert_long: bool,
-        alert_cancel: bool,
-        alert_new_take: bool
+        alert_open_long: bool,
+        alert_close_long: bool
     ) -> tuple:
         def adjust(number: float, precision: float, digits: int = 8) -> float:
             return round(round(number / precision) * precision, digits)
@@ -298,9 +294,8 @@ class MeanStrikeV1(BaseStrategy):
             return log, equity
 
         for i in range(time.shape[0]):
-            alert_long = False
-            alert_cancel = False
-            alert_new_take = False
+            alert_open_long = False
+            alert_close_long = False
 
             if i > 0:
                 entry_price_2[i] = entry_price_2[i - 1]
@@ -338,7 +333,7 @@ class MeanStrikeV1(BaseStrategy):
                 entry_price_2[i] = np.nan
                 entry_price_3[i] = np.nan
                 entry_price_4[i] = np.nan
-                alert_cancel = True
+                alert_close_long = True
 
             # Trading logic (longs)
             if deal_type == 0:
@@ -352,11 +347,11 @@ class MeanStrikeV1(BaseStrategy):
                                     commission,
                                     deal[0],
                                     deal[1],
-                                    12,
+                                    13,
                                     deal[2],
                                     time[i],
                                     deal[3],
-                                    take_price[i],
+                                    close[i],
                                     deal[4],
                                     initial_capital
                                 )
@@ -372,7 +367,7 @@ class MeanStrikeV1(BaseStrategy):
                         entry_price_2[i] = np.nan
                         entry_price_3[i] = np.nan
                         entry_price_4[i] = np.nan
-                        alert_cancel = True
+                        alert_close_long = True
 
                 if not np.isnan(entry_price_2[i]) and low[i] <= entry_price_2[i]:
                     entry_signal = 3
@@ -399,7 +394,6 @@ class MeanStrikeV1(BaseStrategy):
                     )
 
                     entry_price_2[i] = np.nan
-                    alert_new_take = True
 
                 if not np.isnan(entry_price_3[i]) and low[i] <= entry_price_3[i]:
                     entry_signal = 4
@@ -426,7 +420,6 @@ class MeanStrikeV1(BaseStrategy):
                     )
 
                     entry_price_3[i] = np.nan
-                    alert_new_take = True
 
                 if not np.isnan(entry_price_4[i]) and low[i] <= entry_price_4[i]:
                     entry_signal = 5
@@ -453,7 +446,6 @@ class MeanStrikeV1(BaseStrategy):
                     )
 
                     entry_price_4[i] = np.nan
-                    alert_new_take = True
 
                 if close[i] > open[i]:
                     if not np.isnan(take_price[i]) and high[i] >= take_price[i]:
@@ -465,11 +457,11 @@ class MeanStrikeV1(BaseStrategy):
                                     commission,
                                     deal[0],
                                     deal[1],
-                                    12,
+                                    13,
                                     deal[2],
                                     time[i],
                                     deal[3],
-                                    take_price[i],
+                                    close[i],
                                     deal[4],
                                     initial_capital
                                 )
@@ -485,7 +477,7 @@ class MeanStrikeV1(BaseStrategy):
                         entry_price_2[i] = np.nan
                         entry_price_3[i] = np.nan
                         entry_price_4[i] = np.nan
-                        alert_cancel = True
+                        alert_close_long = True
 
             entry_long = (
                 high[i] - low[i] >= sma[i] * mult and
@@ -554,7 +546,7 @@ class MeanStrikeV1(BaseStrategy):
                         entry_price, qty_entry[0]
                     ]
                 )
-                alert_long = True
+                alert_open_long = True
 
         return (
             completed_deals_log,
@@ -563,44 +555,29 @@ class MeanStrikeV1(BaseStrategy):
             entry_price_3,
             entry_price_4,
             take_price,
-            alert_long,
-            alert_cancel,
-            alert_new_take
+            alert_open_long,
+            alert_close_long
         )
     
     def trade(self) -> None:
         if self.order_ids is None:
             self.order_ids = self.cache.load(self.symbol)
 
-        if self.alert_cancel:
-            self.client.cancel_orders(symbol=self.symbol, side='Buy')
+        if self.alert_close_long:
+            self.client.market_close_long(
+                symbol=self.symbol,
+                size='100%',
+                hedge=False
+            )
+            self.client.cancel_all_orders(self.symbol)
 
         self.order_ids['limit_ids'] = self.client.check_limit_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
-        if self.alert_new_take:
-            self.client.cancel_orders(symbol=self.symbol, side='Sell')
-
-            self.order_ids['limit_ids'] = self.client.check_limit_orders(
-                symbol=self.symbol,
-                order_ids=self.order_ids['limit_ids']
-            )
-
-            order_id = self.client.limit_close_long(
-                symbol=self.symbol,
-                size='100%',
-                price=self.take_price[-1],
-                hedge=False
-            )
-
-            if order_id:
-                self.order_ids['limit_ids'].append(order_id)
-
-        if self.alert_long:
+        if self.alert_open_long:
             self.client.cancel_all_orders(self.symbol)
-
             self.order_ids['limit_ids'] = self.client.check_limit_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['limit_ids']
@@ -669,15 +646,5 @@ class MeanStrikeV1(BaseStrategy):
                 leverage=self.params['leverage'],
                 hedge=False
             )
-
-            order_id = self.client.limit_close_long(
-                symbol=self.symbol,
-                size='100%',
-                price=self.take_price[-1],
-                hedge=False
-            )
-
-            if order_id:
-                self.order_ids['limit_ids'].append(order_id)
 
         self.cache.save(self.symbol, self.order_ids)
