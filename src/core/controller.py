@@ -3,11 +3,13 @@ from logging import getLogger
 
 from src.api.server import Server
 from src.core.enums import Mode
+from src.core.utils.singleton import singleton
 from src.services.automation.automizer import Automizer
 from src.services.optimization.optimizer import Optimizer
 from src.services.testing.tester import Tester
 
 
+@singleton
 class Controller:
     def __init__(
         self,
@@ -17,45 +19,59 @@ class Controller:
         testing_info: dict
     ) -> None:
         self.mode = mode
-        self.automation_info = automation_info
-        self.optimization_info = optimization_info
-        self.testing_info = testing_info
+        self.automizer = None
+        self.optimizer = None
+        self.tester = None
+
+        self.static_path = os.path.abspath(
+            os.path.join('src', 'frontend', 'static')
+        )
+        self.templates_path = os.path.abspath(
+            os.path.join('src', 'frontend', 'templates')
+        )
 
         self.logger = getLogger(__name__)
 
-    def delegate(self) -> None:
+        self._init_service(
+            automation_info=automation_info,
+            optimization_info=optimization_info,
+            testing_info=testing_info,
+        )
+
+    def run_mode(self) -> None:
         self.logger.info(f'TVLite started in "{self.mode}" mode')
 
         match self.mode:
             case Mode.AUTOMATION:
-                automizer = Automizer(self.automation_info)
-                automizer.automate()
-
-                data_to_format = (None, automizer.strategies)
-                self.create_server(data_to_format)
+                self.automizer.automate()
+                self._start_server(self.automizer.strategies)
             case Mode.OPTIMIZATION:
-                optimizer = Optimizer(self.optimization_info)
-                optimizer.optimize()
+                self.optimizer.optimize()
             case Mode.TESTING:
-                tester = Tester(self.testing_info)
-                tester.test()
+                self.tester.test()
+                self._start_server(self.tester.strategies)
 
-                data_to_format = (tester, tester.strategies)
-                self.create_server(data_to_format)
+    def _init_service(
+        self,
+        automation_info: dict,
+        optimization_info: dict,
+        testing_info: dict
+    ) -> None:
+        match self.mode:
+            case Mode.AUTOMATION:
+                self.automizer = Automizer(automation_info)
+            case Mode.OPTIMIZATION:
+                self.optimizer = Optimizer(optimization_info)
+            case Mode.TESTING:
+                self.tester = Tester(testing_info)
 
-    def create_server(self, data_to_format: tuple) -> None:
-        path_to_static = os.path.abspath(
-            os.path.join('src', 'frontend', 'static')
-        )
-        path_to_templates = os.path.abspath(
-            os.path.join('src', 'frontend', 'templates')
-        )
-
+    def _start_server(self, data_to_format: dict) -> None:
         server = Server(
+            import_name=__name__,
+            static_folder=self.static_path,
+            template_folder=self.templates_path,
             mode=self.mode,
             data_to_format=data_to_format,
-            import_name=__name__,
-            static_folder=path_to_static,
-            template_folder=path_to_templates
+            tester=self.tester
         )
         server.run()

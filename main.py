@@ -13,7 +13,7 @@ def main() -> None:
         optimization_info=config.OPTIMIZATION_INFO,
         testing_info=config.TESTING_INFO  
     )
-    controller.delegate()
+    controller.run_mode()
 
 
 if __name__ == '__main__':

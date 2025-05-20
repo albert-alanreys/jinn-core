@@ -7,52 +7,6 @@ class DBManager():
     def __init__(self) -> None:
         self.logger = getLogger(__name__)
 
-    def save(
-        self,
-        database_name: str,
-        table_name: str,
-        columns: dict,
-        data: list,
-        drop: bool
-    ) -> None:
-        try:
-            self._connect(database_name)
-
-            if drop:
-                self.cursor.execute(f'DROP TABLE IF EXISTS "{table_name}"')
-
-            self.cursor.execute(
-                'SELECT name FROM sqlite_master '
-                'WHERE type="table" AND name=?',
-                (table_name,)
-            )
-            
-            if not self.cursor.fetchone():
-                column_defs = [
-                    f'"{col}" {dtype}' for col, dtype in columns.items()
-                ]
-                self.cursor.execute(
-                    f'CREATE TABLE IF NOT EXISTS "{table_name}" '
-                    f'({", ".join(column_defs)})'
-                )
-
-            query_to_insert = (
-                f'INSERT {"" if drop else "OR IGNORE"} INTO "{table_name}" '
-                f'VALUES ({", ".join(['?'] * len(columns))})'
-            )
-
-            for row in data:
-                self.cursor.execute(query_to_insert, row)
-
-            self.connection.commit()
-        except Exception as e:
-            self.logger.error(
-                f'Failed to save data into {table_name}: '
-                f'{type(e).__name__} - {e}'
-            )
-        finally:
-            self._disconnect()
-
     def load_many(self, database_name: str, table_name: str) -> list:
         try:
             self._connect(database_name)
@@ -126,5 +80,51 @@ class DBManager():
                 f'{type(e).__name__} - {e}'
             )
             return []
+        finally:
+            self._disconnect()
+
+    def save(
+        self,
+        database_name: str,
+        table_name: str,
+        columns: dict,
+        data: list,
+        drop: bool
+    ) -> None:
+        try:
+            self._connect(database_name)
+
+            if drop:
+                self.cursor.execute(f'DROP TABLE IF EXISTS "{table_name}"')
+
+            self.cursor.execute(
+                'SELECT name FROM sqlite_master '
+                'WHERE type="table" AND name=?',
+                (table_name,)
+            )
+            
+            if not self.cursor.fetchone():
+                column_defs = [
+                    f'"{col}" {dtype}' for col, dtype in columns.items()
+                ]
+                self.cursor.execute(
+                    f'CREATE TABLE IF NOT EXISTS "{table_name}" '
+                    f'({", ".join(column_defs)})'
+                )
+
+            query_to_insert = (
+                f'INSERT {"" if drop else "OR IGNORE"} INTO "{table_name}" '
+                f'VALUES ({", ".join(['?'] * len(columns))})'
+            )
+
+            for row in data:
+                self.cursor.execute(query_to_insert, row)
+
+            self.connection.commit()
+        except Exception as e:
+            self.logger.error(
+                f'Failed to save data into {table_name}: '
+                f'{type(e).__name__} - {e}'
+            )
         finally:
             self._disconnect()

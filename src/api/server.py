@@ -1,39 +1,46 @@
 import threading
+from typing import Optional, TYPE_CHECKING
 
 from flask import Flask
 
 from src.core.enums import Mode
 from src.core.strategy.strategy_manager import StrategyManager
+from src.core.utils.singleton import singleton
 from .formatting.data_formatter import DataFormatter
 from .routes import register_routes
 
+if TYPE_CHECKING:
+    from src.services.testing.tester import Tester
 
+
+@singleton
 class Server(Flask):
     def __init__(
         self,
-        mode: Mode,
-        data_to_format: tuple,
         import_name: str,
         static_folder: str,
-        template_folder: str
+        template_folder: str,
+        mode: Mode,
+        data_to_format: dict,
+        tester: Optional['Tester']
     ) -> None:
-        self.mode = mode
-        self.data_to_format = data_to_format[1]
-
-        self.alerts = []
-        self.alert_updates = []
-        self.data_updates = []
-
-        self.formatter = DataFormatter(mode, data_to_format)
-        self.manager = StrategyManager(mode, data_to_format)
-        self.formatter.format()
-
         super().__init__(
             import_name=import_name,
             static_folder=static_folder,
             template_folder=template_folder
         )
         register_routes(self)
+
+        self.mode = mode
+        self.data_to_format = data_to_format
+
+        self.formatter = DataFormatter(mode, data_to_format)
+        self.manager = StrategyManager(data_to_format, tester)
+        self.formatter.format()
+
+        self.alert_updates = []
+        self.data_updates = []
+        self.alerts = []
 
         if self.mode is Mode.AUTOMATION:
             thread = threading.Thread(target=self.check_strategies)

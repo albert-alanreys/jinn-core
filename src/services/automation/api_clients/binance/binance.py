@@ -1,12 +1,14 @@
 from typing import Any
 
+from src.core.utils.singleton import singleton
 from .account import AccountClient
 from .market import MarketClient
 from .position import PositionClient
 from .trade import TradeClient
 
 
-class BybitClient():
+@singleton
+class BinanceClient():
     def __init__(self) -> None:
         self.alerts = []
 
@@ -28,4 +30,4 @@ class BybitClient():
             except AttributeError:
                 continue
 
-        raise AttributeError(f'BybitClient has no attribute "{name}"')
+        raise AttributeError(f'BinanceClient has no attribute "{name}"')

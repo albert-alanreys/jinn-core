@@ -6,7 +6,7 @@ from time import time
 import config
 from src.core.enums import Exchange
 from src.services.automation.api_clients.http_client import HttpClient
-from src.services.automation.api_clients.telegram_client import TelegramClient
+from src.services.automation.api_clients.telegram import TelegramClient
 
 
 class BaseClient(HttpClient):

@@ -11,10 +11,7 @@ from .deal_keywords import DealKeywords
 class DataFormatter:
     def __init__(self, mode: str, data_to_format: dict) -> None:
         self.mode = mode
-        self.data_to_format = data_to_format[1]
-
-        if self.mode is Mode.TESTING:
-            self.tester = data_to_format[0]
+        self.data_to_format = data_to_format
 
         self.main_data = {}
         self.lite_data = {}

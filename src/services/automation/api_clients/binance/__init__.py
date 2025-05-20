@@ -1,1 +1,1 @@
-from .core import BinanceClient
+from .binance import BinanceClient

@@ -1,15 +1,18 @@
 import ast
+from typing import Optional, TYPE_CHECKING
 
-from src.core.enums import Mode
+if TYPE_CHECKING:
+    from src.services.testing.tester import Tester
 
 
 class StrategyManager:
-    def __init__(self, mode: str, data_to_format: dict) -> None:
-        self.mode = mode
-        self.data_to_format = data_to_format[1]
-
-        if self.mode is Mode.TESTING:
-            self.tester = data_to_format[0]
+    def __init__(
+        self,
+        data_to_format: dict,
+        tester: Optional['Tester']
+    ) -> None:
+        self.data_to_format = data_to_format
+        self.tester = tester
 
     def update_strategy(
         self,
@@ -40,7 +43,7 @@ class StrategyManager:
                 )
             self.data_to_format[id]['instance'] = instance
 
-            if self.mode is Mode.TESTING:
+            if self.tester is not None:
                 equity, metrics = self.tester.calculate_strategy(
                     self.data_to_format[id]
                 )

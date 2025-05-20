@@ -1,1 +1,1 @@
-from .core import BybitClient
+from .bybit import BybitClient

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from src.core.utils.singleton import singleton
 from .db_manager import DBManager
 
 if TYPE_CHECKING:
@@ -12,6 +13,7 @@ if TYPE_CHECKING:
     from src.services.automation.api_clients.bybit import BybitClient
 
 
+@singleton
 class DataManager:
     def __init__(self) -> None:
         self.db_manager = DBManager()
