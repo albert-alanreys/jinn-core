@@ -77,7 +77,7 @@ class TradeClient(BaseClient):
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def market_open_short(
@@ -132,7 +132,7 @@ class TradeClient(BaseClient):
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def market_close_long(self, symbol: str, size: str, hedge: bool) -> None:
@@ -167,7 +167,7 @@ class TradeClient(BaseClient):
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def market_close_short(self, symbol: str, size: str, hedge: bool) -> None:
@@ -202,7 +202,7 @@ class TradeClient(BaseClient):
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def market_stop_close_long(
@@ -255,7 +255,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['result']['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def market_stop_close_short(
@@ -308,7 +308,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['result']['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def limit_open_long(
@@ -370,7 +370,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['result']['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def limit_open_short(
@@ -432,7 +432,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['result']['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def limit_close_long(
@@ -443,48 +443,20 @@ class TradeClient(BaseClient):
         hedge: bool
     ) -> str | None:
         try:
-            position_size = self._get_position_size('Buy', symbol)
-
-            if size.endswith('%'):
-                size_val = float(size.rstrip('%'))
-
-                if size_val == 100:
-                    orders_info = (
-                        self._get_orders(symbol)['result']['list']
-                    )
-                    limit_orders = list(
-                        filter(
-                            lambda order:
-                                order['orderType'] == 'Limit' and
-                                order['side'] == 'Sell',
-                            orders_info
-                        )
-                    )
-                    limit_orders_qty = sum(
-                        map(lambda order: float(order['qty']), limit_orders)
-                    )
-                    qty = position_size - limit_orders_qty
-                else:
-                    qty = position_size * size_val * 0.01
-            elif size.endswith('u'):
-                size_val = float(size.rstrip('u'))
-                market_data = (
-                    self.market.get_tickers(symbol)['result']['list'][0]
-                )
-                last_price = float(market_data['lastPrice'])
-                qty = size_val / last_price
-
-            q_precision = self.market.get_qty_precision(symbol)
             p_precision = self.market.get_price_precision(symbol)
-
-            adjusted_qty = adjust(qty, q_precision)
             adjusted_price = adjust(price, p_precision)
+            qty = self._get_quantity_to_close(
+                side='Buy',
+                symbol=symbol,
+                size=size,
+                price=adjusted_price
+            )
 
             order = self._create_order(
                 symbol=symbol,
                 side='Sell',
                 order_type='Limit',
-                qty=str(adjusted_qty),
+                qty=str(qty),
                 price=str(adjusted_price),
                 position_idx=(1 if hedge else 0),
                 reduce_only=True
@@ -513,7 +485,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['result']['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def limit_close_short(
@@ -524,48 +496,20 @@ class TradeClient(BaseClient):
         hedge: bool
     ) -> str | None:
         try:
-            position_size = self._get_position_size('Sell', symbol)
-
-            if size.endswith('%'):
-                size_val = float(size.rstrip('%'))
-
-                if size_val == 100:
-                    orders_info = (
-                        self._get_orders(symbol)['result']['list']
-                    )
-                    limit_orders = list(
-                        filter(
-                            lambda order:
-                                order['orderType'] == 'Limit' and
-                                order['side'] == 'Buy',
-                            orders_info
-                        )
-                    )
-                    limit_orders_qty = sum(
-                        map(lambda order: float(order['qty']), limit_orders)
-                    )
-                    qty = position_size - limit_orders_qty
-                else:
-                    qty = position_size * size_val * 0.01
-            elif size.endswith('u'):
-                size_val = float(size.rstrip('u'))
-                market_data = (
-                    self.market.get_tickers(symbol)['result']['list'][0]
-                )
-                last_price = float(market_data['lastPrice'])
-                qty = size_val / last_price
-
-            q_precision = self.market.get_qty_precision(symbol)
             p_precision = self.market.get_price_precision(symbol)
-
-            adjusted_qty = adjust(qty, q_precision)
             adjusted_price = adjust(price, p_precision)
+            qty = self._get_quantity_to_close(
+                side='Sell',
+                symbol=symbol,
+                size=size,
+                price=adjusted_price
+            )
 
             order = self._create_order(
                 symbol=symbol,
                 side='Buy',
                 order_type='Limit',
-                qty=str(adjusted_qty),
+                qty=str(qty),
                 price=str(adjusted_price),
                 position_idx=(2 if hedge else 0),
                 reduce_only=True
@@ -593,7 +537,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['result']['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def cancel_all_orders(self, symbol: str) -> None:
@@ -612,7 +556,7 @@ class TradeClient(BaseClient):
             for order in one_sided_orders:
                 self._cancel_order(symbol, order['orderId'])
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def cancel_stop(self, symbol: str, side: str) -> None:
@@ -630,7 +574,7 @@ class TradeClient(BaseClient):
             for order in stop_orders:
                 self._cancel_order(symbol, order['orderId'])
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
 
     def check_stop_orders(self, symbol: str, order_ids: list) -> list:
@@ -677,7 +621,7 @@ class TradeClient(BaseClient):
 
             return active_order_ids
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
             return order_ids
 
@@ -723,7 +667,7 @@ class TradeClient(BaseClient):
 
             return active_order_ids
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}')
+            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
             self.send_exception(e)
             return order_ids
 

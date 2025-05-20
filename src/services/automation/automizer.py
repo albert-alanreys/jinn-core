@@ -136,7 +136,10 @@ class Automizer():
                     strategy_id = str(id(strategy_data))
                     self.strategies[strategy_id] = strategy_data
                 except Exception as e:
-                    self.logger.error(f'{type(e).__name__} - {e}')
+                    self.logger.error(
+                        msg=f'{type(e).__name__} - {e}',
+                        exc_info=True
+                    )
 
         if len(self.strategies) == 0:
             match self.exchange:
@@ -182,7 +185,7 @@ class Automizer():
                 strategy_id = str(id(strategy_data))
                 self.strategies[strategy_id] = strategy_data
             except Exception as e:
-                self.logger.error(f'{type(e).__name__} - {e}')
+                self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
 
         thread = Thread(target=self._run_automation, daemon=True)
         thread.start()

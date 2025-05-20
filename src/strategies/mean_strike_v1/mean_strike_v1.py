@@ -517,10 +517,12 @@ class MeanStrikeV1(BaseStrategy):
                     close[i] * (100 - entry_percent_2) / 100, p_precision
                 )
                 entry_price_3[i] = adjust(
-                    entry_price_2[i] * (100 - entry_percent_3) / 100, p_precision
+                    entry_price_2[i] * (100 - entry_percent_3) / 100,
+                    p_precision
                 )
                 entry_price_4[i] = adjust(
-                    entry_price_3[i] * (100 - entry_percent_4) / 100, p_precision
+                    entry_price_3[i] * (100 - entry_percent_4) / 100,
+                    p_precision
                 )
                 take_price[i] = adjust(
                     close[i] * (100 + take_profit) / 100, p_precision
@@ -540,6 +542,10 @@ class MeanStrikeV1(BaseStrategy):
                 qty_entry[3] = adjust(
                     position_size * entry_volume[3] / 100, q_precision
                 )
+
+                if np.any(qty_entry == 0):
+                    break
+
                 open_deals_log[0] = np.array(
                     [
                         deal_type, entry_signal, entry_date,
@@ -583,10 +589,25 @@ class MeanStrikeV1(BaseStrategy):
                 order_ids=self.order_ids['limit_ids']
             )
 
-            order_id = self.client.limit_open_buy(
+            self.client.market_open_long(
                 symbol=self.symbol,
                 size=(
-                    f'{self.params['order_size'] * self.entry_volume[1] / 100}'
+                    f'{self.params['order_size'] *
+                       self.params['entry_volume'][0] / 100}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
+                ),
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
+                hedge=False
+            )
+
+            order_id = self.client.limit_open_long(
+                symbol=self.symbol,
+                size=(
+                    f'{self.params['order_size'] *
+                       self.params['entry_volume'][1] / 100}'
                     f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
                 margin=(
@@ -600,10 +621,11 @@ class MeanStrikeV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.limit_open_buy(
+            order_id = self.client.limit_open_long(
                 symbol=self.symbol,
                 size=(
-                    f'{self.params['order_size'] * self.entry_volume[2] / 100}'
+                    f'{self.params['order_size'] *
+                       self.params['entry_volume'][2] / 100}'
                     f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
                 margin=(
@@ -617,10 +639,11 @@ class MeanStrikeV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.limit_open_buy(
+            order_id = self.client.limit_open_long(
                 symbol=self.symbol,
                 size=(
-                    f'{self.params['order_size'] * self.entry_volume[3] / 100}'
+                    f'{self.params['order_size'] *
+                       self.params['entry_volume'][3] / 100}'
                     f'{'u' if self.params['order_size_type'] else '%'}'
                 ),
                 margin=(
@@ -633,18 +656,5 @@ class MeanStrikeV1(BaseStrategy):
 
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
-
-            self.client.market_open_long(
-                symbol=self.symbol,
-                size=(
-                    f'{self.params['order_size'] * self.entry_volume[0] / 100}'
-                    f'{'u' if self.params['order_size_type'] else '%'}'
-                ),
-                margin=(
-                    'cross' if self.params['margin_type'] else 'isolated'
-                ),
-                leverage=self.params['leverage'],
-                hedge=False
-            )
 
         self.cache.save(self.symbol, self.order_ids)

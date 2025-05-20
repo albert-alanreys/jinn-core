@@ -79,7 +79,6 @@ class MarketClient(BaseClient):
                 f'{symbol} | '
                 f'{interval} | '
                 f'{type(e).__name__} - {e}'
-
             )
             return []
 
@@ -133,7 +132,6 @@ class MarketClient(BaseClient):
                 f'{symbol} | '
                 f'{interval} | '
                 f'{type(e).__name__} - {e}'
-
             )
             return []
 
