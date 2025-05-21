@@ -594,6 +594,9 @@ class TradeClient(BaseClient):
             for order_id in order_ids:
                 order_info = self._get_order(symbol, order_id)
 
+                if not order_info:
+                    continue
+
                 if order_info['status'] == 'NEW':
                     active_order_ids.append(order_id)
                     continue
@@ -642,6 +645,9 @@ class TradeClient(BaseClient):
         try:
             for order_id in order_ids:
                 order_info = self._get_order(symbol, order_id)
+
+                if not order_info:
+                    continue
 
                 if order_info['status'] == 'NEW':
                     active_order_ids.append(order_id)

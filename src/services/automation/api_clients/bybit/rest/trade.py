@@ -609,6 +609,10 @@ class TradeClient(BaseClient):
         try:
             for order_id in order_ids:
                 order = self._get_orders(symbol, order_id)
+
+                if not order['result']['list']:
+                    continue
+
                 order_info = order['result']['list'][0]
 
                 if order_info['orderStatus'] == 'Untriggered':
@@ -657,6 +661,10 @@ class TradeClient(BaseClient):
         try:
             for order_id in order_ids:
                 order = self._get_orders(symbol, order_id)
+
+                if not order['result']['list']:
+                    continue
+
                 order_info = order['result']['list'][0]
 
                 if order_info['orderStatus'] == 'New':
