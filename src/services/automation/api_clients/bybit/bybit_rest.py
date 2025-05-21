@@ -1,13 +1,11 @@
 from typing import Any
 
-from src.core.utils.singleton import singleton
 from .rest import AccountClient
 from .rest import MarketClient
 from .rest import PositionClient
 from .rest import TradeClient
 
 
-@singleton
 class BybitREST():
     def __init__(self) -> None:
         self.alerts = []

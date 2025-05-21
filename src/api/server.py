@@ -1,11 +1,10 @@
-import threading
+from threading import Thread
 from typing import Optional, TYPE_CHECKING
 
 from flask import Flask
 
 from src.core.enums import Mode
 from src.core.strategy.strategy_manager import StrategyManager
-from src.core.utils.singleton import singleton
 from .formatting.data_formatter import DataFormatter
 from .routes import register_routes
 
@@ -13,7 +12,6 @@ if TYPE_CHECKING:
     from src.services.testing.tester import Tester
 
 
-@singleton
 class Server(Flask):
     def __init__(
         self,
@@ -21,7 +19,7 @@ class Server(Flask):
         static_folder: str,
         template_folder: str,
         mode: Mode,
-        data_to_format: dict,
+        strategy_states: dict,
         tester: Optional['Tester']
     ) -> None:
         super().__init__(
@@ -32,19 +30,18 @@ class Server(Flask):
         register_routes(self)
 
         self.mode = mode
-        self.data_to_format = data_to_format
+        self.strategy_states = strategy_states
 
-        self.formatter = DataFormatter(mode, data_to_format)
-        self.manager = StrategyManager(data_to_format, tester)
-        self.formatter.format()
+        self.data_formatter = DataFormatter(strategy_states, mode)
+        self.strategy_manager = StrategyManager(strategy_states, tester)
+        self.data_formatter.format()
 
         self.alert_updates = []
         self.data_updates = []
         self.alerts = []
 
         if self.mode is Mode.AUTOMATION:
-            thread = threading.Thread(target=self.check_strategies)
-            thread.start()
+            Thread(target=self.check_strategies, daemon=True).start()
 
     def set_alerts(self, alerts: list) -> None:
         self.alerts.extend(alerts)
@@ -58,14 +55,14 @@ class Server(Flask):
     
     def check_strategies(self) -> None:
         while True:
-            for strategy_id, strategy_data in self.data_to_format.items():
-                if strategy_data['alerts_updated']:
-                    self.formatter.format_strategy_data(
-                        strategy_id, strategy_data
+            for strategy_id, strategy_state in self.strategy_states.items():
+                if strategy_state['alerts_updated']:
+                    self.data_formatter.format_strategy_states(
+                        strategy_id, strategy_state
                     )
                     self.set_data_updates(strategy_id)
-                    strategy_data['alerts_updated'] = False
+                    strategy_state['alerts_updated'] = False
 
-                if strategy_data['alerts']:
-                    self.set_alert_updates(strategy_data['alerts'])
-                    strategy_data['alerts'].clear()
+                if strategy_state['alerts']:
+                    self.set_alert_updates(strategy_state['alerts'])
+                    strategy_state['alerts'].clear()

@@ -6,7 +6,7 @@ class AccountClient(BaseClient):
         super().__init__(alerts)
 
     def get_wallet_balance(self) -> dict:
-        url = f'{self.base_endpoint}/v5/account/wallet-balance'
+        url = f'{self.BASE_ENDPOINT}/v5/account/wallet-balance'
         params = {'accountType': 'UNIFIED', 'coin': 'USDT'}
         headers = self.get_headers(params, 'GET')
         return self.get(url, params, headers)

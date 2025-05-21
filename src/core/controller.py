@@ -3,14 +3,12 @@ from logging import getLogger
 
 from src.api.server import Server
 from src.core.enums import Mode
-from src.core.utils.singleton import singleton
 from src.services.automation.automizer import Automizer
 from src.services.optimization.optimizer import Optimizer
 from src.services.testing.tester import Tester
 
 
-@singleton
-class Controller:
+class Controller():
     def __init__(
         self,
         mode: Mode,
@@ -44,12 +42,12 @@ class Controller:
         match self.mode:
             case Mode.AUTOMATION:
                 self.automizer.automate()
-                self._start_server(self.automizer.strategies)
+                self._start_server(self.automizer.strategy_states)
             case Mode.OPTIMIZATION:
                 self.optimizer.optimize()
             case Mode.TESTING:
                 self.tester.test()
-                self._start_server(self.tester.strategies)
+                self._start_server(self.tester.strategy_states)
 
     def _init_service(
         self,
@@ -65,13 +63,13 @@ class Controller:
             case Mode.TESTING:
                 self.tester = Tester(testing_info)
 
-    def _start_server(self, data_to_format: dict) -> None:
+    def _start_server(self, strategy_states: dict) -> None:
         server = Server(
             import_name=__name__,
             static_folder=self.static_path,
             template_folder=self.templates_path,
             mode=self.mode,
-            data_to_format=data_to_format,
+            strategy_states=strategy_states,
             tester=self.tester
         )
         server.run()

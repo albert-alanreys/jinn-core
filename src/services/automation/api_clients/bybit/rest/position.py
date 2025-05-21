@@ -11,7 +11,7 @@ class PositionClient(BaseClient):
         buy_leverage: str,
         sell_leverage: str
     ) -> dict:
-        url = f'{self.base_endpoint}/v5/position/set-leverage'
+        url = f'{self.BASE_ENDPOINT}/v5/position/set-leverage'
         params = {
             'category': 'linear',
             'symbol': symbol,
@@ -22,7 +22,7 @@ class PositionClient(BaseClient):
         return self.post(url, params, headers=headers, logging=False)
 
     def switch_margin_mode(self, symbol: str, mode: int) -> dict:
-        url = f'{self.base_endpoint}/v5/position/switch-isolated'
+        url = f'{self.BASE_ENDPOINT}/v5/position/switch-isolated'
         params = {
             'category': 'linear',
             'symbol': symbol,
@@ -35,7 +35,7 @@ class PositionClient(BaseClient):
         return self.post(url, params, headers=headers, logging=False)
 
     def switch_position_mode(self, symbol: str, mode: int) -> dict:
-        url = f'{self.base_endpoint}/v5/position/switch-mode'
+        url = f'{self.BASE_ENDPOINT}/v5/position/switch-mode'
         params = {
             'category': 'linear',
             'symbol': symbol,

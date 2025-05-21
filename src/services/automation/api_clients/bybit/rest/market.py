@@ -164,7 +164,7 @@ class MarketClient(BaseClient):
             return 0.0
 
     def get_tickers(self, symbol: str) -> dict:
-        url = f'{self.base_endpoint}/v5/market/tickers'
+        url = f'{self.BASE_ENDPOINT}/v5/market/tickers'
         params = {'category': 'linear', 'symbol': symbol}
         return self.get(url, params)
 
@@ -183,7 +183,7 @@ class MarketClient(BaseClient):
         end: int = None,
         limit: int = 1000
     ) -> list:
-        url = f'{self.base_endpoint}/v5/market/kline'
+        url = f'{self.BASE_ENDPOINT}/v5/market/kline'
         
         match market:
             case Market.FUTURES:
@@ -208,6 +208,6 @@ class MarketClient(BaseClient):
         return response['result']['list'][::-1]
     
     def _get_symbol_info(self, symbol: str) -> dict:
-        url = f'{self.base_endpoint}/v5/market/instruments-info'
+        url = f'{self.BASE_ENDPOINT}/v5/market/instruments-info'
         params = {'category': 'linear', 'symbol': symbol}
         return self.get(url, params)

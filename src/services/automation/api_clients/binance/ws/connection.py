@@ -27,7 +27,7 @@ class WebSocketConnection:
         while True:
             try:
                 with connect(self.url, ping_interval=None) as websocket:
-                    self.logger.info(f'Connected to WebSocket: {self.url}')
+                    self.logger.info('WebSocket connection established')
 
                     self._subscribe(websocket, payload)
 
@@ -56,7 +56,7 @@ class WebSocketConnection:
         try:
             websocket.send(json.dumps(payload))
             self.logger.info(
-                f'WebSocket subscribed (Binance): '
+                f'WebSocket subscribed:\n'
                 f'{" | ".join(payload["params"])}'
             )
         except Exception as e:

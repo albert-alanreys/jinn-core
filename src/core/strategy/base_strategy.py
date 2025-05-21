@@ -36,7 +36,7 @@ class BaseStrategy(ABC):
         strategy_dir = os.path.dirname(getfile(self.__class__))
         self.cache = OrderCache(
             base_dir=os.path.join(strategy_dir, '__cache__'),
-            exchange=self.client.exchange.value
+            exchange=self.client.EXCHANGE
         )
         self.order_ids = None
 

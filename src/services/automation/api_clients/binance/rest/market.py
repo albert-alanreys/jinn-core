@@ -166,7 +166,7 @@ class MarketClient(BaseClient):
             return 0.0
 
     def get_tickers(self, symbol: str) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/premiumIndex'
+        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/premiumIndex'
         params = {'symbol': symbol}
         return self.get(url, params)
     
@@ -177,7 +177,7 @@ class MarketClient(BaseClient):
         raise ValueError(f'Invalid interval: {interval}')
 
     def _get_exchange_info(self) -> dict:
-        return self.get(f'{self.futures_endpoint}/fapi/v1/exchangeInfo')
+        return self.get(f'{self.FUTURES_ENDPOINT}/fapi/v1/exchangeInfo')
 
     def _get_klines(
         self,
@@ -190,9 +190,9 @@ class MarketClient(BaseClient):
     ) -> list:
         match market:
             case Market.FUTURES:
-                url = f'{self.futures_endpoint}/fapi/v1/klines'
+                url = f'{self.FUTURES_ENDPOINT}/fapi/v1/klines'
             case Market.SPOT:
-                url = f'{self.spot_endpoint}/api/v3/klines'
+                url = f'{self.SPOT_ENDPOINT}/api/v3/klines'
 
         params = {'symbol': symbol, 'interval': interval, 'limit': limit}
 

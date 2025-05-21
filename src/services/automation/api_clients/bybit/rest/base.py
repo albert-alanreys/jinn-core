@@ -5,18 +5,20 @@ from hashlib import sha256
 from time import time
 
 import config
-from src.core.enums import Exchange
 from src.services.automation.api_clients.http_client import HttpClient
 from src.services.automation.api_clients.telegram import TelegramClient
 
 
 class BaseClient(HttpClient):
-    exchange = Exchange.BYBIT
-    base_endpoint = 'https://api.bybit.com'
-    # base_endpoint = 'https://api-testnet.bybit.com'
+    # BASE_ENDPOINT = 'https://api-testnet.bybit.com'
+    BASE_ENDPOINT = 'https://api.bybit.com'
+    EXCHANGE = 'BYBIT'
+
+    _telegram = None
 
     def __init__(self, alerts: list) -> None:
-        self.telegram = TelegramClient()
+        if BaseClient._telegram is None:
+            BaseClient._telegram = TelegramClient()
 
         self.alerts = alerts
         self.api_key = config.BYBIT_API_KEY
@@ -70,4 +72,4 @@ class BaseClient(HttpClient):
             f"Количество — {alert['message']['qty']}\n"
             f"Цена — {alert['message']['price']}"
         )
-        self.telegram.send_message(message)
+        self._telegram.send_message(message)

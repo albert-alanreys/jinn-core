@@ -6,22 +6,17 @@ if TYPE_CHECKING:
 
 
 class GA:
-    iterations = 10000
-    population_size = 50
-    max_population_size = 300
+    ITERATIONS = 10000
+    POPULATION_SIZE = 50
+    MAX_POPULATION_SIZE = 300
 
-    def __init__(self, strategy_data: dict) -> None:
-        self.strategy = strategy_data['type']
-        self.client = strategy_data['client']
-        self.fold_1 = strategy_data['fold_1']
-        self.fold_2 = strategy_data['fold_2']
-        self.fold_3 = strategy_data['fold_3']
-        self.market_data = {
-            'market': strategy_data['market'],
-            'symbol': strategy_data['symbol'],
-            'p_precision': strategy_data['p_precision'],
-            'q_precision': strategy_data['q_precision']
-        }
+    def __init__(self, strategy_state: dict) -> None:
+        self.strategy = strategy_state['type']
+        self.client = strategy_state['client']
+        self.fold_1 = strategy_state['fold_1']
+        self.fold_2 = strategy_state['fold_2']
+        self.fold_3 = strategy_state['fold_3']
+        self.market_data = strategy_state['market_data']
 
         self.population = {}
         self.best_samples = []
@@ -35,7 +30,7 @@ class GA:
 
             self._create()
 
-            for _ in range(self.iterations):
+            for _ in range(self.ITERATIONS):
                 self._select()
                 self._recombine()
                 self._mutate()
@@ -52,7 +47,7 @@ class GA:
                 random.choice(values)
                 for values in self.strategy.opt_params.values()
             ]
-            for _ in range(self.population_size)
+            for _ in range(self.POPULATION_SIZE)
         ]
 
         for sample in samples:
@@ -68,12 +63,12 @@ class GA:
         market_data = self.market_data.copy()
         market_data['klines'] = fold
 
-        instance = self.strategy(self.client, opt_params=sample)
-        instance.start(market_data)
+        strategy_instance = self.strategy(self.client, opt_params=sample)
+        strategy_instance.start(market_data)
 
         score = round(
-            instance.completed_deals_log[8::13].sum() /
-                instance.params['initial_capital'] * 100,
+            strategy_instance.completed_deals_log[8::13].sum() /
+            strategy_instance.params['initial_capital'] * 100,
             2
         )
         return score
@@ -132,7 +127,7 @@ class GA:
         self.population[fitness] = self.child
 
     def _kill(self) -> None:
-        while len(self.population) > self.max_population_size:
+        while len(self.population) > self.MAX_POPULATION_SIZE:
             self.population.pop(min(self.population))
 
     def _destroy(self) -> None:

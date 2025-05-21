@@ -4,18 +4,20 @@ from hashlib import sha256
 from time import time
 
 import config
-from src.core.enums import Exchange
 from src.services.automation.api_clients.http_client import HttpClient
 from src.services.automation.api_clients.telegram import TelegramClient
 
 
 class BaseClient(HttpClient):
-    exchange = Exchange.BINANCE
-    futures_endpoint = 'https://fapi.binance.com'
-    spot_endpoint = 'https://api.binance.com'
+    FUTURES_ENDPOINT = 'https://fapi.binance.com'
+    SPOT_ENDPOINT = 'https://api.binance.com'
+    EXCHANGE = 'BINANCE'
+
+    _telegram = None
 
     def __init__(self, alerts: list) -> None:
-        self.telegram = TelegramClient()
+        if BaseClient._telegram is None:
+            BaseClient._telegram = TelegramClient()
 
         self.alerts = alerts
         self.api_key = config.BINANCE_API_KEY
@@ -52,7 +54,7 @@ class BaseClient(HttpClient):
             f"Количество — {alert['message']['qty']}\n"
             f"Цена — {alert['message']['price']}"
         )
-        self.telegram.send_message(message)
+        self._telegram.send_message(message)
 
     def _add_signature(self, params: dict) -> dict:
         str_to_sign = '&'.join([f'{k}={v}' for k, v in params.items()])

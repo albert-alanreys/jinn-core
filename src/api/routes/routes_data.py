@@ -13,11 +13,11 @@ def register_data_routes(app):
         if strategy_id in app.data_updates:
             app.data_updates.remove(strategy_id)
 
-        return json.dumps(app.formatter.main_data[strategy_id])
+        return json.dumps(app.data_formatter.main_data[strategy_id])
 
     @app.route('/data/lite')
     def get_lite_data():
-        return json.dumps(app.formatter.lite_data)
+        return json.dumps(app.data_formatter.lite_data)
 
     @app.route('/data/update/<string:strategy_id>', methods=['PATCH'])
     def update_data(strategy_id):
@@ -26,15 +26,33 @@ def register_data_routes(app):
             param = data.get('param')
             value = data.get('value')
 
-            app.manager.update_strategy(
-                id=strategy_id,
+            app.strategy_manager.update_strategy(
+                strategy_id=strategy_id,
                 param_name=param,
                 new_value=value
             )
-            app.formatter.format_strategy_data(
-                id=strategy_id,
-                data=app.data_to_format[strategy_id]
+            app.data_formatter.format_strategy_states(
+                strategy_id=strategy_id,
+                strategy_state=app.strategy_states[strategy_id]
             )
             return json.dumps({'status': 'success'}), 200
-        except (ValueError, KeyError, TypeError):
-            return json.dumps({'status': 'error'}), 400
+        except ValueError:
+            return json.dumps({
+                'status': 'error',
+                'type': 'invalid_request'
+            }), 400
+        except KeyError:
+            return json.dumps({
+                'status': 'error',
+                'type': 'not_found'
+            }), 400
+        except TypeError:
+            return json.dumps({
+                'status': 'error',
+                'type': 'invalid_type'
+            }), 400
+        except Exception:
+            return json.dumps({
+                'status': 'error',
+                'type': 'server_error'
+            }), 500

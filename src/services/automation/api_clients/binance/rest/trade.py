@@ -682,13 +682,13 @@ class TradeClient(BaseClient):
             return order_ids
 
     def _cancel_all_orders(self, symbol: str) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/allOpenOrders'
+        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/allOpenOrders'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.delete(url, params=params, headers=headers)
 
     def _cancel_order(self, symbol: str, order_id: str) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/order'
+        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
         params = {'symbol': symbol, 'orderId': order_id}
         params, headers = self.build_signed_request(params)
         return self.delete(url, params=params, headers=headers)
@@ -705,7 +705,7 @@ class TradeClient(BaseClient):
         price: float = None,
         stop_price: float = None
     ) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/order'
+        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
         params = {
             'symbol': symbol,
             'side': side,
@@ -730,13 +730,13 @@ class TradeClient(BaseClient):
         return self.post(url, params=params, headers=headers)
     
     def _get_order(self, symbol: str, order_id: str) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v1/order'
+        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
         params = {'symbol': symbol, 'orderId': order_id}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)
 
     def _get_orders(self, symbol: str) -> list:
-        url = f'{self.futures_endpoint}/fapi/v1/openOrders'
+        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/openOrders'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)
@@ -821,7 +821,7 @@ class TradeClient(BaseClient):
             return 0.0
 
     def _get_positions(self, symbol: str) -> list:
-        url = f'{self.futures_endpoint}/fapi/v3/positionRisk'
+        url = f'{self.FUTURES_ENDPOINT}/fapi/v3/positionRisk'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)

@@ -26,7 +26,7 @@ AUTOMATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': 1,
-    'strategy': enums.Strategy.NUGGET_V2,
+    'strategy': enums.Strategy.DEVOURER_V3,
 }
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,
@@ -38,11 +38,11 @@ OPTIMIZATION_INFO = {
     'strategy': enums.Strategy.NUGGET_V2,
 }
 TESTING_INFO = {
-    'exchange': enums.Exchange.BINANCE,
+    'exchange': enums.Exchange.BYBIT,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
-    'start': '2022-01-01',
+    'start': '2018-01-01',
     'end': '2025-05-01',
-    'strategy': enums.Strategy.MEAN_STRIKE_V1,
+    'strategy': enums.Strategy.NUGGET_V2,
 }

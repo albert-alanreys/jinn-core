@@ -6,7 +6,7 @@ from logging import getLogger
 from re import match
 
 import src.core.enums as enums
-from src.core.storage.data_manager import DataManager
+from src.core.storage.history_provider import HistoryProvider
 from src.services.automation.api_clients.binance import BinanceREST
 from src.services.automation.api_clients.bybit import BybitREST
 from .performance_metrics import get_performance_metrics
@@ -22,10 +22,11 @@ class Tester:
         self.end = testing_info['end']
         self.strategy = testing_info['strategy']
 
-        self.strategies = {}
-        self.data_manager = DataManager()
+        self.history_provider = HistoryProvider()
         self.binance_client = BinanceREST()
         self.bybit_client = BybitREST()
+
+        self.strategy_states = {}
 
         self.logger = getLogger(__name__)
 
@@ -47,7 +48,7 @@ class Tester:
                 basename = os.path.basename(file_path) 
                 pattern = r'(\w+)_(\w+)_(\w+)_(\w+)\.json'
                 groups = match(pattern, basename).groups()
-                exchange, symbol, market, interval = (
+                exchange, market, symbol, interval = (
                     groups[0].upper(),
                     groups[1].upper(),
                     groups[2].upper(),
@@ -79,7 +80,7 @@ class Tester:
                     valid_interval = client.get_valid_interval(interval)
 
                     try:
-                        klines = self.data_manager.get_data(
+                        market_data = self.history_provider.fetch_data(
                             client=client,
                             market=market,
                             symbol=symbol,
@@ -87,41 +88,34 @@ class Tester:
                             start=params['period']['start'],
                             end=params['period']['end']
                         )
-                        p_precision = client.get_price_precision(symbol)
-                        q_precision = client.get_qty_precision(symbol)
-                        instance = strategy.value(
+                        strategy_instance = strategy.value(
                             client=client,
                             opt_params=params['params'].values()
                         )
 
-                        strategy_data = {
+                        strategy_state = {
                             'name': strategy.name,
                             'type': strategy.value,
-                            'instance': instance,
-                            'params': instance.params,
+                            'instance': strategy_instance,
+                            'params': strategy_instance.params,
                             'client': client,
-                            'exchange': exchange,
-                            'market': market,
-                            'symbol': symbol,
-                            'interval': valid_interval,
-                            'klines': klines,
-                            'p_precision': p_precision,
-                            'q_precision': q_precision,
+                            'market_data': market_data
                         }
+
                         equity, metrics = (
-                            self.calculate_strategy(strategy_data)
+                            self.calculate_strategy(strategy_state)
                         )
-                        strategy_data['equity'] = equity
-                        strategy_data['metrics'] = metrics
-                        strategy_id = str(id(strategy_data))
-                        self.strategies[strategy_id] = strategy_data
+                        strategy_state['equity'] = equity
+                        strategy_state['metrics'] = metrics
+                        strategy_id = str(id(strategy_state))
+                        self.strategy_states[strategy_id] = strategy_state
                     except Exception as e:
                         self.logger.error(
                             msg=f'{type(e).__name__} - {e}',
                             exc_info=True
                         )
 
-        if len(self.strategies) == 0:
+        if not self.strategy_states:
             match self.exchange:
                 case enums.Exchange.BINANCE:
                     client = self.binance_client
@@ -131,7 +125,7 @@ class Tester:
             self.valid_interval = client.get_valid_interval(self.interval)
 
             try:
-                klines = self.data_manager.get_data(
+                market_data = self.history_provider.fetch_data(
                     client=client,
                     market=self.market,
                     symbol=self.symbol,
@@ -139,47 +133,33 @@ class Tester:
                     start=self.start,
                     end=self.end
                 )
-                p_precision = client.get_price_precision(self.symbol)
-                q_precision = client.get_qty_precision(self.symbol)
-                instance = self.strategy.value(client)
+                strategy_instance = self.strategy.value(client)
 
-                strategy_data = {
+                strategy_state = {
                     'name': self.strategy.name,
                     'type': self.strategy.value,
-                    'instance': instance,
-                    'params': instance.params,
+                    'instance': strategy_instance,
+                    'params': strategy_instance.params,
                     'client': client,
-                    'exchange': self.exchange.value,
-                    'market': self.market,
-                    'symbol': self.symbol,
-                    'interval': self.valid_interval,
-                    'klines': klines,
-                    'p_precision': p_precision,
-                    'q_precision': q_precision,
+                    'market_data': market_data
                 }
-                equity, metrics = self.calculate_strategy(strategy_data)
-                strategy_data['equity'] = equity
-                strategy_data['metrics'] = metrics
-                strategy_id = str(id(strategy_data))
-                self.strategies[strategy_id] = strategy_data
+
+                equity, metrics = self.calculate_strategy(strategy_state)
+                strategy_state['equity'] = equity
+                strategy_state['metrics'] = metrics
+                strategy_id = str(id(strategy_state))
+                self.strategy_states[strategy_id] = strategy_state
             except Exception as e:
                 self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
 
-    def calculate_strategy(self, strategy_data: dict) -> tuple:
-        market_data = {
-            'market': strategy_data['market'],
-            'symbol': strategy_data['symbol'],
-            'klines': strategy_data['klines'],
-            'p_precision': strategy_data['p_precision'],
-            'q_precision': strategy_data['q_precision']
-        }
-        strategy_data['instance'].start(market_data)
+    def calculate_strategy(self, strategy_state: dict) -> tuple:
+        strategy_state['instance'].start(strategy_state['market_data'])
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
             equity, metrics = get_performance_metrics(
-                strategy_data['instance'].params['initial_capital'],
-                strategy_data['instance'].completed_deals_log
+                strategy_state['instance'].params['initial_capital'],
+                strategy_state['instance'].completed_deals_log
             )
 
         return equity, metrics

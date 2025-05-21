@@ -6,6 +6,6 @@ class AccountClient(BaseClient):
         super().__init__(alerts)
 
     def get_wallet_balance(self) -> dict:
-        url = f'{self.futures_endpoint}/fapi/v3/account'
+        url = f'{self.FUTURES_ENDPOINT}/fapi/v3/account'
         params, headers = self.build_signed_request({})
         return self.get(url, params, headers)

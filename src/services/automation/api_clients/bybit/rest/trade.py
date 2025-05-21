@@ -698,13 +698,13 @@ class TradeClient(BaseClient):
             return order_ids
 
     def _cancel_all_orders(self, symbol: str) -> dict:
-        url = f'{self.base_endpoint}/v5/order/cancel-all'
+        url = f'{self.BASE_ENDPOINT}/v5/order/cancel-all'
         params = {'category': 'linear', 'symbol': symbol}
         headers = self.get_headers(params, 'POST')
         return self.post(url, params, headers=headers)
 
     def _cancel_order(self, symbol: str, order_id: str) -> dict:
-        url = f'{self.base_endpoint}/v5/order/cancel'
+        url = f'{self.BASE_ENDPOINT}/v5/order/cancel'
         params = {'category': 'linear', 'symbol': symbol, 'orderId': order_id}
         headers = self.get_headers(params, 'POST')
         return self.post(url, params, headers=headers)
@@ -721,7 +721,7 @@ class TradeClient(BaseClient):
         position_idx: int = None,
         reduce_only: bool = None
     ) -> dict:
-        url = f'{self.base_endpoint}/v5/order/create'
+        url = f'{self.BASE_ENDPOINT}/v5/order/create'
         params = {
             'category': 'linear',
             'symbol': symbol,
@@ -748,7 +748,7 @@ class TradeClient(BaseClient):
         return self.post(url, params, headers=headers)
 
     def _get_orders(self, symbol: str, order_id: str = None) -> dict:
-        url = f'{self.base_endpoint}/v5/order/realtime'
+        url = f'{self.BASE_ENDPOINT}/v5/order/realtime'
         params = {'category': 'linear', 'symbol': symbol}
 
         if order_id:
@@ -821,7 +821,7 @@ class TradeClient(BaseClient):
             return 0.0
 
     def _get_positions(self, symbol: str) -> dict:
-        url = f'{self.base_endpoint}/v5/position/list'
+        url = f'{self.BASE_ENDPOINT}/v5/position/list'
         params = {'category': 'linear', 'symbol': symbol}
         headers = self.get_headers(params, 'GET')
         return self.get(url, params, headers)

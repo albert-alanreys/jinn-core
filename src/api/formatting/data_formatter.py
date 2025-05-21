@@ -9,63 +9,69 @@ from .deal_keywords import DealKeywords
 
 
 class DataFormatter:
-    def __init__(self, mode: str, data_to_format: dict) -> None:
+    def __init__(self, strategy_states: dict, mode: str) -> None:
+        self.strategy_states = strategy_states
         self.mode = mode
-        self.data_to_format = data_to_format
 
         self.main_data = {}
         self.lite_data = {}
 
     def format(self) -> None:
-        for id, data in self.data_to_format.items():
-            self.format_strategy_data(id, data)
+        for id, state in self.strategy_states.items():
+            self.format_strategy_states(id, state)
 
-    def format_strategy_data(self, id: str, data: dict) -> None:
-        self.main_data[id] = {}
-        self.main_data[id]['chartData'] = {
+    def format_strategy_states(
+            self,
+            strategy_id: str,
+            strategy_state: dict
+        ) -> None:
+        self.main_data[strategy_id] = {}
+        self.main_data[strategy_id]['chartData'] = {
             'name': '-'.join(
                 word.capitalize()
-                for word in data['name'].split('_')
+                for word in strategy_state['name'].split('_')
             ),
-            'exchange': data['exchange'],
-            'symbol': data['symbol'],
-            'market': data['market'].value,
-            'interval': data['interval'],
-            'mintick': data['p_precision'],
-            'klines': self._format_klines(data['klines']),
+            'exchange': strategy_state['client'].EXCHANGE,
+            'symbol': strategy_state['market_data']['symbol'],
+            'market': strategy_state['market_data']['market'].value,
+            'interval': strategy_state['market_data']['interval'],
+            'mintick': strategy_state['market_data']['p_precision'],
+            'klines': self._format_klines(
+                strategy_state['market_data']['klines']
+            ),
             'indicators': self._format_indicators(
-                data['klines'],
-                data['instance'].indicators
+                strategy_state['market_data']['klines'],
+                strategy_state['instance'].indicators
             ),
             'markers': self._format_deal_markers(
-                data['instance'].completed_deals_log,
-                data['instance'].open_deals_log
+                strategy_state['instance'].completed_deals_log,
+                strategy_state['instance'].open_deals_log
             )
         }
 
         if self.mode is Mode.TESTING:
-            self.main_data[id]['reportData'] = {
-                'equity': self._format_equity(data['equity']),
-                'metrics': data['metrics'],
+            self.main_data[strategy_id]['reportData'] = {
+                'equity': self._format_equity(strategy_state['equity']),
+                'metrics': strategy_state['metrics'],
                 'completedDealsLog': self._format_completed_deals(
-                    data['instance'].completed_deals_log
+                    strategy_state['instance'].completed_deals_log
                 ),
                 'openDealsLog': self._format_open_deals(
-                    data['instance'].open_deals_log
+                    strategy_state['instance'].open_deals_log
                 )
             }
 
-        self.lite_data[id] = {
+        self.lite_data[strategy_id] = {
             'name': '-'.join(
                 word.capitalize()
-                for word in data['name'].split('_')
+                for word in strategy_state['name'].split('_')
             ),
-            'exchange': data['exchange'],
-            'symbol': data['symbol'],
-            'market': data['market'].value,
-            'interval': data['interval'],
-            'mintick': data['p_precision'],
-            'params': data['params']
+            'exchange': strategy_state['client'].EXCHANGE,
+            'symbol': strategy_state['market_data']['symbol'],
+            'market': strategy_state['market_data']['market'].value,
+            'interval': strategy_state['market_data']['interval'],
+            'mintick': strategy_state['market_data']['p_precision'],
+            'params': strategy_state['params']
         }
 
     def _format_klines(self, klines: np.ndarray) -> list:

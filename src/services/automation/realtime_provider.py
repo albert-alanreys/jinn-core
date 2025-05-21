@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import src.core.enums as enums
-from src.core.utils.singleton import singleton
 from src.services.automation.api_clients.binance import BinanceWebSocket
 from src.services.automation.api_clients.bybit import BybitWebSocket
 
@@ -14,62 +13,63 @@ if TYPE_CHECKING:
     from src.services.automation.api_clients.bybit import BybitREST
 
 
-@singleton
-class RealtimeDataProvider:
+class RealtimeProvider():
     def __init__(self) -> None:
-        self.topics_and_strategies = {}
+        self.topic_to_states = {}
 
         self.binance_ws = BinanceWebSocket(self.handle_kline_message)
         self.bybit_ws = BybitWebSocket(self.handle_kline_message)
 
         self.logger = getLogger(__name__)
 
-    def get_data(
+    def fetch_data(
         self,
         client: 'BinanceREST | BybitREST',
         symbol: str,
         interval: str
     ) -> dict:
-        data = client.get_last_klines(
+        p_precision = client.get_price_precision(symbol)
+        q_precision = client.get_qty_precision(symbol)
+
+        klines = client.get_last_klines(
             symbol=symbol,
             interval=interval,
             limit=3000
         )
-        klines = np.array(data)[:, :6].astype(float)
-        p_precision = client.get_price_precision(symbol)
-        q_precision = client.get_qty_precision(symbol)
+        klines = np.array(klines)[:, :6].astype(float)
 
         return {
             'market': enums.Market.FUTURES,
             'symbol': symbol,
-            'klines': klines,
+            'interval': interval,
             'p_precision': p_precision,
-            'q_precision': q_precision
+            'q_precision': q_precision,
+            'klines': klines
         }
 
-    def subscribe_kline_updates(self, strategies: dict) -> None:
+    def subscribe_kline_updates(self, strategy_states: dict) -> None:
         binance_topics = []
         bybit_topics = []
 
-        for item in strategies.values():
-            match item['client'].exchange:
-                case enums.Exchange.BINANCE:
+        for strategy_state in strategy_states.values():
+            match strategy_state['client'].EXCHANGE:
+                case enums.Exchange.BINANCE.value:
                     topic = self.binance_ws.get_topic(
-                        symbol=item['symbol'],
-                        interval=item['interval']
+                        symbol=strategy_state['market_data']['symbol'],
+                        interval=strategy_state['market_data']['interval']
                     )
                     binance_topics.append(topic)
-                case enums.Exchange.BYBIT:
+                case enums.Exchange.BYBIT.value:
                     topic = self.bybit_ws.get_topic(
-                        symbol=item['symbol'],
-                        interval=item['interval']
+                        symbol=strategy_state['market_data']['symbol'],
+                        interval=strategy_state['market_data']['interval']
                     )
                     bybit_topics.append(topic)
 
-            if topic not in self.topics_and_strategies:
-                self.topics_and_strategies[topic] = [item]
+            if topic not in self.topic_to_states:
+                self.topic_to_states[topic] = [strategy_state]
             else:
-                self.topics_and_strategies[topic].append(item)
+                self.topic_to_states[topic].append(strategy_state)
 
         if binance_topics:
             Thread(
@@ -90,10 +90,10 @@ class RealtimeDataProvider:
             topic = message['topic']
             kline = message['kline']
 
-            for strategy in self.topics_and_strategies[topic]:
-                strategy['klines'] = np.vstack(
-                    [strategy['klines'], kline]
+            for strategy_state in self.topic_to_states[topic]:
+                strategy_state['market_data']['klines'] = np.vstack(
+                    [strategy_state['market_data']['klines'], kline]
                 )
-                strategy['klines_updated'] = True
+                strategy_state['klines_updated'] = True
         except Exception as e:
             self.logger.error(f'{type(e).__name__} - {e}')
