@@ -95,7 +95,7 @@ class MarketClient(BaseClient):
                     symbol=symbol,
                     interval=interval,
                     limit=limit
-                )
+                )[:-1]
 
             interval_ms = self.interval_ms[interval]
             end = int(time() * 1000)

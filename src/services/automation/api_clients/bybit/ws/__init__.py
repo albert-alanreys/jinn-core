@@ -1,1 +1,1 @@
-from .client import WebSocketClient
+from .kline_stream import KlineStream

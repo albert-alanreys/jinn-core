@@ -5,9 +5,8 @@ from logging import getLogger
 from re import fullmatch
 from threading import Thread
 
-import numpy as np
-
 import src.core.enums as enums
+from .realtime_data_provider import RealtimeDataProvider
 from .api_clients.binance import BinanceClient
 from .api_clients.bybit import BybitREST
 
@@ -22,6 +21,7 @@ class Automizer():
         self.strategies = {}
         self.alerts = []
 
+        self.data_provider = RealtimeDataProvider()
         self.binance_client = BinanceClient()
         self.bybit_client = BybitREST()
 
@@ -102,23 +102,11 @@ class Automizer():
                 valid_interval = client.get_valid_interval(interval)
 
                 try:
-                    data = client.get_last_klines(
+                    market_data = self.data_provider.get_data(
+                        client=client,
                         symbol=symbol,
-                        interval=valid_interval,
-                        limit=3000
+                        interval=valid_interval
                     )
-                    klines = np.array(data)[:, :6].astype(float)
-                    p_precision = client.get_price_precision(symbol)
-                    q_precision = client.get_qty_precision(symbol)
-
-                    market_data = {
-                        'market': enums.Market.FUTURES,
-                        'symbol': symbol,
-                        'klines': klines,
-                        'p_precision': p_precision,
-                        'q_precision': q_precision
-                    }
-
                     instance = strategy.value(client, **params)
                     instance.start(market_data)
 
@@ -131,7 +119,8 @@ class Automizer():
                         'exchange': exchange,
                         'interval': valid_interval,
                         'alerts': self.alerts,
-                        'updated': False,
+                        'klines_updated': False,
+                        'alerts_updated': False,
                         **market_data
                     }
                     strategy_id = str(id(strategy_data))
@@ -152,23 +141,12 @@ class Automizer():
             self.valid_interval = client.get_valid_interval(self.interval)
 
             try:
-                data = client.get_last_klines(
+                market_data = self.data_provider.get_data(
+                    client=client,
                     symbol=self.symbol,
-                    interval=self.valid_interval,
-                    limit=3000
+                    interval=self.valid_interval
                 )
-                klines = np.array(data)[:, :6].astype(float)
-                p_precision = client.get_price_precision(self.symbol)
-                q_precision = client.get_qty_precision(self.symbol)
-
-                market_data = {
-                    'market': enums.Market.FUTURES,
-                    'symbol': self.symbol,
-                    'klines': klines,
-                    'p_precision': p_precision,
-                    'q_precision': q_precision
-                }
-                instance = self.strategy.value(client)
+                instance = strategy.value(client)
                 instance.start(market_data)
 
                 strategy_data = {
@@ -180,7 +158,8 @@ class Automizer():
                     'exchange': self.exchange.value,
                     'interval': self.valid_interval,
                     'alerts': self.alerts,
-                    'updated': False,
+                    'klines_updated': False,
+                    'alerts_updated': False,
                     **market_data
                 }
                 strategy_id = str(id(strategy_data))
@@ -188,29 +167,18 @@ class Automizer():
             except Exception as e:
                 self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
 
-        thread = Thread(target=self._run_automation, daemon=True)
-        thread.start()
+        Thread(target=self._run_automation, daemon=True).start()
+        Thread(
+            target=self.data_provider.subscribe_kline_updates,
+            args=(self.strategies,),
+            daemon=True
+        ).start()
 
     def _run_automation(self) -> None:
         while True:
             for strategy_id, strategy_data in self.strategies.items():
-                raw_klines = strategy_data['client'].get_last_klines(
-                    symbol=strategy_data['symbol'],
-                    interval=strategy_data['interval'],
-                    limit=2
-                )
-
-                if len(raw_klines) < 2:
-                    continue
-
-                new_klines = np.array(raw_klines)[:-1, :6].astype(float)
-                last_kline_time = strategy_data['klines'][-1, 0]
-                new_kline_time = new_klines[-1, 0]
-
-                if new_kline_time > last_kline_time:
-                    strategy_data['klines'] = np.vstack(
-                        [strategy_data['klines'], new_klines[-1]]
-                    )
+                if strategy_data['klines_updated']:
+                    strategy_data['klines_updated'] = False
                     market_data = {
                         'market': strategy_data['market'],
                         'symbol': strategy_data['symbol'],
@@ -220,7 +188,7 @@ class Automizer():
                     }
                     strategy_data['instance'].start(market_data)
                     strategy_data['instance'].trade()
-                    strategy_data['updated'] = True
+                    strategy_data['alerts_updated'] = True
 
                     if strategy_data['client'].alerts:
                         for alert in strategy_data['client'].alerts:

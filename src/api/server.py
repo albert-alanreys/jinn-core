@@ -59,12 +59,12 @@ class Server(Flask):
     def check_strategies(self) -> None:
         while True:
             for strategy_id, strategy_data in self.data_to_format.items():
-                if strategy_data['updated']:
+                if strategy_data['alerts_updated']:
                     self.formatter.format_strategy_data(
                         strategy_id, strategy_data
                     )
                     self.set_data_updates(strategy_id)
-                    strategy_data['updated'] = False
+                    strategy_data['alerts_updated'] = False
 
                 if strategy_data['alerts']:
                     self.set_alert_updates(strategy_data['alerts'])

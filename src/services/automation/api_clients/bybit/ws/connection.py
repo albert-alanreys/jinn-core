@@ -11,8 +11,8 @@ class WebSocketConnection:
     def __init__(
         self,
         url: str,
-        max_retries: int = 5,
-        retry_delay: float = 10.0
+        max_retries: int = 3,
+        retry_delay: float = 5.0
     ) -> None:
         self.url = url
         self.max_retries = max_retries
@@ -39,9 +39,6 @@ class WebSocketConnection:
                         message = websocket.recv()
                         data = json.loads(message)
                         on_message(data)
-            except KeyboardInterrupt:
-                self.logger.info('WebSocket interrupted by user')
-                break
             except Exception as e:
                 self.logger.warning(f'WebSocket connection lost: {e}')
 

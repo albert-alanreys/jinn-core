@@ -1,13 +1,13 @@
-from typing import Any
+from typing import Any, Callable
 
 from src.core.utils.singleton import singleton
-from .ws.kline_stream import KlineStream
+from .ws import KlineStream
 
 
 @singleton
 class BybitWebSocket:
-    def __init__(self):
-        self.kline = KlineStream()
+    def __init__(self, on_kline: Callable) -> None:
+        self.kline = KlineStream(on_kline)
 
     def __getattr__(self, name: str) -> Any:
         for subclient_name in ('kline',):

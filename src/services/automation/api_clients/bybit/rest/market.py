@@ -95,7 +95,7 @@ class MarketClient(BaseClient):
                     symbol=symbol,
                     interval=interval,
                     limit=limit
-                )
+                )[:-1]
 
             interval_ms = self.interval_ms[interval]
             end = int(time() * 1000)
@@ -182,7 +182,7 @@ class MarketClient(BaseClient):
         start: int = None,
         end: int = None,
         limit: int = 1000
-    ) -> dict | None:
+    ) -> list:
         url = f'{self.base_endpoint}/v5/market/kline'
         
         match market:
