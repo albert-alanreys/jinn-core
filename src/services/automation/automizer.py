@@ -172,23 +172,26 @@ class Automizer():
 
     def _run_automation(self) -> None:
         while True:
-            for strategy_id, strategy_data in self.strategies.items():
-                if strategy_data['klines_updated']:
-                    strategy_data['klines_updated'] = False
-                    market_data = {
-                        'market': strategy_data['market'],
-                        'symbol': strategy_data['symbol'],
-                        'klines': strategy_data['klines'],
-                        'p_precision': strategy_data['p_precision'],
-                        'q_precision': strategy_data['q_precision']
-                    }
-                    strategy_data['instance'].start(market_data)
-                    strategy_data['instance'].trade()
-                    strategy_data['alerts_updated'] = True
+            try:
+                for strategy_id, strategy_data in self.strategies.items():
+                    if strategy_data['klines_updated']:
+                        strategy_data['klines_updated'] = False
+                        market_data = {
+                            'market': strategy_data['market'],
+                            'symbol': strategy_data['symbol'],
+                            'klines': strategy_data['klines'],
+                            'p_precision': strategy_data['p_precision'],
+                            'q_precision': strategy_data['q_precision']
+                        }
+                        strategy_data['instance'].start(market_data)
+                        strategy_data['instance'].trade()
+                        strategy_data['alerts_updated'] = True
 
-                    if strategy_data['client'].alerts:
-                        for alert in strategy_data['client'].alerts:
-                            alert['id'] = strategy_id
-                            self.alerts.append(alert)
+                        if strategy_data['client'].alerts:
+                            for alert in strategy_data['client'].alerts:
+                                alert['id'] = strategy_id
+                                self.alerts.append(alert)
 
-                        strategy_data['client'].alerts.clear()
+                            strategy_data['client'].alerts.clear()
+            except Exception as e:
+                self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)

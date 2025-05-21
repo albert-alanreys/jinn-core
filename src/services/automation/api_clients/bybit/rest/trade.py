@@ -138,6 +138,11 @@ class TradeClient(BaseClient):
     def market_close_long(self, symbol: str, size: str, hedge: bool) -> None:
         try:
             qty = self._get_quantity_to_close('Buy', symbol, size)
+
+            if not qty:
+                self.logger.info(f'No position to close for {symbol}')
+                return
+
             order = self._create_order(
                 symbol=symbol,
                 side='Sell',
@@ -173,6 +178,11 @@ class TradeClient(BaseClient):
     def market_close_short(self, symbol: str, size: str, hedge: bool) -> None:
         try:
             qty = self._get_quantity_to_close('Sell', symbol, size)
+
+            if not qty:
+                self.logger.info(f'No position to close for {symbol}')
+                return
+
             order = self._create_order(
                 symbol=symbol,
                 side='Buy',
@@ -221,6 +231,10 @@ class TradeClient(BaseClient):
                 size=size,
                 price=adjusted_price
             )
+
+            if not qty:
+                self.logger.info(f'No position to close for {symbol}')
+                return
 
             order = self._create_order(
                 symbol=symbol,
@@ -274,6 +288,10 @@ class TradeClient(BaseClient):
                 size=size,
                 price=adjusted_price
             )
+
+            if not qty:
+                self.logger.info(f'No position to close for {symbol}')
+                return
 
             order = self._create_order(
                 symbol=symbol,
@@ -452,6 +470,10 @@ class TradeClient(BaseClient):
                 price=adjusted_price
             )
 
+            if not qty:
+                self.logger.info(f'No position to close for {symbol}')
+                return
+
             order = self._create_order(
                 symbol=symbol,
                 side='Sell',
@@ -504,6 +526,10 @@ class TradeClient(BaseClient):
                 size=size,
                 price=adjusted_price
             )
+
+            if not qty:
+                self.logger.info(f'No position to close for {symbol}')
+                return
 
             order = self._create_order(
                 symbol=symbol,
