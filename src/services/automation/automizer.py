@@ -7,7 +7,7 @@ from threading import Thread
 
 import src.core.enums as enums
 from .realtime_data_provider import RealtimeDataProvider
-from .api_clients.binance import BinanceClient
+from .api_clients.binance import BinanceREST
 from .api_clients.bybit import BybitREST
 
 
@@ -22,7 +22,7 @@ class Automizer():
         self.alerts = []
 
         self.data_provider = RealtimeDataProvider()
-        self.binance_client = BinanceClient()
+        self.binance_client = BinanceREST()
         self.bybit_client = BybitREST()
 
         self.logger = getLogger(__name__)
@@ -167,12 +167,8 @@ class Automizer():
             except Exception as e:
                 self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
 
+        self.data_provider.subscribe_kline_updates(self.strategies)
         Thread(target=self._run_automation, daemon=True).start()
-        Thread(
-            target=self.data_provider.subscribe_kline_updates,
-            args=(self.strategies,),
-            daemon=True
-        ).start()
 
     def _run_automation(self) -> None:
         while True:

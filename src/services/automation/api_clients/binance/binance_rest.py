@@ -1,14 +1,14 @@
 from typing import Any
 
 from src.core.utils.singleton import singleton
-from .account import AccountClient
-from .market import MarketClient
-from .position import PositionClient
-from .trade import TradeClient
+from .rest import AccountClient
+from .rest import MarketClient
+from .rest import PositionClient
+from .rest import TradeClient
 
 
 @singleton
-class BinanceClient():
+class BinanceREST():
     def __init__(self) -> None:
         self.alerts = []
 
@@ -30,4 +30,4 @@ class BinanceClient():
             except AttributeError:
                 continue
 
-        raise AttributeError(f'BinanceClient has no attribute "{name}"')
+        raise AttributeError(f'BinanceREST has no attribute "{name}"')

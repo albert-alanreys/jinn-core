@@ -1,7 +1,7 @@
 import json
 import time
 from logging import getLogger
-from threading import Thread, Event
+from threading import Event
 from typing import Callable
 
 from websockets.sync.client import connect, ClientConnection
@@ -32,7 +32,6 @@ class WebSocketConnection:
                     self._subscribe(websocket, payload)
 
                     self.stop_event.clear()
-                    self._start_ping_thread(websocket)
 
                     while True:
                         message = websocket.recv()
@@ -57,22 +56,9 @@ class WebSocketConnection:
         try:
             websocket.send(json.dumps(payload))
             self.logger.info(
-                f'WebSocket subscribed (Bybit): '
-                f'{" | ".join(payload["args"])}'
+                f'WebSocket subscribed (Binance): '
+                f'{" | ".join(payload["params"])}'
             )
         except Exception as e:
             self.logger.error(f'Failed to send subscription payload: {e}')
             raise
-
-    def _start_ping_thread(self, websocket: ClientConnection) -> None:
-        def ping():
-            while not self.stop_event.is_set():
-                time.sleep(20)
-
-                try:
-                    websocket.send(json.dumps({'op': 'ping'}))
-                except Exception as e:
-                    self.logger.error(f'Ping failed: {e}')
-                    break
-
-        Thread(target=ping, daemon=True).start()

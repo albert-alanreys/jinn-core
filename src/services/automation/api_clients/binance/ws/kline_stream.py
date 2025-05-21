@@ -5,7 +5,7 @@ from .connection import WebSocketConnection
 
 
 class KlineStream:
-    BASE_WS_URL = 'wss://stream.bybit.com/v5/public/linear'
+    BASE_WS_URL = 'wss://fstream.binance.com/ws'
 
     def __init__(self, on_kline: Callable) -> None:
         self.on_kline = on_kline
@@ -14,26 +14,26 @@ class KlineStream:
         self.logger = getLogger(__name__)
 
     def get_topic(self, symbol: str, interval: str) -> str:
-        return f'kline.{interval}.{symbol}'
+        return f'{symbol.lower()}@kline_{interval}'
 
     def start_stream(self, topics: list) -> None:
-        payload = {'op': 'subscribe', 'args': topics}
+        payload = {'method': 'SUBSCRIBE', 'params': topics}
         self.ws.listen(self.on_message, payload)
 
     def on_message(self, message: dict) -> None:
         try:
-            if 'topic' in message:
-                topic = message['topic']
-                kline_data = message['data'][0]
+            if 'e' in message:
+                topic = self.get_topic(message['s'], message['k']['i'])
+                kline_data = message['k']
 
-                if kline_data['confirm']:
+                if kline_data['x']:
                     kline = [
-                        kline_data['start'],
-                        float(kline_data['open']),
-                        float(kline_data['high']),
-                        float(kline_data['low']),
-                        float(kline_data['close']),
-                        float(kline_data['volume'])
+                        kline_data['t'],
+                        float(kline_data['o']),
+                        float(kline_data['h']),
+                        float(kline_data['l']),
+                        float(kline_data['c']),
+                        float(kline_data['v'])
                     ]
                     self.on_kline({'topic': topic, 'kline': kline})
         except (KeyError, IndexError, ValueError) as e:

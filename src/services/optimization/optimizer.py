@@ -5,7 +5,7 @@ from multiprocessing import Pool, cpu_count
 
 import src.core.enums as enums
 from src.core.storage.data_manager import DataManager
-from src.services.automation.api_clients.binance import BinanceClient
+from src.services.automation.api_clients.binance import BinanceREST
 from src.services.automation.api_clients.bybit import BybitREST
 from .ga import GA
 
@@ -22,7 +22,7 @@ class Optimizer:
 
         self.strategies = {}
         self.data_manager = DataManager()
-        self.binance_client = BinanceClient()
+        self.binance_client = BinanceREST()
         self.bybit_client = BybitREST()
 
         self.logger = getLogger(__name__)

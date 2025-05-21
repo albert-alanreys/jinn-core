@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING
 from .order_cache import OrderCache
 
 if TYPE_CHECKING:
-    from src.services.automation.api_clients.binance import BinanceClient
+    from src.services.automation.api_clients.binance import BinanceREST
     from src.services.automation.api_clients.bybit import BybitREST
 
 
 class BaseStrategy(ABC):
     def __init__(
         self,
-        client: 'BinanceClient | BybitREST',
+        client: 'BinanceREST | BybitREST',
         all_params: dict | None = None,
         opt_params: dict | list | None = None
     ) -> None:
