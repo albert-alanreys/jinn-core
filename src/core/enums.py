@@ -5,6 +5,7 @@ from src.strategies import MeanStrikeV1
 from src.strategies import NuggetV2
 from src.strategies import NuggetV4
 from src.strategies import NuggetV5
+from src.strategies import Sandbox
 
 
 class Mode(Enum):
@@ -29,3 +30,4 @@ class Strategy(Enum):
     NUGGET_V2 = NuggetV2
     NUGGET_V4 = NuggetV4
     NUGGET_V5 = NuggetV5
+    SANDBOX = Sandbox
