@@ -10,7 +10,7 @@ from .db_manager import DBManager
 if TYPE_CHECKING:
     from src.core.enums import Market
     from src.services.automation.api_clients.binance import BinanceClient
-    from src.services.automation.api_clients.bybit import BybitClient
+    from src.services.automation.api_clients.bybit import BybitREST
 
 
 @singleton
@@ -21,7 +21,7 @@ class DataManager:
 
     def get_data(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BinanceClient | BybitREST',
         market: 'Market',
         symbol: str,
         interval: str,
@@ -144,7 +144,7 @@ class DataManager:
 
     def _get_data_from_exchange(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BinanceClient | BybitREST',
         market: 'Market',
         symbol: str,
         interval: str,

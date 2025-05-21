@@ -9,7 +9,7 @@ import numpy as np
 
 import src.core.enums as enums
 from .api_clients.binance import BinanceClient
-from .api_clients.bybit import BybitClient
+from .api_clients.bybit import BybitREST
 
 
 class Automizer():
@@ -23,7 +23,8 @@ class Automizer():
         self.alerts = []
 
         self.binance_client = BinanceClient()
-        self.bybit_client = BybitClient()
+        self.bybit_client = BybitREST()
+
         self.logger = getLogger(__name__)
 
     def automate(self) -> None:

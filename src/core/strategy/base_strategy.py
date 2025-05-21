@@ -8,13 +8,13 @@ from .order_cache import OrderCache
 
 if TYPE_CHECKING:
     from src.services.automation.api_clients.binance import BinanceClient
-    from src.services.automation.api_clients.bybit import BybitClient
+    from src.services.automation.api_clients.bybit import BybitREST
 
 
 class BaseStrategy(ABC):
     def __init__(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BinanceClient | BybitREST',
         all_params: dict | None = None,
         opt_params: dict | list | None = None
     ) -> None:
