@@ -109,11 +109,8 @@ class Tester:
                         strategy_state['metrics'] = metrics
                         strategy_id = str(id(strategy_state))
                         self.strategy_states[strategy_id] = strategy_state
-                    except Exception as e:
-                        self.logger.error(
-                            msg=f'{type(e).__name__} - {e}',
-                            exc_info=True
-                        )
+                    except Exception:
+                        self.logger.exception('An error occurred')
 
         if not self.strategy_states:
             match self.exchange:
@@ -149,8 +146,8 @@ class Tester:
                 strategy_state['metrics'] = metrics
                 strategy_id = str(id(strategy_state))
                 self.strategy_states[strategy_id] = strategy_state
-            except Exception as e:
-                self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            except Exception:
+                self.logger.exception('An error occurred')
 
     def calculate_strategy(self, strategy_state: dict) -> tuple:
         strategy_state['instance'].start(strategy_state['market_data'])

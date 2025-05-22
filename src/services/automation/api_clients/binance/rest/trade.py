@@ -75,7 +75,7 @@ class TradeClient(BaseClient):
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def market_open_short(
@@ -128,7 +128,7 @@ class TradeClient(BaseClient):
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def market_close_long(self, symbol: str, size: str, hedge: bool) -> None:
@@ -167,7 +167,7 @@ class TradeClient(BaseClient):
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def market_close_short(self, symbol: str, size: str, hedge: bool) -> None:
@@ -206,7 +206,7 @@ class TradeClient(BaseClient):
             self.alerts.append(alert)
             self.send_telegram_alert(alert)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def market_stop_close_long(
@@ -260,7 +260,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def market_stop_close_short(
@@ -314,7 +314,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def limit_open_long(
@@ -373,7 +373,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def limit_open_short(
@@ -432,7 +432,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def limit_close_long(
@@ -488,7 +488,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def limit_close_short(
@@ -544,7 +544,7 @@ class TradeClient(BaseClient):
             self.send_telegram_alert(alert)
             return order['orderId']
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def cancel_all_orders(self, symbol: str) -> None:
@@ -566,7 +566,7 @@ class TradeClient(BaseClient):
             for order in one_sided_orders:
                 self._cancel_order(symbol, order['orderId'])
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def cancel_stop(self, symbol: str, side: str) -> None:
@@ -584,7 +584,7 @@ class TradeClient(BaseClient):
             for order in stop_orders:
                 self._cancel_order(symbol, order['orderId'])
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
 
     def check_stop_orders(self, symbol: str, order_ids: list) -> list:
@@ -635,7 +635,7 @@ class TradeClient(BaseClient):
 
             return active_order_ids
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
             return order_ids
 
@@ -683,7 +683,7 @@ class TradeClient(BaseClient):
 
             return active_order_ids
         except Exception as e:
-            self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            self.logger.exception('An error occurred')
             self.send_exception(e)
             return order_ids
 

@@ -27,7 +27,7 @@ class Sandbox(BaseStrategy):
         "ma_length":  20,
         "mult":  2.0,
         "range_threshold":  30.0,
-        "intervals": ["1d", "15m"]
+        "intervals": ['1d']
     }
 
     # Parameters to be optimized and their possible values

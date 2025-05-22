@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from src.core.utils.klines import has_first_historical_kline
+from src.core.utils.klines import has_realtime_kline
 from .db_manager import DBManager
 
 if TYPE_CHECKING:
@@ -25,7 +27,7 @@ class HistoryProvider():
         interval: str,
         start: str,
         end: str,
-        extra_intervals: list | None = None
+        extra_intervals: list | None
     ) -> dict:
         valid_interval = client.get_valid_interval(interval)
         p_precision = client.get_price_precision(symbol)
@@ -39,20 +41,22 @@ class HistoryProvider():
             start=start,
             end=end
         )
-        extra_klines = []
+        extra_interval_klines = {}
 
         if extra_intervals:
             for extra_interval in extra_intervals:
-                extra_klines.append(
-                    self._fetch_klines(
-                        client=client,
-                        market=market,
-                        symbol=symbol,
-                        interval=client.get_valid_interval(extra_interval),
-                        start=start,
-                        end=end
-                    )
+                valid_extra_interval = (
+                    client.get_valid_interval(extra_interval)
                 )
+                extra_klines = self._fetch_klines(
+                    client=client,
+                    market=market,
+                    symbol=symbol,
+                    interval=valid_extra_interval,
+                    start=start,
+                    end=end
+                )
+                extra_interval_klines[valid_extra_interval] = extra_klines
 
         return {
             'market': market,
@@ -61,7 +65,7 @@ class HistoryProvider():
             'p_precision': p_precision,
             'q_precision': q_precision,
             'klines': klines,
-            'extra_klines': extra_klines,
+            'extra_klines': extra_interval_klines,
             'start': start,
             'end': end
         }
@@ -129,7 +133,7 @@ class HistoryProvider():
                 end=end_to_request_ms
             )
 
-            if self._has_realtime_kline(klines):
+            if has_realtime_kline(klines):
                 klines = klines[:-1]
 
             columns = {
@@ -148,7 +152,7 @@ class HistoryProvider():
                 drop=True
             )
 
-            if self._has_first_historical_kline(klines, start_ms):
+            if has_first_historical_kline(klines, start_ms):
                 columns = {
                     'klines_key': 'TEXT PRIMARY KEY',
                     'has_first_kline': 'BOOLEAN'
@@ -163,7 +167,7 @@ class HistoryProvider():
                     drop=False
                 )
 
-        klines = np.array(klines, dtype=np.float64)
+        klines = np.array(klines)
         klines = klines[
             (klines[:, 0] >= start_ms) &
             (klines[:, 0] <= end_ms)
@@ -231,12 +235,3 @@ class HistoryProvider():
             [float(value) for value in kline[:6]]
             for kline in klines
         ]
-    
-    def _has_first_historical_kline(self, klines: list, start: int) -> bool:
-        kline_ms = klines[1][0] - klines[0][0]
-        return bool((klines[0][0] - start) // kline_ms)
-    
-    def _has_realtime_kline(self, klines: list) -> bool:
-        now_ms = int(datetime.now().timestamp() * 1000)
-        kline_ms = klines[1][0] - klines[0][0]
-        return not bool((now_ms - klines[-1][0]) // kline_ms)

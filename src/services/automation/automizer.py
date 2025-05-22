@@ -99,15 +99,15 @@ class Automizer():
                     case enums.Exchange.BYBIT.name:
                         client = self.bybit_client
 
-                valid_interval = client.get_valid_interval(interval)
-
                 try:
+                    strategy_instance = strategy.value(client, **params)
+                    intervals = strategy_instance.params.get('intervals')
                     market_data = self.realtime_provider.fetch_data(
                         client=client,
                         symbol=symbol,
-                        interval=valid_interval
+                        interval=interval,
+                        extra_intervals=intervals
                     )
-                    strategy_instance = strategy.value(client, **params)
                     strategy_instance.start(market_data)
 
                     strategy_state = {
@@ -123,11 +123,8 @@ class Automizer():
                     }
                     strategy_id = str(id(strategy_state))
                     self.strategy_states[strategy_id] = strategy_state
-                except Exception as e:
-                    self.logger.error(
-                        msg=f'{type(e).__name__} - {e}',
-                        exc_info=True
-                    )
+                except Exception:
+                    self.logger.exception('An error occurred')
 
         if not self.strategy_states:
             match self.exchange:
@@ -136,15 +133,15 @@ class Automizer():
                 case enums.Exchange.BYBIT:
                     client = self.bybit_client
 
-            self.valid_interval = client.get_valid_interval(self.interval)
-
             try:
+                strategy_instance = self.strategy.value(client)
+                intervals = strategy_instance.params.get('intervals')
                 market_data = self.realtime_provider.fetch_data(
                     client=client,
                     symbol=self.symbol,
-                    interval=self.valid_interval
+                    interval=self.interval,
+                    extra_intervals=intervals
                 )
-                strategy_instance = strategy.value(client)
                 strategy_instance.start(market_data)
 
                 strategy_state = {
@@ -160,29 +157,72 @@ class Automizer():
                 }
                 strategy_id = str(id(strategy_state))
                 self.strategy_states[strategy_id] = strategy_state
-            except Exception as e:
-                self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+            except Exception:
+                self.logger.exception('An error occurred')
 
         self.realtime_provider.subscribe_kline_updates(self.strategy_states)
         Thread(target=self._run_automation, daemon=True).start()
 
     def _run_automation(self) -> None:
         while True:
-            try:
-                for strategy_id, strategy_state in self.strategy_states.items():
-                    if strategy_state['klines_updated']:
-                        strategy_state['klines_updated'] = False
-                        strategy_state['instance'].start(
-                            strategy_state['market_data']
-                        )
-                        strategy_state['instance'].trade()
-                        strategy_state['alerts_updated'] = True
+            for strategy_id, strategy_state in self.strategy_states.items():
+                if not strategy_state['klines_updated']:
+                    continue
 
-                        if strategy_state['client'].alerts:
-                            for alert in strategy_state['client'].alerts:
-                                alert['id'] = strategy_id
-                                self.alerts.append(alert)
+                if not self._all_extra_klines_updated(strategy_id):
+                    continue
 
-                            strategy_state['client'].alerts.clear()
-            except Exception as e:
-                self.logger.error(f'{type(e).__name__} - {e}', exc_info=True)
+                strategy_state['klines_updated'] = False
+
+                try:
+                    self._execute_strategy(strategy_id)
+                    self._update_alerts(strategy_id)
+                except Exception:
+                    self.logger.exception('An error occurred')
+
+    def _all_extra_klines_updated(self, strategy_id: str) -> bool:
+        strategy_state = self.strategy_states[strategy_id]
+        market_data = strategy_state['market_data']
+        base_klines = market_data['klines']
+        extra_interval_klines = market_data['extra_klines']
+
+        if not extra_interval_klines:
+            return True
+
+        try:
+            base_duration = base_klines[1][0] - base_klines[0][0]
+            expected_close_time = base_klines[-1][0] + base_duration
+
+            for extra_klines in extra_interval_klines.values():
+                duration = extra_klines[1][0] - extra_klines[0][0]
+                open_time = extra_klines[-1][0]
+
+                if expected_close_time == open_time + 2 * duration:
+                    return False
+                elif expected_close_time > open_time + 2 * duration:
+                    self.logger.warning('Data synchronization error')
+                    return False
+        except Exception:
+            self.logger.exception('An error occurred')
+            return False
+
+        return True
+
+    def _execute_strategy(self, strategy_id: str) -> None:
+        strategy_state = self.strategy_states[strategy_id]
+        instance = strategy_state['instance']
+        instance.start(strategy_state['market_data'])
+        instance.trade()
+
+    def _update_alerts(self, strategy_id: str) -> None:
+        strategy_state = self.strategy_states[strategy_id]
+        alerts = strategy_state['client'].alerts
+
+        if alerts:
+            for alert in alerts:
+                alert['id'] = strategy_id
+                self.alerts.append(alert)
+
+            alerts.clear()
+
+        strategy_state['alerts_updated'] = True
