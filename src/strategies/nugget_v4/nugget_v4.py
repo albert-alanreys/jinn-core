@@ -12,7 +12,6 @@ class NuggetV4(BaseStrategy):
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     # direction: 0 - "all", 1 — "longs", 2 — "shorts"
     # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
-
     params = {
         "margin_type": 0,
         "direction": 0,

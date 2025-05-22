@@ -24,8 +24,10 @@ class HistoryProvider():
         symbol: str,
         interval: str,
         start: str,
-        end: str 
+        end: str,
+        extra_intervals: list | None = None
     ) -> dict:
+        valid_interval = client.get_valid_interval(interval)
         p_precision = client.get_price_precision(symbol)
         q_precision = client.get_qty_precision(symbol)
 
@@ -33,10 +35,24 @@ class HistoryProvider():
             client=client,
             market=market,
             symbol=symbol,
-            interval=interval,
+            interval=valid_interval,
             start=start,
             end=end
         )
+        extra_klines = []
+
+        if extra_intervals:
+            for extra_interval in extra_intervals:
+                extra_klines.append(
+                    self._fetch_klines(
+                        client=client,
+                        market=market,
+                        symbol=symbol,
+                        interval=client.get_valid_interval(extra_interval),
+                        start=start,
+                        end=end
+                    )
+                )
 
         return {
             'market': market,
@@ -45,6 +61,7 @@ class HistoryProvider():
             'p_precision': p_precision,
             'q_precision': q_precision,
             'klines': klines,
+            'extra_klines': extra_klines,
             'start': start,
             'end': end
         }
@@ -82,14 +99,14 @@ class HistoryProvider():
             request_required = True
 
         if not request_required and start_ms < klines[0][0]:
-            availability = self.db_manager.load_one(
+            first_kline = self.db_manager.load_one(
                 database_name=database_name,
                 table_name='klines_metadata',
                 key_column='klines_key',
                 key_value=table_name
             )
 
-            if not availability:
+            if not first_kline:
                 end_to_request_ms = max(end_ms, klines[-1][0])
                 request_required = True
 
@@ -134,7 +151,7 @@ class HistoryProvider():
             if self._has_first_historical_kline(klines, start_ms):
                 columns = {
                     'klines_key': 'TEXT PRIMARY KEY',
-                    'has_first_bar': 'BOOLEAN'
+                    'has_first_kline': 'BOOLEAN'
                 }
                 table_data = [[table_name, True]]
 

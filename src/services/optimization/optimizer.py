@@ -70,16 +70,16 @@ class Optimizer:
                     case enums.Market.SPOT.name:
                         market = enums.Market.SPOT
 
-                valid_interval = client.get_valid_interval(interval)
-
                 try:
+                    intervals = strategy.value.params.get('intervals')
                     market_data = self.history_provider.fetch_data(
                         client=client,
                         market=market,
                         symbol=symbol,
-                        interval=valid_interval,
+                        interval=interval,
                         start=start,
-                        end=end
+                        end=end,
+                        extra_intervals=intervals
                     )
 
                     fold_size = len(market_data['klines']) // 3
@@ -111,16 +111,16 @@ class Optimizer:
                 case enums.Exchange.BYBIT:
                     client = self.bybit_client
 
-            self.valid_interval = client.get_valid_interval(self.interval)
-
             try:
+                intervals = self.strategy.value.params.get('intervals')
                 market_data = self.history_provider.fetch_data(
                     client=client,
                     market=self.market,
                     symbol=self.symbol,
-                    interval=self.valid_interval,
+                    interval=self.interval,
                     start=self.start,
-                    end=self.end
+                    end=self.end,
+                    extra_intervals=intervals
                 )
 
                 fold_size = len(market_data['klines']) // 3

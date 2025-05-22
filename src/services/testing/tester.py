@@ -77,20 +77,20 @@ class Tester:
                         continue
 
                 for params in params_dicts:
-                    valid_interval = client.get_valid_interval(interval)
-
                     try:
+                        strategy_instance = strategy.value(
+                            client=client,
+                            opt_params=params['params'].values()
+                        )
+                        intervals = strategy_instance.params.get('intervals')
                         market_data = self.history_provider.fetch_data(
                             client=client,
                             market=market,
                             symbol=symbol,
-                            interval=valid_interval,
+                            interval=interval,
                             start=params['period']['start'],
-                            end=params['period']['end']
-                        )
-                        strategy_instance = strategy.value(
-                            client=client,
-                            opt_params=params['params'].values()
+                            end=params['period']['end'],
+                            extra_intervals=intervals
                         )
 
                         strategy_state = {
@@ -122,18 +122,18 @@ class Tester:
                 case enums.Exchange.BYBIT:
                     client = self.bybit_client
 
-            self.valid_interval = client.get_valid_interval(self.interval)
-
             try:
+                strategy_instance = self.strategy.value(client)
+                intervals = strategy_instance.params.get('intervals')
                 market_data = self.history_provider.fetch_data(
                     client=client,
                     market=self.market,
                     symbol=self.symbol,
-                    interval=self.valid_interval,
+                    interval=self.interval,
                     start=self.start,
-                    end=self.end
+                    end=self.end,
+                    extra_intervals=intervals
                 )
-                strategy_instance = self.strategy.value(client)
 
                 strategy_state = {
                     'name': self.strategy.name,

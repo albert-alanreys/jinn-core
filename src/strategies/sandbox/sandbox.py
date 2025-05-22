@@ -11,7 +11,6 @@ class Sandbox(BaseStrategy):
 
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
-
     params = {
         "margin_type":  0,
         "initial_capital":  10000.0,
@@ -27,10 +26,12 @@ class Sandbox(BaseStrategy):
         "lookback":  1,
         "ma_length":  20,
         "mult":  2.0,
-        "range_threshold":  30.0
+        "range_threshold":  30.0,
+        "intervals": ["1d", "15m"]
     }
 
     # Parameters to be optimized and their possible values
+    # Intervals are not subject to optimization
     opt_params = {
         'entry_volume': [
             [10.0, 15.0, 25.0, 50.0],
