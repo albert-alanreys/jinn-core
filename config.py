@@ -19,7 +19,7 @@ TELEGRAM_CHAT_ID = 'TELEGRAM_CHAT_ID'
 #   OPTIMIZATION - оптимизация
 #   TESTING - тестирование
 #   AUTOMATION - автоматизация
-MODE = enums.Mode.TESTING
+MODE = enums.Mode.AUTOMATION
 
 # Настройки для различных режимов
 AUTOMATION_INFO = {

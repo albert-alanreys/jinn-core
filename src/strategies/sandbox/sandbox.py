@@ -1,6 +1,7 @@
 import numpy as np
 import numba as nb
 
+import src.core.lib.intervals as intervals
 import src.core.lib.ta as ta
 from src.core.strategy.base_strategy import BaseStrategy
 
@@ -27,7 +28,7 @@ class Sandbox(BaseStrategy):
         "ma_length":  20,
         "mult":  2.0,
         "range_threshold":  30.0,
-        "intervals": ['1d']
+        "intervals": [1, 15]
     }
 
     # Parameters to be optimized and their possible values
@@ -67,10 +68,7 @@ class Sandbox(BaseStrategy):
 
     # For frontend
     indicator_options = {
-        'EP #2': {'color': '#311b92'},
-        'EP #3': {'color': '#311b92'},
-        'EP #4': {'color': '#311b92'},
-        'TP': {'color': '#4caf50'}
+        'HTF' : {'color': '#000080'}
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
@@ -93,6 +91,26 @@ class Sandbox(BaseStrategy):
         self.close = market_data['klines'][:, 4]
         self.p_precision = market_data['p_precision']
         self.q_precision = market_data['q_precision']
+
+        extra_klines = list(market_data['extra_klines'].values())
+
+        ltf_time = extra_klines[0][:, 0]
+        ltf_close = extra_klines[0][:, 4]
+        self.ltf_close = intervals.shrink(
+            source=ltf_close,
+            main_time=self.time,
+            lower_time=ltf_time
+        )
+
+        print(self.ltf_close)
+
+        htf_time = extra_klines[1][:, 0]
+        htf_close = extra_klines[1][:, 4]
+        self.htf_close = intervals.stretch(
+            source=htf_close,
+            main_time=self.time,
+            higher_time=htf_time
+        )
 
         self.equity = self.params['initial_capital']
         self.qty_entry = np.full(4, np.nan)
@@ -164,26 +182,14 @@ class Sandbox(BaseStrategy):
         )
 
         self.indicators = {
-            'EP #2': {
-                'options': self.indicator_options['EP #2'],
-                'values': self.entry_price_2
-            },
-            'EP #3': {
-                'options': self.indicator_options['EP #3'],
-                'values': self.entry_price_3
-            },
-            'EP #4': {
-                'options': self.indicator_options['EP #4'],
-                'values': self.entry_price_4
-            },
-            'TP': {
-                'options': self.indicator_options['TP'],
-                'values': self.take_price
+            'HTF': {
+                'options': self.indicator_options['HTF'],
+                'values': self.htf_close
             }
         }
 
     @staticmethod
-    @nb.jit(cache=True, nopython=True, nogil=True)
+    # @nb.jit(cache=True, nopython=True, nogil=True)
     def _calculate(
         initial_capital: float,
         commission: float,
