@@ -50,7 +50,7 @@ class BaseClient(HttpClient):
             f"Тип — {alert['message']['type']}\n"
             f"Статус — {alert['message']['status']}\n"
             f"Направление — {alert['message']['side']}\n"
-            f"Символ — {alert['message']['symbol']}\n"
+            f"Символ — #{alert['message']['symbol']}\n"
             f"Количество — {alert['message']['qty']}\n"
             f"Цена — {alert['message']['price']}"
         )

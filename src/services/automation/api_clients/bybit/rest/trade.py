@@ -610,7 +610,7 @@ class TradeClient(BaseClient):
             for order_id in order_ids:
                 order = self._get_orders(symbol, order_id)
 
-                if not order['result']['list']:
+                if not order['result'].get('list'):
                     continue
 
                 order_info = order['result']['list'][0]
@@ -662,7 +662,7 @@ class TradeClient(BaseClient):
             for order_id in order_ids:
                 order = self._get_orders(symbol, order_id)
 
-                if not order['result']['list']:
+                if not order['result'].get('list'):
                     continue
 
                 order_info = order['result']['list'][0]
