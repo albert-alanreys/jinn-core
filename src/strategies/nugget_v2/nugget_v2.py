@@ -376,7 +376,7 @@ class NuggetV2(BaseStrategy):
                     commission,
                     deal_type,
                     entry_signal,
-                    0,
+                    700,
                     entry_date,
                     time[i],
                     entry_price,
@@ -408,7 +408,7 @@ class NuggetV2(BaseStrategy):
                     commission,
                     deal_type,
                     entry_signal,
-                    0,
+                    800,
                     entry_date,
                     time[i],
                     entry_price,
@@ -442,7 +442,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        1,
+                        500,
                         entry_date,
                         time[i],
                         entry_price,
@@ -508,7 +508,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        2,
+                        301,
                         entry_date,
                         time[i],
                         entry_price,
@@ -532,7 +532,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        3,
+                        302,
                         entry_date,
                         time[i],
                         entry_price,
@@ -556,7 +556,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        4,
+                        303,
                         entry_date,
                         time[i],
                         entry_price,
@@ -580,7 +580,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        5,
+                        304,
                         entry_date,
                         time[i],
                         entry_price,
@@ -604,7 +604,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        6,
+                        305,
                         entry_date,
                         time[i],
                         entry_price,
@@ -646,7 +646,7 @@ class NuggetV2(BaseStrategy):
 
             if entry_long:
                 deal_type = 0
-                entry_signal = 0
+                entry_signal = 100
                 entry_price = close[i]
 
                 if order_size_type == 0:
@@ -722,7 +722,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        1,
+                        600,
                         entry_date,
                         time[i],
                         entry_price,
@@ -788,7 +788,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        2,
+                        401,
                         entry_date,
                         time[i],
                         entry_price,
@@ -812,7 +812,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        3,
+                        402,
                         entry_date,
                         time[i],
                         entry_price,
@@ -836,7 +836,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        4,
+                        403,
                         entry_date,
                         time[i],
                         entry_price,
@@ -860,7 +860,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        5,
+                        404,
                         entry_date,
                         time[i],
                         entry_price,
@@ -884,7 +884,7 @@ class NuggetV2(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        6,
+                        405,
                         entry_date,
                         time[i],
                         entry_price,
@@ -926,7 +926,7 @@ class NuggetV2(BaseStrategy):
 
             if entry_short:
                 deal_type = 1
-                entry_signal = 1
+                entry_signal = 200
                 entry_price = close[i]
 
                 if order_size_type == 0:

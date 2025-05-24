@@ -242,7 +242,7 @@ class MeanStrikeV1(BaseStrategy):
                             commission,
                             deal[0],
                             deal[1],
-                            0,
+                            700,
                             deal[2],
                             time[i],
                             deal[3],
@@ -279,7 +279,7 @@ class MeanStrikeV1(BaseStrategy):
                                     commission,
                                     deal[0],
                                     deal[1],
-                                    13,
+                                    100,
                                     deal[2],
                                     time[i],
                                     deal[3],
@@ -306,7 +306,7 @@ class MeanStrikeV1(BaseStrategy):
                         alert_close_long = True
 
                 if not np.isnan(entry_price_2[i]) and low[i] <= entry_price_2[i]:
-                    entry_signal = 3
+                    entry_signal = 302
                     entry_price = entry_price_2[i]
                     entry_date = time[i]
 
@@ -332,7 +332,7 @@ class MeanStrikeV1(BaseStrategy):
                     entry_price_2[i] = np.nan
 
                 if not np.isnan(entry_price_3[i]) and low[i] <= entry_price_3[i]:
-                    entry_signal = 4
+                    entry_signal = 303
                     entry_price = entry_price_3[i]
                     entry_date = time[i]
 
@@ -358,7 +358,7 @@ class MeanStrikeV1(BaseStrategy):
                     entry_price_3[i] = np.nan
 
                 if not np.isnan(entry_price_4[i]) and low[i] <= entry_price_4[i]:
-                    entry_signal = 5
+                    entry_signal = 304
                     entry_price = entry_price_4[i]
                     entry_date = time[i]
 
@@ -392,7 +392,7 @@ class MeanStrikeV1(BaseStrategy):
                                     commission,
                                     deal[0],
                                     deal[1],
-                                    13,
+                                    100,
                                     deal[2],
                                     time[i],
                                     deal[3],
@@ -428,7 +428,7 @@ class MeanStrikeV1(BaseStrategy):
 
             if entry_long:
                 deal_type = 0
-                entry_signal = 2
+                entry_signal = 301
                 entry_price = close[i]
                 entry_date = time[i]
 

@@ -412,7 +412,7 @@ class DevourerV3(BaseStrategy):
                     commission,
                     deal_type,
                     entry_signal,
-                    0,
+                    700,
                     entry_date,
                     time[i],
                     entry_price,
@@ -443,7 +443,7 @@ class DevourerV3(BaseStrategy):
                     commission,
                     deal_type,
                     entry_signal,
-                    0,
+                    800,
                     entry_date,
                     time[i],
                     entry_price,
@@ -499,7 +499,7 @@ class DevourerV3(BaseStrategy):
                     commission,
                     deal_type,
                     entry_signal,
-                    13,
+                    100,
                     entry_date,
                     time[i],
                     entry_price,
@@ -530,7 +530,7 @@ class DevourerV3(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        14,
+                        200,
                         entry_date,
                         time[i],
                         entry_price,
@@ -562,7 +562,7 @@ class DevourerV3(BaseStrategy):
                     stop_price[i] = np.nan
                 else:
                     deal_type = 0
-                    entry_signal = 0
+                    entry_signal = 100
                     entry_price = close[i]
 
                     if order_size_type == 0:
@@ -614,7 +614,7 @@ class DevourerV3(BaseStrategy):
                     commission,
                     deal_type,
                     entry_signal,
-                    13,
+                    100,
                     entry_date,
                     time[i],
                     entry_price,
@@ -649,7 +649,7 @@ class DevourerV3(BaseStrategy):
                         commission,
                         deal_type,
                         entry_signal,
-                        14,
+                        200,
                         entry_date,
                         time[i],
                         entry_price,
@@ -677,7 +677,7 @@ class DevourerV3(BaseStrategy):
                     alert_cancel = True
 
                 deal_type = 0
-                entry_signal = 0
+                entry_signal = 100
                 entry_price = close[i]
 
                 if order_size_type == 0:
@@ -722,7 +722,7 @@ class DevourerV3(BaseStrategy):
                     commission,
                     deal_type,
                     entry_signal,
-                    12,
+                    400,
                     entry_date,
                     time[i],
                     entry_price,
@@ -770,7 +770,7 @@ class DevourerV3(BaseStrategy):
                     commission,
                     deal_type,
                     entry_signal,
-                    14,
+                    200,
                     entry_date,
                     time[i],
                     entry_price,
@@ -799,7 +799,7 @@ class DevourerV3(BaseStrategy):
             elif entry_short_p3:
                 deal_p3 = True
                 deal_type = 1
-                entry_signal = 1
+                entry_signal = 200
                 entry_price = close[i]
 
                 if order_size_type == 0:

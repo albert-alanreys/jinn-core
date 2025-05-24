@@ -883,14 +883,14 @@ export default class ReportManager {
     var th = document.createElement('div');
     th.classList.add('th');
     th.classList.add('align-start');
-    th.classList.add('w-14');
+    th.classList.add('w-18');
     th.innerText = 'Сигнал';
     tr.appendChild(th);
 
     var th = document.createElement('div');
     th.classList.add('th');
     th.classList.add('align-start');
-    th.classList.add('w-14');
+    th.classList.add('w-12');
     th.innerText = 'Дата/Время';
     tr.appendChild(th);
 
@@ -986,7 +986,7 @@ export default class ReportManager {
 
         var td = document.createElement('div');
         td.classList.add('td');
-        td.classList.add('w-14');
+        td.classList.add('w-18');
         tr.appendChild(td);
 
         var div1 = document.createElement('div');
@@ -1004,7 +1004,7 @@ export default class ReportManager {
 
         var td = document.createElement('div');
         td.classList.add('td');
-        td.classList.add('w-14');
+        td.classList.add('w-12');
         tr.appendChild(td);
 
         var div1 = document.createElement('div');

@@ -5,10 +5,37 @@ from decimal import Decimal
 import numpy as np
 
 from src.core.enums import Mode
-from .deal_keywords import DealKeywords
+from . import deal_constants as consts
 
 
 class DataFormatter:
+    MARKER_STYLES = {
+        'open': {
+            'buy': {
+                'position': 'belowBar',
+                'color': '#2962ff',
+                'shape': 'arrowUp'
+            },
+            'sell': {
+                'position': 'aboveBar',
+                'color': '#ff1744',
+                'shape': 'arrowDown'
+            }
+        },
+        'close': {
+            'sell': {
+                'position': 'aboveBar',
+                'color': '#d500f9',
+                'shape': 'arrowDown'
+            },
+            'buy': {
+                'position': 'belowBar',
+                'color': '#d500f9',
+                'shape': 'arrowUp'
+            }
+        }
+    }
+
     def __init__(self, strategy_states: dict, mode: str) -> None:
         self.strategy_states = strategy_states
         self.mode = mode
@@ -142,15 +169,25 @@ class DataFormatter:
                 return []
             
             for deal in open_deals:
+                code = deal[1] - (deal[1] % 100)
+                n_deal = int(deal[1] % 100)
+                comment = (
+                    f'{consts.ENTRY_SIGNAL_CODES[code]}' +
+                    (f' | #{n_deal}' if n_deal > 0 else '')
+                )
+
+                if deal[0] == 0:
+                    styles = self.MARKER_STYLES['open']['buy']
+                    text = f'{comment} | +{deal[4]}'
+
+                else:
+                    styles = self.MARKER_STYLES['open']['sell']
+                    text = f'{comment} | -{deal[4]}'
+
                 marker = {
                     'time': deal[2] / 1000,
-                    'position': 'belowBar' if deal[0] == 0 else 'aboveBar',
-                    'color': '#2962ff' if deal[0] == 0 else '#ff1744',
-                    'shape': 'arrowUp' if deal[0] == 0 else 'arrowDown',
-                    'text': (
-                        f'{DealKeywords.entry_signals[deal[1]]} '
-                        f'{" +" if deal[0] == 0 else ' -'}{deal[4]}'
-                    )
+                    'text': text,
+                    **styles
                 }
                 result.append(marker)
                 
@@ -161,34 +198,48 @@ class DataFormatter:
                 prev_deal = completed_deals[index - 1]
 
                 if prev_deal[3] != deal[3]:
+                    code = prev_deal[1] - (prev_deal[1] % 100)
+                    n_deal = int(prev_deal[1] % 100)
+                    comment = (
+                        f'{consts.ENTRY_SIGNAL_CODES[code]}' +
+                        (f' | #{n_deal}' if n_deal > 0 else '')
+                    )
+
+                    if prev_deal[0] == 0:
+                        styles = self.MARKER_STYLES['open']['buy']
+                        text = f'{comment} | +{position_size}'
+                    else:
+                        styles = self.MARKER_STYLES['open']['sell']
+                        text = f'{comment} | -{position_size}'
+
                     marker = {
                         'time': prev_deal[3] / 1000,
-                        'position': 'belowBar'
-                            if prev_deal[0] == 0 else 'aboveBar',
-                        'color': '#2962ff'
-                            if prev_deal[0] == 0 else '#ff1744',
-                        'shape': 'arrowUp'
-                            if prev_deal[0] == 0 else 'arrowDown',
-                        'text': (
-                            f'{DealKeywords.entry_signals[prev_deal[1]]} '
-                            f'{" +" if prev_deal[0] == 0 else ' -'}'
-                            f'{position_size}'
-                        )
+                        'text': text,
+                        **styles
                     }
                     result.insert(len(result) - deals_count, marker)
 
                     position_size = Decimal('0.0')
                     deals_count = 0
 
+            code = deal[2] - (deal[2] % 100)
+            n_deal = int(deal[2] % 100)
+            comment = (
+                f'{consts.CLOSE_SIGNAL_CODES[code]}' +
+                (f' | #{n_deal}' if n_deal > 0 else '')
+            )
+
+            if deal[0] == 0:
+                styles = self.MARKER_STYLES['close']['sell']
+                text = f'{comment} | -{deal[7]}'
+            else:
+                styles = self.MARKER_STYLES['close']['buy']
+                text = f'{comment} | +{deal[7]}'
+
             marker = {
                 'time': deal[4] / 1000,
-                'position': 'aboveBar' if deal[0] == 0 else 'belowBar',
-                'color': '#d500f9',
-                'shape': 'arrowDown' if deal[0] == 0 else 'arrowUp',
-                'text': (
-                    f'{DealKeywords.exit_signals[deal[2]]} '
-                    f'{" -" if deal[0] == 0 else ' +'}{deal[7]}'
-                )
+                'text': text,
+                **styles
             }
             result.append(marker)
 
@@ -201,32 +252,47 @@ class DataFormatter:
             if deal[2] == last_deal[3]:
                 position_size += Decimal(str(deal[4]))
 
+        code = last_deal[1] - (last_deal[1] % 100)
+        n_deal = int(last_deal[1] % 100)
+        comment = (
+            f'{consts.ENTRY_SIGNAL_CODES[code]}' +
+            (f' | #{n_deal}' if n_deal > 0 else '')
+        )
+
+        if last_deal[0] == 0:
+            styles = self.MARKER_STYLES['open']['buy']
+            text = f'{comment} | +{position_size}'
+        else:
+            styles = self.MARKER_STYLES['open']['sell']
+            text = f'{comment} | -{position_size}'
+
         marker = {
             'time': last_deal[3] / 1000,
-            'position': 'belowBar' 
-                if last_deal[0] == 0 else 'aboveBar',
-            'color': '#2962ff' 
-                if last_deal[0] == 0 else '#ff1744',
-            'shape': 'arrowUp' 
-                if last_deal[0] == 0 else 'arrowDown',
-            'text': (
-                f'{DealKeywords.entry_signals[last_deal[1]]} '
-                f'{" +" if last_deal[0] == 0 else ' -'}{position_size}'
-            )
+            'text': text,
+            **styles
         }
         result.insert(len(result) - deals_count, marker)
 
         for deal in open_deals:
             if deal[2] != last_deal[3]:
+                code = deal[1] - (deal[1] % 100)
+                n_deal = int(deal[1] % 100)
+                comment = (
+                    f'{consts.ENTRY_SIGNAL_CODES[code]}' +
+                    (f' | #{n_deal}' if n_deal > 0 else '')
+                )
+
+                if deal[0] == 0:
+                    styles = self.MARKER_STYLES['open']['buy']
+                    text = f'{comment} | +{deal[4]}'
+                else:
+                    styles = self.MARKER_STYLES['open']['sell']
+                    text = f'{comment} | -{deal[4]}'
+
                 marker = {
                     'time': deal[2] / 1000,
-                    'position': 'belowBar' if deal[0] == 0 else 'aboveBar',
-                    'color': '#2962ff' if deal[0] == 0 else '#ff1744',
-                    'shape': 'arrowUp' if deal[0] == 0 else 'arrowDown',
-                    'text': (
-                        f'{DealKeywords.entry_signals[deal[1]]} '
-                        f'{" +" if deal[0] == 0 else ' -'}{deal[4]}'
-                    )
+                    'text': text,
+                    **styles
                 }
                 result.append(marker)
 
@@ -250,10 +316,24 @@ class DataFormatter:
         formatted_closed = []
 
         for deal in closed:
+            code = deal[1] - (deal[1] % 100)
+            n_deal = int(deal[1] % 100)
+            entry_signal = (
+                f'{consts.ENTRY_SIGNAL_CODES[code]}' +
+                (f' | #{n_deal}' if n_deal > 0 else '')
+            )
+
+            code = deal[2] - (deal[2] % 100)
+            n_deal = int(deal[2] % 100)
+            exit_signal = (
+                f'{consts.CLOSE_SIGNAL_CODES[code]}' +
+                (f' | #{n_deal}' if n_deal > 0 else '')
+            )
+
             formatted = [
-                DealKeywords.deal_types[deal[0]],
-                DealKeywords.entry_signals[deal[1]],
-                DealKeywords.exit_signals[deal[2]],
+                consts.DEAL_TYPES[deal[0]],
+                entry_signal,
+                exit_signal,
                 datetime.fromtimestamp(
                     timestamp=deal[3] / 1000,
                     tz=timezone.utc
@@ -272,9 +352,16 @@ class DataFormatter:
         formatted_open = []
 
         for deal in reshaped_open_deals:
+            code = deal[1] - (deal[1] % 100)
+            n_deal = int(deal[1] % 100)
+            entry_signal = (
+                f'{consts.ENTRY_SIGNAL_CODES[code]}' +
+                (f' | #{n_deal}' if n_deal > 0 else '')
+            )
+
             formatted = [None] * 12
-            formatted[0] = DealKeywords.deal_types[deal[0]]
-            formatted[1] = DealKeywords.entry_signals[deal[1]]
+            formatted[0] = consts.DEAL_TYPES[deal[0]]
+            formatted[1] = entry_signal
             formatted[3] = datetime.fromtimestamp(
                 timestamp=deal[2]/1000,
                 tz=timezone.utc
