@@ -82,7 +82,7 @@ class Tester:
                             client=client,
                             opt_params=params['params'].values()
                         )
-                        intervals = strategy_instance.params.get('intervals')
+                        feeds = strategy_instance.params.get('feeds')
                         market_data = self.history_provider.fetch_data(
                             client=client,
                             market=market,
@@ -90,14 +90,13 @@ class Tester:
                             interval=interval,
                             start=params['period']['start'],
                             end=params['period']['end'],
-                            extra_intervals=intervals
+                            extra_feeds=feeds
                         )
 
                         strategy_state = {
                             'name': strategy.name,
                             'type': strategy.value,
                             'instance': strategy_instance,
-                            'params': strategy_instance.params,
                             'client': client,
                             'market_data': market_data
                         }
@@ -121,7 +120,7 @@ class Tester:
 
             try:
                 strategy_instance = self.strategy.value(client)
-                intervals = strategy_instance.params.get('intervals')
+                feeds = strategy_instance.params.get('feeds')
                 market_data = self.history_provider.fetch_data(
                     client=client,
                     market=self.market,
@@ -129,14 +128,13 @@ class Tester:
                     interval=self.interval,
                     start=self.start,
                     end=self.end,
-                    extra_intervals=intervals
+                    extra_feeds=feeds
                 )
 
                 strategy_state = {
                     'name': self.strategy.name,
                     'type': self.strategy.value,
                     'instance': strategy_instance,
-                    'params': strategy_instance.params,
                     'client': client,
                     'market_data': market_data
                 }

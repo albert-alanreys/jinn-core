@@ -101,12 +101,12 @@ class Automizer():
 
                 try:
                     strategy_instance = strategy.value(client, **params)
-                    intervals = strategy_instance.params.get('intervals')
+                    feeds = strategy_instance.params.get('feeds')
                     market_data = self.realtime_provider.fetch_data(
                         client=client,
                         symbol=symbol,
                         interval=interval,
-                        extra_intervals=intervals
+                        extra_feeds=feeds
                     )
                     strategy_instance.start(market_data)
 
@@ -114,7 +114,6 @@ class Automizer():
                         'name': strategy.name,
                         'type': strategy.value,
                         'instance': strategy_instance,
-                        'params': strategy_instance.params,
                         'client': client,
                         'alerts': self.alerts,
                         'klines_updated': False,
@@ -135,12 +134,12 @@ class Automizer():
 
             try:
                 strategy_instance = self.strategy.value(client)
-                intervals = strategy_instance.params.get('intervals')
+                feeds = strategy_instance.params.get('feeds')
                 market_data = self.realtime_provider.fetch_data(
                     client=client,
                     symbol=self.symbol,
                     interval=self.interval,
-                    extra_intervals=intervals
+                    extra_feeds=feeds
                 )
                 strategy_instance.start(market_data)
 
@@ -148,7 +147,6 @@ class Automizer():
                     'name': self.strategy.name,
                     'type': self.strategy.value,
                     'instance': strategy_instance,
-                    'params': strategy_instance.params,
                     'client': client,
                     'alerts': self.alerts,
                     'klines_updated': False,
@@ -184,16 +182,16 @@ class Automizer():
         strategy_state = self.strategy_states[strategy_id]
         market_data = strategy_state['market_data']
         base_klines = market_data['klines']
-        extra_interval_klines = market_data['extra_klines']
+        extra_klines_by_feed = market_data['extra_klines']
 
-        if not extra_interval_klines:
+        if not extra_klines_by_feed:
             return True
 
         try:
             base_duration = base_klines[1][0] - base_klines[0][0]
             expected_close_time = base_klines[-1][0] + base_duration
 
-            for extra_klines in extra_interval_klines.values():
+            for extra_klines in extra_klines_by_feed.values():
                 duration = extra_klines[1][0] - extra_klines[0][0]
                 open_time = extra_klines[-1][0]
 

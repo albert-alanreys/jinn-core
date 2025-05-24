@@ -71,7 +71,7 @@ class Optimizer:
                         market = enums.Market.SPOT
 
                 try:
-                    intervals = strategy.value.params.get('intervals')
+                    feeds = strategy.value.params.get('feeds')
                     market_data = self.history_provider.fetch_data(
                         client=client,
                         market=market,
@@ -79,7 +79,7 @@ class Optimizer:
                         interval=interval,
                         start=start,
                         end=end,
-                        extra_intervals=intervals
+                        extra_feeds=feeds
                     )
 
                     fold_size = len(market_data['klines']) // 3
@@ -109,7 +109,7 @@ class Optimizer:
                     client = self.bybit_client
 
             try:
-                intervals = self.strategy.value.params.get('intervals')
+                feeds = self.strategy.value.params.get('feeds')
                 market_data = self.history_provider.fetch_data(
                     client=client,
                     market=self.market,
@@ -117,7 +117,7 @@ class Optimizer:
                     interval=self.interval,
                     start=self.start,
                     end=self.end,
-                    extra_intervals=intervals
+                    extra_feeds=feeds
                 )
 
                 fold_size = len(market_data['klines']) // 3

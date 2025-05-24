@@ -69,7 +69,10 @@ class DataFormatter:
             'market': strategy_state['market_data']['market'].value,
             'interval': strategy_state['market_data']['interval'],
             'mintick': strategy_state['market_data']['p_precision'],
-            'params': strategy_state['params']
+            'params': {
+                k: v for k, v in strategy_state['instance'].params.items()
+                if k != 'feeds'
+            }
         }
 
     def _format_klines(self, klines: np.ndarray) -> list:

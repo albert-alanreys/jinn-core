@@ -21,7 +21,7 @@ class StrategyManager:
         new_value: list | str
     ) -> None:
         try:
-            params = self.strategy_states[strategy_id]['params']
+            params = self.strategy_states[strategy_id]['instance'].params
             old_value = params[param_name]
 
             if isinstance(new_value, list):

@@ -19,14 +19,14 @@ TELEGRAM_CHAT_ID = 'TELEGRAM_CHAT_ID'
 #   OPTIMIZATION - оптимизация
 #   TESTING - тестирование
 #   AUTOMATION - автоматизация
-MODE = enums.Mode.TESTING
+MODE = enums.Mode.AUTOMATION
 
 # Настройки для различных режимов
 AUTOMATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
-    'symbol': 'BTCUSDT',
-    'interval': 5,
-    'strategy': enums.Strategy.NUGGET_V2,
+    'symbol': 'DOGEUSDT',
+    'interval': 1,
+    'strategy': enums.Strategy.SANDBOX,
 }
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,
@@ -40,9 +40,9 @@ OPTIMIZATION_INFO = {
 TESTING_INFO = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
-    'symbol': 'BTCUSDT',
+    'symbol': 'XRPUSDT',
     'interval': '1h',
-    'start': '2020-01-01',
-    'end': '2025-05-01',
-    'strategy': enums.Strategy.NUGGET_V2,
+    'start': '2025-01-01',
+    'end': '2025-07-01',
+    'strategy': enums.Strategy.SANDBOX,
 }

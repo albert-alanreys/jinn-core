@@ -30,7 +30,10 @@ class Sandbox(BaseStrategy):
         "ma_length":  20,
         "mult":  2.0,
         "range_threshold":  30.0,
-        "intervals": [15]
+        "feeds": [
+            # ["symbol", 1],
+            ["POLUSDT", 5]
+        ]
     }
 
     # Parameters to be optimized and their possible values
@@ -182,7 +185,10 @@ class Sandbox(BaseStrategy):
         )
 
         self.indicators = {
-            'HTF': {
+            'HTF' + (
+                f' {self.params['feeds'][-1][0]}'
+                if self.params['feeds'][-1][0] != 'symbol' else ''
+            ): {
                 'options': self.indicator_options['HTF'],
                 'values': self.htf_close
             }

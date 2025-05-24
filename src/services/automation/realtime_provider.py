@@ -33,7 +33,7 @@ class RealtimeProvider():
         client: 'BinanceREST | BybitREST',
         symbol: str,
         interval: str,
-        extra_intervals: list | None
+        extra_feeds: list | None
     ) -> dict:
         valid_interval = client.get_valid_interval(interval)
         p_precision = client.get_price_precision(symbol)
@@ -49,31 +49,27 @@ class RealtimeProvider():
         if has_realtime_kline(klines):
             klines = klines[:-1]
 
-        extra_interval_klines = {}
+        extra_klines_by_feed = {}
 
-        if extra_intervals:
-            for extra_interval in extra_intervals:
-                valid_extra_interval = (
-                    client.get_valid_interval(extra_interval)
-                )
-                extra_interval_ms = client.interval_ms[valid_extra_interval]
-                klines_start = int(klines[0][0])
-                klines_end = int(time() * 1000)
-                klines_limit = int(
-                    (klines_end - klines_start) / extra_interval_ms
-                )
+        if extra_feeds:
+            for feed in extra_feeds:
+                extra_symbol = symbol if feed[0] == 'symbol' else feed[0]
+                extra_interval = client.get_valid_interval(feed[1])
+                interval_ms = client.interval_ms[extra_interval]
+                limit = int((time() * 1000 - klines[0][0]) / interval_ms)
 
                 extra_klines = client.get_last_klines(
-                    symbol=symbol,
-                    interval=valid_extra_interval,
-                    limit=klines_limit
+                    symbol=extra_symbol,
+                    interval=extra_interval,
+                    limit=limit
                 )
                 extra_klines = np.array(extra_klines)[:, :6].astype(float)
 
                 if has_realtime_kline(extra_klines):
                     extra_klines = extra_klines[:-1]
 
-                extra_interval_klines[valid_extra_interval] = extra_klines
+                key = (extra_symbol, extra_interval)
+                extra_klines_by_feed[key] = extra_klines
 
         return {
             'market': enums.Market.FUTURES,
@@ -82,7 +78,7 @@ class RealtimeProvider():
             'p_precision': p_precision,
             'q_precision': q_precision,
             'klines': klines,
-            'extra_klines': extra_interval_klines
+            'extra_klines': extra_klines_by_feed
         }
 
     def subscribe_kline_updates(self, strategy_states: dict) -> None:
@@ -94,7 +90,7 @@ class RealtimeProvider():
             market_data = strategy_state['market_data']
             symbol = market_data['symbol']
             base_interval = market_data['interval']
-            extra_interval_klines = market_data['extra_klines']
+            extra_klines = market_data['extra_klines']
 
             match client.EXCHANGE:
                 case enums.Exchange.BINANCE.value:
@@ -108,10 +104,13 @@ class RealtimeProvider():
             self.base_topic_to_states[base_topic].append(strategy_state)
             topics.add(base_topic)
 
-            for interval in extra_interval_klines:
-                extra_topic = get_topic(symbol=symbol, interval=interval)
+            for (extra_symbol, extra_interval) in extra_klines:
+                extra_topic = get_topic(
+                    symbol=extra_symbol,
+                    interval=extra_interval
+                )
                 self.extra_topic_to_states[extra_topic].append(
-                    (strategy_state, interval)
+                    (strategy_state, (extra_symbol, extra_interval))
                 )
                 topics.add(extra_topic)
 
@@ -134,13 +133,15 @@ class RealtimeProvider():
             topic = message['topic']
             kline = message['kline']
 
-            states_with_intervals = self.extra_topic_to_states.get(topic, [])
+            states_with_feeds = self.extra_topic_to_states.get(topic, [])
             strategy_states = self.base_topic_to_states.get(topic, [])
 
-            for strategy_state, interval in states_with_intervals:
+            for strategy_state, (symbol, interval) in states_with_feeds:
                 market_data = strategy_state['market_data']
-                market_data['extra_klines'][interval] = np.vstack(
-                    [market_data['extra_klines'][interval], kline]
+                key = (symbol, interval)
+
+                market_data['extra_klines'][key] = np.vstack(
+                    [market_data['extra_klines'][key], kline]
                 )
 
             for strategy_state in strategy_states:
