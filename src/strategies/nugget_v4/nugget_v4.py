@@ -627,45 +627,45 @@ class NuggetV4(BaseStrategy):
 
                     if grid_type == 0:
                         if (trail_stop == 4 and
-                                high[i] >= take_price[3][i]):
-                            take = take_price[3][i]
+                                high[i] >= take_price[3, i]):
+                            take = take_price[3, i]
                         elif (trail_stop == 3 and
-                                high[i] >= take_price[2][i]):
-                            take = take_price[2][i]
+                                high[i] >= take_price[2, i]):
+                            take = take_price[2, i]
                         elif (trail_stop == 2 and
-                                high[i] >= take_price[1][i]):
-                            take = take_price[1][i]
+                                high[i] >= take_price[1, i]):
+                            take = take_price[1, i]
                         elif (trail_stop == 1 and
-                                high[i] >= take_price[0][i]):
-                            take = take_price[0][i]
+                                high[i] >= take_price[0, i]):
+                            take = take_price[0, i]
                     elif grid_type == 1:
                         if (trail_stop == 9 and
-                                high[i] >= take_price[8][i]):
-                            take = take_price[8][i]
+                                high[i] >= take_price[8, i]):
+                            take = take_price[8, i]
                         elif (trail_stop == 8 and
-                                high[i] >= take_price[7][i]):
-                            take = take_price[7][i]
+                                high[i] >= take_price[7, i]):
+                            take = take_price[7, i]
                         elif (trail_stop == 7 and
-                                high[i] >= take_price[6][i]):
-                            take = take_price[6][i]
+                                high[i] >= take_price[6, i]):
+                            take = take_price[6, i]
                         elif (trail_stop == 6 and
-                                high[i] >= take_price[5][i]):
-                            take = take_price[5][i]
+                                high[i] >= take_price[5, i]):
+                            take = take_price[5, i]
                         elif (trail_stop == 5 and
-                                high[i] >= take_price[4][i]):
-                            take = take_price[4][i]
+                                high[i] >= take_price[4, i]):
+                            take = take_price[4, i]
                         elif (trail_stop == 4 and
-                                high[i] >= take_price[3][i]):
-                            take = take_price[3][i]
+                                high[i] >= take_price[3, i]):
+                            take = take_price[3, i]
                         elif (trail_stop == 3 and
-                                high[i] >= take_price[2][i]):
-                            take = take_price[2][i]
+                                high[i] >= take_price[2, i]):
+                            take = take_price[2, i]
                         elif (trail_stop == 2 and
-                                high[i] >= take_price[1][i]):
-                            take = take_price[1][i]
+                                high[i] >= take_price[1, i]):
+                            take = take_price[1, i]
                         elif (trail_stop == 1 and
-                                high[i] >= take_price[0][i]):
-                            take = take_price[0][i]
+                                high[i] >= take_price[0, i]):
+                            take = take_price[0, i]
 
                     if take is not None:
                         stop_moved = True
@@ -677,8 +677,8 @@ class NuggetV4(BaseStrategy):
                         alert_long_new_stop = True
 
                 if grid_type == 0:
-                    if (not np.isnan(take_price[0][i]) and 
-                            high[i] >= take_price[0][i]):
+                    if (not np.isnan(take_price[0, i]) and 
+                            high[i] >= take_price[0, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -688,7 +688,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[0][i],
+                            take_price[0, i],
                             qty_take_1[0],
                             initial_capital
                         )
@@ -699,11 +699,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_1[0], 8)
                         open_deals_log[4] = position_size
-                        take_price[0][i] = np.nan
+                        take_price[0, i] = np.nan
                         qty_take_1[0] = np.nan
 
-                    if (not np.isnan(take_price[1][i]) and 
-                            high[i] >= take_price[1][i]):
+                    if (not np.isnan(take_price[1, i]) and 
+                            high[i] >= take_price[1, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -713,7 +713,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[1][i],
+                            take_price[1, i],
                             qty_take_1[1],
                             initial_capital
                         )
@@ -724,11 +724,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_1[1], 8)
                         open_deals_log[4] = position_size
-                        take_price[1][i] = np.nan
+                        take_price[1, i] = np.nan
                         qty_take_1[1] = np.nan
 
-                    if (not np.isnan(take_price[2][i]) and 
-                            high[i] >= take_price[2][i]):
+                    if (not np.isnan(take_price[2, i]) and 
+                            high[i] >= take_price[2, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -738,7 +738,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[2][i],
+                            take_price[2, i],
                             qty_take_1[2],
                             initial_capital
                         ) 
@@ -749,11 +749,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_1[2], 8)
                         open_deals_log[4] = position_size
-                        take_price[2][i] = np.nan
+                        take_price[2, i] = np.nan
                         qty_take_1[2] = np.nan
 
-                    if (not np.isnan(take_price[3][i]) and 
-                            high[i] >= take_price[3][i]):
+                    if (not np.isnan(take_price[3, i]) and 
+                            high[i] >= take_price[3, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -763,7 +763,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[3][i],
+                            take_price[3, i],
                             qty_take_1[3],
                             initial_capital
                         )
@@ -774,11 +774,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_1[3], 8)
                         open_deals_log[4] = position_size
-                        take_price[3][i] = np.nan
+                        take_price[3, i] = np.nan
                         qty_take_1[3] = np.nan
 
-                    if (not np.isnan(take_price[4][i]) and 
-                            high[i] >= take_price[4][i]):
+                    if (not np.isnan(take_price[4, i]) and 
+                            high[i] >= take_price[4, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -788,7 +788,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[4][i],
+                            take_price[4, i],
                             round(qty_take_1[4], 8),
                             initial_capital
                         )
@@ -803,15 +803,15 @@ class NuggetV4(BaseStrategy):
                         entry_date = np.nan
                         entry_price = np.nan
                         position_size = np.nan
-                        take_price[4][i] = np.nan
+                        take_price[4, i] = np.nan
                         qty_take_1[4] = np.nan
                         stop_price[i] = np.nan
                         stop_moved = False
                         grid_type = np.nan
                         alert_cancel = True
                 elif grid_type == 1:
-                    if (not np.isnan(take_price[0][i]) and 
-                            high[i] >= take_price[0][i]):
+                    if (not np.isnan(take_price[0, i]) and 
+                            high[i] >= take_price[0, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -821,7 +821,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[0][i],
+                            take_price[0, i],
                             qty_take_2[0],
                             initial_capital
                         )
@@ -832,11 +832,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[0], 8)
                         open_deals_log[4] = position_size
-                        take_price[0][i] = np.nan
+                        take_price[0, i] = np.nan
                         qty_take_2[0] = np.nan
 
-                    if (not np.isnan(take_price[1][i]) and 
-                            high[i] >= take_price[1][i]):
+                    if (not np.isnan(take_price[1, i]) and 
+                            high[i] >= take_price[1, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -846,7 +846,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[1][i],
+                            take_price[1, i],
                             qty_take_2[1],
                             initial_capital
                         )
@@ -857,11 +857,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[1], 8)
                         open_deals_log[4] = position_size
-                        take_price[1][i] = np.nan
+                        take_price[1, i] = np.nan
                         qty_take_2[1] = np.nan
 
-                    if (not np.isnan(take_price[2][i]) and 
-                            high[i] >= take_price[2][i]):
+                    if (not np.isnan(take_price[2, i]) and 
+                            high[i] >= take_price[2, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -871,7 +871,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[2][i],
+                            take_price[2, i],
                             qty_take_2[2],
                             initial_capital
                         )
@@ -882,11 +882,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[2], 8)
                         open_deals_log[4] = position_size
-                        take_price[2][i] = np.nan
+                        take_price[2, i] = np.nan
                         qty_take_2[2] = np.nan
 
-                    if (not np.isnan(take_price[3][i]) and 
-                            high[i] >= take_price[3][i]):
+                    if (not np.isnan(take_price[3, i]) and 
+                            high[i] >= take_price[3, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -896,7 +896,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[3][i],
+                            take_price[3, i],
                             qty_take_2[3],
                             initial_capital
                         )
@@ -907,11 +907,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[3], 8)
                         open_deals_log[4] = position_size
-                        take_price[3][i] = np.nan
+                        take_price[3, i] = np.nan
                         qty_take_2[3] = np.nan
 
-                    if (not np.isnan(take_price[4][i]) and 
-                            high[i] >= take_price[4][i]):
+                    if (not np.isnan(take_price[4, i]) and 
+                            high[i] >= take_price[4, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -921,7 +921,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[4][i],
+                            take_price[4, i],
                             qty_take_2[4],
                             initial_capital
                         )
@@ -932,11 +932,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[4], 8)
                         open_deals_log[4] = position_size
-                        take_price[4][i] = np.nan
+                        take_price[4, i] = np.nan
                         qty_take_2[4] = np.nan
 
-                    if (not np.isnan(take_price[5][i]) and 
-                            high[i] >= take_price[5][i]):
+                    if (not np.isnan(take_price[5, i]) and 
+                            high[i] >= take_price[5, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -946,7 +946,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[5][i],
+                            take_price[5, i],
                             qty_take_2[5],
                             initial_capital
                         )
@@ -957,11 +957,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[5], 8)
                         open_deals_log[4] = position_size
-                        take_price[5][i] = np.nan
+                        take_price[5, i] = np.nan
                         qty_take_2[5] = np.nan
 
-                    if (not np.isnan(take_price[6][i]) and 
-                            high[i] >= take_price[6][i]):
+                    if (not np.isnan(take_price[6, i]) and 
+                            high[i] >= take_price[6, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -971,7 +971,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[6][i],
+                            take_price[6, i],
                             qty_take_2[6],
                             initial_capital
                         )
@@ -982,11 +982,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[6], 8)
                         open_deals_log[4] = position_size
-                        take_price[6][i] = np.nan
+                        take_price[6, i] = np.nan
                         qty_take_2[6] = np.nan
 
-                    if (not np.isnan(take_price[7][i]) and 
-                            high[i] >= take_price[7][i]):
+                    if (not np.isnan(take_price[7, i]) and 
+                            high[i] >= take_price[7, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -996,7 +996,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[7][i],
+                            take_price[7, i],
                             qty_take_2[7],
                             initial_capital
                         )
@@ -1007,11 +1007,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[7], 8)
                         open_deals_log[4] = position_size
-                        take_price[7][i] = np.nan
+                        take_price[7, i] = np.nan
                         qty_take_2[7] = np.nan
 
-                    if (not np.isnan(take_price[8][i]) and 
-                            high[i] >= take_price[8][i]):
+                    if (not np.isnan(take_price[8, i]) and 
+                            high[i] >= take_price[8, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1021,7 +1021,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[8][i],
+                            take_price[8, i],
                             qty_take_2[8],
                             initial_capital
                         )
@@ -1032,11 +1032,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[8], 8)
                         open_deals_log[4] = position_size
-                        take_price[8][i] = np.nan
+                        take_price[8, i] = np.nan
                         qty_take_2[8] = np.nan
 
-                    if (not np.isnan(take_price[9][i]) and 
-                            high[i] >= take_price[9][i]):
+                    if (not np.isnan(take_price[9, i]) and 
+                            high[i] >= take_price[9, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1046,7 +1046,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[9][i],
+                            take_price[9, i],
                             round(qty_take_2[9], 8),
                             initial_capital
                         )
@@ -1061,7 +1061,7 @@ class NuggetV4(BaseStrategy):
                         entry_date = np.nan
                         entry_price = np.nan
                         position_size = np.nan
-                        take_price[9][i] = np.nan
+                        take_price[9, i] = np.nan
                         qty_take_2[9] = np.nan
                         stop_price[i] = np.nan
                         stop_moved = False
@@ -1143,35 +1143,35 @@ class NuggetV4(BaseStrategy):
                     grid_type = 0
 
                     if close[i] >= fibo_levels[0] and close[i] < fibo_levels[1]:
-                        take_price[0][i] = adjust(
+                        take_price[0, i] = adjust(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = adjust(
+                        take_price[1, i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = adjust(
+                        take_price[2, i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = adjust(
+                        take_price[3, i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = adjust(
+                        take_price[4, i] = adjust(
                             fibo_levels[6], p_precision
                         )
                     elif close[i] >= fibo_levels[1]:
-                        take_price[0][i] = adjust(
+                        take_price[0, i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = adjust(
+                        take_price[1, i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = adjust(
+                        take_price[2, i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = adjust(
+                        take_price[3, i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = adjust(
+                        take_price[4, i] = adjust(
                             fibo_levels[7], p_precision
                         )
 
@@ -1195,65 +1195,65 @@ class NuggetV4(BaseStrategy):
                     grid_type = 1
 
                     if close[i] >= fibo_levels[0] and close[i] < fibo_levels[1]:
-                        take_price[0][i] = adjust(
+                        take_price[0, i] = adjust(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = adjust(
+                        take_price[1, i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = adjust(
+                        take_price[2, i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = adjust(
+                        take_price[3, i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = adjust(
+                        take_price[4, i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[5][i] = adjust(
+                        take_price[5, i] = adjust(
                             fibo_levels[7], p_precision
                         )
-                        take_price[6][i] = adjust(
+                        take_price[6, i] = adjust(
                             fibo_levels[8], p_precision
                         )
-                        take_price[7][i] = adjust(
+                        take_price[7, i] = adjust(
                             fibo_levels[9], p_precision
                         )
-                        take_price[8][i] = adjust(
+                        take_price[8, i] = adjust(
                             fibo_levels[10], p_precision
                         )
-                        take_price[9][i] = adjust(
+                        take_price[9, i] = adjust(
                             fibo_levels[11], p_precision
                         )
                     elif close[i] >= fibo_levels[1]:
-                        take_price[0][i] = adjust(
+                        take_price[0, i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = adjust(
+                        take_price[1, i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = adjust(
+                        take_price[2, i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = adjust(
+                        take_price[3, i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = adjust(
+                        take_price[4, i] = adjust(
                             fibo_levels[7], p_precision
                         )
-                        take_price[5][i] = adjust(
+                        take_price[5, i] = adjust(
                             fibo_levels[8], p_precision
                         )
-                        take_price[6][i] = adjust(
+                        take_price[6, i] = adjust(
                             fibo_levels[9], p_precision
                         )
-                        take_price[7][i] = adjust(
+                        take_price[7, i] = adjust(
                             fibo_levels[10], p_precision
                         )
-                        take_price[8][i] = adjust(
+                        take_price[8, i] = adjust(
                             fibo_levels[11], p_precision
                         )
-                        take_price[9][i] = adjust(
+                        take_price[9, i] = adjust(
                             fibo_levels[12], p_precision
                         )
 
@@ -1339,45 +1339,45 @@ class NuggetV4(BaseStrategy):
 
                     if grid_type == 0:
                         if (trail_stop == 4 and
-                                low[i] <= take_price[3][i]):
-                            take = take_price[3][i]
+                                low[i] <= take_price[3, i]):
+                            take = take_price[3, i]
                         elif (trail_stop == 3 and
-                                low[i] <= take_price[2][i]):
-                            take = take_price[2][i]
+                                low[i] <= take_price[2, i]):
+                            take = take_price[2, i]
                         elif (trail_stop == 2 and
-                                low[i] <= take_price[1][i]):
-                            take = take_price[1][i]
+                                low[i] <= take_price[1, i]):
+                            take = take_price[1, i]
                         elif (trail_stop == 1 and
-                                low[i] <= take_price[0][i]):
-                            take = take_price[0][i]
+                                low[i] <= take_price[0, i]):
+                            take = take_price[0, i]
                     elif grid_type == 1:
                         if (trail_stop == 9 and
-                                low[i] <= take_price[8][i]):
-                            take = take_price[8][i]
+                                low[i] <= take_price[8, i]):
+                            take = take_price[8, i]
                         elif (trail_stop == 8 and
-                                low[i] <= take_price[7][i]):
-                            take = take_price[7][i]
+                                low[i] <= take_price[7, i]):
+                            take = take_price[7, i]
                         elif (trail_stop == 7 and
-                                low[i] <= take_price[6][i]):
-                            take = take_price[6][i]
+                                low[i] <= take_price[6, i]):
+                            take = take_price[6, i]
                         elif (trail_stop == 6 and
-                                low[i] <= take_price[5][i]):
-                            take = take_price[5][i]
+                                low[i] <= take_price[5, i]):
+                            take = take_price[5, i]
                         elif (trail_stop == 5 and
-                                low[i] <= take_price[4][i]):
-                            take = take_price[4][i]
+                                low[i] <= take_price[4, i]):
+                            take = take_price[4, i]
                         elif (trail_stop == 4 and
-                                low[i] <= take_price[3][i]):
-                            take = take_price[3][i]
+                                low[i] <= take_price[3, i]):
+                            take = take_price[3, i]
                         elif (trail_stop == 3 and
-                                low[i] <= take_price[2][i]):
-                            take = take_price[2][i]
+                                low[i] <= take_price[2, i]):
+                            take = take_price[2, i]
                         elif (trail_stop == 2 and
-                                low[i] <= take_price[1][i]):
-                            take = take_price[1][i]
+                                low[i] <= take_price[1, i]):
+                            take = take_price[1, i]
                         elif (trail_stop == 1 and
-                                low[i] <= take_price[0][i]):
-                            take = take_price[0][i]
+                                low[i] <= take_price[0, i]):
+                            take = take_price[0, i]
 
                     if take is not None:
                         stop_moved = True
@@ -1389,8 +1389,8 @@ class NuggetV4(BaseStrategy):
                         alert_short_new_stop = True
     
                 if grid_type == 0:
-                    if (not np.isnan(take_price[0][i]) and 
-                            low[i] <= take_price[0][i]):
+                    if (not np.isnan(take_price[0, i]) and 
+                            low[i] <= take_price[0, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1400,7 +1400,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[0][i],
+                            take_price[0, i],
                             qty_take_1[0],
                             initial_capital
                         )
@@ -1411,11 +1411,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_1[0], 8)
                         open_deals_log[4] = position_size
-                        take_price[0][i] = np.nan
+                        take_price[0, i] = np.nan
                         qty_take_1[0] = np.nan
 
-                    if (not np.isnan(take_price[1][i]) and 
-                            low[i] <= take_price[1][i]):
+                    if (not np.isnan(take_price[1, i]) and 
+                            low[i] <= take_price[1, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1425,7 +1425,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[1][i],
+                            take_price[1, i],
                             qty_take_1[1],
                             initial_capital
                         )
@@ -1436,11 +1436,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_1[1], 8)
                         open_deals_log[4] = position_size
-                        take_price[1][i] = np.nan
+                        take_price[1, i] = np.nan
                         qty_take_1[1] = np.nan
 
-                    if (not np.isnan(take_price[2][i]) and 
-                            low[i] <= take_price[2][i]):
+                    if (not np.isnan(take_price[2, i]) and 
+                            low[i] <= take_price[2, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1450,7 +1450,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[2][i],
+                            take_price[2, i],
                             qty_take_1[2],
                             initial_capital
                         )
@@ -1461,11 +1461,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_1[2], 8)
                         open_deals_log[4] = position_size
-                        take_price[2][i] = np.nan
+                        take_price[2, i] = np.nan
                         qty_take_1[2] = np.nan
 
-                    if (not np.isnan(take_price[3][i]) and 
-                            low[i] <= take_price[3][i]):
+                    if (not np.isnan(take_price[3, i]) and 
+                            low[i] <= take_price[3, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1475,7 +1475,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[3][i],
+                            take_price[3, i],
                             qty_take_1[3],
                             initial_capital
                         )
@@ -1486,11 +1486,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_1[3], 8)
                         open_deals_log[4] = position_size
-                        take_price[3][i] = np.nan
+                        take_price[3, i] = np.nan
                         qty_take_1[3] = np.nan
 
-                    if (not np.isnan(take_price[4][i]) and 
-                            low[i] <= take_price[4][i]):
+                    if (not np.isnan(take_price[4, i]) and 
+                            low[i] <= take_price[4, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1500,7 +1500,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[4][i],
+                            take_price[4, i],
                             round(qty_take_1[4], 8),
                             initial_capital
                         )
@@ -1515,15 +1515,15 @@ class NuggetV4(BaseStrategy):
                         entry_date = np.nan
                         entry_price = np.nan
                         position_size = np.nan
-                        take_price[4][i] = np.nan
+                        take_price[4, i] = np.nan
                         qty_take_1[4] = np.nan
                         stop_price[i] = np.nan
                         stop_moved = False
                         grid_type = np.nan
                         alert_cancel = True
                 elif grid_type == 1:
-                    if (not np.isnan(take_price[0][i]) and 
-                            low[i] <= take_price[0][i]):
+                    if (not np.isnan(take_price[0, i]) and 
+                            low[i] <= take_price[0, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1533,7 +1533,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[0][i],
+                            take_price[0, i],
                             qty_take_2[0],
                             initial_capital
                         )
@@ -1544,11 +1544,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[0], 8)
                         open_deals_log[4] = position_size
-                        take_price[0][i] = np.nan
+                        take_price[0, i] = np.nan
                         qty_take_2[0] = np.nan
 
-                    if (not np.isnan(take_price[1][i]) and 
-                            low[i] <= take_price[1][i]):
+                    if (not np.isnan(take_price[1, i]) and 
+                            low[i] <= take_price[1, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1558,7 +1558,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[1][i],
+                            take_price[1, i],
                             qty_take_2[1],
                             initial_capital
                         )
@@ -1569,11 +1569,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[1], 8)
                         open_deals_log[4] = position_size
-                        take_price[1][i] = np.nan
+                        take_price[1, i] = np.nan
                         qty_take_2[1] = np.nan
 
-                    if (not np.isnan(take_price[2][i]) and 
-                            low[i] <= take_price[2][i]):
+                    if (not np.isnan(take_price[2, i]) and 
+                            low[i] <= take_price[2, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1583,7 +1583,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[2][i],
+                            take_price[2, i],
                             qty_take_2[2],
                             initial_capital
                         )
@@ -1594,11 +1594,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[2], 8)
                         open_deals_log[4] = position_size
-                        take_price[2][i] = np.nan
+                        take_price[2, i] = np.nan
                         qty_take_2[2] = np.nan
 
-                    if (not np.isnan(take_price[3][i]) and 
-                            low[i] <= take_price[3][i]):
+                    if (not np.isnan(take_price[3, i]) and 
+                            low[i] <= take_price[3, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1608,7 +1608,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[3][i],
+                            take_price[3, i],
                             qty_take_2[3],
                             initial_capital
                         )
@@ -1619,11 +1619,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[3], 8)
                         open_deals_log[4] = position_size
-                        take_price[3][i] = np.nan
+                        take_price[3, i] = np.nan
                         qty_take_2[3] = np.nan
 
-                    if (not np.isnan(take_price[4][i]) and 
-                            low[i] <= take_price[4][i]):
+                    if (not np.isnan(take_price[4, i]) and 
+                            low[i] <= take_price[4, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1633,7 +1633,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[4][i],
+                            take_price[4, i],
                             qty_take_2[4],
                             initial_capital
                         )
@@ -1644,11 +1644,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[4], 8)
                         open_deals_log[4] = position_size
-                        take_price[4][i] = np.nan
+                        take_price[4, i] = np.nan
                         qty_take_2[4] = np.nan
 
-                    if (not np.isnan(take_price[5][i]) and 
-                            low[i] <= take_price[5][i]):
+                    if (not np.isnan(take_price[5, i]) and 
+                            low[i] <= take_price[5, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1658,7 +1658,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[5][i],
+                            take_price[5, i],
                             qty_take_2[5],
                             initial_capital
                         )
@@ -1669,11 +1669,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[5], 8)
                         open_deals_log[4] = position_size
-                        take_price[5][i] = np.nan
+                        take_price[5, i] = np.nan
                         qty_take_2[5] = np.nan
 
-                    if (not np.isnan(take_price[6][i]) and 
-                            low[i] <= take_price[6][i]):
+                    if (not np.isnan(take_price[6, i]) and 
+                            low[i] <= take_price[6, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1683,7 +1683,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[6][i],
+                            take_price[6, i],
                             qty_take_2[6],
                             initial_capital
                         )
@@ -1694,11 +1694,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[6], 8)
                         open_deals_log[4] = position_size
-                        take_price[6][i] = np.nan
+                        take_price[6, i] = np.nan
                         qty_take_2[6] = np.nan
 
-                    if (not np.isnan(take_price[7][i]) and 
-                            low[i] <= take_price[7][i]):
+                    if (not np.isnan(take_price[7, i]) and 
+                            low[i] <= take_price[7, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1708,7 +1708,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[7][i],
+                            take_price[7, i],
                             qty_take_2[7],
                             initial_capital
                         )
@@ -1719,11 +1719,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[7], 8)
                         open_deals_log[4] = position_size
-                        take_price[7][i] = np.nan
+                        take_price[7, i] = np.nan
                         qty_take_2[7] = np.nan
 
-                    if (not np.isnan(take_price[8][i]) and 
-                            low[i] <= take_price[8][i]):
+                    if (not np.isnan(take_price[8, i]) and 
+                            low[i] <= take_price[8, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1733,7 +1733,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[8][i],
+                            take_price[8, i],
                             qty_take_2[8],
                             initial_capital
                         )
@@ -1744,11 +1744,11 @@ class NuggetV4(BaseStrategy):
 
                         position_size = round(position_size - qty_take_2[8], 8)
                         open_deals_log[4] = position_size
-                        take_price[8][i] = np.nan
+                        take_price[8, i] = np.nan
                         qty_take_2[8] = np.nan
 
-                    if (not np.isnan(take_price[9][i]) and 
-                            low[i] <= take_price[9][i]):
+                    if (not np.isnan(take_price[9, i]) and 
+                            low[i] <= take_price[9, i]):
                         log_entry = create_log_entry(
                             completed_deals_log,
                             commission,
@@ -1758,7 +1758,7 @@ class NuggetV4(BaseStrategy):
                             entry_date,
                             time[i],
                             entry_price,
-                            take_price[9][i],
+                            take_price[9, i],
                             round(qty_take_2[9], 8),
                             initial_capital
                         )
@@ -1773,7 +1773,7 @@ class NuggetV4(BaseStrategy):
                         entry_date = np.nan
                         entry_price = np.nan
                         position_size = np.nan
-                        take_price[9][i] = np.nan
+                        take_price[9, i] = np.nan
                         qty_take_2[9] = np.nan
                         stop_price[i] = np.nan
                         stop_moved = False
@@ -1855,35 +1855,35 @@ class NuggetV4(BaseStrategy):
                     grid_type = 0
 
                     if close[i] <= fibo_levels[0] and close[i] > fibo_levels[1]:
-                        take_price[0][i] = adjust(
+                        take_price[0, i] = adjust(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = adjust(
+                        take_price[1, i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = adjust(
+                        take_price[2, i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = adjust(
+                        take_price[3, i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = adjust(
+                        take_price[4, i] = adjust(
                             fibo_levels[6], p_precision
                         )
                     elif close[i] <= fibo_levels[1]:
-                        take_price[0][i] = adjust(
+                        take_price[0, i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = adjust(
+                        take_price[1, i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = adjust(
+                        take_price[2, i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = adjust(
+                        take_price[3, i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = adjust(
+                        take_price[4, i] = adjust(
                             fibo_levels[7], p_precision
                         )
 
@@ -1907,65 +1907,65 @@ class NuggetV4(BaseStrategy):
                     grid_type = 1
 
                     if close[i] <= fibo_levels[0] and close[i] > fibo_levels[1]:
-                        take_price[0][i] = adjust(
+                        take_price[0, i] = adjust(
                             fibo_levels[2], p_precision
                         )
-                        take_price[1][i] = adjust(
+                        take_price[1, i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[2][i] = adjust(
+                        take_price[2, i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[3][i] = adjust(
+                        take_price[3, i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[4][i] = adjust(
+                        take_price[4, i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[5][i] = adjust(
+                        take_price[5, i] = adjust(
                             fibo_levels[7], p_precision
                         )
-                        take_price[6][i] = adjust(
+                        take_price[6, i] = adjust(
                             fibo_levels[8], p_precision
                         )
-                        take_price[7][i] = adjust(
+                        take_price[7, i] = adjust(
                             fibo_levels[9], p_precision
                         )
-                        take_price[8][i] = adjust(
+                        take_price[8, i] = adjust(
                             fibo_levels[10], p_precision
                         )
-                        take_price[9][i] = adjust(
+                        take_price[9, i] = adjust(
                             fibo_levels[11], p_precision
                         )
                     elif close[i] <= fibo_levels[1]:
-                        take_price[0][i] = adjust(
+                        take_price[0, i] = adjust(
                             fibo_levels[3], p_precision
                         )
-                        take_price[1][i] = adjust(
+                        take_price[1, i] = adjust(
                             fibo_levels[4], p_precision
                         )
-                        take_price[2][i] = adjust(
+                        take_price[2, i] = adjust(
                             fibo_levels[5], p_precision
                         )
-                        take_price[3][i] = adjust(
+                        take_price[3, i] = adjust(
                             fibo_levels[6], p_precision
                         )
-                        take_price[4][i] = adjust(
+                        take_price[4, i] = adjust(
                             fibo_levels[7], p_precision
                         )
-                        take_price[5][i] = adjust(
+                        take_price[5, i] = adjust(
                             fibo_levels[8], p_precision
                         )
-                        take_price[6][i] = adjust(
+                        take_price[6, i] = adjust(
                             fibo_levels[9], p_precision
                         )
-                        take_price[7][i] = adjust(
+                        take_price[7, i] = adjust(
                             fibo_levels[10], p_precision
                         )
-                        take_price[8][i] = adjust(
+                        take_price[8, i] = adjust(
                             fibo_levels[11], p_precision
                         )
-                        take_price[9][i] = adjust(
+                        take_price[9, i] = adjust(
                             fibo_levels[12], p_precision
                         )
 
@@ -2089,7 +2089,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_1'][0]}%',
-                price=self.take_price[0][-1],
+                price=self.take_price[0, -1],
                 hedge=False
             )
 
@@ -2099,7 +2099,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_1'][1]}%',
-                price=self.take_price[1][-1],
+                price=self.take_price[1, -1],
                 hedge=False
             )
 
@@ -2109,7 +2109,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_1'][2]}%',
-                price=self.take_price[2][-1],
+                price=self.take_price[2, -1],
                 hedge=False
             )
 
@@ -2119,7 +2119,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_1'][3]}%',
-                price=self.take_price[3][-1],
+                price=self.take_price[3, -1],
                 hedge=False
             )
 
@@ -2129,7 +2129,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
-                price=self.take_price[4][-1],
+                price=self.take_price[4, -1],
                 hedge=False
             )
 
@@ -2162,7 +2162,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][0]}%',
-                price=self.take_price[0][-1],
+                price=self.take_price[0, -1],
                 hedge=False
             )
 
@@ -2172,7 +2172,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][1]}%',
-                price=self.take_price[1][-1],
+                price=self.take_price[1, -1],
                 hedge=False
             )
 
@@ -2182,7 +2182,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][2]}%',
-                price=self.take_price[2][-1],
+                price=self.take_price[2, -1],
                 hedge=False
             )
 
@@ -2192,7 +2192,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][3]}%',
-                price=self.take_price[3][-1],
+                price=self.take_price[3, -1],
                 hedge=False
             )
 
@@ -2202,7 +2202,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][4]}%',
-                price=self.take_price[4][-1],
+                price=self.take_price[4, -1],
                 hedge=False
             )
 
@@ -2212,7 +2212,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][5]}%',
-                price=self.take_price[5][-1],
+                price=self.take_price[5, -1],
                 hedge=False
             )
 
@@ -2222,7 +2222,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][6]}%',
-                price=self.take_price[6][-1],
+                price=self.take_price[6, -1],
                 hedge=False
             )
 
@@ -2232,7 +2232,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][7]}%',
-                price=self.take_price[7][-1],
+                price=self.take_price[7, -1],
                 hedge=False
             )
 
@@ -2242,7 +2242,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][8]}%',
-                price=self.take_price[8][-1],
+                price=self.take_price[8, -1],
                 hedge=False
             )
 
@@ -2252,7 +2252,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
-                price=self.take_price[9][-1],
+                price=self.take_price[9, -1],
                 hedge=False
             )
 
@@ -2285,7 +2285,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_1'][0]}%',
-                price=self.take_price[0][-1],
+                price=self.take_price[0, -1],
                 hedge=False
             )
 
@@ -2295,7 +2295,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_1'][1]}%',
-                price=self.take_price[1][-1],
+                price=self.take_price[1, -1],
                 hedge=False
             )
 
@@ -2305,7 +2305,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_1'][2]}%',
-                price=self.take_price[2][-1],
+                price=self.take_price[2, -1],
                 hedge=False
             )
 
@@ -2315,7 +2315,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_1'][3]}%',
-                price=self.take_price[3][-1],
+                price=self.take_price[3, -1],
                 hedge=False
             )
 
@@ -2325,7 +2325,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size='100%',
-                price=self.take_price[4][-1],
+                price=self.take_price[4, -1],
                 hedge=False
             )
 
@@ -2358,7 +2358,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][0]}%',
-                price=self.take_price[0][-1],
+                price=self.take_price[0, -1],
                 hedge=False
             )
 
@@ -2368,7 +2368,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][1]}%',
-                price=self.take_price[1][-1],
+                price=self.take_price[1, -1],
                 hedge=False
             )
 
@@ -2378,7 +2378,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][2]}%',
-                price=self.take_price[2][-1],
+                price=self.take_price[2, -1],
                 hedge=False
             )
 
@@ -2388,7 +2388,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][3]}%',
-                price=self.take_price[3][-1],
+                price=self.take_price[3, -1],
                 hedge=False
             )
 
@@ -2398,7 +2398,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][4]}%',
-                price=self.take_price[4][-1],
+                price=self.take_price[4, -1],
                 hedge=False
             )
 
@@ -2408,7 +2408,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][5]}%',
-                price=self.take_price[5][-1],
+                price=self.take_price[5, -1],
                 hedge=False
             )
 
@@ -2418,7 +2418,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][6]}%',
-                price=self.take_price[6][-1],
+                price=self.take_price[6, -1],
                 hedge=False
             )
 
@@ -2428,7 +2428,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][7]}%',
-                price=self.take_price[7][-1],
+                price=self.take_price[7, -1],
                 hedge=False
             )
 
@@ -2438,7 +2438,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume_2'][8]}%',
-                price=self.take_price[8][-1],
+                price=self.take_price[8, -1],
                 hedge=False
             )
 
@@ -2448,7 +2448,7 @@ class NuggetV4(BaseStrategy):
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
                 size='100%',
-                price=self.take_price[9][-1],
+                price=self.take_price[9, -1],
                 hedge=False
             )
 
