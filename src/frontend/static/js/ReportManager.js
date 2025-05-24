@@ -104,7 +104,7 @@ export default class ReportManager {
 
   createReport(data) {
     if (MODE == 'TESTING') {
-      if (data.completedDealsLog.length) {
+      if (data.dealsLog.length) {
         this.createOverviewReport(data);
       } else {
         this.placeholder2.style.display = 'flex';
@@ -112,7 +112,7 @@ export default class ReportManager {
 
       this.createPerformanceReport(data);
 
-      if (data.completedDealsLog.length || data.openDealsLog.length) {
+      if (data.dealsLog.length) {
         this.createTradesReport(data);
       } else {
         this.placeholder3.style.display = 'flex';
@@ -851,7 +851,7 @@ export default class ReportManager {
     th.appendChild(span2);
 
     th.addEventListener('click', () => {
-      data.completedDealsLog.reverse();
+      data.dealsLog.reverse();
       reverse = !reverse;
 
       if (reverse) {
@@ -934,10 +934,10 @@ export default class ReportManager {
       if (!reverse) {
         dealNumber = 1;
       } else {
-        dealNumber = data.completedDealsLog.length;
+        dealNumber = data.dealsLog.length;
       }
 
-      for (var deal of data.completedDealsLog) {
+      for (var deal of data.dealsLog) {
         var tr = document.createElement('div');
         tr.classList.add('tr');
         tbody.appendChild(tr);
@@ -1029,13 +1029,21 @@ export default class ReportManager {
         div1.classList.add('h-50');
         div1.classList.add('align-end');
         div1.classList.add('border');
-        div1.innerText = deal[6] + ' USDT';
+
+        if (deal[6]) {
+          div1.innerText = deal[6] + ' USDT';
+        }
+
         td.appendChild(div1);
 
         var div2 = document.createElement('div');
         div2.classList.add('h-50');
         div2.classList.add('align-end');
-        div2.innerText = deal[5] + ' USDT';
+
+        if (deal[5]) {
+          div2.innerText = deal[5] + ' USDT';
+        }
+
         td.appendChild(div2);
 
         var td = document.createElement('div');
@@ -1069,7 +1077,7 @@ export default class ReportManager {
           div2.innerHTML = `<span style="color: #f23645;">${
             deal[9] + '%'
           }</span>`;
-        } else {
+        } else if (deal[8] > 0) {
           div1.innerText = deal[8] + ' USDT';
           div2.innerText = deal[9] + '%';
         }
@@ -1094,7 +1102,7 @@ export default class ReportManager {
           div1.innerHTML = `<span style="color: #f23645; font-size: 14px;">${
             deal[10] + ' USDT'
           }</span>`;
-        } else {
+        } else if (deal[10] > 0) {
           div1.innerText = deal[10] + ' USDT';
         }
 
@@ -1102,162 +1110,13 @@ export default class ReportManager {
           div2.innerHTML = `<span style="color: #f23645;">${
             deal[11] + '%'
           }</span>`;
-        } else {
+        } else if (deal[11] > 0) {
           div2.innerText = deal[11] + '%';
         }
 
         div.appendChild(div1);
         div.appendChild(div2);
       }
-    }
-
-    if (data.openDealsLog.length > 0) {
-      var tr = document.createElement('div');
-      tr.classList.add('tr');
-
-      if (!reverse) {
-        tbody.appendChild(tr);
-      } else {
-        tbody.prepend(tr);
-      }
-
-      var td = document.createElement('div');
-      td.classList.add('td');
-      td.classList.add('w-10');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-100');
-      div.classList.add('align-start');
-      div.innerText = data.completedDealsLog.length + 1;
-      td.appendChild(div);
-
-      var td = document.createElement('div');
-      td.classList.add('td');
-      td.classList.add('w-18');
-      tr.appendChild(td);
-
-      var div1 = document.createElement('div');
-      div1.classList.add('h-50');
-      div1.classList.add('align-start');
-      div1.classList.add('border');
-
-      if (data.openDealsLog[0] == 'long') {
-        div1.innerText = 'Выход из длинной позиции';
-      } else {
-        div1.innerText = 'Выход из короткой позиции';
-      }
-
-      td.appendChild(div1);
-
-      var div2 = document.createElement('div');
-      div2.classList.add('h-50');
-      div2.classList.add('align-start');
-
-      if (data.openDealsLog[0] == 'long') {
-        div2.innerText = 'Вход в длинную позицию';
-      } else {
-        div2.innerText = 'Вход в короткую позицию';
-      }
-
-      td.appendChild(div2);
-
-      var td = document.createElement('div');
-      td.classList.add('td');
-      td.classList.add('w-14');
-      tr.appendChild(td);
-
-      var div1 = document.createElement('div');
-      div1.classList.add('h-50');
-      div1.classList.add('align-start');
-      div1.classList.add('border');
-      div1.innerText = 'Н/Д';
-      td.appendChild(div1);
-
-      var div2 = document.createElement('div');
-      div2.classList.add('h-50');
-      div2.classList.add('align-start');
-      div2.innerText = data.openDealsLog[1];
-      td.appendChild(div2);
-
-      var td = document.createElement('div');
-      td.classList.add('td');
-      td.classList.add('w-14');
-      tr.appendChild(td);
-
-      var div1 = document.createElement('div');
-      div1.classList.add('h-50');
-      div1.classList.add('align-start');
-      div1.classList.add('border');
-      div1.innerText = 'Н/Д';
-      td.appendChild(div1);
-
-      var div2 = document.createElement('div');
-      div2.classList.add('h-50');
-      div2.classList.add('align-start');
-      div2.innerText = data.openDealsLog[2];
-      td.appendChild(div2);
-
-      var td = document.createElement('div');
-      td.classList.add('td');
-      td.classList.add('w-10');
-      tr.appendChild(td);
-
-      var div1 = document.createElement('div');
-      div1.classList.add('h-50');
-      div1.classList.add('align-end');
-      div1.classList.add('border');
-      div1.innerText = 'Н/Д';
-      td.appendChild(div1);
-
-      var div2 = document.createElement('div');
-      div2.classList.add('h-50');
-      div2.classList.add('align-end');
-      div2.innerText = data.openDealsLog[3] + ' USDT';
-      td.appendChild(div2);
-
-      var td = document.createElement('div');
-      td.classList.add('td');
-      td.classList.add('w-10');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-100');
-      div.classList.add('align-end');
-      div.innerText = data.openDealsLog[4];
-      td.appendChild(div);
-
-      var td = document.createElement('div');
-      td.classList.add('td');
-      td.classList.add('w-10');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-100');
-      div.classList.add('align-end');
-      div.innerText = 'Н/Д';
-      td.appendChild(div);
-
-      var div1 = document.createElement('div');
-      var div2 = document.createElement('div');
-      div.appendChild(div1);
-      div.appendChild(div2);
-
-      var td = document.createElement('div');
-      td.classList.add('td');
-      td.classList.add('w-14');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-100');
-      div.classList.add('align-end');
-      div.innerText = 'Н/Д';
-      td.appendChild(div);
-
-      var div1 = document.createElement('div');
-      var div2 = document.createElement('div');
-      div.appendChild(div1);
-      div.appendChild(div2);
     }
   }
 

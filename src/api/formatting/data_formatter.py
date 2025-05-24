@@ -53,10 +53,8 @@ class DataFormatter:
             self.main_data[strategy_id]['reportData'] = {
                 'equity': self._format_equity(strategy_state['equity']),
                 'metrics': strategy_state['metrics'],
-                'completedDealsLog': self._format_completed_deals(
-                    strategy_state['instance'].completed_deals_log
-                ),
-                'openDealsLog': self._format_open_deals(
+                'dealsLog': self._format_deals_log(
+                    strategy_state['instance'].completed_deals_log,
                     strategy_state['instance'].open_deals_log
                 )
             }
@@ -240,35 +238,46 @@ class DataFormatter:
         ]
         return result
 
-    def _format_completed_deals(self, completed_deals_log: np.ndarray) -> list:
-        result = completed_deals_log.reshape((-1, 13)).tolist()
+    def _format_deals_log(
+        self,
+        closed_deals: np.ndarray,
+        open_deals: np.ndarray
+    ) -> list:
+        closed = closed_deals.reshape((-1, 13))[:, :12]
+        formatted_closed = []
 
-        for deal in result:
-            deal[0] = DealKeywords.deal_types[deal[0]]
-            deal[1] = DealKeywords.entry_signals[deal[1]]
-            deal[2] = DealKeywords.exit_signals[deal[2]]
-            deal[3] = datetime.fromtimestamp(
-                deal[3] / 1000, tz=timezone.utc
+        for deal in closed:
+            formatted = [
+                DealKeywords.deal_types[deal[0]],
+                DealKeywords.entry_signals[deal[1]],
+                DealKeywords.exit_signals[deal[2]],
+                datetime.fromtimestamp(
+                    timestamp=deal[3] / 1000,
+                    tz=timezone.utc
+                ).strftime('%Y/%m/%d %H:%M'),
+                datetime.fromtimestamp(
+                    timestamp=deal[4] / 1000,
+                    tz=timezone.utc
+                ).strftime('%Y/%m/%d %H:%M'),
+                *deal[5:12].tolist()
+            ]
+            formatted_closed.append(formatted)
+
+        reshaped_open_deals = open_deals.reshape((-1, 5))
+        mask = ~np.isnan(reshaped_open_deals).any(axis=1)
+        reshaped_open_deals = reshaped_open_deals[mask]
+        formatted_open = []
+
+        for deal in reshaped_open_deals:
+            formatted = [None] * 12
+            formatted[0] = DealKeywords.deal_types[deal[0]]
+            formatted[1] = DealKeywords.entry_signals[deal[1]]
+            formatted[3] = datetime.fromtimestamp(
+                timestamp=deal[2]/1000,
+                tz=timezone.utc
             ).strftime('%Y/%m/%d %H:%M')
-            deal[4] = datetime.fromtimestamp(
-                deal[4] / 1000, tz=timezone.utc
-            ).strftime('%Y/%m/%d %H:%M')
+            formatted[5] = float(deal[3])
+            formatted[7] = float(deal[4])
+            formatted_open.append(formatted)
 
-        return result
-
-    def _format_open_deals(self, open_deals_log: np.ndarray) -> list:
-        result = list(
-            filter(
-                lambda deal: not np.isnan(deal[0]),
-                open_deals_log.reshape((-1, 5)).tolist()
-            )
-        )
-
-        for deal in result:
-            deal[0] = DealKeywords.deal_types[deal[0]]
-            deal[1] = DealKeywords.entry_signals[deal[1]]
-            deal[2] = datetime.fromtimestamp(
-                deal[2] / 1000, tz=timezone.utc
-            ).strftime('%Y/%m/%d %H:%M')
-
-        return result
+        return formatted_closed + formatted_open
