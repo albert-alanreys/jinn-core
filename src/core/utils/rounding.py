@@ -1,13 +1,19 @@
-def adjust(value: float, step: float, digits: int = 8) -> float:
+import numba as nb
+
+
+@nb.jit(
+    nb.float64(nb.float64, nb.float64),
+    cache=True, nopython=True, nogil=True
+)
+def adjust(value: float, step: float) -> float:
     """
-    Adjust a value to the specified step and round to a fixed number of digits.
+    Rounds a value to the nearest multiple of step with 10 decimal precision.
 
     Args:
-        value (float): The original value to adjust.
-        step (float): Step size (e.g., price or quantity precision).
-        digits (int): Number of decimal places to round to. Defaults to 8.
+        value (float): Input value.
+        step (float): Adjustment step size.
 
     Returns:
         float: Adjusted and rounded value.
     """
-    return round(round(value / step) * step, digits)
+    return round(round(value / step) * step, 10)

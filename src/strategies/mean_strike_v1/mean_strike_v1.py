@@ -3,6 +3,8 @@ import numba as nb
 
 import src.core.lib.ta as ta
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.utils.deals import create_log_entry
+from src.core.utils.rounding import adjust
 
 
 class MeanStrikeV1(BaseStrategy):
@@ -222,93 +224,21 @@ class MeanStrikeV1(BaseStrategy):
         alert_open_long: bool,
         alert_close_long: bool
     ) -> tuple:
-        def adjust(number: float, precision: float, digits: int = 8) -> float:
-            return round(round(number / precision) * precision, digits)
+        for i in range(1, time.shape[0]):
+            entry_price_2[i] = entry_price_2[i - 1]
+            entry_price_3[i] = entry_price_3[i - 1]
+            entry_price_4[i] = entry_price_4[i - 1]
+            take_price[i] = take_price[i - 1]
 
-        def update_log(
-            log: np.ndarray,
-            equity: float,
-            commission: float,
-            deal_type: float,
-            entry_signal: float,
-            exit_signal: float,
-            entry_date: float,
-            exit_date: float,
-            entry_price: float,
-            exit_price: float,
-            position_size: float,
-            initial_capital: float
-        ) -> tuple[np.ndarray, float]:
-            total_commission = round(
-                (position_size * entry_price
-                    * commission / 100) + (position_size
-                    * exit_price * commission / 100),
-                2
-            )
-
-            if deal_type == 0:
-                pnl = round(
-                    (exit_price - entry_price) * position_size
-                        - total_commission,
-                    2
-                )
-            else:
-                pnl = round(
-                    (entry_price - exit_price) * position_size
-                        - total_commission,
-                    2
-                )
-
-            if position_size == 0:
-                return log, equity
-
-            pnl_per = round(
-                (((position_size * entry_price) + pnl)
-                    / (position_size * entry_price) - 1) * 100,
-                2
-            )
-
-            if log.shape[0] == 0:
-                cum_pnl = round(pnl, 2)
-                cum_pnl_per = round(
-                    pnl / (initial_capital + pnl) * 100,
-                    2
-                )
-            else:
-                cum_pnl = round(pnl + log[-3], 2)
-                cum_pnl_per = round(
-                    pnl / (initial_capital + log[-3]) * 100,
-                    2
-                )
-
-            log_row = np.array(
-                [
-                    deal_type, entry_signal, exit_signal, entry_date,
-                    exit_date, entry_price, exit_price, position_size,
-                    pnl, pnl_per, cum_pnl, cum_pnl_per, total_commission
-                ]
-            )
-            log = np.concatenate((log, log_row))
-            equity += pnl
-            return log, equity
-
-        for i in range(time.shape[0]):
             alert_open_long = False
             alert_close_long = False
-
-            if i > 0:
-                entry_price_2[i] = entry_price_2[i - 1]
-                entry_price_3[i] = entry_price_3[i - 1]
-                entry_price_4[i] = entry_price_4[i - 1]
-                take_price[i] = take_price[i - 1]
 
             # Check of liquidation
             if (deal_type == 0 and low[i] <= liquidation_price):
                 for deal in open_deals_log:
                     if not np.isnan(deal[0]):
-                        completed_deals_log, equity = update_log(
+                        log_entry = create_log_entry(
                             completed_deals_log,
-                            equity,
                             commission,
                             deal[0],
                             deal[1],
@@ -320,6 +250,10 @@ class MeanStrikeV1(BaseStrategy):
                             deal[4],
                             initial_capital
                         )
+                        completed_deals_log = np.concatenate(
+                            (completed_deals_log, log_entry)
+                        )
+                        equity += log_entry[8]
 
                 open_deals_log = np.full((4, 5), np.nan)
                 qty_entry = np.full(4, np.nan)
@@ -340,9 +274,8 @@ class MeanStrikeV1(BaseStrategy):
                     if not np.isnan(take_price[i]) and high[i] >= take_price[i]:
                         for deal in open_deals_log:
                             if not np.isnan(deal[0]):
-                                completed_deals_log, equity = update_log(
+                                log_entry = create_log_entry(
                                     completed_deals_log,
-                                    equity,
                                     commission,
                                     deal[0],
                                     deal[1],
@@ -354,6 +287,10 @@ class MeanStrikeV1(BaseStrategy):
                                     deal[4],
                                     initial_capital
                                 )
+                                completed_deals_log = np.concatenate(
+                                    (completed_deals_log, log_entry)
+                                )
+                                equity += log_entry[8]
 
                         open_deals_log = np.full((4, 5), np.nan)
                         qty_entry = np.full(4, np.nan)
@@ -450,9 +387,8 @@ class MeanStrikeV1(BaseStrategy):
                     if not np.isnan(take_price[i]) and high[i] >= take_price[i]:
                         for deal in open_deals_log:
                             if not np.isnan(deal[0]):
-                                completed_deals_log, equity = update_log(
+                                log_entry = create_log_entry(
                                     completed_deals_log,
-                                    equity,
                                     commission,
                                     deal[0],
                                     deal[1],
@@ -464,6 +400,10 @@ class MeanStrikeV1(BaseStrategy):
                                     deal[4],
                                     initial_capital
                                 )
+                                completed_deals_log = np.concatenate(
+                                    (completed_deals_log, log_entry)
+                                )
+                                equity += log_entry[8]
 
                         open_deals_log = np.full((4, 5), np.nan)
                         qty_entry = np.full(4, np.nan)

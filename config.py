@@ -19,7 +19,7 @@ TELEGRAM_CHAT_ID = 'TELEGRAM_CHAT_ID'
 #   OPTIMIZATION - оптимизация
 #   TESTING - тестирование
 #   AUTOMATION - автоматизация
-MODE = enums.Mode.AUTOMATION
+MODE = enums.Mode.TESTING
 
 # Настройки для различных режимов
 AUTOMATION_INFO = {
@@ -44,5 +44,5 @@ TESTING_INFO = {
     'interval': '1h',
     'start': '2020-01-01',
     'end': '2025-05-01',
-    'strategy': enums.Strategy.SANDBOX,
+    'strategy': enums.Strategy.NUGGET_V5,
 }

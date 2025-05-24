@@ -3,6 +3,8 @@ import numba as nb
 
 import src.core.lib.ta as ta
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.utils.deals import create_log_entry
+from src.core.utils.rounding import adjust
 
 
 class DevourerV3(BaseStrategy):
@@ -342,86 +344,15 @@ class DevourerV3(BaseStrategy):
         alert_open_short: bool,
         alert_close_short: bool
     ) -> tuple:
-        def adjust(number: float, precision: float, digits: int = 8) -> float:
-            return round(round(number / precision) * precision, digits)
-
-        def update_log(
-            log: np.ndarray,
-            equity: float,
-            commission: float,
-            deal_type: float,
-            entry_signal: float,
-            exit_signal: float,
-            entry_date: float,
-            exit_date: float,
-            entry_price: float,
-            exit_price: float,
-            position_size: float,
-            initial_capital: float
-        ) -> tuple[np.ndarray, float]:
-            total_commission = round(
-                (position_size * entry_price
-                    * commission / 100) + (position_size
-                    * exit_price * commission / 100),
-                2
-            )
-
-            if deal_type == 0:
-                pnl = round(
-                    (exit_price - entry_price) * position_size
-                        - total_commission,
-                    2
-                )
-            else:
-                pnl = round(
-                    (entry_price - exit_price) * position_size
-                        - total_commission,
-                    2
-                )
-
-            if position_size == 0:
-                return log, equity
-
-            pnl_per = round(
-                (((position_size * entry_price) + pnl)
-                    / (position_size * entry_price) - 1) * 100,
-                2
-            )
-
-            if log.shape[0] == 0:
-                cum_pnl = round(pnl, 2)
-                cum_pnl_per = round(
-                    pnl / (initial_capital + pnl) * 100,
-                    2
-                )
-            else:
-                cum_pnl = round(pnl + log[-3], 2)
-                cum_pnl_per = round(
-                    pnl / (initial_capital + log[-3]) * 100,
-                    2
-                )
-
-            log_row = np.array(
-                [
-                    deal_type, entry_signal, exit_signal, entry_date,
-                    exit_date, entry_price, exit_price, position_size,
-                    pnl, pnl_per, cum_pnl, cum_pnl_per, total_commission
-                ]
-            )
-            log = np.concatenate((log, log_row))
-            equity += pnl
-            return log, equity
-
         for i in range(2, time.shape[0]):
+            stop_price[i] = stop_price[i - 1]
+            take_price[i] = take_price[i - 1]
+
             alert_cancel = False
             alert_open_long = False
             alert_close_long = False
             alert_open_short = False
             alert_close_short = False
-
-            if i > 0:
-                stop_price[i] = stop_price[i - 1]
-                take_price[i] = take_price[i - 1]
 
             # Pattern #3 — indicators
             if close[i] > ema_p3[i]:
@@ -476,9 +407,8 @@ class DevourerV3(BaseStrategy):
 
             # Check of liquidation
             if (deal_p1 or deal_p1) and low[i] <= liquidation_price:
-                completed_deals_log, equity = update_log(
+                log_entry = create_log_entry(
                     completed_deals_log,
-                    equity,
                     commission,
                     deal_type,
                     entry_signal,
@@ -490,6 +420,10 @@ class DevourerV3(BaseStrategy):
                     position_size,
                     initial_capital
                 )
+                completed_deals_log = np.concatenate(
+                    (completed_deals_log, log_entry)
+                )
+                equity += log_entry[8]
                 
                 open_deals_log = np.full(5, np.nan)
                 deal_type = np.nan
@@ -504,9 +438,8 @@ class DevourerV3(BaseStrategy):
                 deal_p2 = False
 
             if deal_p3 and high[i] >= liquidation_price:
-                completed_deals_log, equity = update_log(
+                log_entry = create_log_entry(
                     completed_deals_log,
-                    equity,
                     commission,
                     deal_type,
                     entry_signal,
@@ -518,6 +451,10 @@ class DevourerV3(BaseStrategy):
                     position_size,
                     initial_capital
                 )
+                completed_deals_log = np.concatenate(
+                    (completed_deals_log, log_entry)
+                )
+                equity += log_entry[8]
 
                 open_deals_log = np.full(5, np.nan)
                 deal_type = np.nan
@@ -557,9 +494,8 @@ class DevourerV3(BaseStrategy):
             )
 
             if exit_long_p1:
-                completed_deals_log, equity = update_log(
+                log_entry = create_log_entry(
                     completed_deals_log,
-                    equity,
                     commission,
                     deal_type,
                     entry_signal,
@@ -571,6 +507,10 @@ class DevourerV3(BaseStrategy):
                     position_size,
                     initial_capital
                 )
+                completed_deals_log = np.concatenate(
+                    (completed_deals_log, log_entry)
+                )
+                equity += log_entry[8]
 
                 open_deals_log = np.full(5, np.nan)
                 deal_type = np.nan
@@ -585,9 +525,8 @@ class DevourerV3(BaseStrategy):
                 deal_p1 = True
 
                 if deal_p3:
-                    completed_deals_log, equity = update_log(
+                    log_entry = create_log_entry(
                         completed_deals_log,
-                        equity,
                         commission,
                         deal_type,
                         entry_signal,
@@ -599,6 +538,10 @@ class DevourerV3(BaseStrategy):
                         position_size,
                         initial_capital
                     )
+                    completed_deals_log = np.concatenate(
+                        (completed_deals_log, log_entry)
+                    )
+                    equity += log_entry[8]
 
                     open_deals_log = np.full(5, np.nan)
                     deal_type = np.nan
@@ -666,9 +609,8 @@ class DevourerV3(BaseStrategy):
             )
 
             if exit_long_p2:
-                completed_deals_log, equity = update_log(
+                log_entry = create_log_entry(
                     completed_deals_log,
-                    equity,
                     commission,
                     deal_type,
                     entry_signal,
@@ -680,6 +622,10 @@ class DevourerV3(BaseStrategy):
                     position_size,
                     initial_capital
                 )
+                completed_deals_log = np.concatenate(
+                    (completed_deals_log, log_entry)
+                )
+                equity += log_entry[8]
 
                 open_deals_log = np.full(5, np.nan)
                 deal_type = np.nan
@@ -698,9 +644,8 @@ class DevourerV3(BaseStrategy):
                     deal_p1 = False
 
                 if deal_p3:
-                    completed_deals_log, equity = update_log(
+                    log_entry = create_log_entry(
                         completed_deals_log,
-                        equity,
                         commission,
                         deal_type,
                         entry_signal,
@@ -712,6 +657,10 @@ class DevourerV3(BaseStrategy):
                         position_size,
                         initial_capital
                     )
+                    completed_deals_log = np.concatenate(
+                        (completed_deals_log, log_entry)
+                    )
+                    equity += log_entry[8]
 
                     open_deals_log = np.full(5, np.nan)
                     deal_type = np.nan
@@ -768,9 +717,8 @@ class DevourerV3(BaseStrategy):
 
             # Pattern #3
             if deal_p3 and low[i] <= take_price[i]:
-                completed_deals_log, equity = update_log(
+                log_entry = create_log_entry(
                     completed_deals_log,
-                    equity,
                     commission,
                     deal_type,
                     entry_signal,
@@ -782,6 +730,10 @@ class DevourerV3(BaseStrategy):
                     position_size,
                     initial_capital
                 )
+                completed_deals_log = np.concatenate(
+                    (completed_deals_log, log_entry)
+                )
+                equity += log_entry[8]
 
                 open_deals_log = np.full(5, np.nan)
                 deal_type = np.nan
@@ -813,9 +765,8 @@ class DevourerV3(BaseStrategy):
             )
 
             if exit_short_p3:
-                completed_deals_log, equity = update_log(
+                log_entry = create_log_entry(
                     completed_deals_log,
-                    equity,
                     commission,
                     deal_type,
                     entry_signal,
@@ -827,6 +778,10 @@ class DevourerV3(BaseStrategy):
                     position_size,
                     initial_capital
                 )
+                completed_deals_log = np.concatenate(
+                    (completed_deals_log, log_entry)
+                )
+                equity += log_entry[8]
 
                 open_deals_log = np.full(5, np.nan)
                 deal_type = np.nan
