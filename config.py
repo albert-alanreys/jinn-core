@@ -35,7 +35,7 @@ OPTIMIZATION_INFO = {
     'interval': '1h',
     'start': '2019-01-01',
     'end': '2025-01-01',
-    'strategy': enums.Strategy.SANDBOX,
+    'strategy': enums.Strategy.NUGGET_V2,
 }
 TESTING_INFO = {
     'exchange': enums.Exchange.BINANCE,
@@ -44,5 +44,5 @@ TESTING_INFO = {
     'interval': '1h',
     'start': '2020-01-01',
     'end': '2025-05-01',
-    'strategy': enums.Strategy.NUGGET_V4,
+    'strategy': enums.Strategy.NUGGET_V2,
 }
