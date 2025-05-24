@@ -72,7 +72,7 @@ class WebSocketConnection:
                 try:
                     websocket.send(json.dumps({'op': 'ping'}))
                 except Exception as e:
-                    self.logger.error(f'Ping failed: {e}')
-                    break
+                    self.logger.warning(f'Ping failed: {e}')
+                    continue
 
         Thread(target=ping, daemon=True).start()
