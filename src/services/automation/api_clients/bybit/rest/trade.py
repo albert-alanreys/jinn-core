@@ -55,7 +55,7 @@ class TradeClient(BaseClient):
                 qty=str(qty),
                 position_idx=(1 if hedge else 0)
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol, order['result']['orderId']
             )['result']['list'][0]
 
@@ -75,7 +75,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
         except Exception as e:
             self.logger.exception('An error occurred')
             self.send_exception(e)
@@ -110,7 +110,7 @@ class TradeClient(BaseClient):
                 qty=str(qty),
                 position_idx=(2 if hedge else 0)
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol, order['result']['orderId']
             )['result']['list'][0]
 
@@ -130,7 +130,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
         except Exception as e:
             self.logger.exception('An error occurred')
             self.send_exception(e)
@@ -150,7 +150,7 @@ class TradeClient(BaseClient):
                 qty=str(qty),
                 position_idx=(1 if hedge else 0)
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol, order['result']['orderId']
             )['result']['list'][0]
 
@@ -170,7 +170,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
         except Exception as e:
             self.logger.exception('An error occurred')
             self.send_exception(e)
@@ -190,7 +190,7 @@ class TradeClient(BaseClient):
                 qty=str(qty),
                 position_idx=(2 if hedge else 0)
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol, order['result']['orderId']
             )['result']['list'][0]
 
@@ -210,7 +210,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
         except Exception as e:
             self.logger.exception('An error occurred')
             self.send_exception(e)
@@ -246,7 +246,7 @@ class TradeClient(BaseClient):
                 position_idx=(2 if hedge else 0),
                 reduce_only=True
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol, order['result']['orderId']
             )['result']['list'][0]
 
@@ -266,7 +266,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['result']['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -303,7 +303,7 @@ class TradeClient(BaseClient):
                 position_idx=(1 if hedge else 0),
                 reduce_only=True
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol, order['result']['orderId']
             )['result']['list'][0]
 
@@ -323,7 +323,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['result']['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -364,7 +364,7 @@ class TradeClient(BaseClient):
                 price=str(adjusted_price),
                 position_idx=(1 if hedge else 0)
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol=symbol,
                 order_id=order['result']['orderId']
             )['result']['list'][0]
@@ -385,7 +385,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['result']['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -426,7 +426,7 @@ class TradeClient(BaseClient):
                 price=str(adjusted_price),
                 position_idx=(2 if hedge else 0)
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol=symbol,
                 order_id=order['result']['orderId']
             )['result']['list'][0]
@@ -447,7 +447,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['result']['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -483,7 +483,7 @@ class TradeClient(BaseClient):
                 position_idx=(1 if hedge else 0),
                 reduce_only=True
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol=symbol,
                 order_id=order['result']['orderId']
             )['result']['list'][0]
@@ -504,7 +504,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['result']['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -540,7 +540,7 @@ class TradeClient(BaseClient):
                 position_idx=(2 if hedge else 0),
                 reduce_only=True
             )
-            order_info = self._get_orders(
+            order_info = self._get_order(
                 symbol, order['result']['orderId']
             )['result']['list'][0]
 
@@ -560,7 +560,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['result']['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -574,7 +574,7 @@ class TradeClient(BaseClient):
 
     def cancel_orders(self, symbol: str, side: str) -> None:
         try:
-            orders_info = self._get_orders(symbol)['result']['list']
+            orders_info = self._get_order(symbol)['result']['list']
             one_sided_orders = list(
                 filter(lambda order: order['side'] == side, orders_info)
             )
@@ -587,7 +587,7 @@ class TradeClient(BaseClient):
 
     def cancel_stop(self, symbol: str, side: str) -> None:
         try:
-            orders_info = self._get_orders(symbol)['result']['list']
+            orders_info = self._get_order(symbol)['result']['list']
             stop_orders = list(
                 filter(
                     lambda order:
@@ -608,7 +608,7 @@ class TradeClient(BaseClient):
 
         try:
             for order_id in order_ids:
-                order = self._get_orders(symbol, order_id)
+                order = self._get_order(symbol, order_id)
 
                 if not order['result'].get('list'):
                     continue
@@ -647,7 +647,7 @@ class TradeClient(BaseClient):
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 }
                 self.alerts.append(alert)
-                self.send_telegram_alert(alert)
+                self.notify_telegram(alert)
 
             return active_order_ids
         except Exception as e:
@@ -660,7 +660,7 @@ class TradeClient(BaseClient):
 
         try:
             for order_id in order_ids:
-                order = self._get_orders(symbol, order_id)
+                order = self._get_order(symbol, order_id)
 
                 if not order['result'].get('list'):
                     continue
@@ -697,7 +697,7 @@ class TradeClient(BaseClient):
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 }
                 self.alerts.append(alert)
-                self.send_telegram_alert(alert)
+                self.notify_telegram(alert)
 
             return active_order_ids
         except Exception as e:
@@ -753,9 +753,25 @@ class TradeClient(BaseClient):
             params['reduceOnly'] = reduce_only
 
         headers = self.get_headers(params, 'POST')
-        return self.post(url, params, headers=headers)
+        response = self.post(url, params, headers=headers)
 
-    def _get_orders(self, symbol: str, order_id: str = None) -> dict:
+        if not isinstance(response, dict):
+            raise Exception(response)
+
+        if not response['result'].get('orderId'):
+            ret_msg = response.get('retMsg', 'No orderId')
+            error_details = (
+                f'Order failed: {ret_msg} | '
+                f'symbol={symbol} | '
+                f'side={side} | '
+                f'qty={qty} | '
+                f'price={price}'
+            )
+            raise Exception(error_details)
+
+        return response
+
+    def _get_order(self, symbol: str, order_id: str = None) -> dict:
         url = f'{self.BASE_ENDPOINT}/v5/order/realtime'
         params = {'category': 'linear', 'symbol': symbol}
 

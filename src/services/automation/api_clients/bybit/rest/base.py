@@ -2,6 +2,7 @@ import hmac
 import json
 from datetime import datetime, timezone
 from hashlib import sha256
+from logging import getLogger
 from time import time
 
 import config
@@ -23,6 +24,8 @@ class BaseClient(HttpClient):
         self.alerts = alerts
         self.api_key = config.BYBIT_API_KEY
         self.api_secret = config.BYBIT_API_SECRET
+
+        self.logger = getLogger(__name__)
         
     def get_headers(self, params: dict, method: str) -> dict:
         timestamp = str(int(time() * 1000))
@@ -59,17 +62,20 @@ class BaseClient(HttpClient):
                     timezone.utc
                 ).strftime('%Y-%m-%d %H:%M:%S')
             })
-            message = f'❗️{'BYBIT'}:\n{exception}'
-            self.send_telegram_alert(message)
+            message = f'⚠️{'Bybit Client Exception'}⚠️\n{exception}'
+            self._telegram.send_message(message)
 
-    def send_telegram_alert(self, alert: dict) -> None:
-        message = (
-            f"Биржа — {alert['message']['exchange']}\n"
-            f"Тип — {alert['message']['type']}\n"
-            f"Статус — {alert['message']['status']}\n"
-            f"Направление — {alert['message']['side']}\n"
-            f"Символ — #{alert['message']['symbol']}\n"
-            f"Количество — {alert['message']['qty']}\n"
-            f"Цена — {alert['message']['price']}"
-        )
-        self._telegram.send_message(message)
+    def notify_telegram(self, alert: dict) -> None:
+        try:
+            message = (
+                f"Биржа — {alert['message']['exchange']}\n"
+                f"Тип — {alert['message']['type']}\n"
+                f"Статус — {alert['message']['status']}\n"
+                f"Направление — {alert['message']['side']}\n"
+                f"Символ — #{alert['message']['symbol']}\n"
+                f"Количество — {alert['message']['qty']}\n"
+                f"Цена — {alert['message']['price']}"
+            )
+            self._telegram.send_message(message)
+        except Exception as e:
+            self.logger.error(f'{type(e).__name__}: {str(e)}')

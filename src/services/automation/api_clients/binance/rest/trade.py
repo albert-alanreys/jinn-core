@@ -73,7 +73,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
         except Exception as e:
             self.logger.exception('An error occurred')
             self.send_exception(e)
@@ -126,7 +126,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
         except Exception as e:
             self.logger.exception('An error occurred')
             self.send_exception(e)
@@ -165,7 +165,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
         except Exception as e:
             self.logger.exception('An error occurred')
             self.send_exception(e)
@@ -204,7 +204,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
         except Exception as e:
             self.logger.exception('An error occurred')
             self.send_exception(e)
@@ -257,7 +257,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -311,7 +311,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -370,7 +370,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -429,7 +429,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -485,7 +485,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -541,7 +541,7 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.send_telegram_alert(alert)
+            self.notify_telegram(alert)
             return order['orderId']
         except Exception as e:
             self.logger.exception('An error occurred')
@@ -631,7 +631,7 @@ class TradeClient(BaseClient):
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 }
                 self.alerts.append(alert)
-                self.send_telegram_alert(alert)
+                self.notify_telegram(alert)
 
             return active_order_ids
         except Exception as e:
@@ -679,7 +679,7 @@ class TradeClient(BaseClient):
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 }
                 self.alerts.append(alert)
-                self.send_telegram_alert(alert)
+                self.notify_telegram(alert)
 
             return active_order_ids
         except Exception as e:
@@ -733,7 +733,20 @@ class TradeClient(BaseClient):
             params['stopPrice'] = stop_price
 
         params, headers = self.build_signed_request(params)
-        return self.post(url, params=params, headers=headers)
+        response = self.post(url, params=params, headers=headers)
+
+        if response is None:
+            error_details = (
+                f'Order failed | '
+                f'symbol={symbol} | '
+                f'side={side} | '
+                f'qty={qty} | '
+                f'price={price}'
+            )
+            raise Exception(error_details)
+
+        return response
+
     
     def _get_order(self, symbol: str, order_id: str) -> dict:
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
