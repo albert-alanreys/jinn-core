@@ -733,7 +733,7 @@ class TradeClient(BaseClient):
                 'message': {
                     'exchange': 'BINANCE',
                     'type': order_type,
-                    'status': '⚠️не создан⚠️',
+                    'status': 'не удалось создать',
                     'side': side,
                     'symbol': symbol,
                     'qty': qty,

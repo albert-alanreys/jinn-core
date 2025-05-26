@@ -753,7 +753,7 @@ class TradeClient(BaseClient):
                 'message': {
                     'exchange': 'BYBIT',
                     'type': order_type,
-                    'status': '⚠️не создан⚠️',
+                    'status': 'не удалось создать',
                     'side': side,
                     'symbol': symbol,
                     'qty': qty,
