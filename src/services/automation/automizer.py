@@ -20,10 +20,9 @@ class Automizer():
         self.strategy = automation_info['strategy']
 
         self.realtime_provider = RealtimeProvider()
-
-        telegram_client = TelegramClient()
-        self.binance_client = BinanceREST(telegram_client)
-        self.bybit_client = BybitREST(telegram_client)
+        self.telegram_client = TelegramClient()
+        self.binance_client = BinanceREST(self.telegram_client)
+        self.bybit_client = BybitREST(self.telegram_client)
 
         self.strategy_states = {}
         self.alerts = []

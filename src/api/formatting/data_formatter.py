@@ -1,10 +1,11 @@
-from copy import deepcopy
 from datetime import datetime, timezone
 from decimal import Decimal
 
 import numpy as np
 
 from src.core.enums import Mode
+from src.core.utils.colors import decode_rgb
+from src.core.utils.rounding import adjust
 from . import deal_constants as consts
 
 
@@ -67,7 +68,7 @@ class DataFormatter:
                 strategy_state['market_data']['klines']
             ),
             'indicators': self._format_indicators(
-                strategy_state['market_data']['klines'],
+                strategy_state['market_data'],
                 strategy_state['instance'].indicators
             ),
             'markers': self._format_deal_markers(
@@ -116,33 +117,50 @@ class DataFormatter:
 
     def _format_indicators(
         self,
-        klines: np.ndarray,
+        market_data: dict,
         indicators: dict
     ) -> dict:
-        result = deepcopy(indicators)
+        klines = market_data['klines']
+        p_precision = market_data['p_precision']
+        
+        result = {}
 
-        for name in result.keys():
-            raw_values = result[name]['values'].tolist()
-            line_data = []
+        for name in indicators.keys():
+            values = indicators[name]['values']
+            colors = indicators[name].get('colors')
+            points = []
 
             for i in range(klines.shape[0]):
-                timestamp = klines[i][0] / 1000
+                timestamp = int(klines[i][0] / 1000)
+                value = adjust(values[i], p_precision)
+                color = None
 
-                if not np.isnan(raw_values[i]):
-                    point = {
-                        'time': timestamp,
-                        'value': raw_values[i]
-                    }
-                else:
-                    point = {
-                        'time': timestamp,
-                        'value': '∅',
-                        'color': 't'
-                    }
+                if np.isnan(values[i]):
+                    value = '∅'
+                    color = 't'
 
-                line_data.append(point)
+                if colors is not None:
+                    color = 't'
 
-            result[name]['values'] = line_data
+                    if not np.isnan(colors[i]):
+                        r, g, b = decode_rgb(colors[i])
+                        color = f'rgb({r}, {g}, {b})'
+
+                point = {
+                    'time': timestamp,
+                    'value': value
+                }
+
+                if color is not None:
+                    point['color'] = color
+ 
+                points.append(point)
+
+            if name not in result:
+                result[name] = {}
+
+            result[name]['options'] = indicators[name]['options']
+            result[name]['values'] = points
 
         return result
 

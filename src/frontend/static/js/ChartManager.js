@@ -136,11 +136,9 @@ export default class ChartManager {
     this.indicatorSeriesGroup = {};
 
     for (var name in data.indicators) {
-      var indicatorSeries = this.chart.addSeries(
-        LightweightCharts.LineSeries,
-        data.indicators[name].options
-      );
+      var indicatorSeries = this.chart.addSeries(LightweightCharts.LineSeries);
       indicatorSeries.applyOptions(this.indicatorOptions);
+      indicatorSeries.applyOptions(data.indicators[name].options);
 
       this.indicatorSeriesGroup[name] = indicatorSeries;
     }
@@ -277,7 +275,7 @@ export default class ChartManager {
         var color = '#000000';
       } else {
         var value = point.value;
-        var color = point.color ? '#000000' : options.color;
+        var color = point.color ?? options.color ?? '#000000';
       }
 
       return `<span>${name}</span>

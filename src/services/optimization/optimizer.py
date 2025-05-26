@@ -7,6 +7,7 @@ import src.core.enums as enums
 from src.core.storage.history_provider import HistoryProvider
 from src.services.automation.api_clients.binance import BinanceREST
 from src.services.automation.api_clients.bybit import BybitREST
+from src.services.automation.api_clients.telegram import TelegramClient
 from .ga import GA
 
 
@@ -21,8 +22,9 @@ class Optimizer:
         self.strategy = optimization_info['strategy']
 
         self.history_provider = HistoryProvider()
-        self.binance_client = BinanceREST()
-        self.bybit_client = BybitREST()
+        self.telegram_client = TelegramClient()
+        self.binance_client = BinanceREST(self.telegram_client)
+        self.bybit_client = BybitREST(self.telegram_client)
 
         self.strategy_states = {}
 

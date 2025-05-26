@@ -4,6 +4,7 @@ import numba as nb
 import src.core.lib.intervals as intervals
 import src.core.lib.ta as ta
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.utils.colors import encode_rgb
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
@@ -19,7 +20,7 @@ class Sandbox(BaseStrategy):
         "initial_capital":  10000.0,
         "commission":  0.075,
         "order_size_type":  0,
-        "order_size":  50,
+        "order_size":  5,
         "leverage":  1,
         "entry_volume":  [10.0, 15.0, 25.0, 50.0],
         "entry_percent_2":  2.0,
@@ -30,9 +31,10 @@ class Sandbox(BaseStrategy):
         "ma_length":  20,
         "mult":  2.0,
         "range_threshold":  30.0,
+        "st_atr_period": 10,
+        "st_factor": 3.0,
         "feeds": [
-            # ["symbol", 1],
-            ["symbol", 5]
+            ["symbol", '1d']
         ]
     }
 
@@ -73,8 +75,12 @@ class Sandbox(BaseStrategy):
 
     # For frontend
     indicator_options = {
-        'HTF' : {'color': '#000080'}
+        'HTF' : {'color': '#000080', 'lineWidth': 1},
+        'ST ↑' : {'lineWidth': 2},
+        'ST ↓' : {'lineWidth': 2}
     }
+    supertrend_color_1 = encode_rgb(76, 175, 80)
+    supertrend_color_2 = encode_rgb(255, 82, 82)
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
         super().__init__(client, all_params=all_params, opt_params=opt_params)
@@ -98,14 +104,6 @@ class Sandbox(BaseStrategy):
         self.q_precision = market_data['q_precision']
 
         extra_klines = list(market_data['extra_klines'].values())
-
-        # ltf_time = extra_klines[0][:, 0]
-        # ltf_close = extra_klines[0][:, 4]
-        # self.ltf_close = intervals.shrink(
-        #     source=ltf_close,
-        #     main_time=self.time,
-        #     lower_time=ltf_time
-        # )
 
         htf_time = extra_klines[0][:, 0]
         htf_close = extra_klines[0][:, 4]
@@ -132,8 +130,39 @@ class Sandbox(BaseStrategy):
             length=self.params['ma_length']
         )
 
+        self.supertrend, self.direcion = ta.supertrend(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            factor=self.params['st_factor'],
+            atr_length=self.params['st_atr_period']
+        )
+
         self.alert_open_long = False
         self.alert_close_long = False
+
+        # graphics
+        self.st_up = np.where(
+            self.direcion == -1,
+            self.supertrend,
+            np.nan
+        )
+        self.st_up_colors = np.where(
+            ~np.isnan(self.st_up),
+            self.supertrend_color_1,
+            np.nan
+        )
+
+        self.st_down = np.where(
+            self.direcion == 1,
+            self.supertrend,
+            np.nan
+        )
+        self.st_down_colors = np.where(
+            ~np.isnan(self.st_down),
+            self.supertrend_color_2,
+            np.nan
+        )
 
         (
             self.completed_deals_log,
@@ -191,6 +220,16 @@ class Sandbox(BaseStrategy):
             ): {
                 'options': self.indicator_options['HTF'],
                 'values': self.htf_close
+            },
+            'ST ↑': {
+                'options': self.indicator_options['ST ↑'],
+                'values': self.st_up,
+                'colors': self.st_up_colors
+            },
+            'ST ↓': {
+                'options': self.indicator_options['ST ↓'],
+                'values': self.st_down,
+                'colors': self.st_down_colors
             }
         }
 
@@ -516,6 +555,17 @@ class Sandbox(BaseStrategy):
         )
     
     def trade(self) -> None:
+        # self.alert_open_long = False
+        # self.alert_close_long = False
+
+        # if not hasattr(self, 'debug'):
+        #     self.debug = True
+
+        #     self.alert_open_long = True
+        #     self.entry_price_2[-1] = 98500.0
+        #     self.entry_price_3[-1] = 97500.0
+        #     self.entry_price_4[-1] = 96500.0
+
         if self.order_ids is None:
             self.order_ids = self.cache.load(self.symbol)
 
