@@ -157,6 +157,7 @@ class Optimizer:
             'Optimization started for:\n' +
             '\n'.join(strategies_info)
         )
+        self.telegram_client.send_message('🔥 Оптимизация началась')
 
         with Pool(cpu_count()) as p:
             if hasattr(self, 'history_provider'):
@@ -171,6 +172,9 @@ class Optimizer:
             self.strategy_states[key]['best_samples'] = samples
 
         self._save_params()
+
+        self.logger.info('Optimization completed')
+        self.telegram_client.send_message('✅ Оптимизация завершена')
 
     def _run_optimization(self, strategy_state: dict) -> list:
         ga = GA(strategy_state)

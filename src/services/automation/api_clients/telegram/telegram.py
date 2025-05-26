@@ -39,5 +39,6 @@ class TelegramClient(HttpClient):
         }
         self.post(
             url=f'https://api.telegram.org/bot{self.token}/sendMessage',
-            json=params
+            json=params,
+            logging=False
         )
