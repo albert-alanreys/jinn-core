@@ -12,6 +12,11 @@ if TYPE_CHECKING:
     from .position import PositionClient
 
 
+class OrderCreationError(Exception):
+    def __init__(self, msg: str) -> None:
+        super().__init__(msg)
+
+
 class TradeClient(BaseClient):
     def __init__(
         self,
@@ -23,14 +28,13 @@ class TradeClient(BaseClient):
     ) -> None:
         super().__init__()
 
-        self.logger = getLogger(__name__)
-
         self.account = account
         self.market = market
         self.position = position
         self.telegram = telegram
-
         self.alerts = alerts
+
+        self.logger = getLogger(__name__)
 
     def market_open_long(
         self,
@@ -40,47 +44,56 @@ class TradeClient(BaseClient):
         leverage: int,
         hedge: bool
     ) -> None:
-        if hedge:
-            self.position.switch_position_mode(True)
-        else:
-            self.position.switch_position_mode(False)
-
-        match margin:
-            case 'cross':
-                self.position.switch_margin_mode(symbol, 'CROSSED')
-            case 'isolated':
-                self.position.switch_margin_mode(symbol, 'ISOLATED')
-
-        self.position.set_leverage(symbol, leverage)
-
         try:
-            qty = self._get_quantity_to_open(symbol, size, leverage)
-            order = self._create_order(
-                symbol=symbol,
-                side='BUY',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='MARKET',
-                qty=qty
-            )
-            order_info = self._get_order(symbol, order['orderId'])
+            if hedge:
+                self.position.switch_position_mode(True)
+            else:
+                self.position.switch_position_mode(False)
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'рыночный ордер',
-                    'status': 'исполнен',
-                    'side': 'покупка',
-                    'symbol': order_info['symbol'],
-                    'qty': order_info['executedQty'],
-                    'price': order_info['avgPrice']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order_info['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+            match margin:
+                case 'cross':
+                    self.position.switch_margin_mode(symbol, 'CROSSED')
+                case 'isolated':
+                    self.position.switch_margin_mode(symbol, 'ISOLATED')
+
+            self.position.set_leverage(symbol, leverage)
+            qty = self._get_quantity_to_open(symbol, size, leverage)
+
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='BUY',
+                    position_side=('LONG' if hedge else 'BOTH'),
+                    order_type='MARKET',
+                    qty=qty
+                )
+                order_info = self._get_order(symbol, order['orderId'])
+
+                alert = self._create_order_alert(
+                    order_type='рыночный ордер',
+                    status='исполнен',
+                    side='покупка',
+                    symbol=order_info['symbol'],
+                    qty=order_info['executedQty'],
+                    price=order_info['avgPrice'],
+                    created_time=order_info['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='рыночный ордер',
+                    status='не удалось создать',
+                    side='покупка',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=None,
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
         except Exception:
             self.logger.exception('Failed to execute market_open_long')
 
@@ -92,47 +105,56 @@ class TradeClient(BaseClient):
         leverage: int,
         hedge: bool
     ) -> None:
-        if hedge:
-            self.position.switch_position_mode(True)
-        else:
-            self.position.switch_position_mode(False)
-
-        match margin:
-            case 'cross':
-                self.position.switch_margin_mode(symbol, 'CROSSED')
-            case 'isolated':
-                self.position.switch_margin_mode(symbol, 'ISOLATED')
-
-        self.position.set_leverage(symbol, leverage)
-
         try:
-            qty = self._get_quantity_to_open(symbol, size, leverage)
-            order = self._create_order(
-                symbol=symbol,
-                side='SELL',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='MARKET',
-                qty=qty
-            )
-            order_info = self._get_order(symbol, order['orderId'])
+            if hedge:
+                self.position.switch_position_mode(True)
+            else:
+                self.position.switch_position_mode(False)
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'рыночный ордер',
-                    'status': 'исполнен',
-                    'side': 'продажа',
-                    'symbol': order_info['symbol'],
-                    'qty': order_info['executedQty'],
-                    'price': order_info['avgPrice']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order_info['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+            match margin:
+                case 'cross':
+                    self.position.switch_margin_mode(symbol, 'CROSSED')
+                case 'isolated':
+                    self.position.switch_margin_mode(symbol, 'ISOLATED')
+
+            self.position.set_leverage(symbol, leverage)
+            qty = self._get_quantity_to_open(symbol, size, leverage)
+
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='SELL',
+                    position_side=('SHORT' if hedge else 'BOTH'),
+                    order_type='MARKET',
+                    qty=qty
+                )
+                order_info = self._get_order(symbol, order['orderId'])
+
+                alert = self._create_order_alert(
+                    order_type='рыночный ордер',
+                    status='исполнен',
+                    side='продажа',
+                    symbol=order_info['symbol'],
+                    qty=order_info['executedQty'],
+                    price=order_info['avgPrice'],
+                    created_time=order_info['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='рыночный ордер',
+                    status='не удалось создать',
+                    side='продажа',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=None,
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
         except Exception:
             self.logger.exception('Failed to execute market_open_short')
 
@@ -144,33 +166,42 @@ class TradeClient(BaseClient):
                 self.logger.info(f'No position to close for {symbol}')
                 return
 
-            order = self._create_order(
-                symbol=symbol,
-                side='SELL',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='MARKET',
-                qty=qty,
-                reduce_only=(None if hedge else True)
-            )
-            order_info = self._get_order(symbol, order['orderId'])
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='SELL',
+                    position_side=('LONG' if hedge else 'BOTH'),
+                    order_type='MARKET',
+                    qty=qty,
+                    reduce_only=(None if hedge else True)
+                )
+                order_info = self._get_order(symbol, order['orderId'])
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'рыночный ордер',
-                    'status': 'исполнен',
-                    'side': 'продажа',
-                    'symbol': order_info['symbol'],
-                    'qty': order_info['executedQty'],
-                    'price': order_info['avgPrice']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order_info['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+                alert = self._create_order_alert(
+                    order_type='рыночный ордер',
+                    status='исполнен',
+                    side='продажа',
+                    symbol=order_info['symbol'],
+                    qty=order_info['executedQty'],
+                    price=order_info['avgPrice'],
+                    created_time=order_info['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='рыночный ордер',
+                    status='не удалось создать',
+                    side='продажа',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=None,
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
         except Exception:
             self.logger.exception('Failed to execute market_close_long')
 
@@ -182,33 +213,42 @@ class TradeClient(BaseClient):
                 self.logger.info(f'No position to close for {symbol}')
                 return
 
-            order = self._create_order(
-                symbol=symbol,
-                side='BUY',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='MARKET',
-                qty=qty,
-                reduce_only=(None if hedge else True)
-            )
-            order_info = self._get_order(symbol, order['orderId'])
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='BUY',
+                    position_side=('SHORT' if hedge else 'BOTH'),
+                    order_type='MARKET',
+                    qty=qty,
+                    reduce_only=(None if hedge else True)
+                )
+                order_info = self._get_order(symbol, order['orderId'])
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'рыночный ордер',
-                    'status': 'исполнен',
-                    'side': 'покупка',
-                    'symbol': order_info['symbol'],
-                    'qty': order_info['executedQty'],
-                    'price': order_info['avgPrice']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order_info['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+                alert = self._create_order_alert(
+                    order_type='рыночный ордер',
+                    status='исполнен',
+                    side='покупка',
+                    symbol=order_info['symbol'],
+                    qty=order_info['executedQty'],
+                    price=order_info['avgPrice'],
+                    created_time=order_info['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='рыночный ордер',
+                    status='не удалось создать',
+                    side='покупка',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=None,
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
         except Exception:
             self.logger.exception('Failed to execute market_close_short')
 
@@ -234,33 +274,42 @@ class TradeClient(BaseClient):
                 self.logger.info(f'No position to close for {symbol}')
                 return
 
-            order = self._create_order(
-                symbol=symbol,
-                side='SELL',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='STOP_MARKET',
-                qty=qty,
-                reduce_only=(None if hedge else True),
-                stop_price=adjusted_price
-            )
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='SELL',
+                    position_side=('LONG' if hedge else 'BOTH'),
+                    order_type='STOP_MARKET',
+                    qty=qty,
+                    reduce_only=(None if hedge else True),
+                    stop_price=adjusted_price
+                )
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'рыночный стоп',
-                    'status': 'ожидает исполнения',
-                    'side': 'продажа',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['stopPrice']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+                alert = self._create_order_alert(
+                    order_type='рыночный стоп',
+                    status='ожидает исполнения',
+                    side='продажа',
+                    symbol=order['symbol'],
+                    qty=order['origQty'],
+                    price=order['stopPrice'],
+                    created_time=order['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='рыночный стоп',
+                    status='не удалось создать',
+                    side='продажа',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=str(adjusted_price),
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
             return order['orderId']
         except Exception:
             self.logger.exception('Failed to execute market_stop_close_long')
@@ -287,33 +336,42 @@ class TradeClient(BaseClient):
                 self.logger.info(f'No position to close for {symbol}')
                 return
 
-            order = self._create_order(
-                symbol=symbol,
-                side='BUY',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='STOP_MARKET',
-                qty=qty,
-                reduce_only=(None if hedge else True),
-                stop_price=adjusted_price
-            )
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='BUY',
+                    position_side=('SHORT' if hedge else 'BOTH'),
+                    order_type='STOP_MARKET',
+                    qty=qty,
+                    reduce_only=(None if hedge else True),
+                    stop_price=adjusted_price
+                )
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'рыночный стоп',
-                    'status': 'ожидает исполнения',
-                    'side': 'покупка',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['stopPrice']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+                alert = self._create_order_alert(
+                    order_type='рыночный стоп',
+                    status='ожидает исполнения',
+                    side='покупка',
+                    symbol=order['symbol'],
+                    qty=order['origQty'],
+                    price=order['stopPrice'],
+                    created_time=order['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='рыночный стоп',
+                    status='не удалось создать',
+                    side='покупка',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=str(adjusted_price),
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
             return order['orderId']
         except Exception:
             self.logger.exception('Failed to execute market_stop_close_short')
@@ -326,52 +384,61 @@ class TradeClient(BaseClient):
         leverage: int,
         price: float,
         hedge: bool
-    ) -> None:
-        if hedge:
-            self.position.switch_position_mode(True)
-        else:
-            self.position.switch_position_mode(False)
-
-        match margin:
-            case 'cross':
-                self.position.switch_margin_mode(symbol, 'CROSSED')
-            case 'isolated':
-                self.position.switch_margin_mode(symbol, 'ISOLATED')
-
-        self.position.set_leverage(symbol, leverage)
- 
+    ) -> int:
         try:
+            if hedge:
+                self.position.switch_position_mode(True)
+            else:
+                self.position.switch_position_mode(False)
+
+            match margin:
+                case 'cross':
+                    self.position.switch_margin_mode(symbol, 'CROSSED')
+                case 'isolated':
+                    self.position.switch_margin_mode(symbol, 'ISOLATED')
+
+            self.position.set_leverage(symbol, leverage)
+
             p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_open(symbol, size, leverage, price)
 
-            order = self._create_order(
-                symbol=symbol,
-                side='BUY',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='LIMIT',
-                qty=str(qty),
-                time_in_force='GTC',
-                price=adjusted_price
-            )
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='BUY',
+                    position_side=('LONG' if hedge else 'BOTH'),
+                    order_type='LIMIT',
+                    qty=str(qty),
+                    time_in_force='GTC',
+                    price=adjusted_price
+                )
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'лимитный ордер',
-                    'status': 'ожидает исполнения',
-                    'side': 'покупка',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['price']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status='ожидает исполнения',
+                    side='покупка',
+                    symbol=order['symbol'],
+                    qty=order['origQty'],
+                    price=order['price'],
+                    created_time=order['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status='не удалось создать',
+                    side='покупка',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=str(adjusted_price),
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
             return order['orderId']
         except Exception:
             self.logger.exception('Failed to execute limit_open_long')
@@ -384,52 +451,61 @@ class TradeClient(BaseClient):
         leverage: int,
         price: float,
         hedge: bool
-    ) -> None:
-        if hedge:
-            self.position.switch_position_mode(True)
-        else:
-            self.position.switch_position_mode(False)
-
-        match margin:
-            case 'cross':
-                self.position.switch_margin_mode(symbol, 'CROSSED')
-            case 'isolated':
-                self.position.switch_margin_mode(symbol, 'ISOLATED')
-
-        self.position.set_leverage(symbol, leverage)
- 
+    ) -> int:
         try:
+            if hedge:
+                self.position.switch_position_mode(True)
+            else:
+                self.position.switch_position_mode(False)
+
+            match margin:
+                case 'cross':
+                    self.position.switch_margin_mode(symbol, 'CROSSED')
+                case 'isolated':
+                    self.position.switch_margin_mode(symbol, 'ISOLATED')
+
+            self.position.set_leverage(symbol, leverage)
+
             p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_open(symbol, size, leverage, price)
 
-            order = self._create_order(
-                symbol=symbol,
-                side='SELL',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='LIMIT',
-                qty=str(qty),
-                time_in_force='GTC',
-                price=adjusted_price
-            )
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='SELL',
+                    position_side=('SHORT' if hedge else 'BOTH'),
+                    order_type='LIMIT',
+                    qty=str(qty),
+                    time_in_force='GTC',
+                    price=adjusted_price
+                )
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'лимитный ордер',
-                    'status': 'ожидает исполнения',
-                    'side': 'продажа',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['price']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status='ожидает исполнения',
+                    side='продажа',
+                    symbol=order['symbol'],
+                    qty=order['origQty'],
+                    price=order['price'],
+                    created_time=order['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status='не удалось создать',
+                    side='продажа',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=str(adjusted_price),
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
             return order['orderId']
         except Exception:
             self.logger.exception('Failed to execute limit_open_short')
@@ -456,35 +532,44 @@ class TradeClient(BaseClient):
                 self.logger.info(f'No position to close for {symbol}')
                 return
 
-            order = self._create_order(
-                symbol=symbol,
-                side='SELL',
-                position_side=('LONG' if hedge else 'BOTH'),
-                order_type='TAKE_PROFIT',
-                qty=qty,
-                time_in_force='GTC',
-                reduce_only=(None if hedge else True),
-                price=adjusted_price,
-                stop_price=adjusted_price
-            )
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='SELL',
+                    position_side=('LONG' if hedge else 'BOTH'),
+                    order_type='TAKE_PROFIT',
+                    qty=qty,
+                    time_in_force='GTC',
+                    reduce_only=(None if hedge else True),
+                    price=adjusted_price,
+                    stop_price=adjusted_price
+                )
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'лимитный ордер',
-                    'status': 'ожидает исполнения',
-                    'side': 'продажа',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['price']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status='ожидает исполнения',
+                    side='продажа',
+                    symbol=order['symbol'],
+                    qty=order['origQty'],
+                    price=order['price'],
+                    created_time=order['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status='не удалось создать',
+                    side='продажа',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=str(adjusted_price),
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
             return order['orderId']
         except Exception:
             self.logger.exception('Failed to execute limit_close_long')
@@ -511,35 +596,44 @@ class TradeClient(BaseClient):
                 self.logger.info(f'No position to close for {symbol}')
                 return
 
-            order = self._create_order(
-                symbol=symbol,
-                side='BUY',
-                position_side=('SHORT' if hedge else 'BOTH'),
-                order_type='TAKE_PROFIT',
-                qty=qty,
-                time_in_force='GTC',
-                reduce_only=(None if hedge else True),
-                price=adjusted_price,
-                stop_price=adjusted_price
-            )
+            try:
+                order = self._create_order(
+                    symbol=symbol,
+                    side='BUY',
+                    position_side=('SHORT' if hedge else 'BOTH'),
+                    order_type='TAKE_PROFIT',
+                    qty=qty,
+                    time_in_force='GTC',
+                    reduce_only=(None if hedge else True),
+                    price=adjusted_price,
+                    stop_price=adjusted_price
+                )
 
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': 'лимитный ордер',
-                    'status': 'ожидает исполнения',
-                    'side': 'покупка',
-                    'symbol': order['symbol'],
-                    'qty': order['origQty'],
-                    'price': order['price']
-                },
-                'time': datetime.fromtimestamp(
-                    timestamp=order['updateTime'] / 1000,
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status='ожидает исполнения',
+                    side='покупка',
+                    symbol=order['symbol'],
+                    qty=order['origQty'],
+                    price=order['price'],
+                    created_time=order['updateTime']
+                )
+            except OrderCreationError as e:
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status='не удалось создать',
+                    side='покупка',
+                    symbol=symbol,
+                    qty=str(qty),
+                    price=str(adjusted_price),
+                    created_time=None
+                )
+                self.telegram.send_order_alert(alert)
+                self.logger.warning(e)
+                return
+
             self.alerts.append(alert)
-            self.telegram.notify(alert)
+            self.telegram.send_order_alert(alert)
             return order['orderId']
         except Exception:
             self.logger.exception('Failed to execute limit_close_short')
@@ -610,23 +704,17 @@ class TradeClient(BaseClient):
                 else:
                     side = 'продажа'
 
-                alert = {
-                    'message': {
-                        'exchange': 'BINANCE',
-                        'type': 'рыночный стоп',
-                        'status': status,
-                        'side': side,
-                        'symbol': order_info['symbol'],
-                        'qty': qty,
-                        'price': price
-                    },
-                    'time': datetime.fromtimestamp(
-                        timestamp=order_info['updateTime'] / 1000,
-                        tz=timezone.utc
-                    ).strftime('%Y/%m/%d %H:%M:%S')
-                }
+                alert = self._create_order_alert(
+                    order_type='рыночный стоп',
+                    status=status,
+                    side=side,
+                    symbol=order_info['symbol'],
+                    qty=qty,
+                    price=price,
+                    created_time=order_info['updateTime']
+                )
                 self.alerts.append(alert)
-                self.telegram.notify(alert)
+                self.telegram.send_order_alert(alert)
 
             return active_order_ids
         except Exception:
@@ -657,23 +745,17 @@ class TradeClient(BaseClient):
                 else:
                     side = 'продажа'
 
-                alert = {
-                    'message': {
-                        'exchange': 'BINANCE',
-                        'type': 'лимитный ордер',
-                        'status': status,
-                        'side': side,
-                        'symbol': order_info['symbol'],
-                        'qty': order_info['origQty'],
-                        'price': order_info['price']
-                    },
-                    'time': datetime.fromtimestamp(
-                        timestamp=order_info['updateTime'] / 1000,
-                        tz=timezone.utc
-                    ).strftime('%Y/%m/%d %H:%M:%S')
-                }
+                alert = self._create_order_alert(
+                    order_type='лимитный ордер',
+                    status=status,
+                    side=side,
+                    symbol=order_info['symbol'],
+                    qty=order_info['origQty'],
+                    price=order_info['price'],
+                    created_time=order_info['updateTime']
+                )
                 self.alerts.append(alert)
-                self.telegram.notify(alert)
+                self.telegram.send_order_alert(alert)
 
             return active_order_ids
         except Exception:
@@ -729,26 +811,42 @@ class TradeClient(BaseClient):
         response = self.post(url, params=params, headers=headers)
 
         if response is None:
-            alert = {
-                'message': {
-                    'exchange': 'BINANCE',
-                    'type': order_type,
-                    'status': 'не удалось создать',
-                    'side': side,
-                    'symbol': symbol,
-                    'qty': qty,
-                    'price': price
-                },
-                'time': datetime.now(
-                    tz=timezone.utc
-                ).strftime('%Y/%m/%d %H:%M:%S')
-            }
-            self.alerts.append(alert)
-            self.telegram.notify(alert)
-            raise Exception(alert)
+            raise OrderCreationError('API returned invalid response')
 
         return response
-    
+
+    def _create_order_alert(
+        self,
+        order_type: str,
+        status: str,
+        side: str,
+        symbol: str,
+        qty: str,
+        price: str | None,
+        created_time: int | None
+    ) -> dict:
+        if created_time is not None:
+            order_time = datetime.fromtimestamp(
+                timestamp=created_time / 1000,
+                tz=timezone.utc
+            ).strftime('%Y/%m/%d %H:%M:%S')
+        else:
+            order_time = datetime.now(tz=timezone.utc).timestamp()
+
+        alert = {
+            'message': {
+                'exchange': self.EXCHANGE,
+                'type': order_type,
+                'status': status,
+                'side': side,
+                'symbol': symbol,
+                'qty': qty,
+                'price': price
+            },
+            'time': order_time
+        }
+        return alert
+
     def _get_order(self, symbol: str, order_id: str) -> dict:
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
         params = {'symbol': symbol, 'orderId': order_id}

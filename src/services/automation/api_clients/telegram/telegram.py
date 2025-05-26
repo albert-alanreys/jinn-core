@@ -11,43 +11,27 @@ class TelegramClient(HttpClient):
 
         self.logger = getLogger(__name__)
 
-    def notify(self, msg: dict) -> None:
+    def send_order_alert(self, order_data: dict) -> None:
         try:
-            data = msg['message']
-            
-            side_map = {
-                'BUY': 'покупка',
-                'SELL': 'продажа'
-            }
-            type_map = {
-                'TAKE_PROFIT': 'лимитный ордер',
-                'LIMIT': 'лимитный ордер',
-                'MARKET': 'рыночный ордер',
-                'STOP_MARKET': 'стоп-ордер',
-                'STOP': 'стоп-ордер'
-            }
-
-            order_type = type_map.get(data['type'].upper(), data['type'])
-            direction = side_map.get(data['side'].upper(), data['side'])
-            
-            message = (
+            data = order_data['message']
+            msg = (
                 f"📊 <b>Информация об ордере</b>\n"
-                f"┌───────────────────────\n"
+                f"════════════════════\n"
                 f"│ Биржа: <b>{data['exchange']}</b>\n"
-                f"│ Тип: <b>{order_type}</b>\n"
+                f"│ Тип: <b>{data['type']}</b>\n"
                 f"│ Статус: <b>{data['status']}</b>\n"
-                f"│ Направление: <b>{direction}</b>\n"
+                f"│ Направление: <b>{data['side']}</b>\n"
                 f"│ Символ: <code>#{data['symbol']}</code>\n"
                 f"│ Количество: <b>{data['qty']}</b>\n"
                 f"│ Цена: <b>{data['price']}</b>\n"
-                f"└───────────────────────\n"
-                f"🕒 {msg['time']}"
+                f"════════════════════\n"
+                f"🕒 {order_data['time']}"
             )
-            self._send_message(message)
+            self.send_message(msg)
         except Exception as e:
             self.logger.error(f'{type(e).__name__}: {str(e)}')
 
-    def _send_message(self, msg: str) -> None:
+    def send_message(self, msg: str) -> None:
         params = {
             'chat_id': self.chat,
             'text': msg,
