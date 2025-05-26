@@ -75,10 +75,13 @@ class Sandbox(BaseStrategy):
 
     # For frontend
     indicator_options = {
-        'HTF' : {'color': '#000080', 'lineWidth': 1},
+        'HTF C' : {'lineWidth': 2},
         'ST ↑' : {'lineWidth': 2},
         'ST ↓' : {'lineWidth': 2}
     }
+
+    htf_color_1 = encode_rgb(0, 100, 0)
+    htf_color_2 = encode_rgb(139, 0, 0)
     supertrend_color_1 = encode_rgb(76, 175, 80)
     supertrend_color_2 = encode_rgb(255, 82, 82)
 
@@ -142,6 +145,12 @@ class Sandbox(BaseStrategy):
         self.alert_close_long = False
 
         # graphics
+        self.htf_colors = np.where(
+            self.close > self.htf_close,
+            self.htf_color_1,
+            self.htf_color_2
+        )
+
         self.st_up = np.where(
             self.direcion == -1,
             self.supertrend,
@@ -214,12 +223,13 @@ class Sandbox(BaseStrategy):
         )
 
         self.indicators = {
-            'HTF' + (
+            'HTF C' + (
                 f' {self.params['feeds'][-1][0]}'
                 if self.params['feeds'][-1][0] != 'symbol' else ''
             ): {
-                'options': self.indicator_options['HTF'],
-                'values': self.htf_close
+                'options': self.indicator_options['HTF C'],
+                'values': self.htf_close,
+                'colors': self.htf_colors
             },
             'ST ↑': {
                 'options': self.indicator_options['ST ↑'],
