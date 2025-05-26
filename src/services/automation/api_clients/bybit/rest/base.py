@@ -1,32 +1,23 @@
 import hmac
 import json
-from datetime import datetime, timezone
 from hashlib import sha256
 from logging import getLogger
 from time import time
 
 import config
 from src.services.automation.api_clients.http_client import HttpClient
-from src.services.automation.api_clients.telegram import TelegramClient
 
 
 class BaseClient(HttpClient):
-    # BASE_ENDPOINT = 'https://api-testnet.bybit.com'
     BASE_ENDPOINT = 'https://api.bybit.com'
     EXCHANGE = 'BYBIT'
 
-    _telegram = None
-
-    def __init__(self, alerts: list) -> None:
-        if BaseClient._telegram is None:
-            BaseClient._telegram = TelegramClient()
-
-        self.alerts = alerts
+    def __init__(self) -> None:
         self.api_key = config.BYBIT_API_KEY
         self.api_secret = config.BYBIT_API_SECRET
 
         self.logger = getLogger(__name__)
-        
+
     def get_headers(self, params: dict, method: str) -> dict:
         timestamp = str(int(time() * 1000))
         recv_window = '5000'
@@ -50,32 +41,3 @@ class BaseClient(HttpClient):
             'X-BAPI-SIGN': signature,
             'X-BAPI-RECV-WINDOW': recv_window,
         }
-
-    def send_exception(self, exception: Exception) -> None:
-        if exception:
-            self.alerts.append({
-                'message': {
-                    'exchange': 'BYBIT',
-                    'error': str(exception)
-                },
-                'time': datetime.now(
-                    timezone.utc
-                ).strftime('%Y-%m-%d %H:%M:%S')
-            })
-            message = f'⚠️{'Bybit Client Exception'}⚠️\n{exception}'
-            self._telegram.send_message(message)
-
-    def notify_telegram(self, alert: dict) -> None:
-        try:
-            message = (
-                f"Биржа — {alert['message']['exchange']}\n"
-                f"Тип — {alert['message']['type']}\n"
-                f"Статус — {alert['message']['status']}\n"
-                f"Направление — {alert['message']['side']}\n"
-                f"Символ — #{alert['message']['symbol']}\n"
-                f"Количество — {alert['message']['qty']}\n"
-                f"Цена — {alert['message']['price']}"
-            )
-            self._telegram.send_message(message)
-        except Exception as e:
-            self.logger.error(f'{type(e).__name__}: {str(e)}')

@@ -1,12 +1,10 @@
 import hmac
-from datetime import datetime, timezone
 from hashlib import sha256
 from logging import getLogger
 from time import time
 
 import config
 from src.services.automation.api_clients.http_client import HttpClient
-from src.services.automation.api_clients.telegram import TelegramClient
 
 
 class BaseClient(HttpClient):
@@ -14,13 +12,7 @@ class BaseClient(HttpClient):
     SPOT_ENDPOINT = 'https://api.binance.com'
     EXCHANGE = 'BINANCE'
 
-    _telegram = None
-
-    def __init__(self, alerts: list) -> None:
-        if BaseClient._telegram is None:
-            BaseClient._telegram = TelegramClient()
-
-        self.alerts = alerts
+    def __init__(self) -> None:
         self.api_key = config.BINANCE_API_KEY
         self.api_secret = config.BINANCE_API_SECRET
 
@@ -32,35 +24,6 @@ class BaseClient(HttpClient):
         params = self._add_signature(params)
         headers = {'X-MBX-APIKEY': self.api_key}
         return params, headers
-
-    def send_exception(self, exception: Exception) -> None:
-        if exception:
-            self.alerts.append({
-                'message': {
-                    'exchange': 'BINANCE',
-                    'error': str(exception)
-                },
-                'time': datetime.now(
-                    timezone.utc
-                ).strftime('%Y-%m-%d %H:%M:%S')
-            })
-            message = f'⚠️{'Binance Client Exception'}⚠️\n{exception}'
-            self._telegram.send_message(message)
-
-    def notify_telegram(self, alert: dict) -> None:
-        try:
-            message = (
-                f"Биржа — {alert['message']['exchange']}\n"
-                f"Тип — {alert['message']['type']}\n"
-                f"Статус — {alert['message']['status']}\n"
-                f"Направление — {alert['message']['side']}\n"
-                f"Символ — #{alert['message']['symbol']}\n"
-                f"Количество — {alert['message']['qty']}\n"
-                f"Цена — {alert['message']['price']}"
-            )
-            self._telegram.send_message(message)
-        except Exception as e:
-            self.logger.error(f'{type(e).__name__}: {str(e)}')
 
     def _add_signature(self, params: dict) -> dict:
         str_to_sign = '&'.join([f'{k}={v}' for k, v in params.items()])

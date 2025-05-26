@@ -1,28 +1,35 @@
 from datetime import datetime, timezone
 from logging import getLogger
+from typing import TYPE_CHECKING
 
 from src.core.utils.rounding import adjust
-from .account import AccountClient
 from .base import BaseClient
-from .market import MarketClient
-from .position import PositionClient
+
+if TYPE_CHECKING:
+    from src.services.automation.api_clients.telegram import TelegramClient
+    from .account import AccountClient
+    from .market import MarketClient
+    from .position import PositionClient
 
 
 class TradeClient(BaseClient):
     def __init__(
         self,
-        account: AccountClient,
-        market: MarketClient,
-        position: PositionClient,
+        account: 'AccountClient',
+        market: 'MarketClient',
+        position: 'PositionClient',
+        telegram: 'TelegramClient',
         alerts: list
     ) -> None:
-        super().__init__(alerts)
+        super().__init__()
 
         self.logger = getLogger(__name__)
 
         self.account = account
         self.market = market
         self.position = position
+        self.telegram = telegram
+
         self.alerts = alerts
 
     def market_open_long(
@@ -73,10 +80,9 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+            self.telegram.notify(alert)
+        except Exception:
+            self.logger.exception('Failed to execute market_open_long')
 
     def market_open_short(
         self,
@@ -126,10 +132,9 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+            self.telegram.notify(alert)
+        except Exception:
+            self.logger.exception('Failed to execute market_open_short')
 
     def market_close_long(self, symbol: str, size: str, hedge: bool) -> None:
         try:
@@ -165,10 +170,9 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+            self.telegram.notify(alert)
+        except Exception:
+            self.logger.exception('Failed to execute market_close_long')
 
     def market_close_short(self, symbol: str, size: str, hedge: bool) -> None:
         try:
@@ -204,10 +208,9 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+            self.telegram.notify(alert)
+        except Exception:
+            self.logger.exception('Failed to execute market_close_short')
 
     def market_stop_close_long(
         self,
@@ -257,11 +260,10 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
+            self.telegram.notify(alert)
             return order['orderId']
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute market_stop_close_long')
 
     def market_stop_close_short(
         self,
@@ -311,11 +313,10 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
+            self.telegram.notify(alert)
             return order['orderId']
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute market_stop_close_short')
 
     def limit_open_long(
         self,
@@ -370,11 +371,10 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
+            self.telegram.notify(alert)
             return order['orderId']
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute limit_open_long')
 
     def limit_open_short(
         self,
@@ -429,11 +429,10 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
+            self.telegram.notify(alert)
             return order['orderId']
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute limit_open_short')
 
     def limit_close_long(
         self,
@@ -485,11 +484,10 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
+            self.telegram.notify(alert)
             return order['orderId']
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute limit_close_long')
 
     def limit_close_short(
         self,
@@ -541,17 +539,16 @@ class TradeClient(BaseClient):
                 ).strftime('%Y/%m/%d %H:%M:%S')
             }
             self.alerts.append(alert)
-            self.notify_telegram(alert)
+            self.telegram.notify(alert)
             return order['orderId']
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute limit_close_short')
 
     def cancel_all_orders(self, symbol: str) -> None:
         try:
             self._cancel_all_orders(symbol)
-        except Exception as e:
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute cancel_all_orders')
 
     def cancel_orders(self, symbol: str, side: str) -> None:
         try:
@@ -565,9 +562,8 @@ class TradeClient(BaseClient):
 
             for order in one_sided_orders:
                 self._cancel_order(symbol, order['orderId'])
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute cancel_orders')
 
     def cancel_stop(self, symbol: str, side: str) -> None:
         try:
@@ -583,9 +579,8 @@ class TradeClient(BaseClient):
 
             for order in stop_orders:
                 self._cancel_order(symbol, order['orderId'])
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute cancel_stop')
 
     def check_stop_orders(self, symbol: str, order_ids: list) -> list:
         active_order_ids = []
@@ -631,12 +626,11 @@ class TradeClient(BaseClient):
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 }
                 self.alerts.append(alert)
-                self.notify_telegram(alert)
+                self.telegram.notify(alert)
 
             return active_order_ids
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute check_stop_orders')
             return order_ids
 
     def check_limit_orders(self, symbol: str, order_ids: list) -> list:
@@ -679,12 +673,11 @@ class TradeClient(BaseClient):
                     ).strftime('%Y/%m/%d %H:%M:%S')
                 }
                 self.alerts.append(alert)
-                self.notify_telegram(alert)
+                self.telegram.notify(alert)
 
             return active_order_ids
-        except Exception as e:
-            self.logger.exception('An error occurred')
-            self.send_exception(e)
+        except Exception:
+            self.logger.exception('Failed to execute check_limit_orders')
             return order_ids
 
     def _cancel_all_orders(self, symbol: str) -> dict:
@@ -736,17 +729,25 @@ class TradeClient(BaseClient):
         response = self.post(url, params=params, headers=headers)
 
         if response is None:
-            error_details = (
-                f'Order failed | '
-                f'symbol={symbol} | '
-                f'side={side} | '
-                f'qty={qty} | '
-                f'price={price}'
-            )
-            raise Exception(error_details)
+            alert = {
+                'message': {
+                    'exchange': 'BINANCE',
+                    'type': order_type,
+                    'status': '⚠️не создан⚠️',
+                    'side': side,
+                    'symbol': symbol,
+                    'qty': qty,
+                    'price': price
+                },
+                'time': datetime.now(
+                    tz=timezone.utc
+                ).strftime('%Y/%m/%d %H:%M:%S')
+            }
+            self.alerts.append(alert)
+            self.telegram.notify(alert)
+            raise Exception(alert)
 
         return response
-
     
     def _get_order(self, symbol: str, order_id: str) -> dict:
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'

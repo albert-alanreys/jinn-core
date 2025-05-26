@@ -6,6 +6,7 @@ from re import fullmatch
 from threading import Thread
 
 import src.core.enums as enums
+from src.services.automation.api_clients.telegram import TelegramClient
 from .realtime_provider import RealtimeProvider
 from .api_clients.binance import BinanceREST
 from .api_clients.bybit import BybitREST
@@ -19,8 +20,10 @@ class Automizer():
         self.strategy = automation_info['strategy']
 
         self.realtime_provider = RealtimeProvider()
-        self.binance_client = BinanceREST()
-        self.bybit_client = BybitREST()
+
+        telegram_client = TelegramClient()
+        self.binance_client = BinanceREST(telegram_client)
+        self.bybit_client = BybitREST(telegram_client)
 
         self.strategy_states = {}
         self.alerts = []

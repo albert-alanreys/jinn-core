@@ -2,8 +2,8 @@ from .base import BaseClient
 
 
 class AccountClient(BaseClient):
-    def __init__(self, alerts: list) -> None:
-        super().__init__(alerts)
+    def __init__(self) -> None:
+        super().__init__()
 
     def get_wallet_balance(self) -> dict:
         url = f'{self.FUTURES_ENDPOINT}/fapi/v3/account'

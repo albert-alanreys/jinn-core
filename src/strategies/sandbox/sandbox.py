@@ -32,7 +32,7 @@ class Sandbox(BaseStrategy):
         "range_threshold":  30.0,
         "feeds": [
             # ["symbol", 1],
-            ["POLUSDT", 5]
+            ["symbol", 5]
         ]
     }
 
