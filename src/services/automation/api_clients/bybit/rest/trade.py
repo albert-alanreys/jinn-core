@@ -859,7 +859,10 @@ class TradeClient(BaseClient):
                 tz=timezone.utc
             ).strftime('%Y/%m/%d %H:%M:%S')
         else:
-            order_time = datetime.now(tz=timezone.utc).timestamp()
+            order_time = datetime.fromtimestamp(
+                timestamp=datetime.now().timestamp(),
+                tz=timezone.utc
+            ).strftime('%Y/%m/%d %H:%M:%S')
 
         alert = {
             'message': {
