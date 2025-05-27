@@ -659,7 +659,7 @@ class TradeClient(BaseClient):
         except Exception:
             self.logger.exception('Failed to execute cancel_orders')
 
-    def cancel_stop(self, symbol: str, side: str) -> None:
+    def cancel_stop_orders(self, symbol: str, side: str) -> None:
         try:
             orders_info = self._get_orders(symbol)
             stop_orders = list(
@@ -674,7 +674,7 @@ class TradeClient(BaseClient):
             for order in stop_orders:
                 self._cancel_order(symbol, order['orderId'])
         except Exception:
-            self.logger.exception('Failed to execute cancel_stop')
+            self.logger.exception('Failed to execute cancel_stop_orders')
 
     def check_stop_orders(self, symbol: str, order_ids: list) -> list:
         active_order_ids = []

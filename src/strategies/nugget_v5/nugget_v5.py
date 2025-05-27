@@ -933,7 +933,10 @@ class NuggetV5(BaseStrategy):
         )
 
         if self.alert_long_new_stop:
-            self.client.cancel_stop(symbol=self.symbol, side='Sell')
+            self.client.cancel_stop_orders(
+                symbol=self.symbol,
+                side='Sell'
+            )
             self.order_ids['stop_ids'] = self.client.check_stop_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
@@ -949,7 +952,10 @@ class NuggetV5(BaseStrategy):
                 self.order_ids['stop_ids'].append(order_id)
         
         if self.alert_short_new_stop:
-            self.client.cancel_stop(symbol=self.symbol,  side='Buy')
+            self.client.cancel_stop_orders(
+                symbol=self.symbol,
+                side='Buy'
+            )
             self.order_ids['stop_ids'] = self.client.check_stop_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
