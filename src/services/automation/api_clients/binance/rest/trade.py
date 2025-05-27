@@ -659,6 +659,23 @@ class TradeClient(BaseClient):
         except Exception:
             self.logger.exception('Failed to execute cancel_orders')
 
+    def cancel_limit_orders(self, symbol: str, side: str) -> None:
+        try:
+            orders_info = self._get_orders(symbol)
+            limit_orders = list(
+                filter(
+                    lambda order:
+                        order['type'] == 'LIMIT' and
+                        order['side'] == side.upper(),
+                    orders_info
+                )
+            )
+
+            for order in limit_orders:
+                self._cancel_order(symbol, order['orderId'])
+        except Exception:
+            self.logger.exception('Failed to execute cancel_limit_orders')
+
     def cancel_stop_orders(self, symbol: str, side: str) -> None:
         try:
             orders_info = self._get_orders(symbol)
