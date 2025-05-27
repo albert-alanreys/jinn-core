@@ -26,27 +26,27 @@ class SisterV1(BaseStrategy):
         "order_size_type": 0,
         "order_size": 100,
         "leverage": 1,
-        "stop": 2.0,
+        "stop": 10.0,
         "take_type": 1,
-        "take": 3.0,
-        "length_entry": 12,
-        "ratio_entry": 2.0,
-        "length_exit": 12,
-        "ratio_exit": 3.0,
-        "length_small_trend": 14,
-        "length_medium_trend": 12
+        "take": 10.0,
+        "length_entry": 35,
+        "ratio_entry": 5.0,
+        "length_exit": 35,
+        "ratio_exit": 1.0,
+        "length_small_trend": 560,
+        "length_medium_trend": 3500
     }
 
     # Parameters to be optimized and their possible values
     opt_params = {
-        'stop': [i / 10 for i in range(1, 51)],
-        'take': [i / 10 for i in range(1, 151)],
-        'length_entry': [i for i in range(2, 31)],
-        'ratio_entry': [i / 10 for i in range(5, 51)],
-        'length_exit': [i for i in range(2, 31)],
-        'ratio_exit': [i / 10 for i in range(5, 51)],
-        'length_small_trend': [i for i in range(5, 31)],
-        'length_medium_trend': [i for i in range(5, 51)]
+        'stop': [i / 2 for i in range(2, 21)],
+        'take': [i / 2 for i in range(2, 21)],
+        'length_entry': [i for i in range(10, 51)],
+        'ratio_entry': [i / 10 for i in range(5, 51, 5)],
+        'length_exit': [i for i in range(5, 55, 5)],
+        'ratio_exit': [i / 4 for i in range(0, 13)],
+        'length_small_trend': [i for i in range(100, 510, 10)],
+        'length_medium_trend': [i for i in range(500, 5050, 50)]
     }
 
     # For frontend
@@ -244,7 +244,7 @@ class SisterV1(BaseStrategy):
         }
 
     @staticmethod
-    # @nb.jit(cache=True, nopython=True, nogil=True)
+    @nb.jit(cache=True, nopython=True, nogil=True)
     def _calculate(
         direction: int,
         initial_capital: float,

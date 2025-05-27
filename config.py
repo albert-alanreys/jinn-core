@@ -42,7 +42,7 @@ TESTING_INFO = {
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
-    'start': '2020-01-01',
+    'start': '2018-01-01',
     'end': '2025-05-01',
     'strategy': enums.Strategy.SISTER_V1,
 }
