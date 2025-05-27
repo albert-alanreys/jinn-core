@@ -674,7 +674,11 @@ class TradeClient(BaseClient):
         try:
             orders_info = self._get_order(symbol)['result']['list']
             one_sided_orders = list(
-                filter(lambda order: order['side'] == side, orders_info)
+                filter(
+                    lambda order:
+                        order['side'] == side.capitalize(),
+                    orders_info
+                )
             )
 
             for order in one_sided_orders:
@@ -689,7 +693,7 @@ class TradeClient(BaseClient):
                 filter(
                     lambda order:
                         order['orderType'] == 'Limit' and
-                        order['side'] == side,
+                        order['side'] == side.capitalize(),
                     orders_info
                 )
             )
@@ -706,7 +710,7 @@ class TradeClient(BaseClient):
                 filter(
                     lambda order:
                         order['stopOrderType'] == 'Stop' and
-                        order['side'] == side,
+                        order['side'] == side.capitalize(),
                     orders_info
                 )
             )
