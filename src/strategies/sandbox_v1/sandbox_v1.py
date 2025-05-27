@@ -9,7 +9,7 @@ from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
 
-class Sandbox(BaseStrategy):
+class SandboxV1(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
 
@@ -86,7 +86,7 @@ class Sandbox(BaseStrategy):
     supertrend_color_2 = encode_rgb(255, 82, 82)
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
-        super().__init__(client, all_params=all_params, opt_params=opt_params)
+        super().__init__(client, all_params, opt_params)
 
     def start(self, market_data) -> None:
         self.open_deals_log = np.full((4, 5), np.nan)

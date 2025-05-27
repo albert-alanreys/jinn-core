@@ -125,7 +125,7 @@ class NuggetV2(BaseStrategy):
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
-        super().__init__(client, all_params=all_params, opt_params=opt_params)
+        super().__init__(client, all_params, opt_params)
 
     def start(self, market_data) -> None:
         self.open_deals_log = np.full(5, np.nan)
