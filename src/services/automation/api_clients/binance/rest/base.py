@@ -1,9 +1,9 @@
 import hmac
 from hashlib import sha256
 from logging import getLogger
+from os import getenv
 from time import time
 
-import config
 from src.services.automation.api_clients.http_client import HttpClient
 
 
@@ -13,9 +13,8 @@ class BaseClient(HttpClient):
     EXCHANGE = 'BINANCE'
 
     def __init__(self) -> None:
-        self.api_key = config.BINANCE_API_KEY
-        self.api_secret = config.BINANCE_API_SECRET
-
+        self.api_key = getenv('BINANCE_API_KEY')
+        self.api_secret = getenv('BINANCE_API_SECRET')
         self.logger = getLogger(__name__)
 
     def build_signed_request(self, params: dict) -> tuple:

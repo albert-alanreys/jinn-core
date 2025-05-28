@@ -1,10 +1,13 @@
 import logging
 
+from dotenv import load_dotenv
+
 import config
 from src.core.controller import Controller
 
 
 def main() -> None:
+    load_dotenv()
     logging.basicConfig(level=logging.INFO)
 
     controller = Controller(

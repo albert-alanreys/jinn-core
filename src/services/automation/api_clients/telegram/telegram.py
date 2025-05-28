@@ -1,14 +1,13 @@
 from logging import getLogger
+from os import getenv
 
-import config
 from src.services.automation.api_clients.http_client import HttpClient
 
 
 class TelegramClient(HttpClient):
     def __init__(self) -> None:
-        self.token = config.TELEGRAM_BOT_TOKEN
-        self.chat = config.TELEGRAM_CHAT_ID
-
+        self.token = getenv('TELEGRAM_BOT_TOKEN')
+        self.chat = getenv('TELEGRAM_CHAT_ID')
         self.logger = getLogger(__name__)
 
     def send_order_alert(self, order_data: dict) -> None:
