@@ -149,7 +149,6 @@ class MarketClient(BaseClient):
                 f'Failed to get price precision for {symbol} | '
                 f'{type(e).__name__} - {e}'
             )
-            return 0.0
 
     @lru_cache
     def get_qty_precision(self, symbol: str) -> float:
@@ -163,7 +162,6 @@ class MarketClient(BaseClient):
                 f'Failed to get qty precision for {symbol} | '
                 f'{type(e).__name__} - {e}'
             )
-            return 0.0
 
     def get_tickers(self, symbol: str) -> dict:
         url = f'{self.BASE_ENDPOINT}/v5/market/tickers'
@@ -208,7 +206,7 @@ class MarketClient(BaseClient):
 
         response = self.get(url, params, logging=False)
         return response['result']['list'][::-1]
-    
+
     def _get_symbol_info(self, symbol: str) -> dict:
         url = f'{self.BASE_ENDPOINT}/v5/market/instruments-info'
         params = {'category': 'linear', 'symbol': symbol}

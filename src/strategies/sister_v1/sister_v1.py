@@ -1,5 +1,3 @@
-from random import randint
-
 import numpy as np
 import numba as nb
 
@@ -39,14 +37,14 @@ class SisterV1(BaseStrategy):
 
     # Parameters to be optimized and their possible values
     opt_params = {
-        'stop': [i / 2 for i in range(2, 21)],
-        'take': [i / 2 for i in range(2, 21)],
-        'length_entry': [i for i in range(10, 51)],
+        'stop': [i / 2 for i in range(1, 21)],
+        'take': [i / 2 for i in range(1, 31)],
+        'length_entry': [i for i in range(10, 61)],
         'ratio_entry': [i / 10 for i in range(5, 51, 5)],
-        'length_exit': [i for i in range(5, 55, 5)],
+        'length_exit': [i for i in range(5, 105, 5)],
         'ratio_exit': [i / 4 for i in range(0, 13)],
         'length_small_trend': [i for i in range(3, 21)],
-        'length_medium_trend': [i for i in range(25, 105, 5)]
+        'length_medium_trend': [i for i in range(25, 135, 5)]
     }
 
     # For frontend
