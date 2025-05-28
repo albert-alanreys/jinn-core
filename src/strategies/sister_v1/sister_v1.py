@@ -33,8 +33,8 @@ class SisterV1(BaseStrategy):
         "ratio_entry": 5.0,
         "length_exit": 35,
         "ratio_exit": 1.0,
-        "length_small_trend": 560,
-        "length_medium_trend": 3500
+        "length_small_trend": 7,
+        "length_medium_trend": 35
     }
 
     # Parameters to be optimized and their possible values
@@ -45,8 +45,8 @@ class SisterV1(BaseStrategy):
         'ratio_entry': [i / 10 for i in range(5, 51, 5)],
         'length_exit': [i for i in range(5, 55, 5)],
         'ratio_exit': [i / 4 for i in range(0, 13)],
-        'length_small_trend': [i for i in range(100, 510, 10)],
-        'length_medium_trend': [i for i in range(500, 5050, 50)]
+        'length_small_trend': [i for i in range(3, 21)],
+        'length_medium_trend': [i for i in range(25, 105, 5)]
     }
 
     # For frontend

@@ -166,9 +166,18 @@ class NuggetV2(BaseStrategy):
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.change_upper_band = ta.change(source=self.ds[0], length=1)
-        self.change_lower_band = ta.change(source=self.ds[1], length=1)
-        self.rsi = ta.rsi(source=self.close, length=self.params['rsi_length'])
+        self.change_upper_band = ta.change(
+            source=self.ds[0],
+            length=1
+        )
+        self.change_lower_band = ta.change(
+            source=self.ds[1],
+            length=1
+        )
+        self.rsi = ta.rsi(
+            source=self.close,
+            length=self.params['rsi_length']
+        )
 
         if self.params['bb_filter']:
             self.bb_rsi = ta.bb(
