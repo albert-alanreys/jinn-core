@@ -10,7 +10,7 @@ def atr(
     high: np.ndarray,
     low: np.ndarray,
     close: np.ndarray,
-    length: int
+    length: np.int16
 ) -> np.ndarray:
     # tr
     hl = high - low
@@ -43,7 +43,11 @@ def atr(
     ), 
     cache=True, nopython=True, nogil=True
 )
-def bb(source: np.ndarray, length: int, mult: float) -> np.ndarray:
+def bb(
+    source: np.ndarray,
+    length: np.int16,
+    mult: np.float32
+) -> np.ndarray:
     # sma
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     sma = np.full(rolling.shape[0], np.nan)
@@ -73,7 +77,11 @@ def bb(source: np.ndarray, length: int, mult: float) -> np.ndarray:
     nb.float64[:](nb.float64[:], nb.int16, nb.float32), 
     cache=True, nopython=True, nogil=True
 )
-def bbw(source: np.ndarray, length: int, mult: float) -> np.ndarray:
+def bbw(
+    source: np.ndarray,
+    length: np.int16,
+    mult: np.float32
+) -> np.ndarray:
     # sma
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     sma = np.full(rolling.shape[0], np.nan)
@@ -101,7 +109,7 @@ def bbw(source: np.ndarray, length: int, mult: float) -> np.ndarray:
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def change(source: np.ndarray, length: int) -> np.ndarray:
+def change(source: np.ndarray, length: np.int16) -> np.ndarray:
     values = (
         source - np.concatenate(
             (np.full(length, np.nan), source[: -length])
@@ -161,12 +169,8 @@ def cum(source: np.ndarray) -> np.ndarray:
 def dd(
     source1: np.ndarray,
     source2: np.ndarray,
-    length: int
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray
-]:
+    length: np.int16
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     # upper
     source1 = source1.copy()
     source1[np.isnan(source1)] = -np.inf
@@ -221,13 +225,9 @@ def dmi(
     high: np.ndarray,
     low: np.ndarray,
     close: np.ndarray,
-    di_length: int,
-    adx_length: int
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray
-]:
+    di_length: np.int16,
+    adx_length: np.int16
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     # change_high
     change_high = (
         high - np.concatenate((np.full(1, np.nan), high[: -1]))
@@ -337,12 +337,8 @@ def dmi(
 def donchian(
     source1: np.ndarray,
     source2: np.ndarray,
-    length: int
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray
-]:
+    length: np.int16
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     # upper
     source1 = source1.copy()
     source1[np.isnan(source1)] = -np.inf
@@ -385,12 +381,9 @@ def ds(
     high: np.ndarray,
     low: np.ndarray,
     close: np.ndarray,
-    factor: float,
-    atr_length: int
-) -> tuple[
-    np.ndarray,
-    np.ndarray
-]:
+    factor: np.float32,
+    atr_length: np.int16
+) -> tuple[np.ndarray, np.ndarray]:
     # tr
     hl = high - low
     hc = np.absolute(
@@ -447,7 +440,7 @@ def ds(
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def ema(source: np.ndarray, length: int) -> np.ndarray:
+def ema(source: np.ndarray, length: np.int16) -> np.ndarray:
     values = source.copy()
     alpha = 2 / (length + 1)
     na_sum = np.isnan(values).sum()
@@ -464,7 +457,7 @@ def ema(source: np.ndarray, length: int) -> np.ndarray:
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def highest(source: np.ndarray, length: int) -> np.ndarray:
+def highest(source: np.ndarray, length: np.int16) -> np.ndarray:
     source = source.copy()
     source[np.isnan(source)] = -np.inf
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
@@ -482,7 +475,7 @@ def highest(source: np.ndarray, length: int) -> np.ndarray:
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def hma(source: np.ndarray, length: int) -> np.ndarray:
+def hma(source: np.ndarray, length: np.int16) -> np.ndarray:
     # wma1
     wma1_length = length // 2
     rolling = np.lib.stride_tricks.sliding_window_view(source, wma1_length)
@@ -540,7 +533,7 @@ def hma(source: np.ndarray, length: int) -> np.ndarray:
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def lowest(source: np.ndarray, length: int) -> np.ndarray:
+def lowest(source: np.ndarray, length: np.int16) -> np.ndarray:
     source = source.copy()
     source[np.isnan(source)] = np.inf
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
@@ -560,8 +553,8 @@ def lowest(source: np.ndarray, length: int) -> np.ndarray:
 )
 def pivothigh(
     source: np.ndarray,
-    leftbars: int,
-    rightbars: int
+    leftbars: np.int16,
+    rightbars: np.int16
 ) -> np.ndarray:
     source = source.copy()
     source[np.isnan(source)] = -np.inf
@@ -588,8 +581,8 @@ def pivothigh(
 )
 def pivotlow(
     source: np.ndarray,
-    leftbars: int,
-    rightbars: int
+    leftbars: np.int16,
+    rightbars: np.int16
 ) -> np.ndarray:
     source = source.copy()
     source[np.isnan(source)] = np.inf
@@ -614,7 +607,7 @@ def pivotlow(
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def rma(source: np.ndarray, length: int) -> np.ndarray:
+def rma(source: np.ndarray, length: np.int16) -> np.ndarray:
     values = source.copy()
     alpha = 1 / length
     na_sum = np.isnan(values).sum()
@@ -631,7 +624,7 @@ def rma(source: np.ndarray, length: int) -> np.ndarray:
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def rsi(source: np.ndarray, length: int) -> np.ndarray:
+def rsi(source: np.ndarray, length: np.int16) -> np.ndarray:
     u = source - np.concatenate((np.full(1, np.nan), source[: -1]))
     d = np.concatenate((np.full(1, np.nan), source[: -1])) - source
     u[u < 0] = 0
@@ -667,7 +660,7 @@ def rsi(source: np.ndarray, length: int) -> np.ndarray:
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def sma(source: np.ndarray, length: int) -> np.ndarray:
+def sma(source: np.ndarray, length: np.int16) -> np.ndarray:
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
 
@@ -682,7 +675,7 @@ def sma(source: np.ndarray, length: int) -> np.ndarray:
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def stdev(source: np.ndarray, length: int) -> np.ndarray:
+def stdev(source: np.ndarray, length: np.int16) -> np.ndarray:
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
 
@@ -703,12 +696,9 @@ def supertrend(
     high: np.ndarray,
     low: np.ndarray,
     close: np.ndarray,
-    factor: float,
-    atr_length: int
-) -> tuple[
-    np.ndarray,
-    np.ndarray
-]:
+    factor: np.float32,
+    atr_length: np.int16
+) -> tuple[np.ndarray, np.ndarray]:
     # tr
     hl = high - low
     hc = np.absolute(
@@ -789,7 +779,7 @@ def stoch(
     source: np.ndarray,
     high: np.ndarray,
     low: np.ndarray,
-    length: int
+    length: np.int16
 ) -> np.ndarray:
     # highest
     high = high.copy()
@@ -828,7 +818,7 @@ def tr(
     high: np.ndarray,
     low: np.ndarray,
     close: np.ndarray,
-    handle_na: bool
+    handle_na: np.bool_
 ) -> np.ndarray:
     hl = high - low
     hc = np.absolute(
@@ -854,7 +844,7 @@ def tr(
     nb.float64[:](nb.float64[:], nb.int16),
     cache=True, nopython=True, nogil=True
 )
-def wma(source: np.ndarray, length: int) -> np.ndarray:
+def wma(source: np.ndarray, length: np.int16) -> np.ndarray:
     rolling = np.lib.stride_tricks.sliding_window_view(source, length)
     values = np.full(rolling.shape[0], np.nan)
     weights = np.full(length, np.nan)
@@ -879,7 +869,7 @@ def wpr(
     source1: np.ndarray,
     source2: np.ndarray,
     source3: np.ndarray,
-    length: int
+    length: np.int16
 ) -> np.ndarray:
     # highest
     source1 = source1.copy()
