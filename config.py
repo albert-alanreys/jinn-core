@@ -30,5 +30,5 @@ TESTING_INFO = {
     'interval': '1h',
     'start': '2017-01-01',
     'end': '2025-05-01',
-    'strategy': enums.Strategy.NUGGET_V2,
+    'strategy': enums.Strategy.SISTER_V1,
 }

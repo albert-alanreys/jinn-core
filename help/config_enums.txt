@@ -37,8 +37,9 @@
 
 Ключ strategy (стратегия):
   1. enums.Strategy.DEVOURER_V3 — стратегия Devourer версии 3
-  2. enums.Strategy.DICKEY_FULLER_V1 — стратегия Dickey-Fuller версии 1
-  3. enums.Strategy.MEAN_STRIKE_V1 — стратегия MeanStrike версии 1
-  4. enums.Strategy.NUGGET_V2 — стратегия Nugget версии 2
-  5. enums.Strategy.NUGGET_V4 — стратегия Nugget версии 4
-  6. enums.Strategy.NUGGET_V5 — стратегия Nugget версии 5
+  2. enums.Strategy.MEAN_STRIKE_V1 — стратегия MeanStrike версии 1
+  3. enums.Strategy.NUGGET_V2 — стратегия Nugget версии 2
+  4. enums.Strategy.NUGGET_V4 — стратегия Nugget версии 4
+  5. enums.Strategy.NUGGET_V5 — стратегия Nugget версии 5
+  6. enums.Strategy.SANDBOX_V1 — стратегия Sandbox версии 1
+  7. enums.Strategy.SISTER_V1 — стратегия Sister версии 1

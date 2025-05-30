@@ -229,7 +229,7 @@ export default class ReportManager {
     }
 
     innerDiv2.innerHTML = `<span style="color: ${color};">${
-      data.metrics[0][12] + ' USDT ' + data.metrics[0][12] + '%'
+      data.metrics[0][12] + ' USDT ' + data.metrics[0][13] + '%'
     }</span>`;
     outerDiv.appendChild(innerDiv2);
 
