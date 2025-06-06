@@ -84,19 +84,19 @@ class Optimizer:
                         extra_feeds=feeds
                     )
 
-                    fold_size = len(market_data['klines']) // 3
-                    fold_1 = market_data['klines'][:fold_size]
-                    fold_2 = market_data['klines'][fold_size : 2 * fold_size]
-                    fold_3 = market_data['klines'][2 * fold_size :]
+                    total_len = len(market_data['klines'])
+                    train_size = int(total_len * 0.7)
+
+                    train_data = market_data['klines'][:train_size]
+                    test_data = market_data['klines'][train_size:]
 
                     strategy_state = {
                         'name': strategy.name,
                         'type': strategy.value,
                         'client': client,
-                        'fold_1': fold_1,
-                        'fold_2': fold_2,
-                        'fold_3': fold_3,
-                        'market_data': market_data
+                        'market_data': market_data,
+                        'train_data': train_data,
+                        'test_data': test_data
                     }
                     strategy_id = str(id(strategy_state))
                     self.strategy_states[strategy_id] = strategy_state
@@ -122,19 +122,19 @@ class Optimizer:
                     extra_feeds=feeds
                 )
 
-                fold_size = len(market_data['klines']) // 3
-                fold_1 = market_data['klines'][:fold_size]
-                fold_2 = market_data['klines'][fold_size : 2 * fold_size]
-                fold_3 = market_data['klines'][2 * fold_size :]
+                total_len = len(market_data['klines'])
+                train_size = int(total_len * 0.7)
+
+                train_data = market_data['klines'][:train_size]
+                test_data = market_data['klines'][train_size:]
 
                 strategy_state = {
                     'name': self.strategy.name,
                     'type': self.strategy.value,
                     'client': client,
-                    'fold_1': fold_1,
-                    'fold_2': fold_2,
-                    'fold_3': fold_3,
-                    'market_data': market_data
+                    'market_data': market_data,
+                    'train_data': train_data,
+                    'test_data': test_data
                 }
                 strategy_id = str(id(strategy_state))
                 self.strategy_states[strategy_id] = strategy_state

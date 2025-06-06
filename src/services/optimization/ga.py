@@ -6,28 +6,22 @@ if TYPE_CHECKING:
 
 
 class GA:
-    ITERATIONS = 5000
+    ITERATIONS = 500
     POPULATION_SIZE = 50
     MAX_POPULATION_SIZE = 300
 
     def __init__(self, strategy_state: dict) -> None:
         self.strategy = strategy_state['type']
         self.client = strategy_state['client']
-        self.fold_1 = strategy_state['fold_1']
-        self.fold_2 = strategy_state['fold_2']
-        self.fold_3 = strategy_state['fold_3']
         self.market_data = strategy_state['market_data']
+        self.train_data = strategy_state['train_data']
+        self.test_data = strategy_state['test_data']
 
         self.population = {}
         self.best_samples = []
 
     def fit(self) -> None:
-        folds = [self.fold_1, self.fold_2, self.fold_3]
-
-        for i in range(3):
-            self.train_folds = [folds[j] for j in range(3) if j != i]
-            self.validation_fold = folds[i]
-
+        for _ in range(3):
             self._create()
 
             for _ in range(self.ITERATIONS):
@@ -51,10 +45,7 @@ class GA:
         ]
 
         for sample in samples:
-            fitness = (
-                self._evaluate(sample, self.train_folds[0]) +
-                self._evaluate(sample, self.train_folds[1])
-            )
+            fitness = self._evaluate(sample, self.train_data)
             self.population[fitness] = sample
 
         self.sample_len = len(self.strategy.opt_params)
@@ -120,10 +111,7 @@ class GA:
                 )
 
     def _expand(self) -> None:
-        fitness = (
-            self._evaluate(self.child, self.train_folds[0]) +
-            self._evaluate(self.child, self.train_folds[1])
-        )
+        fitness = self._evaluate(self.child, self.train_data)
         self.population[fitness] = self.child
 
     def _kill(self) -> None:
@@ -146,14 +134,12 @@ class GA:
         best_score = float('-inf')
         best_sample = None
 
-        for score, sample in self.population.items():
-            fitness = (
-                score * 0.3 +
-                self._evaluate(sample, self.validation_fold) * 0.7
-            )
+        for train_fitness, sample in self.population.items():
+            test_fitness = self._evaluate(sample, self.test_data)
+            combined_fitness = 0.5 * train_fitness + 0.5 * test_fitness
 
-            if fitness > best_score:
-                best_score = fitness
+            if combined_fitness > best_score:
+                best_score = combined_fitness
                 best_sample = sample
 
         self.best_samples.append(best_sample)
