@@ -10,8 +10,8 @@ from .db_manager import DBManager
 
 if TYPE_CHECKING:
     from src.core.enums import Market
-    from src.services.automation.api_clients.binance import BinanceREST
-    from src.services.automation.api_clients.bybit import BybitREST
+    from src.services.automation.api_clients.binance import BinanceClient
+    from src.services.automation.api_clients.bybit import BybitClient
 
 
 class HistoryProvider():
@@ -21,7 +21,7 @@ class HistoryProvider():
 
     def fetch_data(
         self,
-        client: 'BinanceREST | BybitREST',
+        client: 'BinanceClient | BybitClient',
         market: 'Market',
         symbol: str,
         interval: str,
@@ -74,7 +74,7 @@ class HistoryProvider():
 
     def _fetch_klines(
         self,
-        client: 'BinanceREST | BybitREST',
+        client: 'BinanceClient | BybitClient',
         market: 'Market',
         symbol: str,
         interval: str,
@@ -193,7 +193,7 @@ class HistoryProvider():
 
     def _fetch_klines_from_exchange(
         self,
-        client: 'BinanceREST | BybitREST',
+        client: 'BinanceClient | BybitClient',
         market: 'Market',
         symbol: str,
         interval: str,
@@ -236,7 +236,7 @@ class HistoryProvider():
     
     def _fetch_precisions(
         self,
-        client: 'BinanceREST | BybitREST',
+        client: 'BinanceClient | BybitClient',
         symbol: str,
     ) -> tuple[float, float]:
         database_name = f'{client.EXCHANGE.lower()}.db'

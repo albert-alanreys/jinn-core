@@ -5,14 +5,14 @@ import src.core.enums as enums
 #    AUTOMATION - automation
 #    OPTIMIZATION - optimization
 #    TESTING - testing
-MODE = enums.Mode.TESTING
+MODE = enums.Mode.AUTOMATION
 
 # Settings for different modes
 AUTOMATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': 1,
-    'strategy': enums.Strategy.SANDBOX_V1,
+    'strategy': enums.Strategy.SISTER_V1,
 }
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,

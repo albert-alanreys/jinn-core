@@ -1,2 +1,1 @@
-from .binance_rest import BinanceREST
-from .binance_ws import BinanceWebSocket
+from .client import BinanceClient

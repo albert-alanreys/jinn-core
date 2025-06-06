@@ -1,15 +1,15 @@
 from typing import Any, TYPE_CHECKING
 
-from .rest import AccountClient
-from .rest import MarketClient
-from .rest import PositionClient
-from .rest import TradeClient
+from .core import AccountClient
+from .core import MarketClient
+from .core import PositionClient
+from .core import TradeClient
 
 if TYPE_CHECKING:
     from src.services.automation.api_clients.telegram import TelegramClient
 
 
-class BinanceREST():
+class BybitClient():
     def __init__(self, telegram_client: 'TelegramClient') -> None:
         self.alerts = []
 
@@ -32,4 +32,4 @@ class BinanceREST():
             except AttributeError:
                 continue
 
-        raise AttributeError(f'BinanceREST has no attribute "{name}"')
+        raise AttributeError(f'BybitClient has no attribute "{name}"')

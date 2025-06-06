@@ -8,8 +8,8 @@ from threading import Thread
 import src.core.enums as enums
 from src.services.automation.api_clients.telegram import TelegramClient
 from .realtime_provider import RealtimeProvider
-from .api_clients.binance import BinanceREST
-from .api_clients.bybit import BybitREST
+from .api_clients.binance import BinanceClient
+from .api_clients.bybit import BybitClient
 
 
 class Automizer():
@@ -21,8 +21,8 @@ class Automizer():
 
         self.realtime_provider = RealtimeProvider()
         self.telegram_client = TelegramClient()
-        self.binance_client = BinanceREST(self.telegram_client)
-        self.bybit_client = BybitREST(self.telegram_client)
+        self.binance_client = BinanceClient(self.telegram_client)
+        self.bybit_client = BybitClient(self.telegram_client)
 
         self.strategy_states = {}
         self.alerts = []
@@ -160,16 +160,23 @@ class Automizer():
             except Exception:
                 self.logger.exception('An error occurred')
 
-        self.realtime_provider.subscribe_kline_updates(self.strategy_states)
-        Thread(target=self._automate, daemon=True).start()
+        self.automation_thread = Thread(
+            target=self._automate,
+            daemon=True
+        )
+        self.automation_thread.start()
+
+        self.market_data_thread = Thread(
+            target=self.realtime_provider.poll_market_data,
+            args=(self.strategy_states,),
+            daemon=True
+        )
+        self.market_data_thread.start()
 
     def _automate(self) -> None:
         while True:
             for strategy_id, strategy_state in self.strategy_states.items():
                 if not strategy_state['klines_updated']:
-                    continue
-
-                if not self._all_extra_klines_updated(strategy_id):
                     continue
 
                 strategy_state['klines_updated'] = False
@@ -179,34 +186,6 @@ class Automizer():
                     self._update_alerts(strategy_id)
                 except Exception:
                     self.logger.exception('An error occurred')
-
-    def _all_extra_klines_updated(self, strategy_id: str) -> bool:
-        strategy_state = self.strategy_states[strategy_id]
-        market_data = strategy_state['market_data']
-        base_klines = market_data['klines']
-        extra_klines_by_feed = market_data['extra_klines']
-
-        if not extra_klines_by_feed:
-            return True
-
-        try:
-            base_duration = base_klines[1][0] - base_klines[0][0]
-            expected_close_time = base_klines[-1][0] + base_duration
-
-            for extra_klines in extra_klines_by_feed.values():
-                duration = extra_klines[1][0] - extra_klines[0][0]
-                open_time = extra_klines[-1][0]
-
-                if expected_close_time == open_time + 2 * duration:
-                    return False
-                elif expected_close_time > open_time + 2 * duration:
-                    self.logger.warning('Data synchronization error')
-                    return False
-        except Exception:
-            self.logger.exception('An error occurred')
-            return False
-
-        return True
 
     def _execute_strategy(self, strategy_id: str) -> None:
         strategy_state = self.strategy_states[strategy_id]
