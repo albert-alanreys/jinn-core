@@ -41,12 +41,12 @@ class Controller():
 
         match self.mode:
             case Mode.AUTOMATION:
-                self.automizer.automate()
+                self.automizer.run()
                 self._start_server(self.automizer.strategy_states)
             case Mode.OPTIMIZATION:
-                self.optimizer.optimize()
+                self.optimizer.run()
             case Mode.TESTING:
-                self.tester.test()
+                self.tester.run()
                 self._start_server(self.tester.strategy_states)
 
     def _init_service(

@@ -30,7 +30,7 @@ class Optimizer:
 
         self.logger = getLogger(__name__)
 
-    def optimize(self) -> None:
+    def run(self) -> None:
         for strategy in enums.Strategy:
             file_path = os.path.abspath(
                 os.path.join(
@@ -164,7 +164,7 @@ class Optimizer:
                 delattr(self, 'history_provider')
 
             best_samples_list = p.map(
-                func=self._run_optimization,
+                func=self._optimize,
                 iterable=self.strategy_states.values()
             )
 
@@ -176,7 +176,7 @@ class Optimizer:
         self.logger.info('Optimization completed')
         self.telegram_client.send_message('✅ Оптимизация завершена')
 
-    def _run_optimization(self, strategy_state: dict) -> list:
+    def _optimize(self, strategy_state: dict) -> list:
         ga = GA(strategy_state)
         ga.fit()
         return ga.best_samples

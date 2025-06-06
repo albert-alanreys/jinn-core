@@ -32,7 +32,7 @@ class Tester:
 
         self.logger = getLogger(__name__)
 
-    def test(self) -> None:
+    def run(self) -> None:
         self.logger.info('Testing process started')
 
         for strategy in enums.Strategy:

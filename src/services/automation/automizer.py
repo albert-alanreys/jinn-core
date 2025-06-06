@@ -29,7 +29,7 @@ class Automizer():
 
         self.logger = getLogger(__name__)
 
-    def automate(self) -> None:
+    def run(self) -> None:
         self.logger.info('Automation process started')
 
         for strategy in enums.Strategy:
@@ -161,9 +161,9 @@ class Automizer():
                 self.logger.exception('An error occurred')
 
         self.realtime_provider.subscribe_kline_updates(self.strategy_states)
-        Thread(target=self._run_automation, daemon=True).start()
+        Thread(target=self._automate, daemon=True).start()
 
-    def _run_automation(self) -> None:
+    def _automate(self) -> None:
         while True:
             for strategy_id, strategy_state in self.strategy_states.items():
                 if not strategy_state['klines_updated']:
