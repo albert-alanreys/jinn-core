@@ -6,9 +6,9 @@ if TYPE_CHECKING:
 
 
 class GA:
-    ITERATIONS = 500
-    POPULATION_SIZE = 50
-    MAX_POPULATION_SIZE = 300
+    ITERATIONS = 5000
+    POPULATION_SIZE = 100
+    MAX_POPULATION_SIZE = 500
 
     def __init__(self, strategy_state: dict) -> None:
         self.strategy = strategy_state['type']
