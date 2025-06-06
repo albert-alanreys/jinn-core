@@ -6,6 +6,7 @@ import numpy as np
 
 import src.core.enums as enums
 from src.core.utils.klines import has_last_historical_kline
+from src.core.utils.klines import has_realtime_kline
 
 if TYPE_CHECKING:
     from src.services.automation.api_clients.binance import BinanceClient
@@ -29,12 +30,16 @@ class RealtimeProvider():
         q_precision = client.get_qty_precision(symbol)   
 
         valid_interval = client.get_valid_interval(interval)
-        last_klines = client.get_last_klines(
-            symbol=symbol,
-            interval=valid_interval,
-            limit=self.KLINES_LIMIT
-        )
-        klines = np.array(last_klines)[:, :6].astype(float)[:-1]
+        klines = np.array(
+            client.get_last_klines(
+                symbol=symbol,
+                interval=valid_interval,
+                limit=self.KLINES_LIMIT
+            )
+        )[:, :6].astype(float)
+
+        if has_realtime_kline(klines):
+            klines = klines[:-1]
 
         extra_klines_by_feed = {}
 
@@ -45,12 +50,16 @@ class RealtimeProvider():
                 interval_ms = client.interval_ms[extra_interval]
                 limit = int((time() * 1000 - klines[0][0]) / interval_ms)
 
-                last_klines = client.get_last_klines(
-                    symbol=extra_symbol,
-                    interval=extra_interval,
-                    limit=limit
-                )
-                extra_klines = np.array(last_klines)[:, :6].astype(float)[:-1]
+                extra_klines = np.array(
+                    client.get_last_klines(
+                        symbol=extra_symbol,
+                        interval=extra_interval,
+                        limit=limit
+                    )
+                )[:, :6].astype(float)
+
+                if has_realtime_kline(extra_klines):
+                    extra_klines = extra_klines[:-1]
 
                 key = (extra_symbol, extra_interval)
                 extra_klines_by_feed[key] = extra_klines

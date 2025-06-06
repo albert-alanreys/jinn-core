@@ -118,9 +118,9 @@ class Automizer():
                         'type': strategy.value,
                         'instance': strategy_instance,
                         'client': client,
+                        'market_data': market_data,
                         'alerts': self.alerts,
-                        'alerts_updated': False,
-                        'market_data': market_data
+                        'updated': False
                     }
                     strategy_id = str(id(strategy_state))
                     self.strategy_states[strategy_id] = strategy_state
@@ -150,20 +150,16 @@ class Automizer():
                     'type': self.strategy.value,
                     'instance': strategy_instance,
                     'client': client,
+                    'market_data': market_data,
                     'alerts': self.alerts,
-                    'alerts_updated': False,
-                    'market_data': market_data
+                    'updated': False
                 }
                 strategy_id = str(id(strategy_state))
                 self.strategy_states[strategy_id] = strategy_state
             except Exception:
                 self.logger.exception('An error occurred')
 
-        self.automation_thread = Thread(
-            target=self._automate,
-            daemon=True
-        )
-        self.automation_thread.start()
+        Thread(target=self._automate, daemon=True).start()
 
     def _automate(self) -> None:
         while True:
@@ -172,6 +168,7 @@ class Automizer():
                     if self.realtime_provider.update_data(strategy_state):
                         self._execute_strategy(strategy_id)
                         self._update_alerts(strategy_id)
+                        strategy_state['updated'] = True
                 except Exception:
                     self.logger.exception('An error occurred')
 
@@ -185,13 +182,13 @@ class Automizer():
 
     def _update_alerts(self, strategy_id: str) -> None:
         strategy_state = self.strategy_states[strategy_id]
-        alerts = strategy_state['client'].alerts
+        new_alerts = strategy_state['client'].alerts
 
-        if alerts:
-            for alert in alerts:
-                alert['id'] = strategy_id
-                self.alerts.append(alert)
+        if not new_alerts:
+            return
 
-            alerts.clear()
-
-        strategy_state['alerts_updated'] = True
+        self.alerts.extend(
+            {**alert, 'id': strategy_id} 
+            for alert in new_alerts
+        )
+        new_alerts.clear()

@@ -254,16 +254,17 @@ class HistoryProvider():
             p_precision = client.get_price_precision(symbol)
             q_precision = client.get_qty_precision(symbol)
 
-            self.db_manager.save(
-                database_name=database_name,
-                table_name='symbol_precisions',
-                columns={
-                    'symbol': 'TEXT PRIMARY KEY',
-                    'p_precision': 'REAL',
-                    'q_precision': 'REAL'
-                },
-                data=[[symbol, p_precision, q_precision]],
-                drop=False
-            )
+            if p_precision is not None and q_precision is not None:
+                self.db_manager.save(
+                    database_name=database_name,
+                    table_name='symbol_precisions',
+                    columns={
+                        'symbol': 'TEXT PRIMARY KEY',
+                        'price_precision': 'REAL',
+                        'qty_precision': 'REAL'
+                    },
+                    data=[[symbol, p_precision, q_precision]],
+                    drop=False
+                )
 
         return p_precision, q_precision
