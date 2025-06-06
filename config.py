@@ -11,8 +11,8 @@ MODE = enums.Mode.AUTOMATION
 AUTOMATION_INFO = {
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
-    'interval': 1,
-    'strategy': enums.Strategy.SISTER_V1,
+    'interval': 5,
+    'strategy': enums.Strategy.SANDBOX_V1,
 }
 OPTIMIZATION_INFO = {
     'exchange': enums.Exchange.BINANCE,

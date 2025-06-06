@@ -4,6 +4,7 @@ from glob import glob
 from logging import getLogger
 from re import fullmatch
 from threading import Thread
+from time import sleep
 
 import src.core.enums as enums
 from src.services.automation.api_clients.telegram import TelegramClient
@@ -118,7 +119,6 @@ class Automizer():
                         'instance': strategy_instance,
                         'client': client,
                         'alerts': self.alerts,
-                        'klines_updated': False,
                         'alerts_updated': False,
                         'market_data': market_data
                     }
@@ -151,7 +151,6 @@ class Automizer():
                     'instance': strategy_instance,
                     'client': client,
                     'alerts': self.alerts,
-                    'klines_updated': False,
                     'alerts_updated': False,
                     'market_data': market_data
                 }
@@ -166,26 +165,17 @@ class Automizer():
         )
         self.automation_thread.start()
 
-        self.market_data_thread = Thread(
-            target=self.realtime_provider.poll_market_data,
-            args=(self.strategy_states,),
-            daemon=True
-        )
-        self.market_data_thread.start()
-
     def _automate(self) -> None:
         while True:
             for strategy_id, strategy_state in self.strategy_states.items():
-                if not strategy_state['klines_updated']:
-                    continue
-
-                strategy_state['klines_updated'] = False
-
                 try:
-                    self._execute_strategy(strategy_id)
-                    self._update_alerts(strategy_id)
+                    if self.realtime_provider.update_data(strategy_state):
+                        self._execute_strategy(strategy_id)
+                        self._update_alerts(strategy_id)
                 except Exception:
                     self.logger.exception('An error occurred')
+
+            sleep(1.0)
 
     def _execute_strategy(self, strategy_id: str) -> None:
         strategy_state = self.strategy_states[strategy_id]

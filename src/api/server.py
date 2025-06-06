@@ -1,4 +1,5 @@
 from threading import Thread
+from time import sleep
 from typing import Optional, TYPE_CHECKING
 
 from flask import Flask
@@ -56,13 +57,18 @@ class Server(Flask):
     def check_strategies(self) -> None:
         while True:
             for strategy_id, strategy_state in self.strategy_states.items():
-                if strategy_state['alerts_updated']:
-                    self.data_formatter.format_strategy_states(
-                        strategy_id, strategy_state
-                    )
-                    self.set_data_updates(strategy_id)
-                    strategy_state['alerts_updated'] = False
+                try:
+                    if strategy_state['alerts_updated']:
+                        self.data_formatter.format_strategy_states(
+                            strategy_id, strategy_state
+                        )
+                        self.set_data_updates(strategy_id)
+                        strategy_state['alerts_updated'] = False
 
-                if strategy_state['alerts']:
-                    self.set_alert_updates(strategy_state['alerts'])
-                    strategy_state['alerts'].clear()
+                    if strategy_state['alerts']:
+                        self.set_alert_updates(strategy_state['alerts'])
+                        strategy_state['alerts'].clear()
+                except Exception as e:
+                    self.logger.error(f'{type(e).__name__} - {e}')
+
+            sleep(5.0)

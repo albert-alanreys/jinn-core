@@ -1,5 +1,5 @@
 from logging import getLogger
-from time import time
+from time import sleep, time
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -65,36 +65,30 @@ class RealtimeProvider():
             'extra_klines': extra_klines_by_feed
         }
 
-    def poll_market_data(self, strategy_states: dict) -> None:
-        while True:
-            for strategy_state in strategy_states.values():
-                try:
-                    market_data = strategy_state['market_data']
-                    extra_klines = market_data['extra_klines']
-                    klines_updated = False
+    def update_data(self, strategy_state: dict) -> None:
+        market_data = strategy_state['market_data']
+        extra_klines = market_data['extra_klines']
+        klines_updated = False
 
-                    if not has_last_historical_kline(market_data['klines']):
-                        market_data['klines'] = self._append_last_kline(
-                            klines=market_data['klines'],
-                            client=strategy_state['client'],
-                            symbol=market_data['symbol'],
-                            interval=market_data['interval']
-                        )
-                        klines_updated = True
+        if not has_last_historical_kline(market_data['klines']):
+            market_data['klines'] = self._append_last_kline(
+                klines=market_data['klines'],
+                client=strategy_state['client'],
+                symbol=market_data['symbol'],
+                interval=market_data['interval']
+            )
+            klines_updated = True
 
-                    for feed, klines in extra_klines.items():
-                        if not has_last_historical_kline(klines):
-                            extra_klines[feed] = self._append_last_kline(
-                                klines=klines,
-                                client=strategy_state['client'],
-                                symbol=feed[0],
-                                interval=feed[1]
-                            )
+        for feed, klines in extra_klines.items():
+            if not has_last_historical_kline(klines):
+                extra_klines[feed] = self._append_last_kline(
+                    klines=klines,
+                    client=strategy_state['client'],
+                    symbol=feed[0],
+                    interval=feed[1]
+                )
 
-                    if klines_updated:
-                        strategy_state['klines_updated'] = True
-                except Exception as e:
-                    self.logger.error(f'{type(e).__name__} - {e}')
+        return klines_updated
 
     def _append_last_kline(
         self,
@@ -103,23 +97,27 @@ class RealtimeProvider():
         symbol: str,
         interval: str
     ) -> np.ndarray:
-        while True:
-            try:
-                last_klines = client.get_last_klines(
-                    symbol=symbol,
-                    interval=interval,
-                    limit=2
-                )
+        max_retries = 5
 
-                if len(last_klines) != 2:
-                    continue
+        for _ in range(max_retries):
+            last_klines = client.get_last_klines(
+                symbol=symbol,
+                interval=interval,
+                limit=2
+            )
 
-                new_kline = np.array(last_klines)[:, :6].astype(float)[:-1]
+            if len(last_klines) != 2:
+                continue
 
-                if new_kline[0][0] <= klines[-1][0]:
-                    time.sleep(1)
-                    continue
+            new_kline = np.array(last_klines)[:, :6].astype(float)[:-1]
 
-                return np.vstack([klines, new_kline])
-            except Exception as e:
-                self.logger.error(f'{type(e).__name__} - {e}')
+            if new_kline[0][0] <= klines[-1][0]:
+                sleep(3.0)
+                continue
+
+            return np.vstack([klines, new_kline])
+
+        self.logger.warning(
+            f'Failed to append new kline for {symbol} | {interval}'
+        )
+        return klines
