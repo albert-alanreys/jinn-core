@@ -29,10 +29,9 @@ class HistoryProvider():
         end: str,
         extra_feeds: list | None
     ) -> dict:
-        valid_interval = client.get_valid_interval(interval)
-        p_precision = client.get_price_precision(symbol)
-        q_precision = client.get_qty_precision(symbol)
+        p_precision, q_precision = self._fetch_precisions(client, symbol)
 
+        valid_interval = client.get_valid_interval(interval)
         klines = self._fetch_klines(
             client=client,
             market=market,
@@ -139,34 +138,30 @@ class HistoryProvider():
             if has_realtime_kline(klines):
                 klines = klines[:-1]
 
-            columns = {
-                'time': 'TIMESTAMP PRIMARY KEY',
-                'open': 'REAL',
-                'high': 'REAL',
-                'low': 'REAL',
-                'close': 'REAL',
-                'volume': 'REAL',
-            }
             self.db_manager.save(
                 database_name=database_name,
                 table_name=table_name,
-                columns=columns,
+                columns={
+                    'time': 'TIMESTAMP PRIMARY KEY',
+                    'open': 'REAL',
+                    'high': 'REAL',
+                    'low': 'REAL',
+                    'close': 'REAL',
+                    'volume': 'REAL'
+                },
                 data=klines,
                 drop=True
             )
 
             if has_first_historical_kline(klines, start_ms):
-                columns = {
-                    'klines_key': 'TEXT PRIMARY KEY',
-                    'has_first_kline': 'BOOLEAN'
-                }
-                table_data = [[table_name, True]]
-
                 self.db_manager.save(
                     database_name=database_name,
                     table_name='klines_metadata',
-                    columns=columns,
-                    data=table_data,
+                    columns={
+                        'klines_key': 'TEXT PRIMARY KEY',
+                        'has_first_kline': 'BOOLEAN'
+                    },
+                    data=[[table_name, True]],
                     drop=False
                 )
 
@@ -238,3 +233,37 @@ class HistoryProvider():
             [float(value) for value in kline[:6]]
             for kline in klines
         ]
+    
+    def _fetch_precisions(
+        self,
+        client: 'BinanceREST | BybitREST',
+        symbol: str,
+    ) -> tuple[float, float]:
+        database_name = f'{client.EXCHANGE.lower()}.db'
+        precision_data = self.db_manager.load_one(
+            database_name=database_name,
+            table_name='symbol_precisions',
+            key_column='symbol',
+            key_value=symbol
+        )
+
+        if precision_data:
+            p_precision = precision_data[1]
+            q_precision = precision_data[2]
+        else:
+            p_precision = client.get_price_precision(symbol)
+            q_precision = client.get_qty_precision(symbol)
+
+            self.db_manager.save(
+                database_name=database_name,
+                table_name='symbol_precisions',
+                columns={
+                    'symbol': 'TEXT PRIMARY KEY',
+                    'p_precision': 'REAL',
+                    'q_precision': 'REAL'
+                },
+                data=[[symbol, p_precision, q_precision]],
+                drop=False
+            )
+
+        return p_precision, q_precision

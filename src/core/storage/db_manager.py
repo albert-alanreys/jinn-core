@@ -31,20 +31,6 @@ class DBManager():
         finally:
             self._disconnect()
 
-    def _connect(self, database_name: str) -> None:
-        db_path = os.path.join(
-            os.path.dirname(__file__), 'databases', database_name
-        )
-        self.connection = sqlite3.connect(db_path)
-        self.cursor = self.connection.cursor()
-    
-    def _disconnect(self) -> None:
-        if self.cursor:
-            self.cursor.close()
-
-        if self.connection:
-            self.connection.close()
-
     def load_one(
         self,
         database_name: str,
@@ -128,3 +114,17 @@ class DBManager():
             )
         finally:
             self._disconnect()
+
+    def _connect(self, database_name: str) -> None:
+        db_path = os.path.join(
+            os.path.dirname(__file__), 'databases', database_name
+        )
+        self.connection = sqlite3.connect(db_path)
+        self.cursor = self.connection.cursor()
+    
+    def _disconnect(self) -> None:
+        if self.cursor:
+            self.cursor.close()
+
+        if self.connection:
+            self.connection.close()
