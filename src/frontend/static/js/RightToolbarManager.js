@@ -1,5 +1,5 @@
 import {
-  getLiteData,
+  getSummary,
   updateData,
   getAlerts,
   getAlertUpdates,
@@ -215,7 +215,7 @@ export default class RightToolbarManager {
 
     updateData(this.currentStrategy, parameter)
       .then(() => {
-        getLiteData().then((data) => {
+        getSummary().then((data) => {
           this.data = data;
           overwrite.bind(this)();
           this.renderUI(this.currentStrategy);

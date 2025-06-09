@@ -1,16 +1,10 @@
 from threading import Thread
 from time import sleep
-from typing import Optional, TYPE_CHECKING
 
 from flask import Flask
 
 from src.core.enums import Mode
-from src.core.strategy.strategy_manager import StrategyManager
-from .formatting.data_formatter import DataFormatter
 from .routes import register_routes
-
-if TYPE_CHECKING:
-    from src.services.testing.tester import Tester
 
 
 class Server(Flask):
@@ -19,9 +13,8 @@ class Server(Flask):
         import_name: str,
         static_folder: str,
         template_folder: str,
-        mode: Mode,
         strategy_contexts: dict,
-        tester: Optional['Tester']
+        mode: Mode
     ) -> None:
         super().__init__(
             import_name=import_name,
@@ -30,14 +23,10 @@ class Server(Flask):
         )
         register_routes(self)
 
-        self.mode = mode
         self.strategy_contexts = strategy_contexts
+        self.mode = mode
 
-        self.data_formatter = DataFormatter(strategy_contexts, mode)
-        self.strategy_manager = StrategyManager(strategy_contexts, tester)
-        self.data_formatter.format()
-
-        self.alerts = []
+        self.strategy_alerts = []
         self.alert_updates = []
         self.data_updates = []
 
@@ -45,22 +34,22 @@ class Server(Flask):
             Thread(target=self._handle_strategy_updates, daemon=True).start()
 
     def set_alerts(self, alerts: list) -> None:
-        self.alerts.extend(alerts)
+        self.strategy_alerts.extend(alerts)
 
     def _handle_strategy_updates(self) -> None:
         while True:
-            for context_id, strategy_context in self.strategy_contexts.items():
+            for cid, context in self.strategy_contexts.items():
                 try:
-                    if strategy_context['updated']:
+                    if context['updated']:
                         self.data_formatter.format_strategy_states(
-                            context_id, strategy_context
+                            cid, context
                         )
-                        self._set_data_updates(context_id)
-                        strategy_context['updated'] = False
+                        self._set_data_updates(cid)
+                        context['updated'] = False
 
-                    if strategy_context['alerts']:
-                        self._set_alert_updates(strategy_context['alerts'])
-                        strategy_context['alerts'].clear()
+                    if context['alerts']:
+                        self._set_alert_updates(context['alerts'])
+                        context['alerts'].clear()
                 except Exception as e:
                     self.logger.error(f'{type(e).__name__} - {e}')
 

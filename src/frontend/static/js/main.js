@@ -2,30 +2,30 @@ import ChartManager from './ChartManager.js';
 import ReportManager from './ReportManager.js';
 import LeftToolbarManager from './LeftToolbarManager.js';
 import RightToolbarManager from './RightToolbarManager.js';
-import { getLiteData, getMainData } from './fetchClient.js';
+import { getSummary, getDetails } from './fetchClient.js';
 
 async function renderUI(id) {
-  var mainData = await getMainData(id);
-  var freshLiteData = await getLiteData();
+  var details = await getDetails(id);
+  var freshSummary = await getSummary();
 
   chartManager.removeChart();
   reportManager.removeReport();
-  chartManager.createChart(mainData.chartData, id);
-  reportManager.createReport(mainData.reportData);
+  chartManager.createChart(details.chart, id);
+  reportManager.createReport(details.report);
 
   leftToolbarManager.removeEventListeners();
   leftToolbarManager.manage(
     chartManager.chart,
-    freshLiteData[id],
+    freshSummary[id],
     chartManager.candlestickSeries
   );
 }
 
-var liteData = await getLiteData();
+var summary = await getSummary();
 
 var chartManager = new ChartManager();
 var reportManager = new ReportManager();
 var leftToolbarManager = new LeftToolbarManager();
-new RightToolbarManager(liteData, renderUI);
+new RightToolbarManager(summary, renderUI);
 
-renderUI(Object.keys(liteData)[0]);
+renderUI(Object.keys(summary)[0]);

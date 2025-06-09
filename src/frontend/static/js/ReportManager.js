@@ -104,7 +104,7 @@ export default class ReportManager {
 
   createReport(data) {
     if (MODE == 'TESTING') {
-      if (data.dealsLog.length) {
+      if (data.deals.length) {
         this.createOverviewReport(data);
       } else {
         this.placeholder2.style.display = 'flex';
@@ -112,7 +112,7 @@ export default class ReportManager {
 
       this.createPerformanceReport(data);
 
-      if (data.dealsLog.length) {
+      if (data.deals.length) {
         this.createTradesReport(data);
       } else {
         this.placeholder3.style.display = 'flex';
@@ -851,7 +851,7 @@ export default class ReportManager {
     th.appendChild(span2);
 
     th.addEventListener('click', () => {
-      data.dealsLog.reverse();
+      data.deals.reverse();
       reverse = !reverse;
 
       if (reverse) {
@@ -934,10 +934,10 @@ export default class ReportManager {
       if (!reverse) {
         dealNumber = 1;
       } else {
-        dealNumber = data.dealsLog.length;
+        dealNumber = data.deals.length;
       }
 
-      for (var deal of data.dealsLog) {
+      for (var deal of data.deals) {
         var tr = document.createElement('div');
         tr.classList.add('tr');
         tbody.appendChild(tr);

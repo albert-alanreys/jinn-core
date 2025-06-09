@@ -26,9 +26,9 @@ export default class LeftToolbarManager {
     });
   }
 
-  manage(chart, liteData, candlestickSeries) {
+  manage(chart, summary, candlestickSeries) {
     this.chart = chart;
-    this.liteData = liteData;
+    this.summary = summary;
     this.candlestickSeries = candlestickSeries;
     this.lines = [];
 
@@ -110,7 +110,7 @@ export default class LeftToolbarManager {
   }
 
   manageRulerButton() {
-    var mintick = this.liteData.mintick;
+    var mintick = this.summary.mintick;
     var precision = String(mintick).match(/.\d+$/g)[0].length - 1;
 
     this.crosshairMoveHandler = (param) => {

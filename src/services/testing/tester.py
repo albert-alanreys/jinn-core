@@ -3,7 +3,7 @@ import numpy as np
 
 class Tester:
     @staticmethod
-    def test(strategy_context: dict) -> tuple:
+    def test(strategy_context: dict) -> dict:
         instance = strategy_context['instance']
         instance.start(strategy_context['market_data'])
 
@@ -15,7 +15,11 @@ class Tester:
             initial_capital=instance.params['initial_capital'],
             deals_log=instance.completed_deals_log
         )
-        return equity, metrics
+
+        return {
+            'equity': equity,
+            'metrics': metrics
+        }
 
     @staticmethod
     def _get_equity(initial_capital: float, deals_log: np.ndarray) -> list:
@@ -456,4 +460,4 @@ class Tester:
             ]
         ]
 
-        return equity, metrics
+        return metrics

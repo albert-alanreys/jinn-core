@@ -60,6 +60,7 @@ class Controller():
             import_name=__name__,
             static_folder=self.static_path,
             template_folder=self.templates_path,
-            strategy_contexts=self.strategy_contexts
+            strategy_contexts=self.strategy_contexts,
+            mode=self.mode
         )
         server.run()

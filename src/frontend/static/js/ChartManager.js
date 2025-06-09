@@ -1,4 +1,4 @@
-import { getDataUpdates, getMainData } from './fetchClient.js';
+import { getDataUpdates, getDetails } from './fetchClient.js';
 
 export default class ChartManager {
   daysOfWeek = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
@@ -231,13 +231,13 @@ export default class ChartManager {
           this.chart.unsubscribeCrosshairMove(crosshairMoveHandler);
           this.chart.subscribeCrosshairMove(crosshairMoveHandler);
         } else {
-          var mainData = crosshairPosition.seriesData.get(
+          var details = crosshairPosition.seriesData.get(
             this.candlestickSeries
           );
-          var o = mainData.open;
-          var h = mainData.high;
-          var l = mainData.low;
-          var c = mainData.close;
+          var o = details.open;
+          var h = details.high;
+          var l = details.low;
+          var c = details.close;
 
           mainLegend.innerHTML = getMainLegendText(o, h, l, c);
 
@@ -305,8 +305,8 @@ export default class ChartManager {
     this.timerId = setInterval(() => {
       getDataUpdates().then((updates) => {
         if (updates.includes(id)) {
-          getMainData(id).then((data) => {
-            this.setChartData(data.chartData);
+          getDetails(id).then((data) => {
+            this.setChartData(data.chart);
           });
         }
       });

@@ -5,7 +5,7 @@ import src.core.enums as enums
 #    AUTOMATION - automation
 #    OPTIMIZATION - optimization
 #    TESTING - testing
-MODE = enums.Mode.OPTIMIZATION
+MODE = enums.Mode.TESTING
 
 # Settings for different modes
 AUTOMATION_CONFIG = {

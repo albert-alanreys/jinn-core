@@ -3,58 +3,40 @@ from decimal import Decimal
 
 import numpy as np
 
-from src.core.enums import Mode
 from src.core.utils.colors import decode_rgb
 from src.core.utils.rounding import adjust
-from . import deal_constants as consts
+from . import constants as consts
 
 
-class DataFormatter:
-    MARKER_STYLES = {
-        'open': {
-            'buy': {
-                'position': 'belowBar',
-                'color': '#2962ff',
-                'shape': 'arrowUp'
-            },
-            'sell': {
-                'position': 'aboveBar',
-                'color': '#ff1744',
-                'shape': 'arrowDown'
+class Formatter:
+    @staticmethod
+    def format_summary(strategy_contexts: dict) -> dict:
+        result = {}
+
+        for cid, context in strategy_contexts.items():
+            result[cid] = {
+                'name': '-'.join(
+                    word.capitalize()
+                    for word in context['name'].split('_')
+                ),
+                'exchange': context['client'].EXCHANGE,
+                'symbol': context['market_data']['symbol'],
+                'market': context['market_data']['market'].value,
+                'interval': context['market_data']['interval'],
+                'mintick': context['market_data']['p_precision'],
+                'params': {
+                    k: v for k, v in context['instance'].params.items()
+                    if k != 'feeds'
+                }
             }
-        },
-        'close': {
-            'sell': {
-                'position': 'aboveBar',
-                'color': '#d500f9',
-                'shape': 'arrowDown'
-            },
-            'buy': {
-                'position': 'belowBar',
-                'color': '#d500f9',
-                'shape': 'arrowUp'
-            }
-        }
-    }
 
-    def __init__(self, strategy_contexts: dict, mode: str) -> None:
-        self.strategy_contexts = strategy_contexts
-        self.mode = mode
+        return result
 
-        self.main_data = {}
-        self.lite_data = {}
+    @staticmethod
+    def format_details(strategy_context: dict) -> dict:
+        result = {}
 
-    def format(self) -> None:
-        for id, state in self.strategy_contexts.items():
-            self.format_strategy_states(id, state)
-
-    def format_strategy_states(
-            self,
-            context_id: str,
-            strategy_context: dict
-        ) -> None:
-        self.main_data[context_id] = {}
-        self.main_data[context_id]['chartData'] = {
+        result['chart'] = {
             'name': '-'.join(
                 word.capitalize()
                 for word in strategy_context['name'].split('_')
@@ -64,46 +46,34 @@ class DataFormatter:
             'market': strategy_context['market_data']['market'].value,
             'interval': strategy_context['market_data']['interval'],
             'mintick': strategy_context['market_data']['p_precision'],
-            'klines': self._format_klines(
+            'klines': Formatter._format_klines(
                 strategy_context['market_data']['klines']
             ),
-            'indicators': self._format_indicators(
+            'indicators': Formatter._format_indicators(
                 strategy_context['market_data'],
                 strategy_context['instance'].indicators
             ),
-            'markers': self._format_deal_markers(
+            'markers': Formatter._format_deal_markers(
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['instance'].open_deals_log
             )
         }
 
-        if self.mode is Mode.TESTING:
-            self.main_data[context_id]['reportData'] = {
-                'equity': self._format_equity(strategy_context['equity']),
-                'metrics': strategy_context['metrics'],
-                'dealsLog': self._format_deals_log(
-                    strategy_context['instance'].completed_deals_log,
-                    strategy_context['instance'].open_deals_log
-                )
-            }
-
-        self.lite_data[context_id] = {
-            'name': '-'.join(
-                word.capitalize()
-                for word in strategy_context['name'].split('_')
+        result['report'] = {
+            'equity': Formatter._format_equity(
+                strategy_context['stats']['equity']
             ),
-            'exchange': strategy_context['client'].EXCHANGE,
-            'symbol': strategy_context['market_data']['symbol'],
-            'market': strategy_context['market_data']['market'].value,
-            'interval': strategy_context['market_data']['interval'],
-            'mintick': strategy_context['market_data']['p_precision'],
-            'params': {
-                k: v for k, v in strategy_context['instance'].params.items()
-                if k != 'feeds'
-            }
+            'metrics': strategy_context['stats']['metrics'],
+            'deals': Formatter._format_deals_log(
+                strategy_context['instance'].completed_deals_log,
+                strategy_context['instance'].open_deals_log
+            )
         }
 
-    def _format_klines(self, klines: np.ndarray) -> list:
+        return result
+
+    @staticmethod
+    def _format_klines(klines: np.ndarray) -> list:
         result = [
             {
                 'time': kline[0] / 1000,
@@ -115,11 +85,8 @@ class DataFormatter:
         ]
         return result
 
-    def _format_indicators(
-        self,
-        market_data: dict,
-        indicators: dict
-    ) -> dict:
+    @staticmethod
+    def _format_indicators(market_data: dict, indicators: dict) -> dict:
         klines = market_data['klines']
         p_precision = market_data['p_precision']
         
@@ -164,8 +131,8 @@ class DataFormatter:
 
         return result
 
+    @staticmethod
     def _format_deal_markers(
-        self,
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
@@ -195,11 +162,11 @@ class DataFormatter:
                 )
 
                 if deal[0] == 0:
-                    styles = self.MARKER_STYLES['open']['buy']
+                    styles = consts.MARKER_STYLES['open']['buy']
                     text = f'{comment} | +{deal[4]}'
 
                 else:
-                    styles = self.MARKER_STYLES['open']['sell']
+                    styles = consts.MARKER_STYLES['open']['sell']
                     text = f'{comment} | -{deal[4]}'
 
                 marker = {
@@ -224,10 +191,10 @@ class DataFormatter:
                     )
 
                     if prev_deal[0] == 0:
-                        styles = self.MARKER_STYLES['open']['buy']
+                        styles = consts.MARKER_STYLES['open']['buy']
                         text = f'{comment} | +{position_size}'
                     else:
-                        styles = self.MARKER_STYLES['open']['sell']
+                        styles = consts.MARKER_STYLES['open']['sell']
                         text = f'{comment} | -{position_size}'
 
                     marker = {
@@ -248,10 +215,10 @@ class DataFormatter:
             )
 
             if deal[0] == 0:
-                styles = self.MARKER_STYLES['close']['sell']
+                styles = consts.MARKER_STYLES['close']['sell']
                 text = f'{comment} | -{deal[7]}'
             else:
-                styles = self.MARKER_STYLES['close']['buy']
+                styles = consts.MARKER_STYLES['close']['buy']
                 text = f'{comment} | +{deal[7]}'
 
             marker = {
@@ -278,10 +245,10 @@ class DataFormatter:
         )
 
         if last_deal[0] == 0:
-            styles = self.MARKER_STYLES['open']['buy']
+            styles = consts.MARKER_STYLES['open']['buy']
             text = f'{comment} | +{position_size}'
         else:
-            styles = self.MARKER_STYLES['open']['sell']
+            styles = consts.MARKER_STYLES['open']['sell']
             text = f'{comment} | -{position_size}'
 
         marker = {
@@ -301,10 +268,10 @@ class DataFormatter:
                 )
 
                 if deal[0] == 0:
-                    styles = self.MARKER_STYLES['open']['buy']
+                    styles = consts.MARKER_STYLES['open']['buy']
                     text = f'{comment} | +{deal[4]}'
                 else:
-                    styles = self.MARKER_STYLES['open']['sell']
+                    styles = consts.MARKER_STYLES['open']['sell']
                     text = f'{comment} | -{deal[4]}'
 
                 marker = {
@@ -316,17 +283,18 @@ class DataFormatter:
 
         return sorted(result, key=lambda x: x['time'])
 
-    def _format_equity(self, equity: np.ndarray) -> list:
+    @staticmethod
+    def _format_equity(equity: list) -> list:
         result = [
             {
                 'time': i + 1,
                 'value': value,
-            } for i, value in enumerate(equity.tolist())
+            } for i, value in enumerate(equity)
         ]
         return result
 
+    @staticmethod
     def _format_deals_log(
-        self,
         closed_deals: np.ndarray,
         open_deals: np.ndarray
     ) -> list:

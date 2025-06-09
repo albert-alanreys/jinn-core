@@ -46,9 +46,9 @@ export async function getDataUpdates() {
   }
 }
 
-export async function getLiteData() {
+export async function getSummary() {
   try {
-    var response = await fetch(`${API_URL}/data/lite`);
+    var response = await fetch(`${API_URL}/data/summary`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -57,14 +57,14 @@ export async function getLiteData() {
     var result = await response.json();
     return result;
   } catch (error) {
-    console.error('Failed to fetch lite data:', error);
+    console.error('Failed to fetch summary:', error);
     throw error;
   }
 }
 
-export async function getMainData(context_id) {
+export async function getDetails(context_id) {
   try {
-    var response = await fetch(`${API_URL}/data/main/${context_id}`);
+    var response = await fetch(`${API_URL}/data/details/${context_id}`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -73,10 +73,7 @@ export async function getMainData(context_id) {
     var result = await response.json();
     return result;
   } catch (error) {
-    console.error(
-      `Failed to fetch main data for strategy ${context_id}:`,
-      error
-    );
+    console.error(`Failed to fetch details for ${context_id}:`, error);
     throw error;
   }
 }

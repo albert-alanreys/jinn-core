@@ -100,7 +100,7 @@ class TestingBuilder:
                     except Exception:
                         self.logger.exception('An error occurred')
 
-        if not self.strategy_contexts:
+        if not strategy_contexts:
             match self.exchange:
                 case enums.Exchange.BINANCE:
                     client = self.binance_client

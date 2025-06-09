@@ -1,14 +1,14 @@
-import json
+from json import dumps
 
 
 def register_alert_routes(app):
-    @app.route('/updates/alerts')
+    @app.route('/updates/alerts', methods=['GET'])
     def get_alert_updates():
         alerts = app.alert_updates.copy()
         app.alert_updates.clear()
         app.set_alerts(alerts)
-        return json.dumps(alerts)
+        return dumps(alerts)
 
-    @app.route('/alerts')
+    @app.route('/alerts', methods=['GET'])
     def get_alerts():
-        return json.dumps(app.alerts[-100:])
+        return dumps(app.strategy_alerts[-100:])
