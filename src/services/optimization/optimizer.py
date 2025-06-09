@@ -1,193 +1,194 @@
 import json
+import multiprocessing
 import os
+import random
 from logging import getLogger
-from multiprocessing import Pool, cpu_count
 
-import src.core.enums as enums
-from src.core.storage.history_provider import HistoryProvider
-from src.services.automation.api_clients.binance import BinanceClient
-from src.services.automation.api_clients.bybit import BybitClient
 from src.services.automation.api_clients.telegram import TelegramClient
-from .ga import GA
 
 
 class Optimizer:
-    def __init__(self, optimization_info: dict) -> None:
-        self.exchange = optimization_info['exchange']
-        self.market = optimization_info['market']
-        self.symbol = optimization_info['symbol']
-        self.interval = optimization_info['interval']
-        self.start = optimization_info['start']
-        self.end = optimization_info['end']
-        self.strategy = optimization_info['strategy']
+    ITERATIONS = 200
+    POPULATION_SIZE = 100
+    MAX_POPULATION_SIZE = 500
 
-        self.history_provider = HistoryProvider()
+    def __init__(self, strategy_contexts: dict) -> None:
+        self.strategy_contexts = strategy_contexts
+
         self.telegram_client = TelegramClient()
-        self.binance_client = BinanceClient(self.telegram_client)
-        self.bybit_client = BybitClient(self.telegram_client)
-
-        self.strategy_states = {}
-
         self.logger = getLogger(__name__)
 
     def run(self) -> None:
-        for strategy in enums.Strategy:
-            file_path = os.path.abspath(
-                os.path.join(
-                    'src',
-                    'strategies',
-                    strategy.name.lower(),
-                    'optimization',
-                    'optimization.json'
-                )
-            )
-
-            if not os.path.exists(file_path):
-                continue
-
-            with open(file_path, 'r') as file:
-                try:
-                    configs = json.load(file)
-                except json.JSONDecodeError:
-                    self.logger.error(f'Failed to load JSON from {file_path}')
-                    continue
-
-            for config in configs:
-                exchange = config['exchange'].upper()
-                market = config['market'].upper()
-                symbol = config['symbol'].upper()
-                interval = config['interval']
-                start = config['start']
-                end = config['end']
-
-                match exchange:
-                    case enums.Exchange.BINANCE.name:
-                        client = self.binance_client
-                    case enums.Exchange.BYBIT.name:
-                        client = self.bybit_client
-
-                match market:
-                    case enums.Market.FUTURES.name:
-                        market = enums.Market.FUTURES
-                    case enums.Market.SPOT.name:
-                        market = enums.Market.SPOT
-
-                try:
-                    feeds = strategy.value.params.get('feeds')
-                    market_data = self.history_provider.fetch_data(
-                        client=client,
-                        market=market,
-                        symbol=symbol,
-                        interval=interval,
-                        start=start,
-                        end=end,
-                        extra_feeds=feeds
-                    )
-
-                    total_len = len(market_data['klines'])
-                    train_size = int(total_len * 0.7)
-
-                    train_data = market_data['klines'][:train_size]
-                    test_data = market_data['klines'][train_size:]
-
-                    strategy_state = {
-                        'name': strategy.name,
-                        'type': strategy.value,
-                        'client': client,
-                        'market_data': market_data,
-                        'train_data': train_data,
-                        'test_data': test_data
-                    }
-                    strategy_id = str(id(strategy_state))
-                    self.strategy_states[strategy_id] = strategy_state
-                except Exception:
-                    self.logger.exception('An error occurred')
-
-        if not self.strategy_states:
-            match self.exchange:
-                case enums.Exchange.BINANCE:
-                    client = self.binance_client
-                case enums.Exchange.BYBIT:
-                    client = self.bybit_client
-
-            try:
-                feeds = self.strategy.value.params.get('feeds')
-                market_data = self.history_provider.fetch_data(
-                    client=client,
-                    market=self.market,
-                    symbol=self.symbol,
-                    interval=self.interval,
-                    start=self.start,
-                    end=self.end,
-                    extra_feeds=feeds
-                )
-
-                total_len = len(market_data['klines'])
-                train_size = int(total_len * 0.7)
-
-                train_data = market_data['klines'][:train_size]
-                test_data = market_data['klines'][train_size:]
-
-                strategy_state = {
-                    'name': self.strategy.name,
-                    'type': self.strategy.value,
-                    'client': client,
-                    'market_data': market_data,
-                    'train_data': train_data,
-                    'test_data': test_data
-                }
-                strategy_id = str(id(strategy_state))
-                self.strategy_states[strategy_id] = strategy_state
-            except Exception:
-                self.logger.exception('An error occurred')
-
-        strategies_info = [
+        summary = [
             ' | '.join([
                 item['name'],
                 item['client'].EXCHANGE,
-                item['market_data']['market'].value,
-                item['market_data']['symbol'],
-                str(item['market_data']['interval']),
-                f"{item['market_data']['start']} → "
-                f"{item['market_data']['end']}"
+                item['market_data']['train']['market'].value,
+                item['market_data']['train']['symbol'],
+                str(item['market_data']['train']['interval']),
+                f"{item['market_data']['train']['start']} → "
+                f"{item['market_data']['test']['end']}"
             ])
-            for item in self.strategy_states.values()
+            for item in self.strategy_contexts.values()
         ]
-        self.logger.info(
-            'Optimization started for:\n' +
-            '\n'.join(strategies_info)
-        )
+        self.logger.info(f"Optimization started for:\n{'\n'.join(summary)}")
         self.telegram_client.send_message('🔥 Оптимизация началась')
 
-        with Pool(cpu_count()) as p:
-            if hasattr(self, 'history_provider'):
-                delattr(self, 'history_provider')
-
-            best_samples_list = p.map(
+        with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
+            best_params = pool.map(
                 func=self._optimize,
-                iterable=self.strategy_states.values()
+                iterable=self.strategy_contexts.values()
             )
 
-        for key, samples in zip(self.strategy_states, best_samples_list):
-            self.strategy_states[key]['best_samples'] = samples
+        for cid, params in zip(self.strategy_contexts, best_params):
+            self.strategy_contexts[cid]['best_params'] = params
 
         self._save_params()
 
         self.logger.info('Optimization completed')
         self.telegram_client.send_message('✅ Оптимизация завершена')
 
-    def _optimize(self, strategy_state: dict) -> list:
-        ga = GA(strategy_state)
-        ga.fit()
-        return ga.best_samples
+    def _optimize(self, strategy_context: dict) -> list:
+        self._init_optimization(strategy_context)
+
+        for _ in range(3):
+            self._create()
+
+            for _ in range(self.ITERATIONS):
+                self._select()
+                self._recombine()
+                self._mutate()
+                self._expand()
+                self._kill()
+                self._destroy()
+
+            self.best_params.append(self._get_best_sample())
+            self.population.clear()
+
+        return self.best_params
+
+    def _init_optimization(self, strategy_context: dict) -> None:
+        self.strategy = strategy_context['type']
+        self.client = strategy_context['client']
+        self.train_data = strategy_context['market_data']['train']
+        self.test_data = strategy_context['market_data']['test']
+
+        self.population = {}
+        self.best_params = []
+
+    def _create(self) -> None:
+        samples = [
+            [               
+                random.choice(values)
+                for values in self.strategy.opt_params.values()
+            ]
+            for _ in range(self.POPULATION_SIZE)
+        ]
+
+        for sample in samples:
+            fitness = self._evaluate(sample, self.train_data)
+            self.population[fitness] = sample
+
+        self.sample_len = len(self.strategy.opt_params)
+
+    def _evaluate(self, sample: list, market_data: dict) -> float:
+        strategy_instance = self.strategy(self.client, opt_params=sample)
+        strategy_instance.start(market_data)
+
+        score = round(
+            strategy_instance.completed_deals_log[8::13].sum() /
+            strategy_instance.params['initial_capital'] * 100,
+            2
+        )
+        return score
+
+    def _select(self) -> None:
+        if random.randint(0, 1) == 0:
+            best_score = max(self.population)
+            parent_1 = self.population[best_score]
+
+            population_copy = self.population.copy()
+            population_copy.pop(best_score)
+
+            parent_2 = random.choice(list(population_copy.values()))
+            self.parents = [parent_1, parent_2]
+        else:
+            self.parents = random.sample(list(self.population.values()), 2)
+
+    def _recombine(self) -> None:
+        r_number = random.randint(0, 1)
+
+        if r_number == 0:
+            delimiter = random.randint(1, self.sample_len - 1)
+            self.child = (
+                self.parents[0][:delimiter] + self.parents[1][delimiter:]
+            )
+        else:
+            delimiter_1 = random.randint(1, self.sample_len // 2 - 1)
+            delimiter_2 = random.randint(
+                self.sample_len // 2 + 1, self.sample_len - 1
+            )
+
+            self.child = (
+                self.parents[0][:delimiter_1] +
+                self.parents[1][delimiter_1:delimiter_2] +
+                self.parents[0][delimiter_2:]
+            )
+
+    def _mutate(self) -> None:
+        if random.random() <= 0.9:
+            gene_num = random.randint(0, self.sample_len - 1)
+            gene_value = random.choice(
+                list(self.strategy.opt_params.values())[gene_num]
+            )
+            self.child[gene_num] = gene_value
+        else:
+            for i in range(len(self.child)):
+                self.child[i] = random.choice(
+                    list(self.strategy.opt_params.values())[i]
+                )
+
+    def _expand(self) -> None:
+        fitness = self._evaluate(self.child, self.train_data)
+        self.population[fitness] = self.child
+
+    def _kill(self) -> None:
+        while len(self.population) > self.MAX_POPULATION_SIZE:
+            self.population.pop(min(self.population))
+
+    def _destroy(self) -> None:
+        if random.random() > 0.001:
+            return
+
+        sorted_population = sorted(
+            self.population.items(),
+            key=lambda x: x[0]
+        )
+
+        for i in range(int(len(self.population) * 0.5)):
+            self.population.pop(sorted_population[i][0])
+
+    def _get_best_sample(self) -> None:
+        best_score = float('-inf')
+        best_sample = None
+
+        for train_fitness, sample in self.population.items():
+            test_fitness = self._evaluate(sample, self.test_data)
+            combined_fitness = 0.5 * train_fitness + 0.5 * test_fitness
+
+            if combined_fitness > best_score:
+                best_score = combined_fitness
+                best_sample = sample
+
+        return best_sample
 
     def _save_params(self) -> None:
-        for strategy in self.strategy_states.values():
+        for strategy in self.strategy_contexts.values():
             filename = (
                 f'{strategy['client'].EXCHANGE}_'
-                f'{strategy['market_data']['market'].value}_'
-                f'{strategy['market_data']['symbol']}_'
-                f'{strategy['market_data']['interval']}.json'
+                f'{strategy['market_data']['train']['market'].value}_'
+                f'{strategy['market_data']['train']['symbol']}_'
+                f'{strategy['market_data']['train']['interval']}.json'
             )
             file_path = os.path.abspath(
                 os.path.join(
@@ -202,14 +203,14 @@ class Optimizer:
             new_items = [
                 {
                     'period': {
-                        'start': strategy['market_data']['start'],
-                        'end': strategy['market_data']['end']
+                        'start': strategy['market_data']['train']['start'],
+                        'end': strategy['market_data']['test']['end']
                     },
                     'params': dict(
-                        zip(strategy['type'].opt_params.keys(), sample)
+                        zip(strategy['type'].opt_params.keys(), params)
                     )
                 }
-                for sample in strategy['best_samples']
+                for params in strategy['best_params']
             ]
             existing_items = []
 

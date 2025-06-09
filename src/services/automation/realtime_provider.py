@@ -24,7 +24,7 @@ class RealtimeProvider():
         client: 'BinanceClient | BybitClient',
         symbol: str,
         interval: str,
-        extra_feeds: list | None
+        feeds: list | None
     ) -> dict:
         p_precision = client.get_price_precision(symbol)
         q_precision = client.get_qty_precision(symbol)   
@@ -41,10 +41,10 @@ class RealtimeProvider():
         if has_realtime_kline(klines):
             klines = klines[:-1]
 
-        extra_klines_by_feed = {}
+        klines_by_feed = {}
 
-        if extra_feeds:
-            for feed in extra_feeds:
+        if feeds:
+            for feed in feeds:
                 extra_symbol = symbol if feed[0] == 'symbol' else feed[0]
                 extra_interval = client.get_valid_interval(feed[1])
                 interval_ms = client.interval_ms[extra_interval]
@@ -62,7 +62,7 @@ class RealtimeProvider():
                     extra_klines = extra_klines[:-1]
 
                 key = (extra_symbol, extra_interval)
-                extra_klines_by_feed[key] = extra_klines
+                klines_by_feed[key] = extra_klines
 
         return {
             'market': enums.Market.FUTURES,
@@ -71,18 +71,18 @@ class RealtimeProvider():
             'p_precision': p_precision,
             'q_precision': q_precision,
             'klines': klines,
-            'extra_klines': extra_klines_by_feed
+            'extra_klines': klines_by_feed
         }
 
-    def update_data(self, strategy_state: dict) -> None:
-        market_data = strategy_state['market_data']
+    def update_data(self, strategy_context: dict) -> None:
+        market_data = strategy_context['market_data']
         extra_klines = market_data['extra_klines']
         klines_updated = False
 
         if not has_last_historical_kline(market_data['klines']):
             market_data['klines'] = self._append_last_kline(
                 klines=market_data['klines'],
-                client=strategy_state['client'],
+                client=strategy_context['client'],
                 symbol=market_data['symbol'],
                 interval=market_data['interval']
             )
@@ -92,7 +92,7 @@ class RealtimeProvider():
             if not has_last_historical_kline(klines):
                 extra_klines[feed] = self._append_last_kline(
                     klines=klines,
-                    client=strategy_state['client'],
+                    client=strategy_context['client'],
                     symbol=feed[0],
                     interval=feed[1]
                 )

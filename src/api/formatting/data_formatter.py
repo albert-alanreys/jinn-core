@@ -37,68 +37,68 @@ class DataFormatter:
         }
     }
 
-    def __init__(self, strategy_states: dict, mode: str) -> None:
-        self.strategy_states = strategy_states
+    def __init__(self, strategy_contexts: dict, mode: str) -> None:
+        self.strategy_contexts = strategy_contexts
         self.mode = mode
 
         self.main_data = {}
         self.lite_data = {}
 
     def format(self) -> None:
-        for id, state in self.strategy_states.items():
+        for id, state in self.strategy_contexts.items():
             self.format_strategy_states(id, state)
 
     def format_strategy_states(
             self,
-            strategy_id: str,
-            strategy_state: dict
+            context_id: str,
+            strategy_context: dict
         ) -> None:
-        self.main_data[strategy_id] = {}
-        self.main_data[strategy_id]['chartData'] = {
+        self.main_data[context_id] = {}
+        self.main_data[context_id]['chartData'] = {
             'name': '-'.join(
                 word.capitalize()
-                for word in strategy_state['name'].split('_')
+                for word in strategy_context['name'].split('_')
             ),
-            'exchange': strategy_state['client'].EXCHANGE,
-            'symbol': strategy_state['market_data']['symbol'],
-            'market': strategy_state['market_data']['market'].value,
-            'interval': strategy_state['market_data']['interval'],
-            'mintick': strategy_state['market_data']['p_precision'],
+            'exchange': strategy_context['client'].EXCHANGE,
+            'symbol': strategy_context['market_data']['symbol'],
+            'market': strategy_context['market_data']['market'].value,
+            'interval': strategy_context['market_data']['interval'],
+            'mintick': strategy_context['market_data']['p_precision'],
             'klines': self._format_klines(
-                strategy_state['market_data']['klines']
+                strategy_context['market_data']['klines']
             ),
             'indicators': self._format_indicators(
-                strategy_state['market_data'],
-                strategy_state['instance'].indicators
+                strategy_context['market_data'],
+                strategy_context['instance'].indicators
             ),
             'markers': self._format_deal_markers(
-                strategy_state['instance'].completed_deals_log,
-                strategy_state['instance'].open_deals_log
+                strategy_context['instance'].completed_deals_log,
+                strategy_context['instance'].open_deals_log
             )
         }
 
         if self.mode is Mode.TESTING:
-            self.main_data[strategy_id]['reportData'] = {
-                'equity': self._format_equity(strategy_state['equity']),
-                'metrics': strategy_state['metrics'],
+            self.main_data[context_id]['reportData'] = {
+                'equity': self._format_equity(strategy_context['equity']),
+                'metrics': strategy_context['metrics'],
                 'dealsLog': self._format_deals_log(
-                    strategy_state['instance'].completed_deals_log,
-                    strategy_state['instance'].open_deals_log
+                    strategy_context['instance'].completed_deals_log,
+                    strategy_context['instance'].open_deals_log
                 )
             }
 
-        self.lite_data[strategy_id] = {
+        self.lite_data[context_id] = {
             'name': '-'.join(
                 word.capitalize()
-                for word in strategy_state['name'].split('_')
+                for word in strategy_context['name'].split('_')
             ),
-            'exchange': strategy_state['client'].EXCHANGE,
-            'symbol': strategy_state['market_data']['symbol'],
-            'market': strategy_state['market_data']['market'].value,
-            'interval': strategy_state['market_data']['interval'],
-            'mintick': strategy_state['market_data']['p_precision'],
+            'exchange': strategy_context['client'].EXCHANGE,
+            'symbol': strategy_context['market_data']['symbol'],
+            'market': strategy_context['market_data']['market'].value,
+            'interval': strategy_context['market_data']['interval'],
+            'mintick': strategy_context['market_data']['p_precision'],
             'params': {
-                k: v for k, v in strategy_state['instance'].params.items()
+                k: v for k, v in strategy_context['instance'].params.items()
                 if k != 'feeds'
             }
         }

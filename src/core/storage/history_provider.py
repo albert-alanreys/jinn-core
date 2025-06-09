@@ -27,7 +27,7 @@ class HistoryProvider():
         interval: str,
         start: str,
         end: str,
-        extra_feeds: list | None
+        feeds: list | None
     ) -> dict:
         p_precision, q_precision = self._fetch_precisions(client, symbol)
 
@@ -41,10 +41,10 @@ class HistoryProvider():
             end=end
         )
 
-        extra_klines_by_feed = {}
+        klines_by_feed = {}
 
-        if extra_feeds:
-            for feed in extra_feeds:
+        if feeds:
+            for feed in feeds:
                 extra_symbol = symbol if feed[0] == 'symbol' else feed[0]
                 extra_interval = client.get_valid_interval(feed[1])
 
@@ -58,7 +58,7 @@ class HistoryProvider():
                 )
 
                 key = (extra_symbol, extra_interval)
-                extra_klines_by_feed[key] = extra_klines
+                klines_by_feed[key] = extra_klines
 
         return {
             'market': market,
@@ -67,7 +67,7 @@ class HistoryProvider():
             'p_precision': p_precision,
             'q_precision': q_precision,
             'klines': klines,
-            'extra_klines': extra_klines_by_feed,
+            'extra_klines': klines_by_feed,
             'start': start,
             'end': end
         }

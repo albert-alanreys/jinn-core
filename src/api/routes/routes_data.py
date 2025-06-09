@@ -8,32 +8,32 @@ def register_data_routes(app):
     def get_data_updates():
         return json.dumps(app.data_updates)
 
-    @app.route('/data/main/<string:strategy_id>')
-    def get_main_data(strategy_id):
-        if strategy_id in app.data_updates:
-            app.data_updates.remove(strategy_id)
+    @app.route('/data/main/<string:context_id>')
+    def get_main_data(context_id):
+        if context_id in app.data_updates:
+            app.data_updates.remove(context_id)
 
-        return json.dumps(app.data_formatter.main_data[strategy_id])
+        return json.dumps(app.data_formatter.main_data[context_id])
 
     @app.route('/data/lite')
     def get_lite_data():
         return json.dumps(app.data_formatter.lite_data)
 
-    @app.route('/data/update/<string:strategy_id>', methods=['PATCH'])
-    def update_data(strategy_id):
+    @app.route('/data/update/<string:context_id>', methods=['PATCH'])
+    def update_data(context_id):
         try:
             data = request.get_json()
             param = data.get('param')
             value = data.get('value')
 
             app.strategy_manager.update_strategy(
-                strategy_id=strategy_id,
+                context_id=context_id,
                 param_name=param,
                 new_value=value
             )
             app.data_formatter.format_strategy_states(
-                strategy_id=strategy_id,
-                strategy_state=app.strategy_states[strategy_id]
+                context_id=context_id,
+                strategy_context=app.strategy_contexts[context_id]
             )
             return json.dumps({'status': 'success'}), 200
         except ValueError:

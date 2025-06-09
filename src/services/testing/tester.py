@@ -14,21 +14,21 @@ from .performance_metrics import get_performance_metrics
 
 
 class Tester:
-    def __init__(self, testing_info: dict) -> None:
-        self.exchange = testing_info['exchange']
-        self.market = testing_info['market']
-        self.symbol = testing_info['symbol']
-        self.interval = testing_info['interval']
-        self.start = testing_info['start']
-        self.end = testing_info['end']
-        self.strategy = testing_info['strategy']
+    def __init__(self, testing_config: dict) -> None:
+        self.exchange = testing_config['exchange']
+        self.market = testing_config['market']
+        self.symbol = testing_config['symbol']
+        self.interval = testing_config['interval']
+        self.start = testing_config['start']
+        self.end = testing_config['end']
+        self.strategy = testing_config['strategy']
 
         self.history_provider = HistoryProvider()
         self.telegram_client = TelegramClient()
         self.binance_client = BinanceClient(self.telegram_client)
         self.bybit_client = BybitClient(self.telegram_client)
 
-        self.strategy_states = {}
+        self.strategy_contexts = {}
 
         self.logger = getLogger(__name__)
 
@@ -92,10 +92,10 @@ class Tester:
                             interval=interval,
                             start=params['period']['start'],
                             end=params['period']['end'],
-                            extra_feeds=feeds
+                            feeds=feeds
                         )
 
-                        strategy_state = {
+                        strategy_context = {
                             'name': strategy.name,
                             'type': strategy.value,
                             'instance': strategy_instance,
@@ -104,16 +104,16 @@ class Tester:
                         }
 
                         equity, metrics = (
-                            self.calculate_strategy(strategy_state)
+                            self.calculate_strategy(strategy_context)
                         )
-                        strategy_state['equity'] = equity
-                        strategy_state['metrics'] = metrics
-                        strategy_id = str(id(strategy_state))
-                        self.strategy_states[strategy_id] = strategy_state
+                        strategy_context['equity'] = equity
+                        strategy_context['metrics'] = metrics
+                        context_id = str(id(strategy_context))
+                        self.strategy_contexts[context_id] = strategy_context
                     except Exception:
                         self.logger.exception('An error occurred')
 
-        if not self.strategy_states:
+        if not self.strategy_contexts:
             match self.exchange:
                 case enums.Exchange.BINANCE:
                     client = self.binance_client
@@ -130,10 +130,10 @@ class Tester:
                     interval=self.interval,
                     start=self.start,
                     end=self.end,
-                    extra_feeds=feeds
+                    feeds=feeds
                 )
 
-                strategy_state = {
+                strategy_context = {
                     'name': self.strategy.name,
                     'type': self.strategy.value,
                     'instance': strategy_instance,
@@ -141,22 +141,22 @@ class Tester:
                     'market_data': market_data
                 }
 
-                equity, metrics = self.calculate_strategy(strategy_state)
-                strategy_state['equity'] = equity
-                strategy_state['metrics'] = metrics
-                strategy_id = str(id(strategy_state))
-                self.strategy_states[strategy_id] = strategy_state
+                equity, metrics = self.calculate_strategy(strategy_context)
+                strategy_context['equity'] = equity
+                strategy_context['metrics'] = metrics
+                context_id = str(id(strategy_context))
+                self.strategy_contexts[context_id] = strategy_context
             except Exception:
                 self.logger.exception('An error occurred')
 
-    def calculate_strategy(self, strategy_state: dict) -> tuple:
-        strategy_state['instance'].start(strategy_state['market_data'])
+    def calculate_strategy(self, strategy_context: dict) -> tuple:
+        strategy_context['instance'].start(strategy_context['market_data'])
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=RuntimeWarning)
             equity, metrics = get_performance_metrics(
-                strategy_state['instance'].params['initial_capital'],
-                strategy_state['instance'].completed_deals_log
+                strategy_context['instance'].params['initial_capital'],
+                strategy_context['instance'].completed_deals_log
             )
 
         return equity, metrics

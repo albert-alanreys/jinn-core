@@ -14,18 +14,18 @@ from .api_clients.bybit import BybitClient
 
 
 class Automizer():
-    def __init__(self, automation_info: dict) -> None:
-        self.exchange = automation_info['exchange']
-        self.symbol = automation_info['symbol']
-        self.interval = automation_info['interval']
-        self.strategy = automation_info['strategy']
+    def __init__(self, automation_config: dict) -> None:
+        self.exchange = automation_config['exchange']
+        self.symbol = automation_config['symbol']
+        self.interval = automation_config['interval']
+        self.strategy = automation_config['strategy']
 
         self.realtime_provider = RealtimeProvider()
         self.telegram_client = TelegramClient()
         self.binance_client = BinanceClient(self.telegram_client)
         self.bybit_client = BybitClient(self.telegram_client)
 
-        self.strategy_states = {}
+        self.strategy_contexts = {}
         self.alerts = []
 
         self.logger = getLogger(__name__)
@@ -109,11 +109,11 @@ class Automizer():
                         client=client,
                         symbol=symbol,
                         interval=interval,
-                        extra_feeds=feeds
+                        feeds=feeds
                     )
                     strategy_instance.start(market_data)
 
-                    strategy_state = {
+                    strategy_context = {
                         'name': strategy.name,
                         'type': strategy.value,
                         'instance': strategy_instance,
@@ -122,12 +122,12 @@ class Automizer():
                         'alerts': self.alerts,
                         'updated': False
                     }
-                    strategy_id = str(id(strategy_state))
-                    self.strategy_states[strategy_id] = strategy_state
+                    context_id = str(id(strategy_context))
+                    self.strategy_contexts[context_id] = strategy_context
                 except Exception:
                     self.logger.exception('An error occurred')
 
-        if not self.strategy_states:
+        if not self.strategy_contexts:
             match self.exchange:
                 case enums.Exchange.BINANCE:
                     client = self.binance_client
@@ -141,11 +141,11 @@ class Automizer():
                     client=client,
                     symbol=self.symbol,
                     interval=self.interval,
-                    extra_feeds=feeds
+                    feeds=feeds
                 )
                 strategy_instance.start(market_data)
 
-                strategy_state = {
+                strategy_context = {
                     'name': self.strategy.name,
                     'type': self.strategy.value,
                     'instance': strategy_instance,
@@ -154,8 +154,8 @@ class Automizer():
                     'alerts': self.alerts,
                     'updated': False
                 }
-                strategy_id = str(id(strategy_state))
-                self.strategy_states[strategy_id] = strategy_state
+                context_id = str(id(strategy_context))
+                self.strategy_contexts[context_id] = strategy_context
             except Exception:
                 self.logger.exception('An error occurred')
 
@@ -163,32 +163,32 @@ class Automizer():
 
     def _automate(self) -> None:
         while True:
-            for strategy_id, strategy_state in self.strategy_states.items():
+            for context_id, strategy_context in self.strategy_contexts.items():
                 try:
-                    if self.realtime_provider.update_data(strategy_state):
-                        self._execute_strategy(strategy_id)
-                        self._update_alerts(strategy_id)
-                        strategy_state['updated'] = True
+                    if self.realtime_provider.update_data(strategy_context):
+                        self._execute_strategy(context_id)
+                        self._update_alerts(context_id)
+                        strategy_context['updated'] = True
                 except Exception:
                     self.logger.exception('An error occurred')
 
             sleep(1.0)
 
-    def _execute_strategy(self, strategy_id: str) -> None:
-        strategy_state = self.strategy_states[strategy_id]
-        instance = strategy_state['instance']
-        instance.start(strategy_state['market_data'])
+    def _execute_strategy(self, context_id: str) -> None:
+        strategy_context = self.strategy_contexts[context_id]
+        instance = strategy_context['instance']
+        instance.start(strategy_context['market_data'])
         instance.trade()
 
-    def _update_alerts(self, strategy_id: str) -> None:
-        strategy_state = self.strategy_states[strategy_id]
-        new_alerts = strategy_state['client'].alerts
+    def _update_alerts(self, context_id: str) -> None:
+        strategy_context = self.strategy_contexts[context_id]
+        new_alerts = strategy_context['client'].alerts
 
         if not new_alerts:
             return
 
         self.alerts.extend(
-            {**alert, 'id': strategy_id} 
+            {**alert, 'id': context_id} 
             for alert in new_alerts
         )
         new_alerts.clear()

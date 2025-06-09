@@ -62,9 +62,9 @@ export async function getLiteData() {
   }
 }
 
-export async function getMainData(strategy_id) {
+export async function getMainData(context_id) {
   try {
-    var response = await fetch(`${API_URL}/data/main/${strategy_id}`);
+    var response = await fetch(`${API_URL}/data/main/${context_id}`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -74,18 +74,18 @@ export async function getMainData(strategy_id) {
     return result;
   } catch (error) {
     console.error(
-      `Failed to fetch main data for strategy ${strategy_id}:`,
+      `Failed to fetch main data for strategy ${context_id}:`,
       error
     );
     throw error;
   }
 }
 
-export async function updateData(strategy_id, parameter) {
+export async function updateData(context_id, parameter) {
   try {
     var parsed = JSON.parse(parameter);
 
-    var response = await fetch(`${API_URL}/data/update/${strategy_id}`, {
+    var response = await fetch(`${API_URL}/data/update/${context_id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

@@ -20,7 +20,7 @@ class Server(Flask):
         static_folder: str,
         template_folder: str,
         mode: Mode,
-        strategy_states: dict,
+        strategy_contexts: dict,
         tester: Optional['Tester']
     ) -> None:
         super().__init__(
@@ -31,10 +31,10 @@ class Server(Flask):
         register_routes(self)
 
         self.mode = mode
-        self.strategy_states = strategy_states
+        self.strategy_contexts = strategy_contexts
 
-        self.data_formatter = DataFormatter(strategy_states, mode)
-        self.strategy_manager = StrategyManager(strategy_states, tester)
+        self.data_formatter = DataFormatter(strategy_contexts, mode)
+        self.strategy_manager = StrategyManager(strategy_contexts, tester)
         self.data_formatter.format()
 
         self.alerts = []
@@ -49,18 +49,18 @@ class Server(Flask):
 
     def _handle_strategy_updates(self) -> None:
         while True:
-            for strategy_id, strategy_state in self.strategy_states.items():
+            for context_id, strategy_context in self.strategy_contexts.items():
                 try:
-                    if strategy_state['updated']:
+                    if strategy_context['updated']:
                         self.data_formatter.format_strategy_states(
-                            strategy_id, strategy_state
+                            context_id, strategy_context
                         )
-                        self._set_data_updates(strategy_id)
-                        strategy_state['updated'] = False
+                        self._set_data_updates(context_id)
+                        strategy_context['updated'] = False
 
-                    if strategy_state['alerts']:
-                        self._set_alert_updates(strategy_state['alerts'])
-                        strategy_state['alerts'].clear()
+                    if strategy_context['alerts']:
+                        self._set_alert_updates(strategy_context['alerts'])
+                        strategy_context['alerts'].clear()
                 except Exception as e:
                     self.logger.error(f'{type(e).__name__} - {e}')
 
@@ -69,6 +69,6 @@ class Server(Flask):
     def _set_alert_updates(self, alerts: list) -> None:
         self.alert_updates.extend(alerts)
 
-    def _set_data_updates(self, strategy_id: str) -> None:
-        if strategy_id not in self.data_updates:
-            self.data_updates.append(strategy_id)
+    def _set_data_updates(self, context_id: str) -> None:
+        if context_id not in self.data_updates:
+            self.data_updates.append(context_id)

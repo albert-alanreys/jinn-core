@@ -12,9 +12,9 @@ def main() -> None:
 
     controller = Controller(
         mode=config.MODE,
-        automation_info=config.AUTOMATION_INFO,
-        optimization_info=config.OPTIMIZATION_INFO,
-        testing_info=config.TESTING_INFO  
+        automation_config=config.AUTOMATION_CONFIG,
+        optimization_config=config.OPTIMIZATION_CONFIG,
+        testing_config=config.TESTING_CONFIG  
     )
     controller.run_mode()
 

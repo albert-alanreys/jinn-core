@@ -64,10 +64,10 @@ pip install "имя_пакета"
 MODE = enums.Mode.OPTIMIZATION
 ```
 
-2. Укажите параметры оптимизации в словаре `OPTIMIZATION_INFO`:
+2. Укажите параметры оптимизации в словаре `OPTIMIZATION_CONFIG`:
 
 ```python
-OPTIMIZATION_INFO = {
+OPTIMIZATION_CONFIG = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
@@ -143,10 +143,10 @@ py main.py
 MODE = enums.Mode.TESTING
 ```
 
-2. Укажите параметры тестирования в словаре `TESTING_INFO`:
+2. Укажите параметры тестирования в словаре `TESTING_CONFIG`:
 
 ```python
-TESTING_INFO = {
+TESTING_CONFIG = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
@@ -195,10 +195,10 @@ py main.py
 MODE = enums.Mode.AUTOMATION
 ```
 
-2. Укажите параметры автоматизации в словаре `AUTOMATION_INFO`:
+2. Укажите параметры автоматизации в словаре `AUTOMATION_CONFIG`:
 
 ```python
-AUTOMATION_INFO = {
+AUTOMATION_CONFIG = {
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': 1,
@@ -226,7 +226,7 @@ MODE = enums.Mode.AUTOMATION
 
 2. Разместите JSON-файлы автоматизации в соответствующих папках стратегий (например, `TVLite\src\strategies\nugget_v2\automation`). Возможны два варианта автоматизации:
 
-- **Вариант 1:** Файлы со всеми параметрами стратегии и их значениями. Имена файлов должны содержать название биржи, тикер и таймфрейм (например, `BYBIT_BTCUSDT_1.json`).  Параметры определены в соответствующих модулях (например, `nugget_v2.py`).  Пример файла доступен в папке `help`.
+- **Вариант 1:** Файлы со всеми параметрами стратегии и их значениями. Имена файлов должны содержать название биржи, тикер и таймфрейм (например, `BYBIT_BTCUSDT_1.json`). Параметры определены в соответствующих модулях (например, `nugget_v2.py`). Пример файла доступен в папке `help`.
 - **Вариант 2:** Файлы с оптимальными параметрами, полученными из папки `optimization`. Их также можно размещать в папках `automation`. В этом случае будет использоваться первый набор параметров.
 
 3. Запустите программу в терминале из корневой директории проекта:
