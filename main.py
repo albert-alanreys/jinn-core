@@ -16,7 +16,7 @@ def main() -> None:
         optimization_config=config.OPTIMIZATION_CONFIG,
         testing_config=config.TESTING_CONFIG  
     )
-    controller.run_mode()
+    controller.start_mode()
 
 
 if __name__ == '__main__':

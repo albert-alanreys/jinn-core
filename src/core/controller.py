@@ -5,7 +5,7 @@ from src.api.server import Server
 from src.core.enums import Mode
 from src.services.automation.automizer import Automizer
 from src.services.optimization import OptimizationBuilder, Optimizer
-from src.services.testing.tester import Tester
+from src.services.testing import TestingBuilder
 
 
 class Controller():
@@ -39,29 +39,27 @@ class Controller():
                 builder = OptimizationBuilder(self.optimization_config)
                 self.strategy_contexts = builder.build()
             case Mode.TESTING:
-                self.tester = Tester(self.esting_config)
+                builder = TestingBuilder(self.testing_config)
+                self.strategy_contexts = builder.build()
 
-    def run_mode(self) -> None:
+    def start_mode(self) -> None:
         self.logger.info(f'TVLite started in "{self.mode}" mode')
 
         match self.mode:
             case Mode.AUTOMATION:
                 self.automizer.run()
-                self._start_server(self.automizer.strategy_contexts)
+                self._start_server()
             case Mode.OPTIMIZATION:
                 optimizer = Optimizer(self.strategy_contexts)
                 optimizer.run()
             case Mode.TESTING:
-                self.tester.run()
-                self._start_server(self.tester.strategy_contexts)
+                self._start_server()
 
-    def _start_server(self, strategy_contexts: dict) -> None:
+    def _start_server(self) -> None:
         server = Server(
             import_name=__name__,
             static_folder=self.static_path,
             template_folder=self.templates_path,
-            mode=self.mode,
-            strategy_contexts=strategy_contexts,
-            tester=self.tester
+            strategy_contexts=self.strategy_contexts
         )
         server.run()
