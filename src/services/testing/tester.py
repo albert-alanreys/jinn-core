@@ -32,112 +32,135 @@ class Tester:
 
     @staticmethod
     def _get_metrics(initial_capital: float, deals_log: np.ndarray) -> list:
+        def _mean(array: np.ndarray) -> float:
+            return round(array.mean(), 2) if array.size else np.nan
+
+
         log = deals_log.reshape((-1, 13))
-        
+
+        log_col_0 = log[:, 0]
+        log_col_8 = log[:, 8]
+        log_col_9 = log[:, 9]
+        log_col_12 = log[:, 12]
+
         # Gross profit
-        all_gross_profit = round(log[:, 8][log[:, 8] > 0].sum(), 2)
+        all_gross_profit = round(log_col_8[log_col_8 > 0].sum(), 2)
         all_gross_profit_per = round(
             all_gross_profit / initial_capital * 100, 2
         )
 
         long_gross_profit = round(
-            log[:, 8][(log[:, 8] > 0) & (log[:, 0] == 0)].sum(), 2
+            log_col_8[(log_col_8 > 0) & (log_col_0 == 0)].sum(),
+            2
         )
         long_gross_profit_per = round(
-            long_gross_profit / initial_capital * 100, 2
+            long_gross_profit / initial_capital * 100,
+            2
         )
 
         short_gross_profit = round(
-            log[:, 8][(log[:, 8] > 0) & (log[:, 0] == 1)].sum(), 2
+            log_col_8[(log_col_8 > 0) & (log_col_0 == 1)].sum(),
+            2
         )
         short_gross_profit_per = round(
-            short_gross_profit / initial_capital * 100, 2
+            short_gross_profit / initial_capital * 100,
+            2
         )
 
         # Gross loss
-        all_gross_loss = round(abs(log[:, 8][log[:, 8] <= 0].sum()), 2)
+        all_gross_loss = round(abs(log_col_8[log_col_8 <= 0].sum()), 2)
         all_gross_loss_per = round(
             all_gross_loss / initial_capital * 100, 2
         )
 
         long_gross_loss = round(
-            abs(log[:, 8][(log[:, 8] <= 0) & (log[:, 0] == 0)].sum()), 2
+            abs(log_col_8[(log_col_8 <= 0) & (log_col_0 == 0)].sum()),
+            2
         )
         long_gross_loss_per = round(
-            long_gross_loss / initial_capital * 100, 2
+            long_gross_loss / initial_capital * 100,
+            2
         )
 
         short_gross_loss = round(
-            abs(log[:, 8][(log[:, 8] <= 0) & (log[:, 0] == 1)].sum()), 2
+            abs(log_col_8[(log_col_8 <= 0) & (log_col_0 == 1)].sum()),
+            2
         )
         short_gross_loss_per = round(
-            short_gross_loss / initial_capital * 100, 2
+            short_gross_loss / initial_capital * 100,
+            2
         )
 
         # Net profit
         all_net_profit = round(all_gross_profit - all_gross_loss, 2)
         all_net_profit_per = round(
-            all_net_profit / initial_capital * 100, 2
+            all_net_profit / initial_capital * 100,
+            2
         )
 
         long_net_profit = round(long_gross_profit - long_gross_loss, 2)
         long_net_profit_per = round(
-            long_net_profit / initial_capital * 100, 2
+            long_net_profit / initial_capital * 100,
+            2
         )
 
         short_net_profit = round(short_gross_profit - short_gross_loss, 2)
         short_net_profit_per = round(
-            short_net_profit / initial_capital * 100, 2
+            short_net_profit / initial_capital * 100,
+            2
         )
 
         # Profit factor
         if all_gross_loss != 0:
             all_profit_factor = round(
-                all_gross_profit / all_gross_loss, 3
+                all_gross_profit / all_gross_loss,
+                3
             )
         else:
             all_profit_factor = np.nan
 
         if long_gross_loss != 0:
             long_profit_factor =  round(
-                long_gross_profit / long_gross_loss, 3
+                long_gross_profit / long_gross_loss,
+                3
             )
         else:
             long_profit_factor = np.nan
 
         if short_gross_loss != 0:
             short_profit_factor = round(
-                short_gross_profit / short_gross_loss, 3
+                short_gross_profit / short_gross_loss,
+                3
             )
         else:
             short_profit_factor = np.nan
 
         # Commission paid
-        all_commission_paid = round(log[:, 12].sum(), 2)
-        long_commission_paid = round(log[:, 12][log[:, 0] == 0].sum(), 2)
-        short_commission_paid = round(log[:, 12][log[:, 0] == 1].sum(), 2)
+        all_commission_paid = round(log_col_12.sum(), 2)
+        long_commission_paid = round(log_col_12[log_col_0 == 0].sum(), 2)
+        short_commission_paid = round(log_col_12[log_col_0 == 1].sum(), 2)
 
         # Total closed trades
         all_total_closed_trades = log.shape[0]
-        long_total_closed_trades = log[log[:, 0] == 0].shape[0]
-        short_total_closed_trades = log[log[:, 0] == 1].shape[0]
+        long_total_closed_trades = log[log_col_0 == 0].shape[0]
+        short_total_closed_trades = log[log_col_0 == 1].shape[0]
 
         # Number winning trades
-        all_number_winning_trades = log[log[:, 8] > 0].shape[0]
+        all_number_winning_trades = log[log_col_8 > 0].shape[0]
         long_number_winning_trades = log[
-            (log[:, 8] > 0) & (log[:, 0] == 0)
+            (log_col_8 > 0) & (log_col_0 == 0)
         ].shape[0]
         short_number_winning_trades = log[
-            (log[:, 8] > 0) & (log[:, 0] == 1)
+            (log_col_8 > 0) & (log_col_0 == 1)
         ].shape[0]
 
         # Number losing trades
-        all_number_losing_trades = log[log[:, 8] <= 0].shape[0]
+        all_number_losing_trades = log[log_col_8 <= 0].shape[0]
         long_number_losing_trades = log[
-            (log[:, 8] <= 0) & (log[:, 0] == 0)
+            (log_col_8 <= 0) & (log_col_0 == 0)
         ].shape[0]
         short_number_losing_trades = log[
-            (log[:, 8] <= 0) & (log[:, 0] == 1)
+            (log_col_8 <= 0) & (log_col_0 == 1)
         ].shape[0]
 
         # Percent profitable
@@ -169,66 +192,63 @@ class Tester:
             short_percent_profitable = np.nan
 
         # Avg trade
-        all_avg_trade = round(log[:, 8].mean(), 2)
-        all_avg_trade_per = round(log[:, 9].mean(), 2)
+        all_avg_trade = _mean(log_col_8)
+        all_avg_trade_per = _mean(log_col_9)
 
-        long_avg_trade = round(log[:, 8][log[:, 0] == 0].mean(), 2)
-        long_avg_trade_per = round(log[:, 9][log[:, 0] == 0].mean(), 2)
+        long_avg_trade = _mean(log_col_8[log_col_0 == 0])
+        long_avg_trade_per = _mean(log_col_9[log_col_0 == 0])
 
-        short_avg_trade = round(log[:, 8][log[:, 0] == 1].mean(), 2)
-        short_avg_trade_per = round(log[:, 9][log[:, 0] == 1].mean(), 2)
+        short_avg_trade = _mean(log_col_8[log_col_0 == 1])
+        short_avg_trade_per = _mean(log_col_9[log_col_0 == 1])
 
         # Avg winning trade
-        all_avg_winning_trade = round(log[:, 8][log[:, 8] > 0].mean(), 2)
-        all_avg_winning_trade_per = round(
-            log[:, 9][log[:, 9] > 0].mean(), 2
+        all_avg_winning_trade = _mean(log_col_8[log_col_8 > 0])
+        all_avg_winning_trade_per = _mean(log_col_9[log_col_9 > 0])
+
+        long_avg_winning_trade = _mean(
+            log_col_8[(log_col_8 > 0) & (log_col_0 == 0)]
+        )
+        long_avg_winning_trade_per = _mean(
+            log_col_9[(log_col_9 > 0) & (log_col_0 == 0)]
         )
 
-        long_avg_winning_trade = round(
-            log[:, 8][(log[:, 8] > 0) & (log[:, 0] == 0)].mean(), 2
+        short_avg_winning_trade = _mean(
+            log_col_8[(log_col_8 > 0) & (log_col_0 == 1)]
         )
-        long_avg_winning_trade_per = round(
-            log[:, 9][(log[:, 9] > 0) & (log[:, 0] == 0)].mean(), 2
-        )
-
-        short_avg_winning_trade = round(
-            log[:, 8][(log[:, 8] > 0) & (log[:, 0] == 1)].mean(), 2
-        )
-        short_avg_winning_trade_per = round(
-            log[:, 9][(log[:, 9] > 0) & (log[:, 0] == 1)].mean(), 2
+        short_avg_winning_trade_per = _mean(
+            log_col_9[(log_col_9 > 0) & (log_col_0 == 1)]
         )
 
         # Avg losing trade
-        all_avg_losing_trade = round(
-            abs(log[:, 8][log[:, 8] <= 0].mean()), 2
+        all_avg_losing_trade = abs(_mean(log_col_8[log_col_8 <= 0]))
+        all_avg_losing_trade_per = abs(_mean(log_col_9[log_col_9 <= 0]))
+
+        long_avg_losing_trade = abs(
+            _mean(log_col_8[(log_col_8 <= 0) & (log_col_0 == 0)])
         )
-        all_avg_losing_trade_per = round(
-            abs(log[:, 9][log[:, 9] <= 0].mean()), 2
+        long_avg_losing_trade_per = abs(
+            _mean(log_col_9[(log_col_9 <= 0) & (log_col_0 == 0)])
         )
 
-        long_avg_losing_trade = round(
-            abs(log[:, 8][(log[:, 8] <= 0) & (log[:, 0] == 0)].mean()), 2
+        short_avg_losing_trade = abs(
+            _mean(log_col_8[(log_col_8 <= 0) & (log_col_0 == 1)])
         )
-        long_avg_losing_trade_per = round(
-            abs(log[:, 9][(log[:, 9] <= 0) & (log[:, 0] == 0)].mean()), 2
-        )
-
-        short_avg_losing_trade = round(
-            abs(log[:, 8][(log[:, 8] <= 0) & (log[:, 0] == 1)].mean()), 2
-        )
-        short_avg_losing_trade_per = round(
-            abs(log[:, 9][(log[:, 9] <= 0) & (log[:, 0] == 1)].mean()), 2
+        short_avg_losing_trade_per = abs(
+            _mean(log_col_9[(log_col_9 <= 0) & (log_col_0 == 1)])
         )
 
         # Ratio avg win / avg loss
         all_ratio_avg_win_loss = round(
-            all_avg_winning_trade / all_avg_losing_trade, 3
+            all_avg_winning_trade / all_avg_losing_trade,
+            3
         )
         long_ratio_avg_win_loss = round(
-            long_avg_winning_trade / long_avg_losing_trade, 3
+            long_avg_winning_trade / long_avg_losing_trade,
+            3
         )
         short_ratio_avg_win_loss = round(
-            short_avg_winning_trade / short_avg_losing_trade, 3
+            short_avg_winning_trade / short_avg_losing_trade,
+            3
         )
 
         # Largest winning trade
@@ -236,8 +256,8 @@ class Tester:
         all_largest_winning_trade_per = np.nan
 
         try:
-            all_largest_winning_trade = round(log[:, 8].max(), 2)
-            all_largest_winning_trade_per = round(log[:, 9].max(), 2)
+            all_largest_winning_trade = round(log_col_8.max(), 2)
+            all_largest_winning_trade_per = round(log_col_9.max(), 2)
         except Exception:
             pass
 
@@ -246,10 +266,12 @@ class Tester:
 
         try:
             long_largest_winning_trade = round(
-                log[:, 8][log[:, 0] == 0].max(), 2
+                log_col_8[log_col_0 == 0].max(),
+                2
             )
             long_largest_winning_trade_per = round(
-                log[:, 9][log[:, 0] == 0].max(), 2
+                log_col_9[log_col_0 == 0].max(),
+                2
             )
         except Exception:
             pass
@@ -259,10 +281,12 @@ class Tester:
 
         try:
             short_largest_winning_trade = round(
-                log[:, 8][log[:, 0] == 1].max(), 2
+                log_col_8[log_col_0 == 1].max(),
+                2
             )
             short_largest_winning_trade_per = round(
-                log[:, 9][log[:, 0] == 1].max(), 2
+                log_col_9[log_col_0 == 1].max(),
+                2
             )
         except Exception:
             pass
@@ -272,8 +296,8 @@ class Tester:
         all_largest_losing_trade_per = np.nan
 
         try:
-            all_largest_losing_trade = round(abs(log[:, 8].min()), 2)
-            all_largest_losing_trade_per = round(abs(log[:, 9].min()), 2)
+            all_largest_losing_trade = round(abs(log_col_8.min()), 2)
+            all_largest_losing_trade_per = round(abs(log_col_9.min()), 2)
         except Exception:
             pass
 
@@ -282,10 +306,12 @@ class Tester:
 
         try:
             long_largest_losing_trade = round(
-                abs(log[:, 8][log[:, 0] == 0].min()), 2
+                abs(log_col_8[log_col_0 == 0].min()),
+                2
             )
             long_largest_losing_trade_per = round(
-                abs(log[:, 9][log[:, 0] == 0].min()), 2
+                abs(log_col_9[log_col_0 == 0].min()),
+                2
             )
         except Exception:
             pass
@@ -295,10 +321,12 @@ class Tester:
 
         try:
             short_largest_losing_trade = round(
-                abs(log[:, 8][log[:, 0] == 1].min()), 2
+                abs(log_col_8[log_col_0 == 1].min()),
+                2
             )
             short_largest_losing_trade_per = round(
-                abs(log[:, 9][log[:, 0] == 1].min()), 2
+                abs(log_col_9[log_col_0 == 1].min()),
+                2
             )
         except Exception:
             pass
@@ -306,7 +334,7 @@ class Tester:
         # Max drawdown
         try:
             equity = np.concatenate(
-                (np.array([initial_capital]), log[:, 8])
+                (np.array([initial_capital]), log_col_8)
             ).cumsum()
             max_equity = equity[0]
             all_max_drawdown = 0.0
@@ -333,7 +361,7 @@ class Tester:
         # Sortino ratio
         all_sortino_ratio = round(
             all_avg_trade_per / 
-                (log[:, 9][log[:, 9] <= 0] ** 2).mean() ** 0.5,
+                _mean(log_col_9[log_col_9 <= 0] ** 2) ** 0.5,
             3
         )
 
