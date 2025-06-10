@@ -19,21 +19,19 @@ def register_data_routes(app):
 
     @app.route('/data/updates', methods=['GET'])
     def get_updates():
-        return dumps(app.data_updates)
+        updates = app.data_updates.copy()
+        app.data_updates.clear()
+        return dumps(updates)
 
     @app.route('/data/details/<string:context_id>', methods=['GET'])
     def get_details(context_id):
         context = app.strategy_contexts[context_id]
         context['stats'] = Tester.test(context)
         details = Formatter.format_details(context)
-
-        if context_id in app.data_updates:
-            app.data_updates.remove(context_id)
-
         return dumps(details)
 
-    @app.route('/data/update/<string:context_id>', methods=['PATCH'])
-    def update_data(context_id):
+    @app.route('/data/contexts/<string:context_id>', methods=['PATCH'])
+    def update_context(context_id):
         try:
             data = request.get_json()
             param = data.get('param')

@@ -2,30 +2,63 @@ import ChartManager from './ChartManager.js';
 import ReportManager from './ReportManager.js';
 import LeftToolbarManager from './LeftToolbarManager.js';
 import RightToolbarManager from './RightToolbarManager.js';
-import { getSummary, getDetails } from './fetchClient.js';
+import {
+  fetchAlerts,
+  fetchSummary,
+  fetchUpdates,
+  fetchDetails,
+} from './fetchClient.js';
 
-async function renderUI(id) {
-  var details = await getDetails(id);
-  var freshSummary = await getSummary();
+async function renderUI(contextId) {
+  var freshSummary = await fetchSummary();
+  var details = await fetchDetails(contextId);
 
   chartManager.removeChart();
   reportManager.removeReport();
-  chartManager.createChart(details.chart, id);
-  reportManager.createReport(details.report);
-
   leftToolbarManager.removeEventListeners();
+
+  chartManager.createChart(details.chart, contextId);
+  reportManager.createReport(details.report);
   leftToolbarManager.manage(
     chartManager.chart,
-    freshSummary[id],
+    freshSummary[contextId],
     chartManager.candlestickSeries
   );
 }
 
-var summary = await getSummary();
+var summary = await fetchSummary();
 
 var chartManager = new ChartManager();
 var reportManager = new ReportManager();
 var leftToolbarManager = new LeftToolbarManager();
-new RightToolbarManager(summary, renderUI);
+var rightToolbarManager = new RightToolbarManager(summary, renderUI);
 
-renderUI(Object.keys(summary)[0]);
+var contextId = Object.keys(summary)[0];
+
+renderUI(contextId);
+
+if (MODE == 'AUTOMATION') {
+  fetchAlerts().then((alerts) => {
+    if (alerts?.length) {
+      rightToolbarManager.addAlerts(alerts);
+    }
+  });
+
+  setInterval(() => {
+    fetchUpdates().then((updates) => {
+      if (updates?.length) {
+        if (updates.includes(contextId)) {
+          fetchDetails(contextId).then((data) => {
+            chartManager.setChartData(data.chart);
+          });
+        }
+
+        fetchAlerts().then((alerts) => {
+          if (alerts?.length) {
+            rightToolbarManager.addAlerts(alerts);
+          }
+        });
+      }
+    });
+  }, 5000);
+}

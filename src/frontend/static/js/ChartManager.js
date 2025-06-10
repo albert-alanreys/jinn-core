@@ -1,5 +1,3 @@
-import { getDataUpdates, getDetails } from './fetchClient.js';
-
 export default class ChartManager {
   daysOfWeek = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
   months = [
@@ -99,18 +97,10 @@ export default class ChartManager {
     crosshairMarkerVisible: false,
   };
 
-  constructor() {
-    this.updateTimerId = NaN;
-  }
-
-  createChart(data, id) {
+  createChart(data) {
     this.createCanvas(data);
     this.createLegends(data);
     this.createScrollButton();
-
-    if (MODE == 'AUTOMATION') {
-      this.manageChartUpdates(id);
-    }
   }
 
   createCanvas(data) {
@@ -298,20 +288,6 @@ export default class ChartManager {
     button.addEventListener('click', () => {
       this.timeScale.scrollToRealTime();
     });
-  }
-
-  manageChartUpdates(id) {
-    clearInterval(this.timerId);
-
-    this.timerId = setInterval(() => {
-      getDataUpdates().then((updates) => {
-        if (updates.includes(id)) {
-          getDetails(id).then((data) => {
-            this.setChartData(data.chart);
-          });
-        }
-      });
-    }, 5000);
   }
 
   removeChart() {

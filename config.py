@@ -5,11 +5,11 @@ import src.core.enums as enums
 #    AUTOMATION - automation
 #    OPTIMIZATION - optimization
 #    TESTING - testing
-MODE = enums.Mode.AUTOMATION
+MODE = enums.Mode.TESTING
 
 # Settings for different modes
 AUTOMATION_CONFIG = {
-    'strategy': enums.Strategy.SISTER_V1,
+    'strategy': enums.Strategy.SANDBOX_V1,
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': 1
@@ -29,6 +29,6 @@ TESTING_CONFIG = {
     'market': enums.Market.SPOT,
     'symbol': 'ETHUSDT',
     'interval': '1h',
-    'start': '2018-01-01',
+    'start': '2017-01-01',
     'end': '2025-05-01'
 }

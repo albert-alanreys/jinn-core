@@ -1,6 +1,6 @@
-export async function getAlerts() {
+export async function fetchAlerts() {
   try {
-    var response = await fetch(`${API_URL}/alerts`);
+    var response = await fetch(`${API_URL}/data/alerts`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -14,39 +14,7 @@ export async function getAlerts() {
   }
 }
 
-export async function getAlertUpdates() {
-  try {
-    var response = await fetch(`${API_URL}/updates/alerts`);
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} - ${response.statusText}`);
-    }
-
-    var result = await response.json();
-    return result;
-  } catch (error) {
-    console.error('Failed to fetch alert updates:', error);
-    throw error;
-  }
-}
-
-export async function getDataUpdates() {
-  try {
-    var response = await fetch(`${API_URL}/updates/data`);
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} - ${response.statusText}`);
-    }
-
-    var result = await response.json();
-    return result;
-  } catch (error) {
-    console.error('Failed to fetch data updates:', error);
-    throw error;
-  }
-}
-
-export async function getSummary() {
+export async function fetchSummary() {
   try {
     var response = await fetch(`${API_URL}/data/summary`);
 
@@ -62,7 +30,23 @@ export async function getSummary() {
   }
 }
 
-export async function getDetails(context_id) {
+export async function fetchUpdates() {
+  try {
+    var response = await fetch(`${API_URL}/data/updates`);
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} - ${response.statusText}`);
+    }
+
+    var result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Failed to fetch data updates:', error);
+    throw error;
+  }
+}
+
+export async function fetchDetails(context_id) {
   try {
     var response = await fetch(`${API_URL}/data/details/${context_id}`);
 
@@ -78,11 +62,11 @@ export async function getDetails(context_id) {
   }
 }
 
-export async function updateData(context_id, parameter) {
+export async function updateContext(context_id, param) {
   try {
-    var parsed = JSON.parse(parameter);
+    var parsed = JSON.parse(param);
 
-    var response = await fetch(`${API_URL}/data/update/${context_id}`, {
+    var response = await fetch(`${API_URL}/data/contexts/${context_id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -100,7 +84,7 @@ export async function updateData(context_id, parameter) {
     var result = await response.json();
     return result;
   } catch (error) {
-    console.error('Failed to update data:', error);
+    console.error(`Failed to update context for ${context_id}:`, error);
     throw error;
   }
 }

@@ -1,9 +1,4 @@
-import {
-  getSummary,
-  updateData,
-  getAlerts,
-  getAlertUpdates,
-} from './fetchClient.js';
+import { fetchSummary, updateContext } from './fetchClient.js';
 
 export default class RightToolbarManager {
   constructor(data, renderUI) {
@@ -12,42 +7,38 @@ export default class RightToolbarManager {
 
     this.manageStrategies();
     this.manageButtons();
-
-    if (MODE == 'AUTOMATION') {
-      this.manageAlerts();
-    }
   }
 
   manageStrategies() {
     var body = document.querySelector('#strategies-list .body');
 
-    for (var key in this.data) {
+    for (var cid in this.data) {
       var button = document.createElement('button');
-      button.setAttribute('data-strategy', key);
+      button.setAttribute('data-cid', cid);
       button.setAttribute('data-status', 'inactive');
       body.appendChild(button);
 
       var div = document.createElement('div');
       div.setAttribute('unselectable', 'on');
-      div.innerHTML = `${this.data[key].name}
-      ${this.data[key].symbol}
-      ${this.data[key].interval}`;
+      div.innerHTML = `${this.data[cid].name}
+      ${this.data[cid].symbol}
+      ${this.data[cid].interval}`;
       button.appendChild(div);
 
       if (body.children.length == 1) {
-        this.currentStrategy = key;
+        this.currentContextId = cid;
         button.setAttribute('data-status', 'active');
         this.createDescription();
       }
 
       button.addEventListener('click', (event) => {
-        if (event.target.dataset.strategy != this.currentStrategy) {
+        if (event.target.dataset.cid != this.currentContextId) {
           document
-            .querySelector(`button[data-strategy="${this.currentStrategy}"]`)
+            .querySelector(`button[data-cid="${this.currentContextId}"]`)
             .setAttribute('data-status', 'inactive');
           event.target.setAttribute('data-status', 'active');
-          this.currentStrategy = event.target.dataset.strategy;
-          this.renderUI(this.currentStrategy);
+          this.currentContextId = event.target.dataset.cid;
+          this.renderUI(this.currentContextId);
           this.createDescription();
         }
       });
@@ -56,7 +47,7 @@ export default class RightToolbarManager {
 
   createDescription() {
     var body = document.querySelector('#strategy-description .body');
-    var strategyData = this.data[this.currentStrategy];
+    var strategyData = this.data[this.currentContextId];
     var oldData = Array.from(body.children);
 
     if (oldData.length > 0) {
@@ -213,12 +204,12 @@ export default class RightToolbarManager {
       });
     }
 
-    updateData(this.currentStrategy, parameter)
+    updateContext(this.currentContextId, parameter)
       .then(() => {
-        getSummary().then((data) => {
+        fetchSummary().then((data) => {
           this.data = data;
           overwrite.bind(this)();
-          this.renderUI(this.currentStrategy);
+          this.renderUI(this.currentContextId);
         });
       })
       .catch(() => {
@@ -228,7 +219,7 @@ export default class RightToolbarManager {
       });
 
     function overwrite() {
-      var strategyData = this.data[this.currentStrategy];
+      var strategyData = this.data[this.currentContextId];
 
       for (var key in strategyData.params) {
         var parameter = strategyData.params[key];
@@ -359,46 +350,62 @@ export default class RightToolbarManager {
     });
   }
 
-  manageAlerts() {
-    getAlerts().then((alerts) => {
-      if (alerts.length > 0) {
-        addAlerts.bind(this)(alerts);
-      }
-    });
+  addAlerts(alerts) {
+    var body = document.querySelector('#alerts-list .body');
+    var count = document.querySelectorAll('.alert').length;
+    var newAlerts = alerts.filter((alert, index) => index + 1 > count);
 
-    setInterval(() => {
-      getAlertUpdates().then((alerts) => {
-        if (alerts.length > 0) {
-          addAlerts.bind(this)(alerts);
-        }
-      });
-    }, 5000);
+    for (var alert of newAlerts) {
+      var outerDiv = document.createElement('div');
+      outerDiv.classList.add('alert');
+      body.prepend(outerDiv);
 
-    function addAlerts(alerts) {
-      var body = document.querySelector('#alerts-list .body');
+      var header = document.createElement('div');
+      header.classList.add('header');
+      outerDiv.appendChild(header);
 
-      for (var alert of alerts) {
-        var outerDiv = document.createElement('div');
-        outerDiv.classList.add('alert');
-        body.prepend(outerDiv);
+      var innerDiv1 = document.createElement('div');
+      innerDiv1.innerText = alert.time;
+      header.appendChild(innerDiv1);
 
-        var header = document.createElement('div');
-        header.classList.add('header');
-        outerDiv.appendChild(header);
+      var innerDiv2 = document.createElement('div');
+      innerDiv2.classList.add('target');
+      innerDiv2.setAttribute('title', 'Открыть стратегию');
+      innerDiv2.setAttribute('data-cid', alert.cid);
+      header.appendChild(innerDiv2);
 
-        var innerDiv1 = document.createElement('div');
-        innerDiv1.innerText = alert.time;
-        header.appendChild(innerDiv1);
+      var hiddenСontent = document.createElement('div');
+      hiddenСontent.classList.add('hidden-content');
+      outerDiv.appendChild(hiddenСontent);
 
-        var innerDiv2 = document.createElement('div');
-        innerDiv2.classList.add('target');
-        innerDiv2.setAttribute('title', 'Открыть стратегию');
-        innerDiv2.setAttribute('data-strategy', alert.id);
-        header.appendChild(innerDiv2);
+      var tr = document.createElement('div');
+      tr.classList.add('tr');
+      hiddenСontent.appendChild(tr);
 
-        var hiddenСontent = document.createElement('div');
-        hiddenСontent.classList.add('hidden-content');
-        outerDiv.appendChild(hiddenСontent);
+      var td1 = document.createElement('div');
+      td1.classList.add('td');
+      td1.innerText = 'Биржа';
+      tr.appendChild(td1);
+
+      var td2 = document.createElement('div');
+      td2.classList.add('td');
+      td2.innerText = alert.message.exchange;
+      tr.appendChild(td2);
+
+      if (!alert.message.hasOwnProperty('error')) {
+        var tr = document.createElement('div');
+        tr.classList.add('tr');
+        hiddenСontent.appendChild(tr);
+
+        var td1 = document.createElement('div');
+        td1.classList.add('td');
+        td1.innerText = 'Тип';
+        tr.appendChild(td1);
+
+        var td2 = document.createElement('div');
+        td2.classList.add('td');
+        td2.innerText = alert.message.type;
+        tr.appendChild(td2);
 
         var tr = document.createElement('div');
         tr.classList.add('tr');
@@ -406,159 +413,129 @@ export default class RightToolbarManager {
 
         var td1 = document.createElement('div');
         td1.classList.add('td');
-        td1.innerText = 'Биржа';
+        td1.innerText = 'Статус';
         tr.appendChild(td1);
 
         var td2 = document.createElement('div');
         td2.classList.add('td');
-        td2.innerText = alert.message.exchange;
-        tr.appendChild(td2);
 
-        if (!alert.message.hasOwnProperty('error')) {
-          var tr = document.createElement('div');
-          tr.classList.add('tr');
-          hiddenСontent.appendChild(tr);
-
-          var td1 = document.createElement('div');
-          td1.classList.add('td');
-          td1.innerText = 'Тип';
-          tr.appendChild(td1);
-
-          var td2 = document.createElement('div');
-          td2.classList.add('td');
-          td2.innerText = alert.message.type;
-          tr.appendChild(td2);
-
-          var tr = document.createElement('div');
-          tr.classList.add('tr');
-          hiddenСontent.appendChild(tr);
-
-          var td1 = document.createElement('div');
-          td1.classList.add('td');
-          td1.innerText = 'Статус';
-          tr.appendChild(td1);
-
-          var td2 = document.createElement('div');
-          td2.classList.add('td');
-
-          if (alert.message.status == 'исполнен') {
-            var color = '#089981';
-          } else if (alert.message.status == 'ожидает исполнения') {
-            var color = '#6a6d78';
-          } else if (alert.message.status == 'отменён') {
-            var color = '#f23645';
-          }
-
-          td2.innerHTML = `<span style="color:
-            ${color};">${alert.message.status}</span>`;
-          tr.appendChild(td2);
-
-          var tr = document.createElement('div');
-          tr.classList.add('tr');
-          hiddenСontent.appendChild(tr);
-
-          var td1 = document.createElement('div');
-          td1.classList.add('td');
-          td1.innerText = 'Направление';
-          tr.appendChild(td1);
-
-          var td2 = document.createElement('div');
-          td2.classList.add('td');
-
-          if (alert.message.side == 'покупка') {
-            var color = '#089981';
-          } else if (alert.message.side == 'продажа') {
-            var color = '#f23645';
-          }
-
-          td2.innerHTML = `<span style="color:
-            ${color};">${alert.message.side}</span>`;
-          tr.appendChild(td2);
-
-          var tr = document.createElement('div');
-          tr.classList.add('tr');
-          hiddenСontent.appendChild(tr);
-
-          var td1 = document.createElement('div');
-          td1.classList.add('td');
-          td1.innerText = 'Символ';
-          tr.appendChild(td1);
-
-          var td2 = document.createElement('div');
-          td2.classList.add('td');
-          td2.innerText = alert.message.symbol;
-          tr.appendChild(td2);
-
-          var tr = document.createElement('div');
-          tr.classList.add('tr');
-          hiddenСontent.appendChild(tr);
-
-          var td1 = document.createElement('div');
-          td1.classList.add('td');
-          td1.innerText = 'Количество';
-          tr.appendChild(td1);
-
-          var td2 = document.createElement('div');
-          td2.classList.add('td');
-          td2.innerText = alert.message.qty;
-          tr.appendChild(td2);
-
-          var tr = document.createElement('div');
-          tr.classList.add('tr');
-          hiddenСontent.appendChild(tr);
-
-          var td1 = document.createElement('div');
-          td1.classList.add('td');
-          td1.innerText = 'Цена';
-          tr.appendChild(td1);
-
-          var td2 = document.createElement('div');
-          td2.classList.add('td');
-          td2.innerText = alert.message.price;
-          tr.appendChild(td2);
-        } else {
-          var tr = document.createElement('div');
-          tr.classList.add('tr');
-          hiddenСontent.appendChild(tr);
-
-          var td = document.createElement('div');
-          td.classList.add('td');
-          td.innerHTML = `<span style="color:#f23645;">
-            ${alert.message.error}</span>`;
-          tr.appendChild(td);
+        if (alert.message.status == 'исполнен') {
+          var color = '#089981';
+        } else if (alert.message.status == 'ожидает исполнения') {
+          var color = '#6a6d78';
+        } else if (alert.message.status == 'отменён') {
+          var color = '#f23645';
         }
 
-        outerDiv.addEventListener('click', (event) => {
-          if (!event.target.classList.contains('target')) {
-            var container = event.target.closest('.alert');
+        td2.innerHTML = `<span style="color:
+            ${color};">${alert.message.status}</span>`;
+        tr.appendChild(td2);
 
-            if (
-              window
-                .getComputedStyle(container.lastChild)
-                .getPropertyValue('display') == 'none'
-            ) {
-              container.lastChild.style.display = 'flex';
-            } else {
-              container.lastChild.style.display = 'none';
-            }
-          }
-        });
+        var tr = document.createElement('div');
+        tr.classList.add('tr');
+        hiddenСontent.appendChild(tr);
 
-        innerDiv2.addEventListener('click', (event) => {
-          if (event.target.dataset.strategy != this.currentStrategy) {
-            document
-              .querySelector(`button[data-strategy="${this.currentStrategy}"]`)
-              .setAttribute('data-status', 'inactive');
-            this.currentStrategy = event.target.dataset.strategy;
-            document
-              .querySelector(`button[data-strategy="${this.currentStrategy}"]`)
-              .setAttribute('data-status', 'active');
+        var td1 = document.createElement('div');
+        td1.classList.add('td');
+        td1.innerText = 'Направление';
+        tr.appendChild(td1);
 
-            this.renderUI(this.currentStrategy, true);
-            this.createDescription();
-          }
-        });
+        var td2 = document.createElement('div');
+        td2.classList.add('td');
+
+        if (alert.message.side == 'покупка') {
+          var color = '#089981';
+        } else if (alert.message.side == 'продажа') {
+          var color = '#f23645';
+        }
+
+        td2.innerHTML = `<span style="color:
+            ${color};">${alert.message.side}</span>`;
+        tr.appendChild(td2);
+
+        var tr = document.createElement('div');
+        tr.classList.add('tr');
+        hiddenСontent.appendChild(tr);
+
+        var td1 = document.createElement('div');
+        td1.classList.add('td');
+        td1.innerText = 'Символ';
+        tr.appendChild(td1);
+
+        var td2 = document.createElement('div');
+        td2.classList.add('td');
+        td2.innerText = alert.message.symbol;
+        tr.appendChild(td2);
+
+        var tr = document.createElement('div');
+        tr.classList.add('tr');
+        hiddenСontent.appendChild(tr);
+
+        var td1 = document.createElement('div');
+        td1.classList.add('td');
+        td1.innerText = 'Количество';
+        tr.appendChild(td1);
+
+        var td2 = document.createElement('div');
+        td2.classList.add('td');
+        td2.innerText = alert.message.qty;
+        tr.appendChild(td2);
+
+        var tr = document.createElement('div');
+        tr.classList.add('tr');
+        hiddenСontent.appendChild(tr);
+
+        var td1 = document.createElement('div');
+        td1.classList.add('td');
+        td1.innerText = 'Цена';
+        tr.appendChild(td1);
+
+        var td2 = document.createElement('div');
+        td2.classList.add('td');
+        td2.innerText = alert.message.price;
+        tr.appendChild(td2);
+      } else {
+        var tr = document.createElement('div');
+        tr.classList.add('tr');
+        hiddenСontent.appendChild(tr);
+
+        var td = document.createElement('div');
+        td.classList.add('td');
+        td.innerHTML = `<span style="color:#f23645;">
+            ${alert.message.error}</span>`;
+        tr.appendChild(td);
       }
+
+      outerDiv.addEventListener('click', (event) => {
+        if (!event.target.classList.contains('target')) {
+          var container = event.target.closest('.alert');
+
+          if (
+            window
+              .getComputedStyle(container.lastChild)
+              .getPropertyValue('display') == 'none'
+          ) {
+            container.lastChild.style.display = 'flex';
+          } else {
+            container.lastChild.style.display = 'none';
+          }
+        }
+      });
+
+      innerDiv2.addEventListener('click', (event) => {
+        if (event.target.dataset.cid != this.currentContextId) {
+          document
+            .querySelector(`button[data-cid="${this.currentContextId}"]`)
+            .setAttribute('data-status', 'inactive');
+          this.currentContextId = event.target.dataset.cid;
+          document
+            .querySelector(`button[data-cid="${this.currentContextId}"]`)
+            .setAttribute('data-status', 'active');
+
+          this.renderUI(this.currentContextId);
+          this.createDescription();
+        }
+      });
     }
   }
 }
