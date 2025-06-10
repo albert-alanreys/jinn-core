@@ -34,8 +34,8 @@ class SandboxV1(BaseStrategy):
         "st_atr_period": 10,
         "st_factor": 3.0,
         "feeds": [
-            ["symbol", 15],
-            ["symbol", 1],
+            ["symbol", '1d'],
+            # ["symbol", 1],
         ]
     }
 
@@ -117,13 +117,13 @@ class SandboxV1(BaseStrategy):
             higher_time=htf_time
         )
 
-        ltf_time = extra_klines[1][:, 0]
-        ltf_close = extra_klines[1][:, 4]
-        self.ltf_close = intervals.shrink(
-            source=ltf_close,
-            main_time=self.time,
-            lower_time=ltf_time
-        )
+        # ltf_time = extra_klines[1][:, 0]
+        # ltf_close = extra_klines[1][:, 4]
+        # self.ltf_close = intervals.shrink(
+        #     source=ltf_close,
+        #     main_time=self.time,
+        #     lower_time=ltf_time
+        # )
 
         self.equity = self.params['initial_capital']
         self.qty_entry = np.full(4, np.nan)

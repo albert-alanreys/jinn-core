@@ -3,10 +3,11 @@ from decimal import Decimal
 
 import numpy as np
 
-from src.core.utils.colors import decode_rgb
-from src.core.utils.rounding import adjust
+from src.core.utils.colors import decode_rgb_vectorized
+from src.core.utils.rounding import adjust_vectorized
 from . import constants as consts
 
+import time
 
 class Formatter:
     @staticmethod
@@ -76,58 +77,57 @@ class Formatter:
     def _format_klines(klines: np.ndarray) -> list:
         result = [
             {
-                'time': kline[0] / 1000,
+                'time': kline[0] * 0.001,
                 'open': kline[1],
                 'high': kline[2],
                 'low': kline[3],
                 'close': kline[4],
-            } for kline in klines.tolist()
+            } for kline in klines
         ]
         return result
 
     @staticmethod
     def _format_indicators(market_data: dict, indicators: dict) -> dict:
-        klines = market_data['klines']
-        p_precision = market_data['p_precision']
-        
         result = {}
 
-        for name in indicators.keys():
-            values = indicators[name]['values']
-            colors = indicators[name].get('colors')
-            points = []
+        klines = market_data['klines']
+        timestamps = klines[:, 0] * 0.001
 
-            for i in range(klines.shape[0]):
-                timestamp = int(klines[i][0] / 1000)
-                value = adjust(values[i], p_precision)
-                color = None
+        for name, indicator in indicators.items():
+            values = adjust_vectorized(
+                indicator['values'], market_data['p_precision']
+            )
+            color_data = indicator.get('colors')
+            color_array = np.full(values.shape, 't', dtype=object)
 
-                if np.isnan(values[i]):
-                    value = '∅'
-                    color = 't'
+            if color_data is None:
+                color_array[~np.isnan(values)] = indicator['options']['color']
+            else:
+                valid_color_mask = ~np.isnan(color_data)
 
-                if colors is not None:
-                    color = 't'
+                if np.any(valid_color_mask):
+                    rgb_components = decode_rgb_vectorized(
+                        color_data[valid_color_mask]
+                            .astype(np.uint32)
+                            .reshape(-1, 1),
+                        np.empty(
+                            (np.count_nonzero(valid_color_mask), 3),
+                            dtype=np.uint8
+                        )
+                    )
+                    color_array[valid_color_mask] = (
+                        'rgb('
+                        + rgb_components[:, 0].astype(str) + ', ' 
+                        + rgb_components[:, 1].astype(str) + ', ' 
+                        + rgb_components[:, 2].astype(str) + ')'
+                    )
 
-                    if not np.isnan(colors[i]):
-                        r, g, b = decode_rgb(colors[i])
-                        color = f'rgb({r}, {g}, {b})'
-
-                point = {
-                    'time': timestamp,
-                    'value': value
-                }
-
-                if color is not None:
-                    point['color'] = color
- 
-                points.append(point)
-
-            if name not in result:
-                result[name] = {}
-
-            result[name]['options'] = indicators[name]['options']
-            result[name]['values'] = points
+            str_values = values.astype(str)
+            points = [
+                {'time': int(t), 'value': v, 'color': c}
+                for t, v, c in zip(timestamps, str_values, color_array)
+            ]
+            result[name] = {'options': indicator['options'], 'values': points}
 
         return result
 
@@ -284,22 +284,22 @@ class Formatter:
         return sorted(result, key=lambda x: x['time'])
 
     @staticmethod
-    def _format_equity(equity: list) -> list:
-        result = [
+    def _format_equity(equity: np.ndarray) -> list:
+        return [
             {
                 'time': i + 1,
                 'value': value,
             } for i, value in enumerate(equity)
         ]
-        return result
 
     @staticmethod
     def _format_deals_log(
         closed_deals: np.ndarray,
         open_deals: np.ndarray
     ) -> list:
+        t = time.time()
         closed = closed_deals.reshape((-1, 13))[:, :12]
-        formatted_closed = []
+        result = []
 
         for deal in closed:
             code = deal[1] - (deal[1] % 100)
@@ -330,12 +330,11 @@ class Formatter:
                 ).strftime('%Y/%m/%d %H:%M'),
                 *deal[5:12].tolist()
             ]
-            formatted_closed.append(formatted)
+            result.append(formatted)
 
         reshaped_open_deals = open_deals.reshape((-1, 5))
         mask = ~np.isnan(reshaped_open_deals).any(axis=1)
         reshaped_open_deals = reshaped_open_deals[mask]
-        formatted_open = []
 
         for deal in reshaped_open_deals:
             code = deal[1] - (deal[1] % 100)
@@ -354,6 +353,6 @@ class Formatter:
             ).strftime('%Y/%m/%d %H:%M')
             formatted[5] = float(deal[3])
             formatted[7] = float(deal[4])
-            formatted_open.append(formatted)
+            result.append(formatted)
 
-        return formatted_closed + formatted_open
+        return result

@@ -22,12 +22,15 @@ class Tester:
         }
 
     @staticmethod
-    def _get_equity(initial_capital: float, deals_log: np.ndarray) -> list:
+    def _get_equity(
+        initial_capital: float,
+        deals_log: np.ndarray
+    ) -> np.ndarray:
         log = deals_log.reshape((-1, 13))
 
         equity = np.concatenate(
             (np.array([initial_capital]), log[:, 8])
-        ).cumsum().tolist()
+        ).cumsum()
         return equity
 
     @staticmethod

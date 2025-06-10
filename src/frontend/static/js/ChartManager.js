@@ -265,7 +265,7 @@ export default class ChartManager {
         var value = '∅';
         var color = '#000000';
       } else {
-        var value = point.value;
+        var value = point.value === 'nan' ? '∅' : point.value;
         var color = point.color ?? options.color ?? '#000000';
       }
 
