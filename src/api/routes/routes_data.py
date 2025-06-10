@@ -8,20 +8,24 @@ from src.services.testing import Tester
 
 
 def register_data_routes(app):
-    @app.route('/updates/data', methods=['GET'])
-    def get_data_updates():
-        return dumps(app.data_updates)
+    @app.route('/data/alerts', methods=['GET'])
+    def get_alerts():
+        return dumps(app.strategy_alerts)
 
     @app.route('/data/summary', methods=['GET'])
     def get_summary():
         summary = Formatter.format_summary(app.strategy_contexts)
         return dumps(summary)
 
+    @app.route('/data/updates', methods=['GET'])
+    def get_updates():
+        return dumps(app.data_updates)
+
     @app.route('/data/details/<string:context_id>', methods=['GET'])
     def get_details(context_id):
-        stats = Tester.test(app.strategy_contexts[context_id])
-        app.strategy_contexts[context_id]['stats'] = stats
-        details = Formatter.format_details(app.strategy_contexts[context_id])
+        context = app.strategy_contexts[context_id]
+        context['stats'] = Tester.test(context)
+        details = Formatter.format_details(context)
 
         if context_id in app.data_updates:
             app.data_updates.remove(context_id)
@@ -52,25 +56,11 @@ def register_data_routes(app):
             app.strategy_contexts[context_id]['instance'] = instance
             return dumps({'status': 'success'}), 200
         except ValueError:
-            return dumps({
-                'status': 'error',
-                'type': 'invalid_request'
-            }), 400
-        except KeyError:
-            return dumps({
-                'status': 'error',
-                'type': 'not_found'
-            }), 400
+            return dumps({'status': 'error', 'type': 'invalid_request'}), 400
         except TypeError:
-            return dumps({
-                'status': 'error',
-                'type': 'invalid_type'
-            }), 400
+            return dumps({'status': 'error', 'type': 'invalid_type'}), 400
         except Exception:
-            return dumps({
-                'status': 'error',
-                'type': 'server_error'
-            }), 500
+            return dumps({'status': 'error', 'type': 'server_error'}), 500
 
     def _parse_value(raw):
         if isinstance(raw, list):

@@ -3,7 +3,7 @@ from logging import getLogger
 
 from src.api.server import Server
 from src.core.enums import Mode
-from src.services.automation.automizer import Automizer
+from src.services.automation import AutomationBuilder, Automizer
 from src.services.optimization import OptimizationBuilder, Optimizer
 from src.services.testing import TestingBuilder
 
@@ -34,26 +34,27 @@ class Controller():
     def _init_service(self) -> None:
         match self.mode:
             case Mode.AUTOMATION:
-                self.automizer = Automizer(self.automation_config)
+                builder = AutomationBuilder(self.automation_config)
             case Mode.OPTIMIZATION:
                 builder = OptimizationBuilder(self.optimization_config)
-                self.strategy_contexts = builder.build()
             case Mode.TESTING:
                 builder = TestingBuilder(self.testing_config)
-                self.strategy_contexts = builder.build()
+        
+        self.strategy_contexts = builder.build()
 
     def start_mode(self) -> None:
         self.logger.info(f'TVLite started in "{self.mode}" mode')
 
         match self.mode:
             case Mode.AUTOMATION:
-                self.automizer.run()
-                self._start_server()
+                automizer = Automizer(self.strategy_contexts)
+                automizer.run()
             case Mode.OPTIMIZATION:
                 optimizer = Optimizer(self.strategy_contexts)
                 optimizer.run()
-            case Mode.TESTING:
-                self._start_server()
+
+        if self.mode in (Mode.AUTOMATION, Mode.TESTING):
+            self._start_server()
 
     def _start_server(self) -> None:
         server = Server(

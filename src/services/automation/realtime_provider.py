@@ -77,7 +77,7 @@ class RealtimeProvider():
     def update_data(self, strategy_context: dict) -> None:
         market_data = strategy_context['market_data']
         extra_klines = market_data['extra_klines']
-        klines_updated = False
+        updated = False
 
         if not has_last_historical_kline(market_data['klines']):
             market_data['klines'] = self._append_last_kline(
@@ -86,7 +86,7 @@ class RealtimeProvider():
                 symbol=market_data['symbol'],
                 interval=market_data['interval']
             )
-            klines_updated = True
+            updated = True
 
         for feed, klines in extra_klines.items():
             if not has_last_historical_kline(klines):
@@ -97,7 +97,7 @@ class RealtimeProvider():
                     interval=feed[1]
                 )
 
-        return klines_updated
+        return updated
 
     def _append_last_kline(
         self,

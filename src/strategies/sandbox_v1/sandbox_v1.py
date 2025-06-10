@@ -572,7 +572,7 @@ class SandboxV1(BaseStrategy):
             alert_open_long,
             alert_close_long
         )
-    
+
     def trade(self) -> None:
         # self.alert_open_long = False
         # self.alert_close_long = False
