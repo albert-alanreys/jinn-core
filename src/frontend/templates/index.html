@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-status="{{ mode }}">
+<html lang="ru">
   <head>
     <title>TV Lite</title>
     <meta charset="UTF-8" />
@@ -14,7 +14,6 @@
   </head>
 
   <body>
-    <div id="top-toolbar"></div>
     <div id="horizontal-container">
       <div id="left-toolbar">
         <button id="screenshot-button" title="Сделать снимок экрана">
@@ -76,26 +75,13 @@
             </div>
           </div>
           <div id="report-wrapper">
-            <div id="placeholder-1" class="placeholder">
-              <img src="../static/images/report.svg" />
-              <h2>Тестер стратегий</h2>
-              <p>
-                Чтобы протестировать стратегию, запустите TVLite в режиме
-                "TESTING".
-              </p>
-            </div>
-            <div id="overview-report">
-              <div id="placeholder-2" class="placeholder">
-                <img src="../static/images/no-report.svg" />
-                <p>Нет данных</p>
-              </div>
-            </div>
+            <div id="overview-report"></div>
             <div id="performance-report"></div>
-            <div id="trades-report">
-              <div id="placeholder-3" class="placeholder">
-                <img src="../static/images/no-report.svg" />
-                <p>Нет данных</p>
-              </div>
+            <div id="trades-report"></div>
+
+            <div id="report-placeholder">
+              <img src="../static/images/no-report.svg" />
+              <p>Нет данных</p>
             </div>
           </div>
         </div>
@@ -118,15 +104,7 @@
             <div class="header">
               <p>Оповещения</p>
             </div>
-            <div class="body">
-              <div id="placeholder-4" class="placeholder">
-                <img src="../static/images/alerts.svg" />
-                <p>
-                  Чтобы генерировались оповещения, запустите TVLite в режиме
-                  "AUTOMATION".
-                </p>
-              </div>
-            </div>
+            <div class="body"></div>
           </div>
         </div>
         <div id="toolbar-buttons">

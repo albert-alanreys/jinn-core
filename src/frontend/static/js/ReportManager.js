@@ -41,6 +41,7 @@ export default class ReportManager {
       background: { type: 'solid', color: '#FFFFFF' },
       textColor: 'black',
       fontSize: 12,
+      attributionLogo: false,
     },
     rightPriceScale: {
       visible: false,
@@ -95,28 +96,24 @@ export default class ReportManager {
   };
 
   constructor() {
-    this.placeholder2 = document.getElementById('placeholder-2');
-    this.placeholder3 = document.getElementById('placeholder-3');
-
     this.manageTabs();
     this.manageSize();
   }
 
   createReport(data) {
-    if (MODE == 'TESTING') {
-      if (data.deals.length) {
-        this.createOverviewReport(data);
-      } else {
-        this.placeholder2.style.display = 'flex';
-      }
+    var overviewReport = document.getElementById('overview-report');
+    var placeholder = document.getElementById('report-placeholder');
 
+    if (data.deals.length) {
+      overviewReport.style.display = 'flex';
+      placeholder.style.display = 'none';
+
+      this.createOverviewReport(data);
       this.createPerformanceReport(data);
-
-      if (data.deals.length) {
-        this.createTradesReport(data);
-      } else {
-        this.placeholder3.style.display = 'flex';
-      }
+      this.createTradesReport(data);
+    } else {
+      overviewReport.style.display = 'none';
+      placeholder.style.display = 'flex';
     }
   }
 
@@ -1122,20 +1119,13 @@ export default class ReportManager {
 
   removeReport() {
     try {
-      if (this.placeholder2.style.display != 'flex') {
+      var placeholder = document.getElementById('report-placeholder');
+
+      if (placeholder.style.display === 'none') {
         document.getElementById('metrics-container').remove();
         document.getElementById('chart-container').remove();
-        this.chart.remove();
-      } else {
-        this.placeholder2.style.display = 'none';
-      }
-
-      document.getElementById('performance-container').remove();
-
-      if (this.placeholder3.style.display != 'flex') {
+        document.getElementById('performance-container').remove();
         document.getElementById('trades-container').remove();
-      } else {
-        this.placeholder3.style.display = 'none';
       }
     } catch {}
   }
@@ -1147,13 +1137,14 @@ export default class ReportManager {
     var overviewReport = document.getElementById('overview-report');
     var performanceReport = document.getElementById('performance-report');
     var tradesReport = document.getElementById('trades-report');
+    var placeholder = document.getElementById('report-placeholder');
 
     overviewButton.addEventListener('click', () => {
       overviewButton.dataset.status = 'active';
       performanceButton.dataset.status = 'inactive';
       tradesButton.dataset.status = 'inactive';
 
-      if (MODE == 'TESTING') {
+      if (placeholder.style.display === 'none') {
         overviewReport.style.display = 'flex';
         performanceReport.style.display = 'none';
         tradesReport.style.display = 'none';
@@ -1165,7 +1156,7 @@ export default class ReportManager {
       performanceButton.dataset.status = 'active';
       tradesButton.dataset.status = 'inactive';
 
-      if (MODE == 'TESTING') {
+      if (placeholder.style.display === 'none') {
         overviewReport.style.display = 'none';
         performanceReport.style.display = 'flex';
         tradesReport.style.display = 'none';
@@ -1177,7 +1168,7 @@ export default class ReportManager {
       performanceButton.dataset.status = 'inactive';
       tradesButton.dataset.status = 'active';
 
-      if (MODE == 'TESTING') {
+      if (placeholder.style.display === 'none') {
         overviewReport.style.display = 'none';
         performanceReport.style.display = 'none';
         tradesReport.style.display = 'flex';

@@ -68,11 +68,11 @@
 }
 
 #report-wrapper {
-  display: none;
+  display: flex;
   justify-content: center;
   align-items: center;
   flex-grow: 1;
-  height: 0px;
+  height: 390px;
   background-color: #fff;
 }
 
@@ -116,12 +116,6 @@
 
 #performance-report,
 #trades-report {
-  display: none;
-}
-
-html[data-status='AUTOMATION'] #overview-report,
-html[data-status='AUTOMATION'] #performance-report,
-html[data-status='AUTOMATION'] #trades-report {
   display: none;
 }
 
@@ -237,17 +231,16 @@ html[data-status='AUTOMATION'] #trades-report {
   background-color: #f5f5f5;
 }
 
-#report-wrapper .placeholder {
+#report-placeholder {
   display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   margin: auto;
+  padding: 6px;
 }
 
-html[data-status='AUTOMATION'] #placeholder-1 {
-  display: flex;
-}
-
-#placeholder-2 img,
-#placeholder-3 img {
+#report-placeholder img {
   margin-bottom: 10px;
 }
 

@@ -22,6 +22,7 @@ export default class ChartManager {
       background: { type: 'solid', color: '#ffffff' },
       textColor: 'black',
       fontSize: 12,
+      attributionLogo: false,
     },
     rightPriceScale: {
       scaleMargins: { top: 0.05, bottom: 0.05 },
