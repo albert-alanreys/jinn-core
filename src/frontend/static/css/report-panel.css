@@ -6,7 +6,6 @@
 }
 
 #report-panel-handle {
-  pointer-events: none;
   min-height: 4px;
   cursor: ns-resize;
 }
