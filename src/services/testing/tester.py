@@ -28,16 +28,15 @@ class Tester:
     ) -> np.ndarray:
         log = deals_log.reshape((-1, 13))
 
-        equity = np.concatenate(
-            (np.array([initial_capital]), log[:, 8])
-        ).cumsum()
-        return equity
+        equity = np.empty(log.shape[0] + 1)
+        equity[0] = initial_capital
+        equity[1:] = log[:, 8]
+        return equity.cumsum()[1:]
 
     @staticmethod
     def _get_metrics(initial_capital: float, deals_log: np.ndarray) -> list:
         def _mean(array: np.ndarray) -> float:
             return round(array.mean(), 2) if array.size else np.nan
-
 
         log = deals_log.reshape((-1, 13))
 

@@ -7,7 +7,6 @@ from src.core.utils.colors import decode_rgb_vectorized
 from src.core.utils.rounding import adjust_vectorized
 from . import constants as consts
 
-import time
 
 class Formatter:
     @staticmethod
@@ -62,6 +61,7 @@ class Formatter:
 
         result['report'] = {
             'equity': Formatter._format_equity(
+                strategy_context['instance'].completed_deals_log,
                 strategy_context['stats']['equity']
             ),
             'metrics': strategy_context['stats']['metrics'],
@@ -75,7 +75,7 @@ class Formatter:
 
     @staticmethod
     def _format_klines(klines: np.ndarray) -> list:
-        result = [
+        return [
             {
                 'time': kline[0] * 0.001,
                 'open': kline[1],
@@ -84,7 +84,6 @@ class Formatter:
                 'close': kline[4],
             } for kline in klines
         ]
-        return result
 
     @staticmethod
     def _format_indicators(market_data: dict, indicators: dict) -> dict:
@@ -124,7 +123,7 @@ class Formatter:
 
             str_values = values.astype(str)
             points = [
-                {'time': int(t), 'value': v, 'color': c}
+                {'time': t, 'value': v, 'color': c}
                 for t, v, c in zip(timestamps, str_values, color_array)
             ]
             result[name] = {'options': indicator['options'], 'values': points}
@@ -170,7 +169,7 @@ class Formatter:
                     text = f'{comment} | -{deal[4]}'
 
                 marker = {
-                    'time': deal[2] / 1000,
+                    'time': deal[2] * 0.001,
                     'text': text,
                     **styles
                 }
@@ -198,7 +197,7 @@ class Formatter:
                         text = f'{comment} | -{position_size}'
 
                     marker = {
-                        'time': prev_deal[3] / 1000,
+                        'time': prev_deal[3] * 0.001,
                         'text': text,
                         **styles
                     }
@@ -222,7 +221,7 @@ class Formatter:
                 text = f'{comment} | +{deal[7]}'
 
             marker = {
-                'time': deal[4] / 1000,
+                'time': deal[4] * 0.001,
                 'text': text,
                 **styles
             }
@@ -252,7 +251,7 @@ class Formatter:
             text = f'{comment} | -{position_size}'
 
         marker = {
-            'time': last_deal[3] / 1000,
+            'time': last_deal[3] * 0.001,
             'text': text,
             **styles
         }
@@ -275,7 +274,7 @@ class Formatter:
                     text = f'{comment} | -{deal[4]}'
 
                 marker = {
-                    'time': deal[2] / 1000,
+                    'time': deal[2] * 0.001,
                     'text': text,
                     **styles
                 }
@@ -284,24 +283,27 @@ class Formatter:
         return sorted(result, key=lambda x: x['time'])
 
     @staticmethod
-    def _format_equity(equity: np.ndarray) -> list:
+    def _format_equity(
+        completed_deals_log: np.ndarray,
+        equity: np.ndarray
+    ) -> list:
+        timestamps = completed_deals_log[4::13] * 0.001
+        values = adjust_vectorized(equity, 0.01)
+
         return [
-            {
-                'time': i + 1,
-                'value': value,
-            } for i, value in enumerate(equity)
+            {'t': t, 'time': i + 1, 'value': v} 
+            for i, (t, v) in enumerate(zip(timestamps, values))
         ]
 
     @staticmethod
     def _format_deals_log(
-        closed_deals: np.ndarray,
-        open_deals: np.ndarray
+        completed_deals_log: np.ndarray,
+        open_deals_log: np.ndarray
     ) -> list:
-        t = time.time()
-        closed = closed_deals.reshape((-1, 13))[:, :12]
+        completed_deals = completed_deals_log.reshape((-1, 13))[:, :12]
         result = []
 
-        for deal in closed:
+        for deal in completed_deals:
             code = deal[1] - (deal[1] % 100)
             n_deal = int(deal[1] % 100)
             entry_signal = (
@@ -321,22 +323,22 @@ class Formatter:
                 entry_signal,
                 exit_signal,
                 datetime.fromtimestamp(
-                    timestamp=deal[3] / 1000,
+                    timestamp=deal[3] * 0.001,
                     tz=timezone.utc
                 ).strftime('%Y/%m/%d %H:%M'),
                 datetime.fromtimestamp(
-                    timestamp=deal[4] / 1000,
+                    timestamp=deal[4] * 0.001,
                     tz=timezone.utc
                 ).strftime('%Y/%m/%d %H:%M'),
                 *deal[5:12].tolist()
             ]
             result.append(formatted)
 
-        reshaped_open_deals = open_deals.reshape((-1, 5))
-        mask = ~np.isnan(reshaped_open_deals).any(axis=1)
-        reshaped_open_deals = reshaped_open_deals[mask]
+        open_deals = open_deals_log.reshape((-1, 5))
+        mask = ~np.isnan(open_deals).any(axis=1)
+        open_deals = open_deals[mask]
 
-        for deal in reshaped_open_deals:
+        for deal in open_deals:
             code = deal[1] - (deal[1] % 100)
             n_deal = int(deal[1] % 100)
             entry_signal = (
@@ -348,7 +350,7 @@ class Formatter:
             formatted[0] = consts.DEAL_TYPES[deal[0]]
             formatted[1] = entry_signal
             formatted[3] = datetime.fromtimestamp(
-                timestamp=deal[2]/1000,
+                timestamp=deal[2] * 0.001,
                 tz=timezone.utc
             ).strftime('%Y/%m/%d %H:%M')
             formatted[5] = float(deal[3])
