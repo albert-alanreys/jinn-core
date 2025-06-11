@@ -8,6 +8,6 @@ def register_base_routes(app):
     def index():
         return render_template(
             template_name_or_list='index.html',
-            api_url=getenv('API_URL', 'http://127.0.0.1:5000'),
-            mode=app.mode.value
+            server_url=getenv('SERVER_URL', 'http://127.0.0.1:5000'),
+            server_mode=app.mode.value
         )

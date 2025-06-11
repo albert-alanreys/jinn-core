@@ -1,70 +1,87 @@
 from ast import literal_eval
-from json import dumps
 
-from flask import request
+import flask
 
 from src.api.formatting import Formatter
 from src.services.testing import Tester
 
 
-def register_data_routes(app):
-    @app.route('/data/alerts', methods=['GET'])
-    def get_alerts():
-        return dumps(app.strategy_alerts)
+api_bp = flask.Blueprint('api', __name__, url_prefix='/api/data')
 
-    @app.route('/data/summary', methods=['GET'])
-    def get_summary():
-        summary = Formatter.format_summary(app.strategy_contexts)
-        return dumps(summary)
 
-    @app.route('/data/updates', methods=['GET'])
-    def get_updates():
-        updates = app.data_updates.copy()
-        app.data_updates.clear()
-        return dumps(updates)
+@api_bp.route('/alerts', methods=['GET'])
+def get_alerts():
+    return flask.jsonify(flask.current_app.strategy_alerts)
 
-    @app.route('/data/details/<string:context_id>', methods=['GET'])
-    def get_details(context_id):
-        context = app.strategy_contexts[context_id]
-        context['stats'] = Tester.test(context)
-        details = Formatter.format_details(context)
-        return dumps(details)
 
-    @app.route('/data/contexts/<string:context_id>', methods=['PATCH'])
-    def update_context(context_id):
-        try:
-            data = request.get_json()
-            param = data.get('param')
-            raw_value = data.get('value')
+@api_bp.route('/summary', methods=['GET'])
+def get_summary():
+    summary = Formatter.format_summary(
+        flask.current_app.strategy_contexts
+    )
+    return flask.jsonify(summary)
 
-            instance = app.strategy_contexts[context_id]['instance']
-            params = instance.params
 
-            old_value = params[param]
-            new_value = _parse_value(raw_value)
+@api_bp.route('/updates', methods=['GET'])
+def get_updates():
+    updates = flask.current_app.data_updates.copy()
+    flask.current_app.data_updates.clear()
+    return flask.jsonify(updates)
 
-            if type(old_value) != type(new_value):
-                raise TypeError()
 
-            params[param] = new_value
-            instance = app.strategy_contexts[context_id]['type'](
-                client=app.strategy_contexts[context_id]['client'],
-                all_params=params
-            )
-            app.strategy_contexts[context_id]['instance'] = instance
-            return dumps({'status': 'success'}), 200
-        except ValueError:
-            return dumps({'status': 'error', 'type': 'invalid_request'}), 400
-        except TypeError:
-            return dumps({'status': 'error', 'type': 'invalid_type'}), 400
-        except Exception:
-            return dumps({'status': 'error', 'type': 'server_error'}), 500
+@api_bp.route('/details/<string:context_id>', methods=['GET'])
+def get_details(context_id):
+    context = flask.current_app.strategy_contexts[context_id]
+    context['stats'] = Tester.test(context)
+    details = Formatter.format_details(context)
+    return flask.jsonify(details)
 
-    def _parse_value(raw):
-        if isinstance(raw, list):
-            return [float(x) for x in raw]
 
-        if isinstance(raw, str):
-            raw = raw.capitalize()
+@api_bp.route('/contexts/<string:context_id>', methods=['PATCH'])
+def update_context(context_id):
+    try:
+        data = flask.request.get_json()
+        param = data.get('param')
+        raw_value = data.get('value')
 
-        return literal_eval(raw)
+        strategy_context = flask.current_app.strategy_contexts[context_id]
+        instance = strategy_context['instance']
+        params = instance.params
+
+        old_value = params[param]
+        new_value = _parse_value(raw_value)
+
+        if type(old_value) != type(new_value):
+            raise TypeError()
+
+        params[param] = new_value
+        instance = strategy_context['type'](
+            client=strategy_context['client'],
+            all_params=params
+        )
+        strategy_context['instance'] = instance
+
+        return flask.jsonify(
+            {'status': 'success'}
+        ), 200
+    except ValueError:
+        return flask.jsonify(
+            {'status': 'error', 'type': 'invalid_request'}
+        ), 400
+    except TypeError:
+        return flask.jsonify(
+            {'status': 'error', 'type': 'invalid_type'}
+        ), 400
+    except Exception:
+        return flask.jsonify(
+            {'status': 'error', 'type': 'server_error'}
+        ), 500
+
+def _parse_value(raw):
+    if isinstance(raw, list):
+        return [float(x) for x in raw]
+
+    if isinstance(raw, str):
+        raw = raw.capitalize()
+
+    return literal_eval(raw)

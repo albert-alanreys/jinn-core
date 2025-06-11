@@ -1,6 +1,6 @@
 export async function fetchAlerts() {
   try {
-    var response = await fetch(`${API_URL}/data/alerts`);
+    var response = await fetch(`${SERVER_URL}/api/data/alerts`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -16,7 +16,7 @@ export async function fetchAlerts() {
 
 export async function fetchSummary() {
   try {
-    var response = await fetch(`${API_URL}/data/summary`);
+    var response = await fetch(`${SERVER_URL}/api/data/summary`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -32,7 +32,7 @@ export async function fetchSummary() {
 
 export async function fetchUpdates() {
   try {
-    var response = await fetch(`${API_URL}/data/updates`);
+    var response = await fetch(`${SERVER_URL}/api/data/updates`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -48,7 +48,7 @@ export async function fetchUpdates() {
 
 export async function fetchDetails(context_id) {
   try {
-    var response = await fetch(`${API_URL}/data/details/${context_id}`);
+    var response = await fetch(`${SERVER_URL}/api/data/details/${context_id}`);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -66,16 +66,19 @@ export async function updateContext(context_id, param) {
   try {
     var parsed = JSON.parse(param);
 
-    var response = await fetch(`${API_URL}/data/contexts/${context_id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        param: Object.keys(parsed)[0],
-        value: Object.values(parsed)[0],
-      }),
-    });
+    var response = await fetch(
+      `${SERVER_URL}/api/data/contexts/${context_id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          param: Object.keys(parsed)[0],
+          value: Object.values(parsed)[0],
+        }),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} - ${response.statusText}`);

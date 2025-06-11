@@ -37,7 +37,7 @@ var contextId = Object.keys(summary)[0];
 
 renderUI(contextId);
 
-if (MODE == 'AUTOMATION') {
+if (SERVER_MODE == 'AUTOMATION') {
   fetchAlerts().then((alerts) => {
     if (alerts?.length) {
       rightToolbarManager.addAlerts(alerts);
