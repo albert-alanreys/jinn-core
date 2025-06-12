@@ -17,7 +17,7 @@ async function renderUI(contextId) {
   reportManager.removeReport();
   leftToolbarManager.removeEventListeners();
 
-  chartManager.createChart(details.chart, contextId);
+  chartManager.createChart(details.chart);
   reportManager.createReport(details.report);
   leftToolbarManager.manage(
     chartManager.chart,

@@ -1,7 +1,7 @@
 import numpy as np
 import numba as nb
 
-import src.core.lib.ta as ta
+import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
@@ -109,27 +109,27 @@ class DevourerV3(BaseStrategy):
         self.close_under_ema_counter_p3 = 0
 
         self.macd_p1 = (
-            ta.ema(
+            qk.ema(
                 source=self.close,
                 length=self.params['fast_len_p1']
             ) -
-            ta.ema(
+            qk.ema(
                 source=self.close,
                 length=self.params['slow_len_p1']
             )
         )
-        self.signal_p1 = ta.ema(
+        self.signal_p1 = qk.ema(
             source=self.macd_p1,
             length=self.params['sig_len_p1']
         )
-        self.k_p1 = ta.stoch(
+        self.k_p1 = qk.stoch(
             source=self.close,
             high=self.high,
             low=self.low,
             length=self.params['k_len_p1']
         )
-        self.d_p1 = ta.sma(source=self.k_p1, length=self.params['d_len_p1'])
-        supertrend = ta.supertrend(
+        self.d_p1 = qk.sma(source=self.k_p1, length=self.params['d_len_p1'])
+        supertrend = qk.supertrend(
             high=self.high,
             low=self.low,
             close=self.close,
@@ -137,51 +137,51 @@ class DevourerV3(BaseStrategy):
             atr_length=self.params['atr_len_p1']
         )
         self.direction_p1 = supertrend[1]
-        self.atr_p1 = ta.atr(
+        self.atr_p1 = qk.atr(
             high=self.high,
             low=self.low,
             close=self.close,
             length=self.params['atr_len_p1']
         )
-        self.ema_p1 = ta.ema(
-            source=ta.highest(
+        self.ema_p1 = qk.ema(
+            source=qk.highest(
                 source=self.close,
                 length=self.params['ema_len_p1']
             ),
             length=self.params['ema_len_p1']
         )
-        self.cross_up1_p1 = ta.crossover(
+        self.cross_up1_p1 = qk.crossover(
             source1=self.macd_p1,
             source2=self.signal_p1
         )
-        self.cross_down_p1 = ta.crossunder(
+        self.cross_down_p1 = qk.crossunder(
             source1=self.macd_p1,
             source2=self.signal_p1
         )
-        self.cross_up2_p1 = ta.crossover(
+        self.cross_up2_p1 = qk.crossover(
             source1=self.close,
             source2=self.ema_p1
         )
         self.lower_band_p2 = (
-            ta.highest(
+            qk.highest(
                 source=self.high,
                 length=self.params['highest_len_p2']
             ) * (self.params['correction_p2'] - 100) / -100
         )
-        self.signal_p2 = ta.ema(
+        self.signal_p2 = qk.ema(
             source=self.macd_p1,
             length=self.params['ema_len_p2']
         )
-        self.cross_p2 = ta.cross(source1=self.signal_p2, source2=self.macd_p1)
-        self.atr_p2 = ta.atr(
+        self.cross_p2 = qk.cross(source1=self.signal_p2, source2=self.macd_p1)
+        self.atr_p2 = qk.atr(
             high=self.high,
             low=self.low,
             close=self.close,
             length=self.params['atr_len_p2']
         )
-        self.ema_p3 = ta.ema(
-            source=ta.ema(
-                source=ta.ema(
+        self.ema_p3 = qk.ema(
+            source=qk.ema(
+                source=qk.ema(
                     source=self.close,
                     length=self.params['ema_len_p3']
                 ),
@@ -189,7 +189,7 @@ class DevourerV3(BaseStrategy):
             ),
             length=self.params['ema_len_p3']
         )
-        self.atr_p3 = ta.atr(
+        self.atr_p3 = qk.atr(
             high=self.high,
             low=self.low,
             close=self.close,

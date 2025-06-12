@@ -7,56 +7,67 @@ from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
 
-class SisterV1(BaseStrategy):
+class DailyProfitV1(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
 
     # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
     # direction: 0 - "all", 1 — "longs", 2 — "shorts"
     # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
-    # take_type: 0 — "fixed", 1 — "trailing"
 
     params = {
         "margin_type": 0,
         "direction": 0,
         "initial_capital": 10000.0,
+        "min_capital": 100.0,
         "commission": 0.075,
         "order_size_type": 0,
         "order_size": 100,
         "leverage": 1,
-        "stop": 10.0,
-        "take_type": 1,
-        "take": 10.0,
-        "length_entry": 35,
-        "ratio_entry": 5.0,
-        "length_exit": 35,
-        "ratio_exit": 1.0,
-        "length_small_trend": 7,
-        "length_medium_trend": 35
+        "stop": 0.5,
+        "trail_stop": True,
+        "take_multiplier_1": 3.0,
+        "take_volume_1": 30.0,
+        "take_2": True,
+        "take_multiplier_2": 2.0,
+        "take_volume_2": 30.0,
+        "st_atr_length": 14,
+        "st_factor": 2.5,
+        "rsi_length": 10,
+        "stoch_length": 10,
+        "stoch_rsi_upper_limit": 90.0,
+        "stoch_rsi_lower_limit": 10.0,
+        "vwap_close": True,
+        "vwap_zone": 0.3
     }
 
     # Parameters to be optimized and their possible values
     opt_params = {
-        'stop': [i / 2 for i in range(1, 21)],
-        'take': [i / 2 for i in range(1, 31)],
-        'length_entry': [i for i in range(10, 61)],
-        'ratio_entry': [i / 10 for i in range(5, 51, 5)],
-        'length_exit': [i for i in range(5, 105, 5)],
-        'ratio_exit': [i / 4 for i in range(0, 13)],
-        'length_small_trend': [i for i in range(3, 21)],
-        'length_medium_trend': [i for i in range(25, 135, 5)]
+        'stop': [0.3, 0.5, 0.7],
+        'trail_stop': [True, False],
+        'take_multiplier_1': [2.0, 3.0, 4.0],
+        'take_volume_1': [10.0, 20.0, 30.0],
+        'take_2': [True, False],
+        'take_multiplier_2': [1.5, 2.0, 2.5, 3.0],
+        'take_volume_2': [10.0, 20.0, 30.0] ,
+        'st_atr_length': [i for i in range(10, 20)],
+        'st_factor': [2.0, 2.5, 3.0],
+        'rsi_length': [i for i in range(10, 20)],
+        'stoch_length': [i for i in range(10, 20)],
+        'stoch_rsi_upper_limit': [80.0, 90.0],
+        'stoch_rsi_lower_limit': [10.0, 20.0],
+        'vwap_close': [True, False],
+        'vwap_zone': [0.2, 0.3, 0.4]
     }
 
     # For frontend
     indicator_options = {
         'SL': {'color': '#FF0000', 'lineWidth': 2},
-        'TP': {'color': '#008000', 'lineWidth': 2},
-        'SMA ST': {'color': '#9400D3', 'lineWidth': 1},
-        'SMA MT': {'color': '#000080', 'lineWidth': 1},
-        'SMA L Entry': {'color': '#FF7F50', 'lineWidth': 1},
-        'SMA L Exit': {'color': '#BDB76B', 'lineWidth': 1},
-        'SMA S Entry': {'color': '#1E90FF', 'lineWidth': 1},
-        'SMA S Exit': {'color': '#008080', 'lineWidth': 1}
+        'TP #1': {'color': '#008000', 'lineWidth': 2},
+        'TP #2': {'color': '#008000', 'lineWidth': 2},
+        'ST ↑' : {'color': '#006400','lineWidth': 1},
+        'ST ↓' : {'color': '#8B0000','lineWidth': 1},
+        # 'VWAP': {'lineWidth': 3}
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
@@ -77,172 +88,153 @@ class SisterV1(BaseStrategy):
         self.high = market_data['klines'][:, 2]
         self.low = market_data['klines'][:, 3]
         self.close = market_data['klines'][:, 4]
+        self.volume = market_data['klines'][:, 5]
         self.p_precision = market_data['p_precision']
         self.q_precision = market_data['q_precision']
 
         self.equity = self.params['initial_capital']
-        self.take_price = np.full(self.time.shape[0], np.nan)
+
         self.stop_price = np.full(self.time.shape[0], np.nan)
+        self.stop_moved = False
+
+        self.take_price = np.array(
+            [
+                np.full(self.time.shape[0], np.nan),
+                np.full(self.time.shape[0], np.nan)
+            ]
+        )
+        self.qty_take = np.full(2, np.nan)
+
+        self.st_upper_band, self.st_lower_band = qk.dst(
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            factor=self.params['st_factor'],
+            atr_length=self.params['st_atr_length']
+        )
+
+        self.rsi_high = qk.rsi(
+            source=self.high,
+            length=self.params['rsi_length']
+        )
+        self.rsi_low = qk.rsi(
+            source=self.low,
+            length=self.params['rsi_length']
+        )
+        self.rsi_close = qk.rsi(
+            source=self.close,
+            length=self.params['rsi_length']
+        )
+        self.stoch_rsi = qk.stoch(
+            source=self.rsi_close,
+            high=self.rsi_high,
+            low=self.rsi_low,
+            length=self.params['stoch_length']
+        )
+
+        self.vwap = qk.daily_vwap_with_reset(
+            time=self.time,
+            high=self.high,
+            low=self.low,
+            close=self.close,
+            volume=self.volume,
+        )
+
+        print(self.vwap[-50:])
+
+
         self.liquidation_price = np.nan
-
-        self.atr_entry = qk.atr(
-            high=self.high,
-            low=self.low,
-            close=self.close,
-            length=self.params['length_entry']
-        )
-        self.sma_entry = qk.sma(
-            source=self.close,
-            length=self.params['length_entry']
-        )
-        self.sma_long_entry = (
-            self.sma_entry -
-            self.atr_entry * self.params['ratio_entry']
-        )
-        self.sma_short_entry = (
-            self.sma_entry +
-            self.atr_entry * self.params['ratio_entry']
-        )
-
-        self.atr_exit = qk.atr(
-            high=self.high,
-            low=self.low,
-            close=self.close,
-            length=self.params['length_exit']
-        )
-        self.sma_exit = qk.sma(
-            source=self.close,
-            length=self.params['length_exit']
-        )
-        self.sma_long_exit = (
-            self.sma_exit +
-            self.atr_exit * self.params['ratio_exit']
-        )
-        self.sma_short_exit = (
-            self.sma_exit -
-            self.atr_exit * self.params['ratio_exit']
-        )
-
-        self.sma_small_trend = qk.sma(
-            source=self.close,
-            length=self.params['length_small_trend']
-        )
-        self.sma_medium_trend = qk.sma(
-            source=self.close,
-            length=self.params['length_medium_trend']
-        )
-
-        self.cond_exit_long = qk.crossover(
-            source1=self.close,
-            source2=self.sma_long_exit
-        )
-        self.cond_exit_short = qk.crossover(
-            source1=self.close,
-            source2=self.sma_short_exit
-        )
 
         self.alert_cancel = False
         self.alert_open_long = False
         self.alert_open_short = False
         self.alert_close_long = False
         self.alert_close_short = False
-        self.alert_long_new_take = False
-        self.alert_short_new_take = False
+        self.alert_long_new_stop = False
+        self.alert_short_new_stop = False
 
-        (
-            self.completed_deals_log,
-            self.open_deals_log,
-            self.take_price,
-            self.stop_price,
-            self.alert_cancel,
-            self.alert_open_long,
-            self.alert_open_short,
-            self.alert_close_long,
-            self.alert_close_short,
-            self.alert_long_new_take,
-            self.alert_short_new_take
-        ) = self._calculate(
-            self.params['direction'],
-            self.params['initial_capital'],
-            self.params['commission'],
-            self.params['order_size_type'],
-            self.params['order_size'],
-            self.params['leverage'],
-            self.params['stop'],
-            self.params['take_type'],
-            self.params['take'],
-            self.p_precision,
-            self.q_precision,
-            self.time,
-            self.open,
-            self.high,
-            self.low,
-            self.close,
-            self.equity,
-            self.completed_deals_log,
-            self.open_deals_log,
-            self.deal_type,
-            self.entry_signal,
-            self.entry_date,
-            self.entry_price,
-            self.take_price,
-            self.stop_price,
-            self.liquidation_price,
-            self.position_size,
-            self.sma_long_entry,
-            self.sma_short_entry,
-            self.sma_long_exit,
-            self.sma_short_exit,
-            self.sma_small_trend,
-            self.sma_medium_trend,
-            self.cond_exit_long,
-            self.cond_exit_short,
-            self.alert_cancel,
-            self.alert_open_long,
-            self.alert_open_short,
-            self.alert_close_long,
-            self.alert_close_short,
-            self.alert_long_new_take,
-            self.alert_short_new_take
-        )
+        # (
+        #     self.completed_deals_log,
+        #     self.open_deals_log,
+        #     self.take_price,
+        #     self.stop_price,
+        #     self.alert_cancel,
+        #     self.alert_open_long,
+        #     self.alert_open_short,
+        #     self.alert_close_long,
+        #     self.alert_close_short,
+        #     self.alert_long_new_take,
+        #     self.alert_short_new_take
+        # ) = self._calculate(
+        #     self.params['direction'],
+        #     self.params['initial_capital'],
+        #     self.params['commission'],
+        #     self.params['order_size_type'],
+        #     self.params['order_size'],
+        #     self.params['leverage'],
+        #     self.params['stop'],
+        #     self.params['take_type'],
+        #     self.params['take'],
+        #     self.p_precision,
+        #     self.q_precision,
+        #     self.time,
+        #     self.open,
+        #     self.high,
+        #     self.low,
+        #     self.close,
+        #     self.equity,
+        #     self.completed_deals_log,
+        #     self.open_deals_log,
+        #     self.deal_type,
+        #     self.entry_signal,
+        #     self.entry_date,
+        #     self.entry_price,
+        #     self.take_price,
+        #     self.stop_price,
+        #     self.liquidation_price,
+        #     self.position_size,
+        #     self.sma_long_entry,
+        #     self.sma_short_entry,
+        #     self.sma_long_exit,
+        #     self.sma_short_exit,
+        #     self.sma_small_trend,
+        #     self.sma_medium_trend,
+        #     self.cond_exit_long,
+        #     self.cond_exit_short,
+        #     self.alert_cancel,
+        #     self.alert_open_long,
+        #     self.alert_open_short,
+        #     self.alert_close_long,
+        #     self.alert_close_short,
+        #     self.alert_long_new_take,
+        #     self.alert_short_new_take
+        # )
 
         self.indicators = {
             'SL': {
                 'options': self.indicator_options['SL'],
                 'values': self.stop_price
             },
-            'TP': {
-                'options': self.indicator_options['TP'],
-                'values': self.take_price
+            'TP #1': {
+                'options': self.indicator_options['TP #1'],
+                'values': self.take_price[0]
             },
-            'SMA ST': {
-                'options': self.indicator_options['SMA ST'],
-                'values': self.sma_small_trend
+            'TP #2': {
+                'options': self.indicator_options['TP #2'],
+                'values': self.take_price[1]
             },
-            'SMA MT': {
-                'options': self.indicator_options['SMA MT'],
-                'values': self.sma_medium_trend
+            'ST ↑': {
+                'options': self.indicator_options['ST ↑'],
+                'values': self.st_upper_band
             },
-            'SMA L Entry': {
-                'options': self.indicator_options['SMA L Entry'],
-                'values': self.sma_long_entry
-            },
-            'SMA L Exit': {
-                'options': self.indicator_options['SMA L Exit'],
-                'values': self.sma_long_exit
-            },
-            'SMA S Entry': {
-                'options': self.indicator_options['SMA S Entry'],
-                'values': self.sma_short_entry
-            },
-            'SMA S Exit': {
-                'options': self.indicator_options['SMA S Exit'],
-                'values': self.sma_short_exit
+            'ST ↓': {
+                'options': self.indicator_options['ST ↓'],
+                'values': self.st_lower_band
             }
         }
 
     @staticmethod
-    @nb.jit(cache=True, nopython=True, nogil=True)
+    # @nb.jit(cache=True, nopython=True, nogil=True)
     def _calculate(
         direction: int,
         initial_capital: float,

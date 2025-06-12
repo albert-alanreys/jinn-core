@@ -1,7 +1,7 @@
 import numpy as np
 import numba as nb
 
-import src.core.lib.ta as ta
+import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
@@ -103,11 +103,11 @@ class MeanStrikeV1(BaseStrategy):
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
 
-        self.lowest = ta.lowest(
+        self.lowest = qk.lowest(
             source=np.roll(self.low, 1),
             length=self.params['lookback']
         )
-        self.sma = ta.sma(
+        self.sma = qk.sma(
             source=(self.high - self.low), 
             length=self.params['ma_length']
         )

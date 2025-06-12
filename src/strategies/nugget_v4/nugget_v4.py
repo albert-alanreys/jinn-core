@@ -1,7 +1,7 @@
 import numpy as np
 import numba as nb
 
-import src.core.lib.ta as ta
+import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
@@ -185,19 +185,19 @@ class NuggetV4(BaseStrategy):
         self.pivot_HH = np.nan
         self.pivot_LL = np.nan
 
-        self.ds = ta.ds(
+        self.dst = qk.dst(
             high=self.high,
             low=self.low,
             close=self.close,
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.change_upper_band = ta.change(source=self.ds[0], length=1)
-        self.change_lower_band = ta.change(source=self.ds[1], length=1)
-        self.rsi = ta.rsi(source=self.close, length=self.params['rsi_length'])
+        self.change_upper_band = qk.change(source=self.dst[0], length=1)
+        self.change_lower_band = qk.change(source=self.dst[1], length=1)
+        self.rsi = qk.rsi(source=self.close, length=self.params['rsi_length'])
 
         if self.params['bb_filter']:
-            self.bb_rsi = ta.bb(
+            self.bb_rsi = qk.bb(
                 source=self.rsi,
                 length=self.params['ma_length'],
                 mult=self.params['bb_mult']
@@ -205,12 +205,12 @@ class NuggetV4(BaseStrategy):
         else:
             self.bb_rsi = np.full(self.time.shape[0], np.nan)
 
-        self.pivot_LH = ta.pivothigh(
+        self.pivot_LH = qk.pivothigh(
             source=self.high,
             leftbars=self.params['pivot_bars'],
             rightbars=self.params['pivot_bars']
         )
-        self.pivot_HL = ta.pivotlow(
+        self.pivot_HL = qk.pivotlow(
             source=self.low,
             leftbars=self.params['pivot_bars'],
             rightbars=self.params['pivot_bars']
@@ -298,8 +298,8 @@ class NuggetV4(BaseStrategy):
             self.last_pivot,
             self.pivot_HH,
             self.pivot_LL,
-            self.ds[0],
-            self.ds[1],
+            self.dst[0],
+            self.dst[1],
             self.change_upper_band,
             self.change_lower_band,
             self.rsi,
@@ -422,8 +422,8 @@ class NuggetV4(BaseStrategy):
         last_pivot: float,
         pivot_HH: float,
         pivot_LL: float,
-        ds_upper_band: np.ndarray,
-        ds_lower_band: np.ndarray,
+        dst_upper_band: np.ndarray,
+        dst_lower_band: np.ndarray,
         change_upper_band: np.ndarray,
         change_lower_band: np.ndarray,
         rsi: np.ndarray,
@@ -615,10 +615,10 @@ class NuggetV4(BaseStrategy):
 
                 if (stop_type == 1 and
                         change_lower_band[i] and
-                        ((ds_lower_band[i] * (100 - stop)
+                        ((dst_lower_band[i] * (100 - stop)
                         / 100) > stop_price[i])):
                     stop_price[i] = adjust(
-                        ds_lower_band[i] * (100 - stop) / 100,
+                        dst_lower_band[i] * (100 - stop) / 100,
                         p_precision
                     )
                     alert_long_new_stop = True
@@ -1069,8 +1069,8 @@ class NuggetV4(BaseStrategy):
                         alert_cancel = True
 
             pre_entry_long = (
-                (close[i] / ds_lower_band[i] - 1) * 100 > st_lower_band and
-                (close[i] / ds_lower_band[i] - 1) * 100 < st_upper_band and
+                (close[i] / dst_lower_band[i] - 1) * 100 > st_lower_band and
+                (close[i] / dst_lower_band[i] - 1) * 100 < st_upper_band and
                 rsi[i] < rsi_long_upper_limit and
                 rsi[i] > rsi_long_lower_limit and
                 np.isnan(deal_type) and
@@ -1131,7 +1131,7 @@ class NuggetV4(BaseStrategy):
 
                 if stop_type == 1 or stop_type == 2:
                     stop_price[i] = adjust(
-                        ds_lower_band[i] * (100 - stop) / 100,
+                        dst_lower_band[i] * (100 - stop) / 100,
                         p_precision
                     )
                 elif stop_type == 3:
@@ -1327,10 +1327,10 @@ class NuggetV4(BaseStrategy):
 
                 if (stop_type == 1 and
                         change_upper_band[i] and
-                        ((ds_upper_band[i] * (100 + stop)
+                        ((dst_upper_band[i] * (100 + stop)
                         / 100) < stop_price[i])):
                     stop_price[i] = adjust(
-                        (ds_upper_band[i] * (100 + stop) / 100), 
+                        (dst_upper_band[i] * (100 + stop) / 100), 
                         p_precision
                     )
                     alert_short_new_stop = True
@@ -1781,8 +1781,8 @@ class NuggetV4(BaseStrategy):
                         alert_cancel = True
 
             pre_entry_short = (
-                (ds_upper_band[i] / close[i] - 1) * 100 > st_lower_band and
-                (ds_upper_band[i] / close[i] - 1) * 100 < st_upper_band and
+                (dst_upper_band[i] / close[i] - 1) * 100 > st_lower_band and
+                (dst_upper_band[i] / close[i] - 1) * 100 < st_upper_band and
                 rsi[i] < rsi_short_upper_limit and
                 rsi[i] > rsi_short_lower_limit and
                 np.isnan(deal_type) and
@@ -1843,7 +1843,7 @@ class NuggetV4(BaseStrategy):
 
                 if stop_type == 1 or stop_type == 2:
                     stop_price[i] = adjust(
-                        ds_upper_band[i] * (100 + stop) / 100,
+                        dst_upper_band[i] * (100 + stop) / 100,
                         p_precision
                     )
                 elif stop_type == 3:

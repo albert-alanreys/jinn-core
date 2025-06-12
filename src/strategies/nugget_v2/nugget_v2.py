@@ -3,7 +3,7 @@ from random import randint
 import numpy as np
 import numba as nb
 
-import src.core.lib.ta as ta
+import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
@@ -159,28 +159,28 @@ class NuggetV2(BaseStrategy):
         self.qty_take = np.full(5, np.nan)
         self.stop_moved = False
 
-        self.ds = ta.ds(
+        self.dst = qk.dst(
             high=self.high,
             low=self.low,
             close=self.close,
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.change_upper_band = ta.change(
-            source=self.ds[0],
+        self.change_upper_band = qk.change(
+            source=self.dst[0],
             length=1
         )
-        self.change_lower_band = ta.change(
-            source=self.ds[1],
+        self.change_lower_band = qk.change(
+            source=self.dst[1],
             length=1
         )
-        self.rsi = ta.rsi(
+        self.rsi = qk.rsi(
             source=self.close,
             length=self.params['rsi_length']
         )
 
         if self.params['bb_filter']:
-            self.bb_rsi = ta.bb(
+            self.bb_rsi = qk.bb(
                 source=self.rsi,
                 length=self.params['ma_length'],
                 mult=self.params['bb_mult']
@@ -189,7 +189,7 @@ class NuggetV2(BaseStrategy):
             self.bb_rsi = np.full(self.time.shape[0], np.nan)
 
         if self.params['adx_filter']:
-            dmi = ta.dmi(
+            dmi = qk.dmi(
                 high=self.high,
                 low=self.low,
                 close=self.close,
@@ -263,8 +263,8 @@ class NuggetV2(BaseStrategy):
             self.position_size,
             self.qty_take,
             self.stop_moved,
-            self.ds[0],
-            self.ds[1],
+            self.dst[0],
+            self.dst[1],
             self.change_upper_band,
             self.change_lower_band,
             self.rsi,
@@ -354,8 +354,8 @@ class NuggetV2(BaseStrategy):
         position_size: float,
         qty_take: np.ndarray,
         stop_moved: int,
-        ds_upper_band: np.ndarray,
-        ds_lower_band: np.ndarray,
+        dst_upper_band: np.ndarray,
+        dst_lower_band: np.ndarray,
         change_upper_band: np.ndarray,
         change_lower_band: np.ndarray,
         rsi: np.ndarray,
@@ -479,10 +479,10 @@ class NuggetV2(BaseStrategy):
 
                 if (stop_type == 1 and
                         change_lower_band[i] and
-                        ((ds_lower_band[i] * (100 - stop)
+                        ((dst_lower_band[i] * (100 - stop)
                         / 100) > stop_price[i])):
                     stop_price[i] = adjust(
-                        ds_lower_band[i] * (100 - stop) / 100,
+                        dst_lower_band[i] * (100 - stop) / 100,
                         p_precision
                     )
                     alert_long_new_stop = True
@@ -639,8 +639,8 @@ class NuggetV2(BaseStrategy):
                     alert_cancel = True
 
             entry_long = (
-                (close[i] / ds_lower_band[i] - 1) * 100 > st_lower_band and
-                (close[i] / ds_lower_band[i] - 1) * 100 < st_upper_band and
+                (close[i] / dst_lower_band[i] - 1) * 100 > st_lower_band and
+                (close[i] / dst_lower_band[i] - 1) * 100 < st_upper_band and
                 rsi[i] < rsi_long_upper_limit and
                 rsi[i] > rsi_long_lower_limit and
                 np.isnan(deal_type) and
@@ -680,7 +680,7 @@ class NuggetV2(BaseStrategy):
                     entry_price * (1 - (1 / leverage)), p_precision
                 )
                 stop_price[i] = adjust(
-                    ds_lower_band[i] * (100 - stop) / 100, p_precision
+                    dst_lower_band[i] * (100 - stop) / 100, p_precision
                 )
                 take_price[0, i] = adjust(
                     close[i] * (100 + take_percent[0]) / 100, p_precision
@@ -759,10 +759,10 @@ class NuggetV2(BaseStrategy):
 
                 if (stop_type == 1 and
                         change_upper_band[i] and
-                        ((ds_upper_band[i] * (100 + stop)
+                        ((dst_upper_band[i] * (100 + stop)
                         / 100) < stop_price[i])):
                     stop_price[i] = adjust(
-                        (ds_upper_band[i] * (100 + stop) / 100), 
+                        (dst_upper_band[i] * (100 + stop) / 100), 
                         p_precision
                     )
                     alert_short_new_stop = True
@@ -919,8 +919,8 @@ class NuggetV2(BaseStrategy):
                     alert_cancel = True
 
             entry_short = (
-                (ds_upper_band[i] / close[i] - 1) * 100 > st_lower_band and
-                (ds_upper_band[i] / close[i] - 1) * 100 < st_upper_band and
+                (dst_upper_band[i] / close[i] - 1) * 100 > st_lower_band and
+                (dst_upper_band[i] / close[i] - 1) * 100 < st_upper_band and
                 rsi[i] < rsi_short_upper_limit and
                 rsi[i] > rsi_short_lower_limit and
                 np.isnan(deal_type) and
@@ -960,7 +960,7 @@ class NuggetV2(BaseStrategy):
                     entry_price * (1 + (1 / leverage)), p_precision
                 )
                 stop_price[i] = adjust(
-                    ds_upper_band[i] * (100 + stop) / 100, p_precision
+                    dst_upper_band[i] * (100 + stop) / 100, p_precision
                 )
                 take_price[0, i] = adjust(
                     close[i] * (100 - take_percent[0]) / 100, p_precision

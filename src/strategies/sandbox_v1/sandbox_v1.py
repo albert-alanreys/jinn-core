@@ -1,8 +1,7 @@
 import numpy as np
 import numba as nb
 
-import src.core.lib.intervals as intervals
-import src.core.lib.ta as ta
+import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
 from src.core.utils.colors import encode_rgb
 from src.core.utils.deals import create_log_entry
@@ -111,7 +110,7 @@ class SandboxV1(BaseStrategy):
 
         htf_time = extra_klines[0][:, 0]
         htf_close = extra_klines[0][:, 4]
-        self.htf_close = intervals.stretch(
+        self.htf_close = qk.stretch(
             source=htf_close,
             main_time=self.time,
             higher_time=htf_time
@@ -119,7 +118,7 @@ class SandboxV1(BaseStrategy):
 
         # ltf_time = extra_klines[1][:, 0]
         # ltf_close = extra_klines[1][:, 4]
-        # self.ltf_close = intervals.shrink(
+        # self.ltf_close = qk.shrink(
         #     source=ltf_close,
         #     main_time=self.time,
         #     lower_time=ltf_time
@@ -133,16 +132,16 @@ class SandboxV1(BaseStrategy):
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
 
-        self.lowest = ta.lowest(
+        self.lowest = qk.lowest(
             source=np.roll(self.low, 1),
             length=self.params['lookback']
         )
-        self.sma = ta.sma(
+        self.sma = qk.sma(
             source=(self.high - self.low), 
             length=self.params['ma_length']
         )
 
-        self.supertrend, self.direcion = ta.supertrend(
+        self.supertrend, self.direcion = qk.supertrend(
             high=self.high,
             low=self.low,
             close=self.close,

@@ -1,5 +1,6 @@
 from enum import Enum
 
+from src.strategies import DailyProfitV1
 from src.strategies import DevourerV3
 from src.strategies import MeanStrikeV1
 from src.strategies import NuggetV2
@@ -26,6 +27,7 @@ class Market(Enum):
 
 
 class Strategy(Enum):
+    DAILY_PROFIT_V1 = DailyProfitV1
     DEVOURER_V3 = DevourerV3
     MEAN_STRIKE_V1 = MeanStrikeV1
     NUGGET_V2 = NuggetV2

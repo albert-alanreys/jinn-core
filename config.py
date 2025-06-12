@@ -24,11 +24,11 @@ OPTIMIZATION_CONFIG = {
     'end': '2025-01-01'
 }
 TESTING_CONFIG = {
-    'strategy': enums.Strategy.NUGGET_V2,
+    'strategy': enums.Strategy.DAILY_PROFIT_V1,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
-    'start': '2017-01-01',
-    'end': '2025-05-01'
+    'start': '2020-01-01',
+    'end': '2025-06-01'
 }
