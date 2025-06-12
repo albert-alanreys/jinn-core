@@ -28,7 +28,7 @@ TESTING_CONFIG = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'start': '2020-01-01',
+    'interval': '5m',
+    'start': '2025-01-01',
     'end': '2025-06-01'
 }

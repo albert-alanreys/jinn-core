@@ -425,7 +425,7 @@ class DevourerV3(BaseStrategy):
                 )
                 equity += log_entry[8]
                 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
@@ -456,7 +456,7 @@ class DevourerV3(BaseStrategy):
                 )
                 equity += log_entry[8]
 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
@@ -512,7 +512,7 @@ class DevourerV3(BaseStrategy):
                 )
                 equity += log_entry[8]
 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
@@ -543,7 +543,7 @@ class DevourerV3(BaseStrategy):
                     )
                     equity += log_entry[8]
 
-                    open_deals_log = np.full(5, np.nan)
+                    open_deals_log[:] = np.nan
                     deal_type = np.nan
                     entry_signal = np.nan
                     entry_date = np.nan
@@ -627,7 +627,7 @@ class DevourerV3(BaseStrategy):
                 )
                 equity += log_entry[8]
 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
@@ -662,7 +662,7 @@ class DevourerV3(BaseStrategy):
                     )
                     equity += log_entry[8]
 
-                    open_deals_log = np.full(5, np.nan)
+                    open_deals_log[:] = np.nan
                     deal_type = np.nan
                     entry_signal = np.nan
                     entry_date = np.nan
@@ -735,7 +735,7 @@ class DevourerV3(BaseStrategy):
                 )
                 equity += log_entry[8]
 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
@@ -783,7 +783,7 @@ class DevourerV3(BaseStrategy):
                 )
                 equity += log_entry[8]
 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan

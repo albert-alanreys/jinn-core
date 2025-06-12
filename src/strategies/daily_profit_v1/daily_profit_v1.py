@@ -3,6 +3,7 @@ import numba as nb
 
 import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.utils.colors import encode_rgb
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
@@ -19,7 +20,6 @@ class DailyProfitV1(BaseStrategy):
         "margin_type": 0,
         "direction": 0,
         "initial_capital": 10000.0,
-        "min_capital": 100.0,
         "commission": 0.075,
         "order_size_type": 0,
         "order_size": 100,
@@ -37,7 +37,6 @@ class DailyProfitV1(BaseStrategy):
         "stoch_length": 10,
         "stoch_rsi_upper_limit": 90.0,
         "stoch_rsi_lower_limit": 10.0,
-        "vwap_close": True,
         "vwap_zone": 0.3
     }
 
@@ -56,7 +55,6 @@ class DailyProfitV1(BaseStrategy):
         'stoch_length': [i for i in range(10, 20)],
         'stoch_rsi_upper_limit': [80.0, 90.0],
         'stoch_rsi_lower_limit': [10.0, 20.0],
-        'vwap_close': [True, False],
         'vwap_zone': [0.2, 0.3, 0.4]
     }
 
@@ -65,10 +63,15 @@ class DailyProfitV1(BaseStrategy):
         'SL': {'color': '#FF0000', 'lineWidth': 2},
         'TP #1': {'color': '#008000', 'lineWidth': 2},
         'TP #2': {'color': '#008000', 'lineWidth': 2},
-        'ST ↑' : {'color': '#006400','lineWidth': 1},
-        'ST ↓' : {'color': '#8B0000','lineWidth': 1},
-        # 'VWAP': {'lineWidth': 3}
+        'ST ↑' : {'color': '#006400','lineWidth': 1, 'lineStyle': 2},
+        'ST ↓' : {'color': '#8B0000','lineWidth': 1, 'lineStyle': 2},
+        'VWAP': {'lineWidth': 3},
+        'VWAP UB': {'lineWidth': 1},
+        'VWAP LB': {'lineWidth': 1}
     }
+
+    vwap_color_1 = encode_rgb(30, 144, 255)
+    vwap_color_2 = encode_rgb(250, 128, 114)
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
         super().__init__(client, all_params, opt_params)
@@ -76,11 +79,12 @@ class DailyProfitV1(BaseStrategy):
     def start(self, market_data) -> None:
         self.open_deals_log = np.full(5, np.nan)
         self.completed_deals_log = np.array([])
-        self.position_size = np.nan
-        self.entry_signal = np.nan
-        self.entry_price = np.nan
-        self.entry_date = np.nan
+
         self.deal_type = np.nan
+        self.entry_signal = np.nan
+        self.entry_date = np.nan
+        self.entry_price = np.nan
+        self.position_size = np.nan
 
         self.symbol = market_data['symbol']
         self.time = market_data['klines'][:, 0]
@@ -94,18 +98,21 @@ class DailyProfitV1(BaseStrategy):
 
         self.equity = self.params['initial_capital']
 
-        self.stop_price = np.full(self.time.shape[0], np.nan)
-        self.stop_moved = False
+        self.liquidation_price = np.nan
 
-        self.take_price = np.array(
+        self.stop_prices = np.full(self.time.shape[0], np.nan)
+        self.moved_stop_price_1 = np.nan
+        self.moved_stop_price_2 = np.nan
+
+        self.take_prices = np.array(
             [
                 np.full(self.time.shape[0], np.nan),
                 np.full(self.time.shape[0], np.nan)
             ]
         )
-        self.qty_take = np.full(2, np.nan)
+        self.take_volumes = np.full(2, np.nan)
 
-        self.st_upper_band, self.st_lower_band = qk.dst(
+        self.dst_upper_band, self.dst_lower_band = qk.dst(
             high=self.high,
             low=self.low,
             close=self.close,
@@ -132,18 +139,27 @@ class DailyProfitV1(BaseStrategy):
             length=self.params['stoch_length']
         )
 
-        self.vwap = qk.daily_vwap_with_reset(
+        self.vwap = qk.vwap(
             time=self.time,
             high=self.high,
             low=self.low,
             close=self.close,
             volume=self.volume,
         )
+        self.vwap_colors = np.empty(self.vwap.shape[0], dtype=np.float64)
+        self.vwap_colors[0] = np.nan
+        self.vwap_colors[1:] = np.where(
+            self.vwap[1:] > self.vwap[:-1],
+            self.vwap_color_1,
+            self.vwap_color_2
+        )
 
-        print(self.vwap[-50:])
-
-
-        self.liquidation_price = np.nan
+        self.vwap_upper_band = (
+            self.vwap * (100 + self.params['vwap_zone']) / 100
+        )
+        self.vwap_lower_band = (
+            self.vwap * (100 - self.params['vwap_zone']) / 100
+        )
 
         self.alert_cancel = False
         self.alert_open_long = False
@@ -153,88 +169,109 @@ class DailyProfitV1(BaseStrategy):
         self.alert_long_new_stop = False
         self.alert_short_new_stop = False
 
-        # (
-        #     self.completed_deals_log,
-        #     self.open_deals_log,
-        #     self.take_price,
-        #     self.stop_price,
-        #     self.alert_cancel,
-        #     self.alert_open_long,
-        #     self.alert_open_short,
-        #     self.alert_close_long,
-        #     self.alert_close_short,
-        #     self.alert_long_new_take,
-        #     self.alert_short_new_take
-        # ) = self._calculate(
-        #     self.params['direction'],
-        #     self.params['initial_capital'],
-        #     self.params['commission'],
-        #     self.params['order_size_type'],
-        #     self.params['order_size'],
-        #     self.params['leverage'],
-        #     self.params['stop'],
-        #     self.params['take_type'],
-        #     self.params['take'],
-        #     self.p_precision,
-        #     self.q_precision,
-        #     self.time,
-        #     self.open,
-        #     self.high,
-        #     self.low,
-        #     self.close,
-        #     self.equity,
-        #     self.completed_deals_log,
-        #     self.open_deals_log,
-        #     self.deal_type,
-        #     self.entry_signal,
-        #     self.entry_date,
-        #     self.entry_price,
-        #     self.take_price,
-        #     self.stop_price,
-        #     self.liquidation_price,
-        #     self.position_size,
-        #     self.sma_long_entry,
-        #     self.sma_short_entry,
-        #     self.sma_long_exit,
-        #     self.sma_short_exit,
-        #     self.sma_small_trend,
-        #     self.sma_medium_trend,
-        #     self.cond_exit_long,
-        #     self.cond_exit_short,
-        #     self.alert_cancel,
-        #     self.alert_open_long,
-        #     self.alert_open_short,
-        #     self.alert_close_long,
-        #     self.alert_close_short,
-        #     self.alert_long_new_take,
-        #     self.alert_short_new_take
-        # )
+        (
+            self.open_deals_log,
+            self.completed_deals_log,
+            self.stop_prices,
+            self.take_prices,
+            self.alert_cancel,
+            self.alert_open_long,
+            self.alert_open_short,
+            self.alert_close_long,
+            self.alert_close_short,
+            self.alert_long_new_stop,
+            self.alert_short_new_stop
+        ) = self._calculate(
+            self.params['direction'],
+            self.params['initial_capital'],
+            self.params['commission'],
+            self.params['order_size_type'],
+            self.params['order_size'],
+            self.params['leverage'],
+            self.params['stop'],
+            self.params['trail_stop'],
+            self.params['take_multiplier_1'],
+            self.params['take_volume_1'],
+            self.params['take_2'],
+            self.params['take_multiplier_2'],
+            self.params['take_volume_2'],
+            self.params['stoch_rsi_upper_limit'],
+            self.params['stoch_rsi_lower_limit'],
+            self.open_deals_log,
+            self.completed_deals_log,
+            self.deal_type,
+            self.entry_signal,
+            self.entry_date,
+            self.entry_price,
+            self.position_size,
+            self.time,
+            self.high,
+            self.low,
+            self.close,
+            self.p_precision,
+            self.q_precision,
+            self.equity,
+            self.liquidation_price,
+            self.stop_prices,
+            self.moved_stop_price_1,
+            self.moved_stop_price_2,
+            self.take_prices,
+            self.take_volumes,
+            self.dst_upper_band,
+            self.dst_lower_band,
+            self.stoch_rsi,
+            self.vwap,
+            self.vwap_upper_band,
+            self.vwap_lower_band,
+            self.alert_cancel,
+            self.alert_open_long,
+            self.alert_open_short,
+            self.alert_close_long,
+            self.alert_close_short,
+            self.alert_long_new_stop,
+            self.alert_short_new_stop
+        )
 
         self.indicators = {
             'SL': {
                 'options': self.indicator_options['SL'],
-                'values': self.stop_price
+                'values': self.stop_prices
             },
             'TP #1': {
                 'options': self.indicator_options['TP #1'],
-                'values': self.take_price[0]
+                'values': self.take_prices[0]
             },
             'TP #2': {
                 'options': self.indicator_options['TP #2'],
-                'values': self.take_price[1]
+                'values': self.take_prices[1]
             },
             'ST ↑': {
                 'options': self.indicator_options['ST ↑'],
-                'values': self.st_upper_band
+                'values': self.dst_upper_band
             },
             'ST ↓': {
                 'options': self.indicator_options['ST ↓'],
-                'values': self.st_lower_band
+                'values': self.dst_lower_band
+            },
+            'VWAP': {
+                'options': self.indicator_options['VWAP'],
+                'values': self.vwap,
+                'colors': self.vwap_colors
+            },
+            'VWAP UB': {
+                'options': self.indicator_options['VWAP UB'],
+                'values': self.vwap_upper_band,
+                'colors': self.vwap_colors
+            },
+            'VWAP LB': {
+                'options': self.indicator_options['VWAP LB'],
+                'values': self.vwap_lower_band,
+                'colors': self.vwap_colors
             }
         }
 
     @staticmethod
-    # @nb.jit(cache=True, nopython=True, nogil=True)
+    @nb.jit(cache=True, nopython=True, nogil=True)
     def _calculate(
         direction: int,
         initial_capital: float,
@@ -243,53 +280,59 @@ class DailyProfitV1(BaseStrategy):
         order_size: float,
         leverage: int,
         stop: float,
-        take_type: int,
-        take: float,
-        p_precision: float,
-        q_precision: float,
-        time: np.ndarray,
-        open: np.ndarray,
-        high: np.ndarray,
-        low: np.ndarray,
-        close: np.ndarray,
-        equity: float,
-        completed_deals_log: np.ndarray,
+        trail_stop: bool,
+        take_multiplier_1: float,
+        take_volume_1: float,
+        take_2: bool,
+        take_multiplier_2: float,
+        take_volume_2: float,
+        stoch_rsi_upper_limit: float,
+        stoch_rsi_lower_limit: float,
         open_deals_log: np.ndarray,
+        completed_deals_log: np.ndarray,
         deal_type: float,
         entry_signal: float,
         entry_date: float,
         entry_price: float,
-        take_price: np.ndarray,
-        stop_price: np.ndarray,
-        liquidation_price: float,
         position_size: float,
-        sma_long_entry: np.ndarray,
-        sma_short_entry: np.ndarray,
-        sma_long_exit: np.ndarray,
-        sma_short_exit: np.ndarray,
-        sma_small_trend: np.ndarray,
-        sma_medium_trend: np.ndarray,
-        cond_exit_long: np.ndarray,
-        cond_exit_short: np.ndarray,
+        time: np.ndarray,
+        high: np.ndarray,
+        low: np.ndarray,
+        close: np.ndarray,
+        p_precision: float,
+        q_precision: float,
+        equity: float,
+        liquidation_price: float,
+        stop_prices: np.ndarray,
+        moved_stop_price_1: float,
+        moved_stop_price_2: float,
+        take_prices: np.ndarray,
+        take_volumes: np.ndarray,
+        dst_upper_band: np.ndarray,
+        dst_lower_band: np.ndarray,
+        stoch_rsi: np.ndarray,
+        vwap: np.ndarray,
+        vwap_upper_band: np.ndarray,
+        vwap_lower_band: np.ndarray,
         alert_cancel: bool,
         alert_open_long: bool,
         alert_open_short: bool,
         alert_close_long: bool,
         alert_close_short: bool,
-        alert_long_new_take: bool,
-        alert_short_new_take: bool
+        alert_long_new_stop: bool,
+        alert_short_new_stop: bool
     ) -> tuple:
-        for i in range(1, time.shape[0]):
-            stop_price[i] = stop_price[i - 1]
-            take_price[i] = take_price[i - 1]
+        for i in range(2, time.shape[0]):
+            stop_prices[i] = stop_prices[i - 1]
+            take_prices[:, i] = take_prices[:, i - 1]
 
             alert_cancel = False
             alert_open_long = False
             alert_open_short = False
             alert_close_long = False
             alert_close_short = False
-            alert_long_new_take = False
-            alert_short_new_take = False
+            alert_long_new_stop = False
+            alert_short_new_stop = False
 
             # Check of liquidation
             if (deal_type == 0 and low[i] <= liquidation_price):
@@ -311,15 +354,16 @@ class DailyProfitV1(BaseStrategy):
                 )
                 equity += log_entry[8]
                 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
                 entry_price = np.nan
-                take_price[i] = np.nan
-                stop_price[i] = np.nan
-                liquidation_price = np.nan
                 position_size = np.nan
+                liquidation_price = np.nan
+                stop_prices[i] = np.nan
+                take_prices[:, i] = np.nan
+                take_volumes[:] = np.nan
                 alert_cancel = True
 
             if (deal_type == 1 and high[i] >= liquidation_price):
@@ -341,30 +385,21 @@ class DailyProfitV1(BaseStrategy):
                 )
                 equity += log_entry[8]
 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
                 entry_price = np.nan
-                take_price[i] = np.nan
-                stop_price[i] = np.nan
-                liquidation_price = np.nan
                 position_size = np.nan
+                liquidation_price = np.nan
+                stop_prices[i] = np.nan
+                take_prices[:, i] = np.nan
+                take_volumes[:] = np.nan
                 alert_cancel = True
 
             # Trading logic (longs)
-            is_new_take_price = (
-                take_type == 1 and
-                deal_type == 0 and
-                not np.isnan(take_price[i - 1])
-            )
-
-            if is_new_take_price:
-                take_price[i] = min(sma_long_exit[i], take_price[i - 1])
-                alert_long_new_take = True
-
             if deal_type == 0:
-                if low[i] <= stop_price[i]:
+                if low[i] <= stop_prices[i]:
                     log_entry = create_log_entry(
                         completed_deals_log,
                         commission,
@@ -374,7 +409,7 @@ class DailyProfitV1(BaseStrategy):
                         entry_date,
                         time[i],
                         entry_price,
-                        stop_price[i],
+                        stop_prices[i],
                         position_size,
                         initial_capital
                     )
@@ -383,28 +418,115 @@ class DailyProfitV1(BaseStrategy):
                     )
                     equity += log_entry[8]
 
-                    open_deals_log = np.full(5, np.nan)
+                    open_deals_log[:] = np.nan
                     deal_type = np.nan
                     entry_signal = np.nan
                     entry_date = np.nan
                     entry_price = np.nan
-                    take_price[i] = np.nan
-                    stop_price[i] = np.nan
-                    liquidation_price = np.nan
                     position_size = np.nan
+                    liquidation_price = np.nan
+                    stop_prices[i] = np.nan
+                    take_prices[:, i] = np.nan
+                    take_volumes[:] = np.nan
                     alert_cancel = True
 
-                if high[i] >= take_price[i]:
+                if (
+                    not np.isnan(take_prices[0, i])
+                    and high[i] >= take_prices[0, i]
+                ):
                     log_entry = create_log_entry(
                         completed_deals_log,
                         commission,
                         deal_type,
                         entry_signal,
-                        300,
+                        301,
                         entry_date,
                         time[i],
                         entry_price,
-                        take_price[i],
+                        take_prices[0, i],
+                        take_volumes[0],
+                        initial_capital
+                    )
+                    completed_deals_log = np.concatenate(
+                        (completed_deals_log, log_entry)
+                    )
+                    equity += log_entry[8]
+
+                    position_size = round(position_size - take_volumes[0], 8)
+                    open_deals_log[4] = position_size
+                    take_prices[0, i] = np.nan
+                    take_volumes[0] = np.nan
+
+                    if trail_stop and stop_prices[i] < moved_stop_price_1:
+                        stop_prices[i] = moved_stop_price_1
+                        alert_long_new_stop = True
+
+                if (
+                    not np.isnan(take_prices[1, i])
+                    and high[i] >= take_prices[1, i]
+                ):
+                    log_entry = create_log_entry(
+                        completed_deals_log,
+                        commission,
+                        deal_type,
+                        entry_signal,
+                        302,
+                        entry_date,
+                        time[i],
+                        entry_price,
+                        take_prices[1, i],
+                        take_volumes[1],
+                        initial_capital
+                    )
+                    completed_deals_log = np.concatenate(
+                        (completed_deals_log, log_entry)
+                    )
+                    equity += log_entry[8]
+                    position_size = round(position_size - take_volumes[1], 8)
+
+                    if position_size == 0:
+                        open_deals_log[:] = np.nan
+                        deal_type = np.nan
+                        entry_signal = np.nan
+                        entry_date = np.nan
+                        entry_price = np.nan
+                        position_size = np.nan
+                        liquidation_price = np.nan
+                        stop_prices[i] = np.nan
+                        take_prices[:, i] = np.nan
+                        take_volumes[:] = np.nan
+                        alert_cancel = True
+                    else:
+                        open_deals_log[4] = position_size
+                        take_prices[1, i] = np.nan
+                        take_volumes[1] = np.nan
+
+                        if trail_stop and stop_prices[i] < moved_stop_price_2:
+                            stop_prices[i] = moved_stop_price_2
+                            alert_long_new_stop = True
+
+            if deal_type == 0:
+                kline_ms = time[1] - time[0]
+                day_1 = time[i] // 86400000
+                day_2 = (time[i] + kline_ms) // 86400000
+
+                is_exit_long = (
+                    vwap[i] < vwap[i - 1] and
+                    stoch_rsi[i] > stoch_rsi_upper_limit or
+                    day_1 != day_2
+                )
+
+                if is_exit_long:
+                    log_entry = create_log_entry(
+                        completed_deals_log,
+                        commission,
+                        deal_type,
+                        entry_signal,
+                        100,
+                        entry_date,
+                        time[i],
+                        entry_price,
+                        close[i],
                         position_size,
                         initial_capital
                     )
@@ -413,95 +535,85 @@ class DailyProfitV1(BaseStrategy):
                     )
                     equity += log_entry[8]
 
-                    open_deals_log = np.full(5, np.nan)
+                    open_deals_log[:] = np.nan
                     deal_type = np.nan
                     entry_signal = np.nan
                     entry_date = np.nan
                     entry_price = np.nan
-                    take_price[i] = np.nan
-                    stop_price[i] = np.nan
-                    liquidation_price = np.nan
                     position_size = np.nan
+                    liquidation_price = np.nan
+                    stop_prices[i] = np.nan
+                    take_prices[:, i] = np.nan
+                    take_volumes[:] = np.nan
+                    alert_close_long = True
                     alert_cancel = True
 
-            exit_long = (
-                deal_type == 0 and
-                cond_exit_long[i]
-            )
-            entry_long = (
+            is_entry_long = (
                 np.isnan(deal_type) and
-                high[i - 1] >= sma_long_entry[i - 1] and
-                low[i - 1] <= sma_long_entry[i - 1] and
-                close[i] > close[i - 1] and
-                close[i] > open[i] and
-                close[i] > sma_small_trend[i] and
-                close[i] > sma_medium_trend[i] and
-                close[i] < sma_long_exit[i] and
-                (direction == 0 or direction == 1)
+                (
+                    high[i - 1] > vwap_lower_band[i - 1] and
+                    high[i - 1] < vwap_upper_band[i - 1] or
+                    low[i - 1] > vwap_lower_band[i - 1] and
+                    low[i - 1] < vwap_upper_band[i - 1]
+                ) and
+                vwap[i - 1] > vwap[i - 2] and
+                stoch_rsi[i - 1] < stoch_rsi_lower_limit and
+                (direction == 0 or direction == 1) and
+                not np.isnan(dst_lower_band[i])
             )
 
-            if exit_long:
-                log_entry = create_log_entry(
-                    completed_deals_log,
-                    commission,
-                    deal_type,
-                    entry_signal,
-                    100,
-                    entry_date,
-                    time[i],
-                    entry_price,
-                    close[i],
-                    position_size,
-                    initial_capital
-                )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
-
-                open_deals_log = np.full(5, np.nan)
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
-                take_price[i] = np.nan
-                stop_price[i] = np.nan
-                liquidation_price = np.nan
-                position_size = np.nan
-                alert_close_long = True
-                alert_cancel = True
-
-            if entry_long:
+            if is_entry_long:
                 deal_type = 0
                 entry_signal = 100
-                entry_date = time[i]
                 entry_price = close[i]
 
                 if order_size_type == 0:
                     initial_position =  (
                         equity * leverage * (order_size / 100.0)
                     )
-                    position_size = adjust(
+                    position_size = (
                         initial_position * (1 - commission / 100)
-                        / entry_price, q_precision
+                        / entry_price
                     )
-                else:
+                elif order_size_type == 1:
                     initial_position = (
                         order_size * leverage
                     )
-                    position_size = adjust(
+                    position_size = (
                         initial_position * (1 - commission / 100)
-                        / entry_price, q_precision
+                        / entry_price
                     )
-
-                take_price[i] = adjust(
-                    entry_price * (100 + take) / 100, p_precision
-                )
-                stop_price[i] = adjust(
-                    entry_price * (100 - stop) / 100, p_precision
-                )
+                    
+                entry_date = time[i]
                 liquidation_price = adjust(
                     entry_price * (1 - (1 / leverage)), p_precision
+                )
+                stop_prices[i] = adjust(
+                    dst_lower_band[i] * (100 - stop) / 100, p_precision
+                )
+
+                stop_distance = abs((stop_prices[i] / entry_price - 1) * 100)
+                take_distance_1 = stop_distance * take_multiplier_1
+                take_prices[0, i] = adjust(
+                    entry_price * (100 + take_distance_1) / 100,
+                    p_precision
+                )
+
+                if take_2:
+                    take_distance_2 = take_distance_1 * take_multiplier_2
+                    take_prices[1, i] = adjust(
+                        entry_price * (100 + take_distance_2) / 100,
+                        p_precision
+                    )
+
+                position_size = adjust(
+                    position_size, q_precision
+                )
+                take_volumes[0] = adjust(
+                    position_size * take_volume_1 / 100, q_precision
+                )
+                take_volumes[1] = adjust(
+                    position_size * take_volume_2 / 100, q_precision
                 )
 
                 open_deals_log = np.array(
@@ -513,18 +625,8 @@ class DailyProfitV1(BaseStrategy):
                 alert_open_long = True
 
             # Trading logic (shorts)
-            is_new_take_price = (
-                take_type == 1 and
-                deal_type == 1 and
-                not np.isnan(take_price[i - 1])
-            )
-
-            if is_new_take_price:
-                take_price[i] = max(sma_short_exit[i], take_price[i - 1])
-                alert_short_new_take = True
-
             if deal_type == 1:
-                if high[i] >= stop_price[i]:
+                if high[i] >= stop_prices[i]:
                     log_entry = create_log_entry(
                         completed_deals_log,
                         commission,
@@ -534,7 +636,7 @@ class DailyProfitV1(BaseStrategy):
                         entry_date,
                         time[i],
                         entry_price,
-                        stop_price[i],
+                        stop_prices[i],
                         position_size,
                         initial_capital
                     )
@@ -543,28 +645,114 @@ class DailyProfitV1(BaseStrategy):
                     )
                     equity += log_entry[8]
 
-                    open_deals_log = np.full(5, np.nan)
+                    open_deals_log[:] = np.nan
                     deal_type = np.nan
                     entry_signal = np.nan
                     entry_date = np.nan
                     entry_price = np.nan
-                    take_price[i] = np.nan
-                    stop_price[i] = np.nan
-                    liquidation_price = np.nan
                     position_size = np.nan
-                    alert_cancel = True 
+                    liquidation_price = np.nan
+                    stop_prices[i] = np.nan
+                    take_prices[:, i] = np.nan
+                    take_volumes[:] = np.nan
+                    alert_cancel = True
 
-                if low[i] <= take_price[i]:
+                if (
+                    not np.isnan(take_prices[0, i])
+                    and low[i] <= take_prices[0, i]
+                ):
                     log_entry = create_log_entry(
                         completed_deals_log,
                         commission,
                         deal_type,
                         entry_signal,
-                        400,
+                        401,
                         entry_date,
                         time[i],
                         entry_price,
-                        take_price[i],
+                        take_prices[0, i],
+                        take_volumes[0],
+                        initial_capital
+                    )
+                    completed_deals_log = np.concatenate(
+                        (completed_deals_log, log_entry)
+                    )
+                    equity += log_entry[8]
+
+                    position_size = round(position_size - take_volumes[0], 8)
+                    open_deals_log[4] = position_size
+                    take_prices[0, i] = np.nan
+                    take_volumes[0] = np.nan
+
+                    if trail_stop and stop_prices[i] > moved_stop_price_1:
+                        stop_prices[i] = moved_stop_price_1
+                        alert_short_new_stop = True
+                if (
+                    not np.isnan(take_prices[1, i])
+                    and low[i] <= take_prices[1, i]
+                ):
+                    log_entry = create_log_entry(
+                        completed_deals_log,
+                        commission,
+                        deal_type,
+                        entry_signal,
+                        402,
+                        entry_date,
+                        time[i],
+                        entry_price,
+                        take_prices[1, i],
+                        take_volumes[1],
+                        initial_capital
+                    )
+                    completed_deals_log = np.concatenate(
+                        (completed_deals_log, log_entry)
+                    )
+                    equity += log_entry[8]
+                    position_size = round(position_size - take_volumes[1], 8)
+
+                    if position_size == 0:
+                        open_deals_log[:] = np.nan
+                        deal_type = np.nan
+                        entry_signal = np.nan
+                        entry_date = np.nan
+                        entry_price = np.nan
+                        position_size = np.nan
+                        liquidation_price = np.nan
+                        stop_prices[i] = np.nan
+                        take_prices[:, i] = np.nan
+                        take_volumes[:] = np.nan
+                        alert_cancel = True
+                    else:
+                        open_deals_log[4] = position_size
+                        take_prices[1, i] = np.nan
+                        take_volumes[1] = np.nan
+
+                        if trail_stop and stop_prices[i] > moved_stop_price_2:
+                            stop_prices[i] = moved_stop_price_2
+                            alert_short_new_stop = True
+
+            if deal_type == 1:
+                kline_ms = time[1] - time[0]
+                day_1 = time[i] // 86400000
+                day_2 = (time[i] + kline_ms) // 86400000
+
+                is_exit_short = (
+                    vwap[i] >= vwap[i - 1] and
+                    stoch_rsi[i] < stoch_rsi_lower_limit or
+                    day_1 != day_2
+                )
+
+                if is_exit_short:
+                    log_entry = create_log_entry(
+                        completed_deals_log,
+                        commission,
+                        deal_type,
+                        entry_signal,
+                        200,
+                        entry_date,
+                        time[i],
+                        entry_price,
+                        close[i],
                         position_size,
                         initial_capital
                     )
@@ -573,96 +761,87 @@ class DailyProfitV1(BaseStrategy):
                     )
                     equity += log_entry[8]
 
-                    open_deals_log = np.full(5, np.nan)
+                    open_deals_log[:] = np.nan
                     deal_type = np.nan
                     entry_signal = np.nan
                     entry_date = np.nan
                     entry_price = np.nan
-                    take_price[i] = np.nan
-                    stop_price[i] = np.nan
-                    liquidation_price = np.nan
                     position_size = np.nan
-                    alert_cancel = True 
+                    liquidation_price = np.nan
+                    stop_prices[i] = np.nan
+                    take_prices[:, i] = np.nan
+                    take_volumes[:] = np.nan
+                    alert_close_short = True
+                    alert_cancel = True
 
-            exit_short = (
-                deal_type == 1 and
-                cond_exit_short[i]
-            )
-            entry_short = (
+            is_entry_short = (
                 np.isnan(deal_type) and
-                high[i - 1] >= sma_short_entry[i - 1] and
-                low[i - 1] <= sma_short_entry[i - 1] and
-                close[i] < close[i - 1] and
-                close[i] < open[i] and
-                close[i] < sma_small_trend[i] and
-                close[i] < sma_medium_trend[i] and
-                close[i] > sma_short_exit[i] and
-                (direction == 0 or direction == 2)
+                (
+                    high[i - 1] > vwap_lower_band[i - 1] and
+                    high[i - 1] < vwap_upper_band[i - 1] or
+                    low[i - 1] > vwap_lower_band[i - 1] and
+                    low[i - 1] < vwap_upper_band[i - 1]
+                ) and
+                vwap[i - 1] < vwap[i - 2] and
+                stoch_rsi[i - 1] > stoch_rsi_upper_limit and
+                (direction == 0 or direction == 2) and
+                not np.isnan(dst_upper_band[i])
             )
 
-            if exit_short:
-                log_entry = create_log_entry(
-                    completed_deals_log,
-                    commission,
-                    deal_type,
-                    entry_signal,
-                    200,
-                    entry_date,
-                    time[i],
-                    entry_price,
-                    close[i],
-                    position_size,
-                    initial_capital
-                )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
-
-                open_deals_log = np.full(5, np.nan)
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
-                take_price[i] = np.nan
-                stop_price[i] = np.nan
-                liquidation_price = np.nan
-                position_size = np.nan
-                alert_close_short = True
-                alert_cancel = True
-
-            if entry_short:
+            if is_entry_short:
                 deal_type = 1
                 entry_signal = 200
-                entry_date = time[i]
                 entry_price = close[i]
 
                 if order_size_type == 0:
                     initial_position = (
                         equity * leverage * (order_size / 100.0)
                     )
-                    position_size = adjust(
+                    position_size = (
                         initial_position * (1 - commission / 100)
-                        / entry_price, q_precision
+                        / entry_price
                     )
-                else:
+                elif order_size_type == 1:
                     initial_position = (
                         order_size * leverage
                     )
-                    position_size = adjust(
+                    position_size = (
                         initial_position * (1 - commission / 100)
-                        / entry_price, q_precision
+                        / entry_price
                     )
 
-                take_price[i] = adjust(
-                    entry_price * (100 - take) / 100, p_precision
-                )
-                stop_price[i] = adjust(
-                    entry_price * (100 + stop) / 100, p_precision
-                )
+                entry_date = time[i]
                 liquidation_price = adjust(
                     entry_price * (1 + (1 / leverage)), p_precision
                 )
+                stop_prices[i] = adjust(
+                    dst_upper_band[i] * (100 + stop) / 100, p_precision
+                )
+
+                stop_distance = abs((stop_prices[i] / entry_price - 1) * 100)
+                take_distance_1 = stop_distance * take_multiplier_1
+                take_prices[0, i] = adjust(
+                    entry_price * (100 - take_distance_1) / 100,
+                    p_precision
+                )
+
+                if take_2:
+                    take_distance_2 = take_distance_1 * take_multiplier_2
+                    take_prices[1, i] = adjust(
+                        entry_price * (100 - take_distance_2) / 100,
+                        p_precision
+                    )
+
+                position_size = adjust(
+                    position_size, q_precision
+                )
+                take_volumes[0] = adjust(
+                    position_size * take_volume_1 / 100, q_precision
+                )
+                take_volumes[1] = adjust(
+                    position_size * take_volume_2 / 100, q_precision
+                )
+
                 open_deals_log = np.array(
                     [
                         deal_type, entry_signal, entry_date,
@@ -672,17 +851,17 @@ class DailyProfitV1(BaseStrategy):
                 alert_open_short = True
 
         return (
-            completed_deals_log,
             open_deals_log,
-            take_price,
-            stop_price,
+            completed_deals_log,
+            stop_prices,
+            take_prices,
             alert_cancel,
             alert_open_long,
             alert_open_short,
             alert_close_long,
             alert_close_short,
-            alert_long_new_take,
-            alert_short_new_take
+            alert_long_new_stop,
+            alert_short_new_stop
         )
 
     def trade(self) -> None:
@@ -701,43 +880,43 @@ class DailyProfitV1(BaseStrategy):
             order_ids=self.order_ids['limit_ids']
         )
 
-        if self.alert_long_new_take:
-            self.client.cancel_limit_orders(
+        if self.alert_long_new_stop:
+            self.client.cancel_stop_orders(
                 symbol=self.symbol,
                 side='Sell'
             )
-            self.order_ids['limit_ids'] = self.client.check_limit_orders(
+            self.order_ids['stop_ids'] = self.client.check_stop_orders(
                 symbol=self.symbol,
-                order_ids=self.order_ids['limit_ids']
+                order_ids=self.order_ids['stop_ids']
             )
-            order_id = self.client.limit_close_long(
+            order_id = self.client.market_stop_close_long(
                 symbol=self.symbol, 
                 size='100%', 
-                price=self.take_price[-1], 
+                price=self.stop_price[-1], 
                 hedge=False
             )
 
             if order_id:
-                self.order_ids['limit_ids'].append(order_id)
+                self.order_ids['stop_ids'].append(order_id)
 
-        if self.alert_short_new_take:
-            self.client.cancel_limit_orders(
+        if self.alert_short_new_stop:
+            self.client.cancel_stop_orders(
                 symbol=self.symbol,
                 side='Buy'
             )
-            self.order_ids['limit_ids'] = self.client.check_limit_orders(
+            self.order_ids['stop_ids'] = self.client.check_stop_orders(
                 symbol=self.symbol,
-                order_ids=self.order_ids['limit_ids']
+                order_ids=self.order_ids['stop_ids']
             )
-            order_id = self.client.limit_close_short(
+            order_id = self.client.market_stop_close_short(
                 symbol=self.symbol, 
                 size='100%', 
-                price=self.take_price[-1], 
+                price=self.stop_price[-1], 
                 hedge=False
             )
 
             if order_id:
-                self.order_ids['limit_ids'].append(order_id)
+                self.order_ids['stop_ids'].append(order_id)
 
         if self.alert_close_long:
             self.client.market_close_long(
@@ -778,8 +957,18 @@ class DailyProfitV1(BaseStrategy):
 
             order_id = self.client.limit_close_long(
                 symbol=self.symbol,
-                size='100%',
-                price=self.take_price[-1],
+                size=f'{self.params['take_volume_1']}%',
+                price=self.take_price[0, -1],
+                hedge=False
+            )
+
+            if order_id:
+                self.order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.limit_close_long(
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2']}%',
+                price=self.take_price[1, -1],
                 hedge=False
             )
 
@@ -811,8 +1000,18 @@ class DailyProfitV1(BaseStrategy):
 
             order_id = self.client.limit_close_short(
                 symbol=self.symbol,
-                size='100%',
-                price=self.take_price[-1],
+                size=f'{self.params['take_volume_1']}%',
+                price=self.take_price[0, -1],
+                hedge=False
+            )
+
+            if order_id:
+                self.order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.limit_close_short(
+                symbol=self.symbol,
+                size=f'{self.params['take_volume_2']}%',
+                price=self.take_price[1, -1],
                 hedge=False
             )
 

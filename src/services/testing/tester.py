@@ -361,11 +361,12 @@ class Tester:
             all_max_drawdown_per = 0.0
 
         # Sortino ratio
-        all_sortino_ratio = round(
-            all_avg_trade_per / 
-                _mean(log_col_9[log_col_9 <= 0] ** 2) ** 0.5,
-            3
-        )
+        denominator = _mean(log_col_9[log_col_9 <= 0] ** 2) ** 0.5
+
+        if denominator == 0 or np.isnan(denominator):
+            all_sortino_ratio = np.nan 
+        else:
+            all_sortino_ratio = round(all_avg_trade_per / denominator, 3)
 
         metrics = [
             [

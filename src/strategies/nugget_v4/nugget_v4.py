@@ -528,7 +528,7 @@ class NuggetV4(BaseStrategy):
                 )
                 equity += log_entry[8]
                 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
@@ -536,9 +536,9 @@ class NuggetV4(BaseStrategy):
                 liquidation_price = np.nan
                 position_size = np.nan
                 stop_price[i] = np.nan
-                take_price[:, i : i + 1] = np.full(10, np.nan).reshape((10, 1))
-                qty_take_1 = np.full(5, np.nan)
-                qty_take_2 = np.full(10, np.nan)
+                take_price[:, i] = np.nan
+                qty_take_1[:] = np.nan
+                qty_take_2[:] = np.nan
                 stop_moved = False
                 grid_type = np.nan
                 alert_cancel = True
@@ -562,7 +562,7 @@ class NuggetV4(BaseStrategy):
                 )
                 equity += log_entry[8]
 
-                open_deals_log = np.full(5, np.nan)
+                open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
@@ -570,9 +570,9 @@ class NuggetV4(BaseStrategy):
                 liquidation_price = np.nan
                 position_size = np.nan
                 stop_price[i] = np.nan
-                take_price[:, i : i + 1] = np.full(10, np.nan).reshape((10, 1))
-                qty_take_1 = np.full(5, np.nan)
-                qty_take_2 = np.full(10, np.nan)
+                take_price[:, i] = np.nan
+                qty_take_1[:] = np.nan
+                qty_take_2[:] = np.nan
                 stop_moved = False
                 grid_type = np.nan
                 alert_cancel = True
@@ -598,7 +598,7 @@ class NuggetV4(BaseStrategy):
                     )
                     equity += log_entry[8]
 
-                    open_deals_log = np.full(5, np.nan)
+                    open_deals_log[:] = np.nan
                     deal_type = np.nan
                     entry_signal = np.nan
                     entry_date = np.nan
@@ -606,9 +606,9 @@ class NuggetV4(BaseStrategy):
                     liquidation_price = np.nan
                     position_size = np.nan
                     stop_price[i] = np.nan
-                    take_price[:, i : i + 1] = np.full(10, np.nan).reshape((10, 1))
-                    qty_take_1 = np.full(5, np.nan)
-                    qty_take_2 = np.full(10, np.nan)
+                    take_price[:, i] = np.nan
+                    qty_take_1[:] = np.nan
+                    qty_take_2[:] = np.nan
                     stop_moved = False
                     grid_type = np.nan
                     alert_cancel = True
@@ -797,7 +797,7 @@ class NuggetV4(BaseStrategy):
                         )
                         equity += log_entry[8]
 
-                        open_deals_log = np.full(5, np.nan)
+                        open_deals_log[:] = np.nan
                         deal_type = np.nan
                         entry_signal = np.nan
                         entry_date = np.nan
@@ -1055,7 +1055,7 @@ class NuggetV4(BaseStrategy):
                         )
                         equity += log_entry[8]
 
-                        open_deals_log = np.full(5, np.nan)
+                        open_deals_log[:] = np.nan
                         deal_type = np.nan
                         entry_signal = np.nan
                         entry_date = np.nan
@@ -1310,7 +1310,7 @@ class NuggetV4(BaseStrategy):
                     )
                     equity += log_entry[8]
 
-                    open_deals_log = np.full(5, np.nan)
+                    open_deals_log[:] = np.nan
                     deal_type = np.nan
                     entry_signal = np.nan
                     entry_date = np.nan
@@ -1318,9 +1318,9 @@ class NuggetV4(BaseStrategy):
                     liquidation_price = np.nan
                     position_size = np.nan
                     stop_price[i] = np.nan
-                    take_price[:, i : i + 1] = np.full(10, np.nan).reshape((10, 1))
-                    qty_take_1 = np.full(5, np.nan)
-                    qty_take_2 = np.full(10, np.nan)
+                    take_price[:, i] = np.nan
+                    qty_take_1[:] = np.nan
+                    qty_take_2[:] = np.nan
                     stop_moved = False
                     grid_type = np.nan
                     alert_cancel = True
@@ -1509,7 +1509,7 @@ class NuggetV4(BaseStrategy):
                         )
                         equity += log_entry[8]
 
-                        open_deals_log = np.full(5, np.nan)
+                        open_deals_log[:] = np.nan
                         deal_type = np.nan
                         entry_signal = np.nan
                         entry_date = np.nan
@@ -1767,7 +1767,7 @@ class NuggetV4(BaseStrategy):
                         )
                         equity += log_entry[8]
 
-                        open_deals_log = np.full(5, np.nan)
+                        open_deals_log[:] = np.nan
                         deal_type = np.nan
                         entry_signal = np.nan
                         entry_date = np.nan
