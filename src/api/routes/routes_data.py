@@ -53,7 +53,9 @@ def update_context(context_id):
         old_value = params[param]
         new_value = _parse_value(raw_value)
 
-        if type(old_value) != type(new_value):
+        if isinstance(old_value, float) and isinstance(new_value, int):
+            new_value = float(new_value)
+        elif type(old_value) != type(new_value):
             raise TypeError()
 
         params[param] = new_value

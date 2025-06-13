@@ -583,7 +583,7 @@ class DailyProfitV1(BaseStrategy):
                         initial_position * (1 - commission / 100)
                         / entry_price
                     )
-                    
+
                 entry_date = time[i]
                 liquidation_price = adjust(
                     entry_price * (1 - (1 / leverage)), p_precision
@@ -591,6 +591,7 @@ class DailyProfitV1(BaseStrategy):
                 stop_prices[i] = adjust(
                     dst_lower_band[i] * (100 - stop) / 100, p_precision
                 )
+                moved_stop_price_1 = entry_price
 
                 stop_distance = abs((stop_prices[i] / entry_price - 1) * 100)
                 take_distance_1 = stop_distance * take_multiplier_1
@@ -598,6 +599,7 @@ class DailyProfitV1(BaseStrategy):
                     entry_price * (100 + take_distance_1) / 100,
                     p_precision
                 )
+                moved_stop_price_1 = take_prices[0, i]
 
                 if take_2:
                     take_distance_2 = take_distance_1 * take_multiplier_2
@@ -817,6 +819,7 @@ class DailyProfitV1(BaseStrategy):
                 stop_prices[i] = adjust(
                     dst_upper_band[i] * (100 + stop) / 100, p_precision
                 )
+                moved_stop_price_1 = entry_price
 
                 stop_distance = abs((stop_prices[i] / entry_price - 1) * 100)
                 take_distance_1 = stop_distance * take_multiplier_1
@@ -824,6 +827,7 @@ class DailyProfitV1(BaseStrategy):
                     entry_price * (100 - take_distance_1) / 100,
                     p_precision
                 )
+                moved_stop_price_2 = take_prices[0, i]
 
                 if take_2:
                     take_distance_2 = take_distance_1 * take_multiplier_2
