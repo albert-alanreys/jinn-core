@@ -551,13 +551,13 @@ class DailyProfitV1(BaseStrategy):
             is_entry_long = (
                 np.isnan(deal_type) and
                 (
-                    high[i - 1] > vwap_lower_band[i - 1] and
-                    high[i - 1] < vwap_upper_band[i - 1] or
-                    low[i - 1] > vwap_lower_band[i - 1] and
-                    low[i - 1] < vwap_upper_band[i - 1]
+                    high[i] > vwap_lower_band[i] and
+                    high[i] < vwap_upper_band[i] or
+                    low[i] > vwap_lower_band[i] and
+                    low[i] < vwap_upper_band[i]
                 ) and
-                vwap[i - 1] > vwap[i - 2] and
-                stoch_rsi[i - 1] < stoch_rsi_lower_limit and
+                vwap[i] > vwap[i - 1] and
+                stoch_rsi[i] < stoch_rsi_lower_limit and
                 (direction == 0 or direction == 1) and
                 not np.isnan(dst_lower_band[i])
             )
@@ -779,13 +779,13 @@ class DailyProfitV1(BaseStrategy):
             is_entry_short = (
                 np.isnan(deal_type) and
                 (
-                    high[i - 1] > vwap_lower_band[i - 1] and
-                    high[i - 1] < vwap_upper_band[i - 1] or
-                    low[i - 1] > vwap_lower_band[i - 1] and
-                    low[i - 1] < vwap_upper_band[i - 1]
+                    high[i] > vwap_lower_band[i] and
+                    high[i] < vwap_upper_band[i] or
+                    low[i] > vwap_lower_band[i] and
+                    low[i] < vwap_upper_band[i]
                 ) and
-                vwap[i - 1] < vwap[i - 2] and
-                stoch_rsi[i - 1] > stoch_rsi_upper_limit and
+                vwap[i] < vwap[i - 1] and
+                stoch_rsi[i] > stoch_rsi_upper_limit and
                 (direction == 0 or direction == 2) and
                 not np.isnan(dst_upper_band[i])
             )
