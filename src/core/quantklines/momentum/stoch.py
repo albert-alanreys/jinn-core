@@ -38,4 +38,7 @@ def stoch(
 
     # values
     values = 100 * (source - lowest) / (highest - lowest)
+    values = np.where(values > 100, 100, values)
+    values = np.where(values < 0, 0, values)
+
     return values
