@@ -37,7 +37,8 @@ class DailyProfitV1(BaseStrategy):
         "stoch_length": 10,
         "stoch_rsi_upper_limit": 90.0,
         "stoch_rsi_lower_limit": 10.0,
-        "vwap_zone": 0.3
+        "vwap_zone": 0.3,
+        "vwap_close": False
     }
 
     # Parameters to be optimized and their possible values
@@ -55,7 +56,8 @@ class DailyProfitV1(BaseStrategy):
         'stoch_length': [i for i in range(10, 20)],
         'stoch_rsi_upper_limit': [80.0, 90.0],
         'stoch_rsi_lower_limit': [10.0, 20.0],
-        'vwap_zone': [0.2, 0.3, 0.4]
+        'vwap_zone': [0.2, 0.3, 0.4],
+        'vwap_close': [True, False]
     }
 
     # For frontend
@@ -197,6 +199,7 @@ class DailyProfitV1(BaseStrategy):
             self.params['take_volume_2'],
             self.params['stoch_rsi_upper_limit'],
             self.params['stoch_rsi_lower_limit'],
+            self.params['vwap_close'],
             self.open_deals_log,
             self.completed_deals_log,
             self.deal_type,
@@ -288,6 +291,7 @@ class DailyProfitV1(BaseStrategy):
         take_volume_2: float,
         stoch_rsi_upper_limit: float,
         stoch_rsi_lower_limit: float,
+        vwap_close: bool,
         open_deals_log: np.ndarray,
         completed_deals_log: np.ndarray,
         deal_type: float,
@@ -511,7 +515,7 @@ class DailyProfitV1(BaseStrategy):
                 day_2 = (time[i] + kline_ms) // 86400000
 
                 is_exit_long = (
-                    vwap[i] < vwap[i - 1] and
+                    (vwap[i] < vwap[i - 1] if vwap_close else True) and
                     stoch_rsi[i] > stoch_rsi_upper_limit or
                     day_1 != day_2
                 )
@@ -739,7 +743,7 @@ class DailyProfitV1(BaseStrategy):
                 day_2 = (time[i] + kline_ms) // 86400000
 
                 is_exit_short = (
-                    vwap[i] >= vwap[i - 1] and
+                    (vwap[i] >= vwap[i - 1] if vwap_close else True) and
                     stoch_rsi[i] < stoch_rsi_lower_limit or
                     day_1 != day_2
                 )
