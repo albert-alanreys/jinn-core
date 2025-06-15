@@ -136,8 +136,8 @@ class DailyProfitV1(BaseStrategy):
         )
         self.stoch_rsi = qk.stoch(
             source=self.rsi_close,
-            high=self.rsi_high,
-            low=self.rsi_low,
+            high=self.rsi_close,
+            low=self.rsi_close,
             length=self.params['stoch_length']
         )
 
@@ -603,7 +603,7 @@ class DailyProfitV1(BaseStrategy):
                     entry_price * (100 + take_distance_1) / 100,
                     p_precision
                 )
-                moved_stop_price_1 = take_prices[0, i]
+                moved_stop_price_2 = take_prices[0, i]
 
                 if take_2:
                     take_distance_2 = take_distance_1 * take_multiplier_2
