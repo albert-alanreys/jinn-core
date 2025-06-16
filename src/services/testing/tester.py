@@ -1,24 +1,23 @@
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from src.core.strategy.base_strategy import BaseStrategy
 
 
 class Tester:
     @staticmethod
-    def test(strategy_context: dict) -> dict:
-        instance = strategy_context['instance']
-        instance.start(strategy_context['market_data'])
-
-        equity = Tester._get_equity(
-            initial_capital=instance.params['initial_capital'],
-            deals_log=instance.completed_deals_log
-        )
-        metrics = Tester._get_metrics(
-            initial_capital=instance.params['initial_capital'],
-            deals_log=instance.completed_deals_log
-        )
-
+    def test(strategy_instance: 'BaseStrategy') -> dict:
         return {
-            'equity': equity,
-            'metrics': metrics
+            'equity': Tester._get_equity(
+                initial_capital=strategy_instance.params['initial_capital'],
+                deals_log=strategy_instance.completed_deals_log
+            ),
+            'metrics': Tester._get_metrics(
+                initial_capital=strategy_instance.params['initial_capital'],
+                deals_log=strategy_instance.completed_deals_log
+            )
         }
 
     @staticmethod

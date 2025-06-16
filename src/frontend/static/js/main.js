@@ -6,19 +6,21 @@ import {
   fetchAlerts,
   fetchSummary,
   fetchUpdates,
-  fetchDetails,
+  fetchChartDetails,
+  fetchReportDetails,
 } from './fetchClient.js';
 
 async function renderUI(contextId) {
   var freshSummary = await fetchSummary();
-  var details = await fetchDetails(contextId);
+  var chartDetails = await fetchChartDetails(contextId);
+  var reportDetails = await fetchReportDetails(contextId);
 
   chartManager.removeChart();
   reportManager.removeReport();
   leftToolbarManager.removeEventListeners();
 
-  chartManager.createChart(details.chart);
-  reportManager.createReport(details.report);
+  chartManager.createChart(chartDetails);
+  reportManager.createReport(reportDetails);
   leftToolbarManager.manage(
     chartManager.chart,
     freshSummary[contextId],
@@ -48,8 +50,13 @@ if (SERVER_MODE == 'AUTOMATION') {
     fetchUpdates().then((updates) => {
       if (updates?.length) {
         if (updates.includes(contextId)) {
-          fetchDetails(contextId).then((data) => {
-            chartManager.setChartData(data.chart);
+          fetchChartDetails(contextId).then((chartDetails) => {
+            chartManager.setChartData(chartDetails);
+          });
+
+          fetchReportDetails(contextId).then((reportDetails) => {
+            reportManager.removeReport();
+            reportManager.createReport(reportDetails);
           });
         }
 

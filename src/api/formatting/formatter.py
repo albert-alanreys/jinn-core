@@ -33,10 +33,8 @@ class Formatter:
         return result
 
     @staticmethod
-    def format_details(strategy_context: dict) -> dict:
-        result = {}
-
-        result['chart'] = {
+    def format_chart_details(strategy_context: dict) -> dict:
+        return {
             'name': '-'.join(
                 word.capitalize()
                 for word in strategy_context['name'].split('_')
@@ -59,19 +57,19 @@ class Formatter:
             )
         }
 
-        result['report'] = {
+    @staticmethod
+    def format_report_details(strategy_context: dict) -> dict:
+        return {
             'equity': Formatter._format_equity(
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['stats']['equity']
             ),
             'metrics': strategy_context['stats']['metrics'],
-            'deals': Formatter._format_deals_log(
+            'trades': Formatter._format_deals_log(
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['instance'].open_deals_log
             )
         }
-
-        return result
 
     @staticmethod
     def _format_klines(klines: np.ndarray) -> list:

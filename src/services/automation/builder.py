@@ -105,6 +105,8 @@ class AutomationBuilder():
                         interval=interval,
                         feeds=instance.params.get('feeds')
                     )
+                    instance.start(market_data)
+
                     context = {
                         'name': strategy.name,
                         'type': strategy.value,
@@ -132,6 +134,8 @@ class AutomationBuilder():
                     interval=self.interval,
                     feeds=instance.params.get('feeds')
                 )
+                instance.start(market_data)
+
                 context = {
                     'name': self.strategy.name,
                     'type': self.strategy.value,

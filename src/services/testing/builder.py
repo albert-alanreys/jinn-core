@@ -89,6 +89,8 @@ class TestingBuilder:
                             end=params['period']['end'],
                             feeds=instance.params.get('feeds')
                         )
+                        instance.start(market_data)
+
                         context = {
                             'name': strategy.name,
                             'type': strategy.value,
@@ -118,6 +120,8 @@ class TestingBuilder:
                     end=self.end,
                     feeds=instance.params.get('feeds')
                 )
+                instance.start(market_data)
+
                 context = {
                     'name': self.strategy.name,
                     'type': self.strategy.value,

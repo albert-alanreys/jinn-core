@@ -7,7 +7,7 @@ from src.api.formatting import Formatter
 from src.services.testing import Tester
 
 
-api_bp = flask.Blueprint('api', __name__, url_prefix='/api/data')
+api_bp = flask.Blueprint('api', __name__, url_prefix='/api')
 
 
 @api_bp.route('/alerts', methods=['GET'])
@@ -31,12 +31,19 @@ def get_updates():
     return flask.Response(dumps(updates), mimetype='application/json')
 
 
-@api_bp.route('/details/<string:context_id>', methods=['GET'])
-def get_details(context_id):
+@api_bp.route('/details/chart/<string:context_id>', methods=['GET'])
+def get_chart_details(context_id):
     context = flask.current_app.strategy_contexts[context_id]
-    context['stats'] = Tester.test(context)
-    details = Formatter.format_details(context)
-    return flask.Response(dumps(details), mimetype='application/json')
+    chart_details = Formatter.format_chart_details(context)
+    return flask.Response(dumps(chart_details), mimetype='application/json')
+
+
+@api_bp.route('/details/report/<string:context_id>', methods=['GET'])
+def get_report_details(context_id):
+    context = flask.current_app.strategy_contexts[context_id]
+    context['stats'] = Tester.test(context['instance'])
+    report_details = Formatter.format_report_details(context)
+    return flask.Response(dumps(report_details), mimetype='application/json')
 
 
 @api_bp.route('/contexts/<string:context_id>', methods=['PATCH'])
@@ -46,8 +53,8 @@ def update_context(context_id):
         param = data.get('param')
         raw_value = data.get('value')
 
-        strategy_context = flask.current_app.strategy_contexts[context_id]
-        instance = strategy_context['instance']
+        context = flask.current_app.strategy_contexts[context_id]
+        instance = context['instance']
         params = instance.params
 
         old_value = params[param]
@@ -59,11 +66,12 @@ def update_context(context_id):
             raise TypeError()
 
         params[param] = new_value
-        instance = strategy_context['type'](
-            client=strategy_context['client'],
+        instance = context['type'](
+            client=context['client'],
             all_params=params
         )
-        strategy_context['instance'] = instance
+        instance.start(context['market_data'])
+        context['instance'] = instance
 
         return flask.Response(
             dumps({'status': 'success'}),
@@ -88,6 +96,7 @@ def update_context(context_id):
             mimetype='application/json',
             status=500
         )
+
 
 def _parse_value(raw):
     if isinstance(raw, list):

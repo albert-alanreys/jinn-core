@@ -104,7 +104,7 @@ export default class ReportManager {
     var overviewReport = document.getElementById('overview-report');
     var placeholder = document.getElementById('report-placeholder');
 
-    if (data.deals.length) {
+    if (data.trades.length) {
       overviewReport.style.display = 'flex';
       placeholder.style.display = 'none';
 
@@ -848,7 +848,7 @@ export default class ReportManager {
     th.appendChild(span2);
 
     th.addEventListener('click', () => {
-      data.deals.reverse();
+      data.trades.reverse();
       reverse = !reverse;
 
       if (reverse) {
@@ -931,10 +931,10 @@ export default class ReportManager {
       if (!reverse) {
         dealNumber = 1;
       } else {
-        dealNumber = data.deals.length;
+        dealNumber = data.trades.length;
       }
 
-      for (var deal of data.deals) {
+      for (var deal of data.trades) {
         var tr = document.createElement('div');
         tr.classList.add('tr');
         tbody.appendChild(tr);
