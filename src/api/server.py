@@ -2,6 +2,7 @@ from threading import Thread
 from time import sleep
 
 from flask import Flask
+from flask_cors import CORS
 
 from src.core.enums import Mode
 from .routes import register_routes
@@ -21,7 +22,17 @@ class Server(Flask):
             static_folder=static_folder,
             template_folder=template_folder
         )
+
         register_routes(self)
+
+        CORS(
+            self,
+            resources={
+                r'/api/*': {
+                    'origins': 'http://localhost:5173'
+                }
+            }
+        )
 
         self.strategy_contexts = strategy_contexts
         self.mode = mode
