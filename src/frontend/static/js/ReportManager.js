@@ -118,6 +118,8 @@ export default class ReportManager {
   }
 
   createOverviewReport(data) {
+    console.log(data);
+
     var metricsContainer = document.createElement('div');
     metricsContainer.setAttribute('id', 'metrics-container');
     document.getElementById('overview-report').appendChild(metricsContainer);
@@ -132,16 +134,16 @@ export default class ReportManager {
 
     var innerDiv2 = document.createElement('div');
 
-    if (data.metrics[0][0] > 0) {
+    if (parseInt(data.metrics[0].all[0]) > 0) {
       var color = '#089981';
-    } else if (data.metrics[0][0] < 0) {
+    } else if (data.metrics[0].all[0] < 0) {
       var color = '#f23645';
     } else {
       var color = '#212529';
     }
 
     innerDiv2.innerHTML = `<span style="color: ${color};">${
-      data.metrics[0][0] + ' USDT ' + data.metrics[0][1] + '%'
+      data.metrics[0].all[0] + ' ' + data.metrics[0].all[1]
     }</span>`;
     outerDiv.appendChild(innerDiv2);
 
@@ -154,7 +156,7 @@ export default class ReportManager {
     outerDiv.appendChild(innerDiv1);
 
     var innerDiv2 = document.createElement('div');
-    innerDiv2.innerText = data.metrics[0][8];
+    innerDiv2.innerText = data.metrics[5].all[0];
     outerDiv.appendChild(innerDiv2);
 
     var outerDiv = document.createElement('div');
@@ -166,9 +168,7 @@ export default class ReportManager {
     outerDiv.appendChild(innerDiv1);
 
     var innerDiv2 = document.createElement('div');
-    innerDiv2.innerHTML = `<span style="color: #089981;">${
-      data.metrics[0][11] + '%'
-    }</span>`;
+    innerDiv2.innerHTML = `<span style="color: #089981;">${data.metrics[8].all[0]}</span>`;
     outerDiv.appendChild(innerDiv2);
 
     var outerDiv = document.createElement('div');
@@ -181,16 +181,16 @@ export default class ReportManager {
 
     var innerDiv2 = document.createElement('div');
 
-    if (data.metrics[0][6] > 1) {
+    if (parseInt(data.metrics[3].all[0]) > 1) {
       var color = '#089981';
-    } else if (data.metrics[0][6] < 1) {
+    } else if (parseInt(data.metrics[3].all[0]) < 1) {
       var color = '#f23645';
     } else {
       var color = '#212529';
     }
 
     innerDiv2.innerHTML = `<span style="color:
-      ${color};">${data.metrics[0][6]}</span>`;
+      ${color};">${data.metrics[3].all[0]}</span>`;
     outerDiv.appendChild(innerDiv2);
 
     var outerDiv = document.createElement('div');
@@ -203,7 +203,7 @@ export default class ReportManager {
 
     var innerDiv2 = document.createElement('div');
     innerDiv2.innerHTML = `<span style="color: #f23645;">${
-      data.metrics[0][23] + ' USDT ' + data.metrics[0][24] + '%'
+      data.metrics[15].all[0] + ' ' + data.metrics[15].all[1]
     }</span>`;
     outerDiv.appendChild(innerDiv2);
 
@@ -217,16 +217,16 @@ export default class ReportManager {
 
     var innerDiv2 = document.createElement('div');
 
-    if (data.metrics[0][12] > 0) {
+    if (parseInt(data.metrics[10].all[0]) > 0) {
       var color = '#089981';
-    } else if (data.metrics[0][12] < 0) {
+    } else if (parseInt(data.metrics[10].all[0]) < 0) {
       var color = '#f23645';
     } else {
       var color = '#212529';
     }
 
     innerDiv2.innerHTML = `<span style="color: ${color};">${
-      data.metrics[0][12] + ' USDT ' + data.metrics[0][13] + '%'
+      data.metrics[10].all[0] + ' ' + data.metrics[10].all[1]
     }</span>`;
     outerDiv.appendChild(innerDiv2);
 
@@ -298,522 +298,49 @@ export default class ReportManager {
     tbody.classList.add('tbody');
     table.appendChild(tbody);
 
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
+    for (var metric of data.metrics) {
+      var tr = document.createElement('div');
+      tr.classList.add('tr');
+      tbody.appendChild(tr);
 
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Чистая прибыль';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
       var td = document.createElement('div');
       td.classList.add('td');
       tr.appendChild(td);
 
       var div = document.createElement('div');
       div.classList.add('h-50');
-      div.classList.add('align-end');
+      div.classList.add('align-start');
+      div.innerText = metric.title;
       td.appendChild(div);
 
-      var div1 = document.createElement('div');
-      var div2 = document.createElement('div');
-      div1.innerText = data.metrics[i][0] + ' USDT';
-      div2.innerText = data.metrics[i][1] + '%';
-      div.appendChild(div1);
-      div.appendChild(div2);
+      [metric.all, metric.long, metric.short].forEach((dataArray, i) => {
+        var td = document.createElement('div');
+        td.classList.add('td');
+        tr.appendChild(td);
+
+        var div = document.createElement('div');
+        div.classList.add('h-50');
+        div.classList.add('align-end');
+        td.appendChild(div);
+
+        if (dataArray.length === 2) {
+          var div1 = document.createElement('div');
+          var div2 = document.createElement('div');
+          div1.innerText = dataArray[0];
+          div2.innerText = dataArray[1];
+          div.appendChild(div1);
+          div.appendChild(div2);
+        } else if (dataArray.length === 1) {
+          var div1 = document.createElement('div');
+          div1.innerText = dataArray[0];
+          div.appendChild(div1);
+        } else {
+          var div1 = document.createElement('div');
+          div1.innerText = '';
+          div.appendChild(div1);
+        }
+      });
     }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Валовая прибыль';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      td.appendChild(div);
-
-      var div1 = document.createElement('div');
-      var div2 = document.createElement('div');
-      div1.innerText = data.metrics[i][2] + ' USDT';
-      div2.innerText = data.metrics[i][3] + '%';
-      div.appendChild(div1);
-      div.appendChild(div2);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Валовой убыток';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      td.appendChild(div);
-
-      var div1 = document.createElement('div');
-      var div2 = document.createElement('div');
-      div1.innerText = data.metrics[i][4] + ' USDT';
-      div2.innerText = data.metrics[i][5] + '%';
-      div.appendChild(div1);
-      div.appendChild(div2);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Фактор прибыли';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      div.innerText = data.metrics[i][6] != '' ? data.metrics[i][6] : 'Н/Д';
-      td.appendChild(div);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Выплаченная комиссия';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      div.innerText = data.metrics[i][7] + ' USDT';
-      td.appendChild(div);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Всего закрытых сделок';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      div.innerText = data.metrics[i][8];
-      td.appendChild(div);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Количество прибыльных сделок';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      div.innerText = data.metrics[i][9];
-      td.appendChild(div);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Количество убыточных сделок';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      div.innerText = data.metrics[i][10];
-      td.appendChild(div);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Процент прибыльных сделок';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      div.innerText =
-        data.metrics[i][11] != '' ? data.metrics[i][11] + '%' : 'Н/Д';
-      td.appendChild(div);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Средняя по сделке';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      td.appendChild(div);
-
-      if (data.metrics[i][12] != '') {
-        var div1 = document.createElement('div');
-        var div2 = document.createElement('div');
-        div1.innerText = data.metrics[i][12] + ' USDT';
-        div2.innerText = data.metrics[i][13] + '%';
-        div.appendChild(div1);
-        div.appendChild(div2);
-      } else {
-        div.innerText = 'Н/Д';
-      }
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Средняя прибыль по сделке';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      td.appendChild(div);
-
-      if (data.metrics[i][14] != '') {
-        var div1 = document.createElement('div');
-        var div2 = document.createElement('div');
-        div1.innerText = data.metrics[i][14] + ' USDT';
-        div2.innerText = data.metrics[i][15] + '%';
-        div.appendChild(div1);
-        div.appendChild(div2);
-      } else {
-        div.innerText = 'Н/Д';
-      }
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Средний убыток по сделке';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      td.appendChild(div);
-
-      if (data.metrics[i][16] != '') {
-        var div1 = document.createElement('div');
-        var div2 = document.createElement('div');
-        div1.innerText = data.metrics[i][16] + ' USDT';
-        div2.innerText = data.metrics[i][17] + '%';
-        div.appendChild(div1);
-        div.appendChild(div2);
-      } else {
-        div.innerText = 'Н/Д';
-      }
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Коэффициент средней прибыли / среднего убытка';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      div.innerText = data.metrics[i][18] != '' ? data.metrics[i][18] : 'Н/Д';
-      td.appendChild(div);
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Самая прибыльная сделка';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      td.appendChild(div);
-
-      if (data.metrics[i][19] != '') {
-        var div1 = document.createElement('div');
-        var div2 = document.createElement('div');
-        div1.innerText = data.metrics[i][19] + ' USDT';
-        div2.innerText = data.metrics[i][20] + '%';
-        div.appendChild(div1);
-        div.appendChild(div2);
-      } else {
-        div.innerText = 'Н/Д';
-      }
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Самая убыточная сделка';
-    td.appendChild(div);
-
-    for (var i = 0; i < 3; i++) {
-      var td = document.createElement('div');
-      td.classList.add('td');
-      tr.appendChild(td);
-
-      var div = document.createElement('div');
-      div.classList.add('h-50');
-      div.classList.add('align-end');
-      td.appendChild(div);
-
-      if (data.metrics[i][21] != '') {
-        var div1 = document.createElement('div');
-        var div2 = document.createElement('div');
-        div1.innerText = data.metrics[i][21] + ' USDT';
-        div2.innerText = data.metrics[i][22] + '%';
-        div.appendChild(div1);
-        div.appendChild(div2);
-      } else {
-        div.innerText = 'Н/Д';
-      }
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Максимальная просадка';
-    td.appendChild(div);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-end');
-    td.appendChild(div);
-
-    if (data.metrics[0][23] != '') {
-      var div1 = document.createElement('div');
-      var div2 = document.createElement('div');
-      div1.innerText = data.metrics[0][23] + ' USDT';
-      div2.innerText = data.metrics[0][24] + '%';
-      div.appendChild(div1);
-      div.appendChild(div2);
-    } else {
-      div.innerText = 'Н/Д';
-    }
-
-    var tr = document.createElement('div');
-    tr.classList.add('tr');
-    tbody.appendChild(tr);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-start');
-    div.innerText = 'Коэффициент Сортино';
-    td.appendChild(div);
-
-    var td = document.createElement('div');
-    td.classList.add('td');
-    tr.appendChild(td);
-
-    var div = document.createElement('div');
-    div.classList.add('h-50');
-    div.classList.add('align-end');
-    div.innerText = data.metrics[0][25] != '' ? data.metrics[0][25] : 'Н/Д';
-    td.appendChild(div);
   }
 
   createTradesReport(data) {

@@ -367,127 +367,182 @@ class Tester:
         else:
             all_sortino_ratio = round(all_avg_trade_per / denominator, 3)
 
-        metrics = [
-            [
-                all_net_profit,
-                all_net_profit_per,
-                all_gross_profit,
-                all_gross_profit_per,
-                all_gross_loss,
-                all_gross_loss_per,
-                "" if np.isnan(all_profit_factor)
-                    else all_profit_factor,
-                all_commission_paid,
-                all_total_closed_trades,
-                all_number_winning_trades,
-                all_number_losing_trades,
-                "" if np.isnan(all_percent_profitable)
-                    else all_percent_profitable,
-                "" if np.isnan(all_avg_trade)
-                    else all_avg_trade,
-                "" if np.isnan(all_avg_trade_per)
-                    else all_avg_trade_per,
-                "" if np.isnan(all_avg_winning_trade)
-                    else all_avg_winning_trade,
-                "" if np.isnan(all_avg_winning_trade_per)
-                    else all_avg_winning_trade_per,
-                "" if np.isnan(all_avg_losing_trade)
-                    else all_avg_losing_trade,
-                "" if np.isnan(all_avg_losing_trade_per)
-                    else all_avg_losing_trade_per,
-                "" if np.isnan(all_ratio_avg_win_loss)
-                    else all_ratio_avg_win_loss,
-                "" if np.isnan(all_largest_winning_trade)
-                    else all_largest_winning_trade,
-                "" if np.isnan(all_largest_winning_trade_per)
-                    else all_largest_winning_trade_per,
-                "" if np.isnan(all_largest_losing_trade)
-                    else all_largest_losing_trade,
-                "" if np.isnan(all_largest_losing_trade_per)
-                    else all_largest_losing_trade_per,
-                "" if np.isnan(all_max_drawdown)
-                    else all_max_drawdown,
-                "" if np.isnan(all_max_drawdown_per)
-                    else all_max_drawdown_per,
-                "" if np.isnan(all_sortino_ratio)
-                    else all_sortino_ratio
-            ],
-            [
-                long_net_profit,
-                long_net_profit_per,
-                long_gross_profit,
-                long_gross_profit_per,
-                long_gross_loss,
-                long_gross_loss_per,
-                "" if np.isnan(long_profit_factor)
-                    else long_profit_factor,
-                long_commission_paid,
-                long_total_closed_trades,
-                long_number_winning_trades,
-                long_number_losing_trades,
-                "" if np.isnan(long_percent_profitable)
-                    else long_percent_profitable,
-                "" if np.isnan(long_avg_trade)
-                    else long_avg_trade,
-                "" if np.isnan(long_avg_trade_per)
-                    else long_avg_trade_per,
-                "" if np.isnan(long_avg_winning_trade)
-                    else long_avg_winning_trade,
-                "" if np.isnan(long_avg_winning_trade_per)
-                    else long_avg_winning_trade_per,
-                "" if np.isnan(long_avg_losing_trade)
-                    else long_avg_losing_trade,
-                "" if np.isnan(long_avg_losing_trade_per)
-                    else long_avg_losing_trade_per,
-                "" if np.isnan(long_ratio_avg_win_loss)
-                    else long_ratio_avg_win_loss,
-                "" if np.isnan(long_largest_winning_trade)
-                    else long_largest_winning_trade,
-                "" if np.isnan(long_largest_winning_trade_per)
-                    else long_largest_winning_trade_per,
-                "" if np.isnan(long_largest_losing_trade)
-                    else long_largest_losing_trade,
-                "" if np.isnan(long_largest_losing_trade_per)
-                    else long_largest_losing_trade_per
-            ],
-            [
-                short_net_profit,
-                short_net_profit_per,
-                short_gross_profit,
-                short_gross_profit_per,
-                short_gross_loss,
-                short_gross_loss_per,
-                "" if np.isnan(short_profit_factor)
-                    else short_profit_factor,
-                short_commission_paid,
-                short_total_closed_trades,
-                short_number_winning_trades,
-                short_number_losing_trades,
-                "" if np.isnan(short_percent_profitable)
-                    else short_percent_profitable,
-                "" if np.isnan(short_avg_trade)
-                    else short_avg_trade,
-                "" if np.isnan(short_avg_trade_per)
-                    else short_avg_trade_per,
-                "" if np.isnan(short_avg_winning_trade)
-                    else short_avg_winning_trade,
-                "" if np.isnan(short_avg_winning_trade_per)
-                    else short_avg_winning_trade_per,
-                "" if np.isnan(short_avg_losing_trade)
-                    else short_avg_losing_trade,
-                "" if np.isnan(short_avg_losing_trade_per)
-                    else short_avg_losing_trade_per,
-                "" if np.isnan(short_ratio_avg_win_loss)
-                    else short_ratio_avg_win_loss,
-                "" if np.isnan(short_largest_winning_trade)
-                    else short_largest_winning_trade,
-                "" if np.isnan(short_largest_winning_trade_per)
-                    else short_largest_winning_trade_per,
-                "" if np.isnan(short_largest_losing_trade)
-                    else short_largest_losing_trade,
-                "" if np.isnan(short_largest_losing_trade_per)
-                    else short_largest_losing_trade_per
-            ]
+        return [
+            {
+                'title': 'Чистая прибыль',
+                'all': [
+                    all_net_profit,
+                    all_net_profit_per
+                ],
+                'long': [
+                    long_net_profit,
+                    long_net_profit_per
+                ],
+                'short': [
+                    short_net_profit,
+                    short_net_profit_per
+                ]
+            },
+            {
+                'title': 'Валовая прибыль',
+                'all': [
+                    all_gross_profit,
+                    all_gross_profit_per
+                ],
+                'long': [
+                    long_gross_profit,
+                    long_gross_profit_per
+                ],
+                'short': [
+                    short_gross_profit,
+                    short_gross_profit_per
+                ]
+            },
+            {
+                'title': 'Валовой убыток',
+                'all': [
+                    all_gross_loss,
+                    all_gross_loss_per
+                ],
+                'long': [
+                    long_gross_loss,
+                    long_gross_loss_per
+                ],
+                'short': [
+                    short_gross_loss,
+                    short_gross_loss_per
+                ]
+            },
+            {
+                'title': 'Фактор прибыли',
+                'all': [all_profit_factor],
+                'long': [long_profit_factor],
+                'short': [short_profit_factor]
+            },
+            {
+                'title': 'Выплаченная комиссия',
+                'all': [all_commission_paid],
+                'long': [long_commission_paid],
+                'short': [short_commission_paid]
+            },
+            {
+                'title': 'Всего закрытых сделок',
+                'all': [all_total_closed_trades],
+                'long': [long_total_closed_trades],
+                'short': [short_total_closed_trades]
+            },
+            {
+                'title': 'Количество прибыльных сделок',
+                'all': [all_number_winning_trades],
+                'long': [long_number_winning_trades],
+                'short': [short_number_winning_trades]
+            },
+            {
+                'title': 'Количество убыточных сделок',
+                'all': [all_number_losing_trades],
+                'long': [long_number_losing_trades],
+                'short': [short_number_losing_trades]
+            },
+            {
+                'title': 'Процент прибыльных сделок',
+                'all': [all_percent_profitable],
+                'long': [long_percent_profitable],
+                'short': [short_percent_profitable]
+            },
+            {
+                'title': 'Средняя по сделке',
+                'all': [
+                    all_avg_trade,
+                    all_avg_trade_per
+                ],
+                'long': [
+                    long_avg_trade,
+                    long_avg_trade_per
+                ],
+                'short': [
+                    short_avg_trade,
+                    short_avg_trade_per
+                ]
+            },
+            {
+                'title': 'Средняя прибыль по сделке',
+                'all': [
+                    all_avg_winning_trade,
+                    all_avg_winning_trade_per
+                ],
+                'long': [
+                    long_avg_winning_trade,
+                    long_avg_winning_trade_per
+                ],
+                'short': [
+                    short_avg_winning_trade,
+                    short_avg_winning_trade_per
+                ]
+            },
+            {
+                'title': 'Средний убыток по сделке',
+                'all': [
+                    all_avg_losing_trade,
+                    all_avg_losing_trade_per
+                ],
+                'long': [
+                    long_avg_losing_trade,
+                    long_avg_losing_trade_per
+                ],
+                'short': [
+                    short_avg_losing_trade,
+                    short_avg_losing_trade_per
+                ]
+            },
+            {
+                'title': 'Коэффициент средней прибыли / среднего убытка',
+                'all': [all_ratio_avg_win_loss],
+                'long': [long_ratio_avg_win_loss],
+                'short': [short_ratio_avg_win_loss]
+            },
+            {
+                'title': 'Самая прибыльная сделка',
+                'all': [
+                    all_largest_winning_trade,
+                    all_largest_winning_trade_per
+                ],
+                'long': [
+                    long_largest_winning_trade,
+                    long_largest_winning_trade_per
+                ],
+                'short': [
+                    short_largest_winning_trade,
+                    short_largest_winning_trade_per
+                ]
+            },
+            {
+                'title': 'Самая убыточная сделка',
+                'all': [
+                    all_largest_losing_trade,
+                    all_largest_losing_trade_per
+                ],
+                'long': [
+                    long_largest_losing_trade,
+                    long_largest_losing_trade_per
+                ],
+                'short': [
+                    short_largest_losing_trade,
+                    short_largest_losing_trade_per
+                ]
+            },
+            {
+                'title': 'Максимальная просадка',
+                'all': [
+                    all_max_drawdown,
+                    all_max_drawdown_per
+                ],
+                'long': [],
+                'short': []
+            },
+            {
+                'title': 'Коэффициент Сортино',
+                'all': [all_sortino_ratio],
+                'long': [],
+                'short': []
+            }
         ]
-
-        return metrics

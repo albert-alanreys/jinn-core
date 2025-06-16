@@ -206,7 +206,7 @@
   justify-content: center;
 }
 
-.td div :last-child {
+.td div :nth-child(n + 2) {
   font-size: 12px;
 }
 

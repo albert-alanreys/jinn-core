@@ -64,7 +64,9 @@ class Formatter:
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['stats']['equity']
             ),
-            'metrics': strategy_context['stats']['metrics'],
+            'metrics': Formatter._format_metrics(
+                metrics=strategy_context['stats']['metrics']
+            ),
             'trades': Formatter._format_deals_log(
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['instance'].open_deals_log
@@ -292,6 +294,37 @@ class Formatter:
             {'t': t, 'time': i + 1, 'value': v} 
             for i, (t, v) in enumerate(zip(timestamps, values))
         ]
+
+    @staticmethod
+    def _format_metrics(metrics: list) -> list:
+        result = []
+
+        for metric in metrics:
+            title = metric['title']
+            suffixes = consts.METRIC_SUFFIXES.get(title, [])
+
+            def apply_suffix(values):
+                formatted_values = []
+
+                for i, value in enumerate(values):
+                    if np.isnan(value):
+                        formatted_values.append('')
+                    else:
+                        suffix = suffixes[i] if i < len(suffixes) else ''
+                        formatted_values.append(f'{value}{suffix}')
+
+                return formatted_values
+
+            formatted = {
+                'title': title,
+                'all': apply_suffix(metric['all']),
+                'long': apply_suffix(metric['long']),
+                'short': apply_suffix(metric['short'])
+            }
+            result.append(formatted)
+
+        return result
+
 
     @staticmethod
     def _format_deals_log(
