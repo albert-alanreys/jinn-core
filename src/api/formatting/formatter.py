@@ -334,7 +334,7 @@ class Formatter:
         completed_deals = completed_deals_log.reshape((-1, 13))[:, :12]
         result = []
 
-        for deal in completed_deals:
+        for num, deal in enumerate(completed_deals, 1):
             code = deal[1] - (deal[1] % 100)
             n_deal = int(deal[1] % 100)
             entry_signal = (
@@ -350,7 +350,9 @@ class Formatter:
             )
 
             formatted = [
-                consts.DEAL_TYPES[deal[0]],
+                str(num),
+                consts.TRADE_TYPE_LABELS[deal[0]][0],
+                consts.TRADE_TYPE_LABELS[deal[0]][1],
                 entry_signal,
                 exit_signal,
                 datetime.fromtimestamp(
@@ -361,7 +363,13 @@ class Formatter:
                     timestamp=deal[4] * 0.001,
                     tz=timezone.utc
                 ).strftime('%Y/%m/%d %H:%M'),
-                *deal[5:12].tolist()
+                f'{deal[5]} USDT',
+                f'{deal[6]} USDT',
+                str(deal[7]),
+                f'{deal[8]} USDT',
+                f'{deal[9]}%',
+                f'{deal[10]} USDT',
+                f'{deal[11]}%'
             ]
             result.append(formatted)
 
@@ -369,7 +377,7 @@ class Formatter:
         mask = ~np.isnan(open_deals).any(axis=1)
         open_deals = open_deals[mask]
 
-        for deal in open_deals:
+        for num, deal in enumerate(open_deals, num + 1):
             code = deal[1] - (deal[1] % 100)
             n_deal = int(deal[1] % 100)
             entry_signal = (
@@ -377,15 +385,25 @@ class Formatter:
                 (f' | #{n_deal}' if n_deal > 0 else '')
             )
 
-            formatted = [None] * 12
-            formatted[0] = consts.DEAL_TYPES[deal[0]]
-            formatted[1] = entry_signal
-            formatted[3] = datetime.fromtimestamp(
-                timestamp=deal[2] * 0.001,
-                tz=timezone.utc
-            ).strftime('%Y/%m/%d %H:%M')
-            formatted[5] = float(deal[3])
-            formatted[7] = float(deal[4])
+            formatted = [
+                str(num),
+                consts.TRADE_TYPE_LABELS[deal[0]][0],
+                consts.TRADE_TYPE_LABELS[deal[0]][1],
+                entry_signal,
+                '',
+                datetime.fromtimestamp(
+                    timestamp=deal[2] * 0.001,
+                    tz=timezone.utc
+                ).strftime('%Y/%m/%d %H:%M'),
+                '',
+                f'{deal[3]} USDT',
+                '',
+                str(deal[4]),
+                '',
+                '',
+                '',
+                ''
+            ]
             result.append(formatted)
 
         return result

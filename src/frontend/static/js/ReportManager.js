@@ -118,8 +118,6 @@ export default class ReportManager {
   }
 
   createOverviewReport(data) {
-    console.log(data);
-
     var metricsContainer = document.createElement('div');
     metricsContainer.setAttribute('id', 'metrics-container');
     document.getElementById('overview-report').appendChild(metricsContainer);
@@ -452,15 +450,6 @@ export default class ReportManager {
     fillBody();
 
     function fillBody() {
-      var dealNumber;
-      var step = !reverse ? 1 : -1;
-
-      if (!reverse) {
-        dealNumber = 1;
-      } else {
-        dealNumber = data.trades.length;
-      }
-
       for (var deal of data.trades) {
         var tr = document.createElement('div');
         tr.classList.add('tr');
@@ -474,9 +463,8 @@ export default class ReportManager {
         var div = document.createElement('div');
         div.classList.add('h-100');
         div.classList.add('align-start');
-        div.innerText = dealNumber;
+        div.innerText = deal[0];
         td.appendChild(div);
-        dealNumber += step;
 
         var td = document.createElement('div');
         td.classList.add('td');
@@ -487,48 +475,18 @@ export default class ReportManager {
         div1.classList.add('h-50');
         div1.classList.add('align-start');
         div1.classList.add('border');
-
-        if (deal[0] == 'long') {
-          div1.innerText = 'Выход из длинной позиции';
-        } else {
-          div1.innerText = 'Выход из короткой позиции';
-        }
-
+        div1.innerText = deal[1];
         td.appendChild(div1);
 
         var div2 = document.createElement('div');
         div2.classList.add('h-50');
         div2.classList.add('align-start');
-
-        if (deal[0] == 'long') {
-          div2.innerText = 'Вход в длинную позицию';
-        } else {
-          div2.innerText = 'Вход в короткую позицию';
-        }
-
+        div2.innerText = deal[2];
         td.appendChild(div2);
 
         var td = document.createElement('div');
         td.classList.add('td');
         td.classList.add('w-18');
-        tr.appendChild(td);
-
-        var div1 = document.createElement('div');
-        div1.classList.add('h-50');
-        div1.classList.add('align-start');
-        div1.classList.add('border');
-        div1.innerText = deal[2];
-        td.appendChild(div1);
-
-        var div2 = document.createElement('div');
-        div2.classList.add('h-50');
-        div2.classList.add('align-start');
-        div2.innerText = deal[1];
-        td.appendChild(div2);
-
-        var td = document.createElement('div');
-        td.classList.add('td');
-        td.classList.add('w-12');
         tr.appendChild(td);
 
         var div1 = document.createElement('div');
@@ -546,6 +504,24 @@ export default class ReportManager {
 
         var td = document.createElement('div');
         td.classList.add('td');
+        td.classList.add('w-12');
+        tr.appendChild(td);
+
+        var div1 = document.createElement('div');
+        div1.classList.add('h-50');
+        div1.classList.add('align-start');
+        div1.classList.add('border');
+        div1.innerText = deal[6];
+        td.appendChild(div1);
+
+        var div2 = document.createElement('div');
+        div2.classList.add('h-50');
+        div2.classList.add('align-start');
+        div2.innerText = deal[5];
+        td.appendChild(div2);
+
+        var td = document.createElement('div');
+        td.classList.add('td');
         td.classList.add('w-10');
         tr.appendChild(td);
 
@@ -553,21 +529,13 @@ export default class ReportManager {
         div1.classList.add('h-50');
         div1.classList.add('align-end');
         div1.classList.add('border');
-
-        if (deal[6]) {
-          div1.innerText = deal[6] + ' USDT';
-        }
-
+        div1.innerText = deal[8];
         td.appendChild(div1);
 
         var div2 = document.createElement('div');
         div2.classList.add('h-50');
         div2.classList.add('align-end');
-
-        if (deal[5]) {
-          div2.innerText = deal[5] + ' USDT';
-        }
-
+        div2.innerText = deal[7];
         td.appendChild(div2);
 
         var td = document.createElement('div');
@@ -578,7 +546,7 @@ export default class ReportManager {
         var div = document.createElement('div');
         div.classList.add('h-100');
         div.classList.add('align-end');
-        div.innerText = deal[7];
+        div.innerText = deal[9];
         td.appendChild(div);
 
         var td = document.createElement('div');
@@ -594,16 +562,12 @@ export default class ReportManager {
         var div1 = document.createElement('div');
         var div2 = document.createElement('div');
 
-        if (deal[8] < 0) {
-          div1.innerHTML = `<span style="color: #f23645; font-size: 14px;">${
-            deal[8] + ' USDT'
-          }</span>`;
-          div2.innerHTML = `<span style="color: #f23645;">${
-            deal[9] + '%'
-          }</span>`;
-        } else if (deal[8] > 0) {
-          div1.innerText = deal[8] + ' USDT';
-          div2.innerText = deal[9] + '%';
+        if (parseFloat(deal[10]) < 0) {
+          div1.innerHTML = `<span style="color: #f23645; font-size: 14px;">${deal[10]}</span>`;
+          div2.innerHTML = `<span style="color: #f23645;">${deal[11]}</span>`;
+        } else if (parseFloat(deal[10]) > 0) {
+          div1.innerText = deal[10];
+          div2.innerText = deal[11];
         }
 
         div.appendChild(div1);
@@ -622,20 +586,16 @@ export default class ReportManager {
         var div1 = document.createElement('div');
         var div2 = document.createElement('div');
 
-        if (deal[10] < 0) {
-          div1.innerHTML = `<span style="color: #f23645; font-size: 14px;">${
-            deal[10] + ' USDT'
-          }</span>`;
-        } else if (deal[10] > 0) {
-          div1.innerText = deal[10] + ' USDT';
+        if (parseFloat(deal[12]) < 0) {
+          div1.innerHTML = `<span style="color: #f23645; font-size: 14px;">${deal[12]}</span>`;
+        } else if (parseFloat(deal[12]) > 0) {
+          div1.innerText = deal[12];
         }
 
-        if (deal[11] < 0) {
-          div2.innerHTML = `<span style="color: #f23645;">${
-            deal[11] + '%'
-          }</span>`;
-        } else if (deal[11] > 0) {
-          div2.innerText = deal[11] + '%';
+        if (parseFloat(deal[13]) < 0) {
+          div2.innerHTML = `<span style="color: #f23645;">${deal[13]}</span>`;
+        } else if (parseFloat(deal[13]) > 0) {
+          div2.innerText = deal[13];
         }
 
         div.appendChild(div1);
