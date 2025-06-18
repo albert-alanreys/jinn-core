@@ -60,14 +60,15 @@ class Formatter:
     @staticmethod
     def format_report_details(strategy_context: dict) -> dict:
         return {
-            'equity': Formatter._format_equity(
+            'overview': Formatter._format_overview(
+                strategy_context['stats']['metrics'],
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['stats']['equity']
             ),
             'metrics': Formatter._format_metrics(
                 metrics=strategy_context['stats']['metrics']
             ),
-            'trades': Formatter._format_deals_log(
+            'trades': Formatter._format_trades(
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['instance'].open_deals_log
             )
@@ -283,17 +284,41 @@ class Formatter:
         return sorted(result, key=lambda x: x['time'])
 
     @staticmethod
-    def _format_equity(
+    def _format_overview(
+        metrics: list,
         completed_deals_log: np.ndarray,
         equity: np.ndarray
-    ) -> list:
+    ) -> dict:
+        metrics_dict = {m['title']: m['all'] for m in metrics}
+        formatted_metrics = []
+
+        for title in consts.OVERVIEW_METRICS:
+            target_metric = metrics_dict.get(title, [])
+            suffixes = consts.METRIC_SUFFIXES.get(title, [])
+
+            for i, value in enumerate(target_metric):
+                suffix = suffixes[i] if i < len(suffixes) else ''
+                formatted_metrics.append(f'{value}{suffix}')
+
         timestamps = completed_deals_log[4::13] * 0.001
         values = adjust_vectorized(equity, 0.01)
 
-        return [
-            {'t': t, 'time': i + 1, 'value': v} 
-            for i, (t, v) in enumerate(zip(timestamps, values))
-        ]
+        formatted_equity = []
+        used_timestamps = set()
+
+        for t, v in zip(timestamps, values):
+            adjusted_time = t
+
+            while adjusted_time in used_timestamps:
+                adjusted_time += 1
+
+            used_timestamps.add(adjusted_time)
+            formatted_equity.append({'time': adjusted_time, 'value': v})
+
+        return {
+            'metrics': formatted_metrics,
+            'equity': formatted_equity
+        }
 
     @staticmethod
     def _format_metrics(metrics: list) -> list:
@@ -316,7 +341,7 @@ class Formatter:
                 return formatted_values
 
             formatted = {
-                'title': title,
+                'title': [title],
                 'all': apply_suffix(metric['all']),
                 'long': apply_suffix(metric['long']),
                 'short': apply_suffix(metric['short'])
@@ -327,7 +352,7 @@ class Formatter:
 
 
     @staticmethod
-    def _format_deals_log(
+    def _format_trades(
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
@@ -351,8 +376,8 @@ class Formatter:
 
             formatted = [
                 str(num),
-                consts.TRADE_TYPE_LABELS[deal[0]][0],
                 consts.TRADE_TYPE_LABELS[deal[0]][1],
+                consts.TRADE_TYPE_LABELS[deal[0]][0],
                 entry_signal,
                 exit_signal,
                 datetime.fromtimestamp(
@@ -387,8 +412,8 @@ class Formatter:
 
             formatted = [
                 str(num),
-                consts.TRADE_TYPE_LABELS[deal[0]][0],
                 consts.TRADE_TYPE_LABELS[deal[0]][1],
+                consts.TRADE_TYPE_LABELS[deal[0]][0],
                 entry_signal,
                 '',
                 datetime.fromtimestamp(

@@ -241,12 +241,16 @@ export default class ReportManager {
       LightweightCharts.AreaSeries,
       this.areaOptions
     );
-    areaSeries.setData(data.equity);
+
+    const equity = data.overview.equity.map((item, i) => {
+      return { time: i + 1, value: item['value'] };
+    });
+    areaSeries.setData(equity);
 
     this.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
       this.chart
         .timeScale()
-        .setVisibleLogicalRange({ from: 0, to: data.equity.length - 1 });
+        .setVisibleLogicalRange({ from: 0, to: equity.length - 1 });
     });
   }
 
@@ -308,7 +312,7 @@ export default class ReportManager {
       var div = document.createElement('div');
       div.classList.add('h-50');
       div.classList.add('align-start');
-      div.innerText = metric.title;
+      div.innerText = metric.title[0];
       td.appendChild(div);
 
       [metric.all, metric.long, metric.short].forEach((dataArray, i) => {
@@ -475,13 +479,13 @@ export default class ReportManager {
         div1.classList.add('h-50');
         div1.classList.add('align-start');
         div1.classList.add('border');
-        div1.innerText = deal[1];
+        div1.innerText = deal[2];
         td.appendChild(div1);
 
         var div2 = document.createElement('div');
         div2.classList.add('h-50');
         div2.classList.add('align-start');
-        div2.innerText = deal[2];
+        div2.innerText = deal[1];
         td.appendChild(div2);
 
         var td = document.createElement('div');
