@@ -4,7 +4,7 @@ from json import dumps
 import flask
 
 from src.api.formatting import Formatter
-from src.services.testing import Tester
+from src.services.testing.tester import Tester
 
 
 api_bp = flask.Blueprint('api', __name__, url_prefix='/api')
@@ -38,14 +38,6 @@ def get_chart_details(context_id):
     return flask.Response(dumps(chart_details), mimetype='application/json')
 
 
-@api_bp.route('/details/report/<string:context_id>', methods=['GET'])
-def get_report_details(context_id):
-    context = flask.current_app.strategy_contexts[context_id]
-    context['stats'] = Tester.test(context['instance'])
-    report_details = Formatter.format_report_details(context)
-    return flask.Response(dumps(report_details), mimetype='application/json')
-
-
 @api_bp.route('/contexts/<string:context_id>', methods=['PATCH'])
 def update_context(context_id):
     try:
@@ -71,7 +63,9 @@ def update_context(context_id):
             all_params=params
         )
         instance.start(context['market_data'])
+
         context['instance'] = instance
+        context['stats'] = Tester.test(instance)
 
         return flask.Response(
             dumps({'status': 'success'}),

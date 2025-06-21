@@ -3,9 +3,6 @@ from logging import getLogger
 
 from src.api.server import Server
 from src.core.enums import Mode
-from src.services.automation import AutomationBuilder, Automizer
-from src.services.optimization import OptimizationBuilder, Optimizer
-from src.services.testing import TestingBuilder
 
 
 class Controller():
@@ -34,12 +31,20 @@ class Controller():
     def _init_service(self) -> None:
         match self.mode:
             case Mode.AUTOMATION:
+                from src.services.automation.builder import AutomationBuilder
+
                 builder = AutomationBuilder(self.automation_config)
             case Mode.OPTIMIZATION:
+                from src.services.optimization.builder import OptimizationBuilder
+
                 builder = OptimizationBuilder(self.optimization_config)
             case Mode.TESTING:
+                from src.services.testing.builder import TestingBuilder
+
                 builder = TestingBuilder(self.testing_config)
-        
+            case _:
+                raise ValueError(f'Unsupported mode: {self.mode}')
+
         self.strategy_contexts = builder.build()
 
     def start_mode(self) -> None:
@@ -47,9 +52,13 @@ class Controller():
 
         match self.mode:
             case Mode.AUTOMATION:
+                from src.services.automation.automizer import Automizer
+
                 automizer = Automizer(self.strategy_contexts)
                 automizer.run()
             case Mode.OPTIMIZATION:
+                from src.services.optimization.optimizer import Optimizer
+
                 optimizer = Optimizer(self.strategy_contexts)
                 optimizer.run()
 

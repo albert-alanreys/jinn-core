@@ -58,23 +58,6 @@ class Formatter:
         }
 
     @staticmethod
-    def format_report_details(strategy_context: dict) -> dict:
-        return {
-            'overview': Formatter._format_overview(
-                strategy_context['stats']['metrics'],
-                strategy_context['instance'].completed_deals_log,
-                strategy_context['stats']['equity']
-            ),
-            'metrics': Formatter._format_metrics(
-                metrics=strategy_context['stats']['metrics']
-            ),
-            'trades': Formatter._format_trades(
-                strategy_context['instance'].completed_deals_log,
-                strategy_context['instance'].open_deals_log
-            )
-        }
-
-    @staticmethod
     def _format_klines(klines: np.ndarray) -> list:
         return [
             {
@@ -285,9 +268,9 @@ class Formatter:
 
     @staticmethod
     def _format_overview(
-        metrics: list,
         completed_deals_log: np.ndarray,
-        equity: np.ndarray
+        equity: np.ndarray,
+        metrics: list
     ) -> dict:
         metrics_dict = {m['title']: m['all'] for m in metrics}
         formatted_metrics = []

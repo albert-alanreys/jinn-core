@@ -2,6 +2,7 @@ from logging import getLogger
 from threading import Thread
 from time import sleep
 
+from src.services.testing.tester import Tester
 from .realtime_provider import RealtimeProvider
 
 
@@ -39,7 +40,10 @@ class Automizer():
             sleep(1.0)
 
     def _execute_strategy(self, context_id: str) -> None:
-        strategy_context = self.strategy_contexts[context_id]
-        instance = strategy_context['instance']
-        instance.start(strategy_context['market_data'])
+        context = self.strategy_contexts[context_id]
+
+        instance = context['instance']
+        instance.start(context['market_data'])
         instance.trade()
+
+        context['stats'] = Tester.test(instance)

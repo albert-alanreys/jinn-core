@@ -9,6 +9,7 @@ from src.core.storage.history_provider import HistoryProvider
 from src.services.automation.api_clients.binance import BinanceClient
 from src.services.automation.api_clients.bybit import BybitClient
 from src.services.automation.api_clients.telegram import TelegramClient
+from .tester import Tester
 
 
 class TestingBuilder:
@@ -90,13 +91,15 @@ class TestingBuilder:
                             feeds=instance.params.get('feeds')
                         )
                         instance.start(market_data)
+                        stats = Tester.test(instance)
 
                         context = {
                             'name': strategy.name,
                             'type': strategy.value,
                             'instance': instance,
                             'client': client,
-                            'market_data': market_data
+                            'market_data': market_data,
+                            'stats': stats,
                         }
                         strategy_contexts[str(id(context))] = context
                     except Exception:
@@ -121,13 +124,15 @@ class TestingBuilder:
                     feeds=instance.params.get('feeds')
                 )
                 instance.start(market_data)
+                stats = Tester.test(instance)
 
                 context = {
                     'name': self.strategy.name,
                     'type': self.strategy.value,
                     'instance': instance,
                     'client': client,
-                    'market_data': market_data
+                    'market_data': market_data,
+                    'stats': stats,
                 }
                 strategy_contexts[str(id(context))] = context
             except Exception:

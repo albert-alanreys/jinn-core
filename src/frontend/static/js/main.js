@@ -7,13 +7,23 @@ import {
   fetchSummary,
   fetchUpdates,
   fetchChartDetails,
-  fetchReportDetails,
+  fetchReportOverview,
+  fetchReportMetrics,
+  fetchReportTrades,
 } from './fetchClient.js';
+
+async function getReportDetails(contextId) {
+  var overview = await fetchReportOverview(contextId);
+  var metrics = await fetchReportMetrics(contextId);
+  var trades = await fetchReportTrades(contextId);
+
+  return { overview, metrics, trades };
+}
 
 async function renderUI(contextId) {
   var freshSummary = await fetchSummary();
   var chartDetails = await fetchChartDetails(contextId);
-  var reportDetails = await fetchReportDetails(contextId);
+  var reportDetails = await getReportDetails(contextId);
 
   chartManager.removeChart();
   reportManager.removeReport();
@@ -54,7 +64,7 @@ if (SERVER_MODE == 'AUTOMATION') {
             chartManager.setChartData(chartDetails);
           });
 
-          fetchReportDetails(contextId).then((reportDetails) => {
+          getReportDetails(contextId).then((reportDetails) => {
             reportManager.removeReport();
             reportManager.createReport(reportDetails);
           });

@@ -64,10 +64,10 @@ export async function fetchChartDetails(context_id) {
   }
 }
 
-export async function fetchReportDetails(context_id) {
+export async function fetchReportOverview(context_id) {
   try {
     var response = await fetch(
-      `${SERVER_URL}/api/details/report/${context_id}`
+      `${SERVER_URL}/api/report/overview/${context_id}`
     );
 
     if (!response.ok) {
@@ -77,7 +77,43 @@ export async function fetchReportDetails(context_id) {
     var result = await response.json();
     return result;
   } catch (error) {
-    console.error(`Failed to fetch details for ${context_id}:`, error);
+    console.error(`Failed to fetch overview for ${context_id}:`, error);
+    throw error;
+  }
+}
+
+export async function fetchReportMetrics(context_id) {
+  try {
+    var response = await fetch(
+      `${SERVER_URL}/api/report/metrics/${context_id}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} - ${response.statusText}`);
+    }
+
+    var result = await response.json();
+    return result;
+  } catch (error) {
+    console.error(`Failed to fetch metrics for ${context_id}:`, error);
+    throw error;
+  }
+}
+
+export async function fetchReportTrades(context_id) {
+  try {
+    var response = await fetch(
+      `${SERVER_URL}/api/report/trades/${context_id}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} - ${response.statusText}`);
+    }
+
+    var result = await response.json();
+    return result;
+  } catch (error) {
+    console.error(`Failed to fetch trades for ${context_id}:`, error);
     throw error;
   }
 }

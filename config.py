@@ -29,6 +29,6 @@ TESTING_CONFIG = {
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
     'interval': '30m',
-    'start': '2025-01-01',
-    'end': '2025-06-01'
+    'start': '2024-05-25',
+    'end': '2024-11-10'
 }

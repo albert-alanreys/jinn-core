@@ -6,6 +6,7 @@ from logging import getLogger
 
 import src.core.enums as enums
 from src.services.automation.api_clients.telegram import TelegramClient
+from src.services.testing.tester import Tester
 from .realtime_provider import RealtimeProvider
 from .api_clients.binance import BinanceClient
 from .api_clients.bybit import BybitClient
@@ -106,6 +107,7 @@ class AutomationBuilder():
                         feeds=instance.params.get('feeds')
                     )
                     instance.start(market_data)
+                    stats = Tester.test(instance)
 
                     context = {
                         'name': strategy.name,
@@ -113,7 +115,8 @@ class AutomationBuilder():
                         'instance': instance,
                         'client': client,
                         'market_data': market_data,
-                        'updated': False
+                        'stats': stats,
+                        'updated': False,
                     }
                     strategy_contexts[str(id(context))] = context
                 except Exception:
@@ -135,6 +138,7 @@ class AutomationBuilder():
                     feeds=instance.params.get('feeds')
                 )
                 instance.start(market_data)
+                stats = Tester.test(instance)
 
                 context = {
                     'name': self.strategy.name,
@@ -142,7 +146,8 @@ class AutomationBuilder():
                     'instance': instance,
                     'client': client,
                     'market_data': market_data,
-                    'updated': False
+                    'stats': stats,
+                    'updated': False,
                 }
                 strategy_contexts[str(id(context))] = context
             except Exception:
