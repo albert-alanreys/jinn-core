@@ -4,6 +4,7 @@ from json import dumps
 import flask
 
 from src.api.formatting import Formatter
+from src.api.utils.error_handling import handle_api_errors
 from src.services.testing.tester import Tester
 
 
@@ -11,12 +12,14 @@ api_bp = flask.Blueprint('api', __name__, url_prefix='/api')
 
 
 @api_bp.route('/alerts', methods=['GET'])
+@handle_api_errors
 def get_alerts():
     alerts = flask.current_app.strategy_alerts
     return flask.Response(dumps(alerts), mimetype='application/json')
 
 
 @api_bp.route('/summary', methods=['GET'])
+@handle_api_errors
 def get_summary():
     summary = Formatter.format_summary(
         flask.current_app.strategy_contexts
@@ -25,6 +28,7 @@ def get_summary():
 
 
 @api_bp.route('/updates', methods=['GET'])
+@handle_api_errors
 def get_updates():
     updates = flask.current_app.data_updates.copy()
     flask.current_app.data_updates.clear()
@@ -32,6 +36,7 @@ def get_updates():
 
 
 @api_bp.route('/details/chart/<string:context_id>', methods=['GET'])
+@handle_api_errors
 def get_chart_details(context_id):
     context = flask.current_app.strategy_contexts[context_id]
     chart_details = Formatter.format_chart_details(context)
@@ -39,57 +44,39 @@ def get_chart_details(context_id):
 
 
 @api_bp.route('/contexts/<string:context_id>', methods=['PATCH'])
+@handle_api_errors
 def update_context(context_id):
-    try:
-        data = flask.request.get_json()
-        param = data.get('param')
-        raw_value = data.get('value')
+    data = flask.request.get_json()
+    param = data.get('param')
+    raw_value = data.get('value')
 
-        context = flask.current_app.strategy_contexts[context_id]
-        instance = context['instance']
-        params = instance.params
+    context = flask.current_app.strategy_contexts[context_id]
+    instance = context['instance']
+    params = instance.params
 
-        old_value = params[param]
-        new_value = _parse_value(raw_value)
+    old_value = params[param]
+    new_value = _parse_value(raw_value)
 
-        if isinstance(old_value, float) and isinstance(new_value, int):
-            new_value = float(new_value)
-        elif type(old_value) != type(new_value):
-            raise TypeError()
+    if isinstance(old_value, float) and isinstance(new_value, int):
+        new_value = float(new_value)
+    elif type(old_value) != type(new_value):
+        raise TypeError()
 
-        params[param] = new_value
-        instance = context['type'](
-            client=context['client'],
-            all_params=params
-        )
-        instance.start(context['market_data'])
+    params[param] = new_value
+    instance = context['type'](
+        client=context['client'],
+        all_params=params
+    )
+    instance.start(context['market_data'])
 
-        context['instance'] = instance
-        context['stats'] = Tester.test(instance)
+    context['instance'] = instance
+    context['stats'] = Tester.test(instance)
 
-        return flask.Response(
-            dumps({'status': 'success'}),
-            mimetype='application/json',
-            status=200
-        )
-    except ValueError:
-        return flask.Response(
-            dumps({'status': 'error', 'type': 'invalid_request'}),
-            mimetype='application/json',
-            status=400
-        )
-    except TypeError:
-        return flask.Response(
-            dumps({'status': 'error', 'type': 'invalid_type'}),
-            mimetype='application/json',
-            status=400
-        )
-    except Exception:
-        return flask.Response(
-            dumps({'status': 'error', 'type': 'server_error'}),
-            mimetype='application/json',
-            status=500
-        )
+    return flask.Response(
+        dumps({'status': 'success'}),
+        mimetype='application/json',
+        status=200
+    )
 
 
 def _parse_value(raw):

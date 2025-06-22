@@ -51,7 +51,7 @@ class Formatter:
                 strategy_context['market_data'],
                 strategy_context['instance'].indicators
             ),
-            'markers': Formatter._format_deal_markers(
+            'markers': Formatter._format_markers(
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['instance'].open_deals_log
             )
@@ -115,7 +115,7 @@ class Formatter:
         return result
 
     @staticmethod
-    def _format_deal_markers(
+    def _format_markers(
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
