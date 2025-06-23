@@ -14,7 +14,7 @@ api_bp = flask.Blueprint('api', __name__, url_prefix='/api')
 @api_bp.route('/alerts', methods=['GET'])
 @handle_api_errors
 def get_alerts():
-    alerts = flask.current_app.strategy_alerts
+    alerts = list(flask.current_app.strategy_alerts.values())
     return flask.Response(dumps(alerts), mimetype='application/json')
 
 
@@ -30,8 +30,8 @@ def get_summary():
 @api_bp.route('/updates', methods=['GET'])
 @handle_api_errors
 def get_updates():
-    updates = flask.current_app.data_updates.copy()
-    flask.current_app.data_updates.clear()
+    updates = flask.current_app.updated_contexts.copy()
+    flask.current_app.updated_contexts.clear()
     return flask.Response(dumps(updates), mimetype='application/json')
 
 
@@ -46,6 +46,15 @@ def get_chart_details(context_id):
 @api_bp.route('/contexts/<string:context_id>', methods=['PATCH'])
 @handle_api_errors
 def update_context(context_id):
+    def _parse_value(raw):
+        if isinstance(raw, list):
+            return [float(x) for x in raw]
+
+        if isinstance(raw, str):
+            raw = raw.capitalize()
+
+        return literal_eval(raw)
+
     data = flask.request.get_json()
     param = data.get('param')
     raw_value = data.get('value')
@@ -77,13 +86,3 @@ def update_context(context_id):
         mimetype='application/json',
         status=200
     )
-
-
-def _parse_value(raw):
-    if isinstance(raw, list):
-        return [float(x) for x in raw]
-
-    if isinstance(raw, str):
-        raw = raw.capitalize()
-
-    return literal_eval(raw)

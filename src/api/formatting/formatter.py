@@ -10,6 +10,31 @@ from . import constants as consts
 
 class Formatter:
     @staticmethod
+    def format_contexts(strategy_contexts: dict) -> dict:
+        result = {}
+        
+        for cid, context in strategy_contexts.items():
+            formatted = {
+                'name': '-'.join(
+                    word.capitalize()
+                    for word in context['name'].split('_')
+                ),
+                'exchange': context['client'].EXCHANGE,
+                'symbol': context['market_data']['symbol'],
+                'market': context['market_data']['market'].value,
+                'interval': context['market_data']['interval'],
+                'mintick': context['market_data']['p_precision'],
+                'params': {
+                    k: v for k, v in context['instance'].params.items()
+                    if k != 'feeds'
+                }
+            }
+            result[cid] = formatted
+
+        return result
+
+    # deprecated
+    @staticmethod
     def format_summary(strategy_contexts: dict) -> dict:
         result = {}
 
@@ -32,6 +57,7 @@ class Formatter:
 
         return result
 
+    # deprecated
     @staticmethod
     def format_chart_details(strategy_context: dict) -> dict:
         return {

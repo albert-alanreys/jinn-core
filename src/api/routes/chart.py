@@ -1,0 +1,89 @@
+from json import dumps
+import flask
+
+from src.api.formatting import Formatter
+from src.api.utils.error_handling import handle_api_errors
+
+
+chart_bp = flask.Blueprint(
+    name='chart_api',
+    import_name=__name__,
+    url_prefix='/api/chart'
+)
+
+
+@chart_bp.route('/klines/<string:context_id>', methods=['GET'])
+@handle_api_errors
+def get_klines(context_id):
+    """
+    Get formatted klines (candlestick) data for chart visualization.
+
+    Args:
+        context_id (str): Unique identifier of the strategy context.
+
+    Returns:
+        Response: JSON response containing formatted klines data.
+    """
+
+    context = flask.current_app.strategy_contexts[context_id]
+    klines = Formatter._format_klines(
+        context['market_data']['klines']
+    )
+
+    return flask.Response(
+        response=dumps(klines),
+        status=200,
+        mimetype='application/json'
+    )
+
+
+@chart_bp.route('/indicators/<string:context_id>', methods=['GET'])
+@handle_api_errors
+def get_indicators(context_id):
+    """
+    Get calculated technical indicators for chart visualization.
+
+    Args:
+        context_id (str): Unique identifier of the strategy context.
+
+    Returns:
+        Response: JSON response containing formatted indicators data.
+    """
+
+    context = flask.current_app.strategy_contexts[context_id]
+    indicators = Formatter._format_indicators(
+        context['market_data'],
+        context['instance'].indicators
+    )
+
+    return flask.Response(
+        response=dumps(indicators),
+        status=200,
+        mimetype='application/json'
+    )
+
+
+@chart_bp.route('/markers/<string:context_id>', methods=['GET'])
+@handle_api_errors
+def get_markers(context_id):
+    """
+    Get trade markers (entry/exit points) for chart visualization.
+
+    Args:
+        context_id (str): Unique identifier of the strategy context.
+
+    Returns:
+        Response: JSON response containing formatted trade markers.
+    """
+
+    context = flask.current_app.strategy_contexts[context_id]
+    markers = Formatter._format_markers(
+        context['instance'].completed_deals_log,
+        context['instance'].open_deals_log
+    )
+
+    return flask.Response(
+        response=dumps(markers),
+        status=200,
+        mimetype='application/json'
+    )

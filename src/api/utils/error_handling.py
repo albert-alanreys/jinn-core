@@ -52,6 +52,21 @@ def handle_api_errors(f: Callable) -> Callable:
                     mimetype='application/json',
                     status=404
                 )
+            
+            if (
+                'alert_id' in kwargs and
+                kwargs['alert_id'] not in
+                flask.current_app.strategy_alerts
+            ):
+                return flask.Response(
+                    dumps({
+                        'status': 'error',
+                        'type': 'alert_not_found',
+                        'message': f'Alert {kwargs["alert_id"]} not found'
+                    }),
+                    mimetype='application/json',
+                    status=404
+                )
 
             return flask.Response(
                 dumps({

@@ -37,8 +37,9 @@ class Server(Flask):
         self.strategy_contexts = strategy_contexts
         self.mode = mode
 
-        self.strategy_alerts = []
-        self.data_updates = []
+        self.updated_contexts = []
+        self.strategy_alerts = {}
+        self.new_alerts = {}
 
         if self.mode is Mode.AUTOMATION:
             Thread(target=self._handle_strategy_updates, daemon=True).start()
@@ -51,19 +52,25 @@ class Server(Flask):
                         alerts = context['client'].alerts
 
                         if alerts:
-                            self.strategy_alerts.extend(
-                                {'cid': cid, **alert}
-                                for alert in alerts
-                            )
+                            for alert in alerts:
+                                alert_id = str(len(self.strategy_alerts) + 1)
+                                alert_obj = {
+                                    'id': alert_id,
+                                    'cid': cid,
+                                    **alert
+                                }
+                                self.strategy_alerts[alert_id] = alert_obj
+                                self.new_alerts[alert_id] = alert_obj
+                            
                             alerts.clear()
 
-                        self._set_data_updates(cid)
+                        self._register_context_update(cid)
                         context['updated'] = False
                 except Exception as e:
                     self.logger.error(f'{type(e).__name__} - {e}')
 
             sleep(5.0)
 
-    def _set_data_updates(self, context_id: str) -> None:
-        if context_id not in self.data_updates:
-            self.data_updates.append(context_id)
+    def _register_context_update(self, context_id: str) -> None:
+        if context_id not in self.updated_contexts:
+            self.updated_contexts.append(context_id)
