@@ -27,7 +27,8 @@ class Formatter:
                 'params': {
                     k: v for k, v in context['instance'].params.items()
                     if k != 'feeds'
-                }
+                },
+                'indicators': context['instance'].indicator_options
             }
             result[cid] = formatted
 
@@ -77,6 +78,7 @@ class Formatter:
                 strategy_context['market_data'],
                 strategy_context['instance'].indicators
             ),
+            'indicator_options': strategy_context['instance'].indicator_options,
             'markers': Formatter._format_markers(
                 strategy_context['instance'].completed_deals_log,
                 strategy_context['instance'].open_deals_log
@@ -140,11 +142,10 @@ class Formatter:
                 first_valid = values[~np.isnan(values)][0]
                 values[:np.argmax(~np.isnan(values))] = first_valid
 
-            points = [
+            result[name] = [
                 {'time': t, 'value': v, 'color': c}
                 for t, v, c in zip(timestamps, values, color_array)
             ]
-            result[name] = {'options': indicator['options'], 'values': points}
 
         return result
 

@@ -129,7 +129,7 @@ export default class ChartManager {
     for (var name in data.indicators) {
       var indicatorSeries = this.chart.addSeries(LightweightCharts.LineSeries);
       indicatorSeries.applyOptions(this.indicatorOptions);
-      indicatorSeries.applyOptions(data.indicators[name].options);
+      indicatorSeries.applyOptions(data.indicator_options);
 
       this.indicatorSeriesGroup[name] = indicatorSeries;
     }
@@ -175,7 +175,7 @@ export default class ChartManager {
 
     for (var name in this.indicatorSeriesGroup) {
       this.indicatorSeriesGroup[name].setData(
-        data.indicators[name].values.slice(-this.visibleRange)
+        data.indicators[name].slice(-this.visibleRange)
       );
     }
   }
@@ -206,11 +206,7 @@ export default class ChartManager {
     indicatorsLegend.innerHTML = Object.entries(this.indicatorSeriesGroup)
       .map(([name, series]) => {
         var point = series.data().at(-1);
-        return getIndicatorLegendText(
-          name,
-          point,
-          data.indicators[name].options
-        );
+        return getIndicatorLegendText(name, point, data.indicator_options);
       })
       .join(' ');
 
@@ -240,7 +236,7 @@ export default class ChartManager {
               return getIndicatorLegendText(
                 name,
                 point,
-                data.indicators[name].options
+                data.indicator_options
               );
             })
             .join(' ');
