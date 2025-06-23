@@ -107,7 +107,7 @@ class Formatter:
                 indicator['values'], market_data['p_precision']
             )
             color_data = indicator.get('colors')
-            color_array = np.full(values.shape, 't', dtype=object)
+            color_array = np.full(values.shape, 'transparent', dtype=object)
 
             if color_data is None:
                 color_array[~np.isnan(values)] = indicator['options']['color']
@@ -131,10 +131,18 @@ class Formatter:
                         + rgb_components[:, 2].astype(str) + ')'
                     )
 
-            str_values = values.astype(str)
+            mask = np.isnan(values)
+            idx = np.where(~mask, np.arange(values.shape[0]), 0)
+            np.maximum.accumulate(idx, out=idx)
+            values = values[idx]
+
+            if np.isnan(values[0]):
+                first_valid = values[~np.isnan(values)][0]
+                values[:np.argmax(~np.isnan(values))] = first_valid
+
             points = [
                 {'time': t, 'value': v, 'color': c}
-                for t, v, c in zip(timestamps, str_values, color_array)
+                for t, v, c in zip(timestamps, values, color_array)
             ]
             result[name] = {'options': indicator['options'], 'values': points}
 

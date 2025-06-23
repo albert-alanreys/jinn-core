@@ -262,11 +262,15 @@ export default class ChartManager {
 
     function getIndicatorLegendText(name, point, options) {
       if (!point) {
-        var value = '∅';
         var color = '#000000';
+        var value = '∅';
       } else {
-        var value = point.value === 'nan' ? '∅' : point.value;
         var color = point.color ?? options.color ?? '#000000';
+        var value = color === 'transparent' ? '∅' : point.value;
+
+        if (color === 'transparent') {
+          color = '#000000';
+        }
       }
 
       return `<span>${name}</span>

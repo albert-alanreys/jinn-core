@@ -8,7 +8,7 @@ from src.services.automation.api_clients.telegram import TelegramClient
 
 
 class Optimizer:
-    ITERATIONS = 200
+    ITERATIONS = 10000
     POPULATION_SIZE = 100
     MAX_POPULATION_SIZE = 500
 
