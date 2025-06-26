@@ -21,6 +21,7 @@ def encode_rgb(r: np.uint8, g: np.uint8, b: np.uint8) -> np.uint32:
     Returns:
         uint32: Packed color value
     """
+
     return (r << 16) | (g << 8) | b
 
 
@@ -38,9 +39,11 @@ def decode_rgb(color: np.uint32) -> tuple[np.uint8, np.uint8, np.uint8]:
     Returns:
         tuple: (R, G, B) components as uint8
     """
+
     r = (color >> 16) & 0xFF
     g = (color >> 8)  & 0xFF
     b = color & 0xFF
+
     return (r, g, b)
 
 

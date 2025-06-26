@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import numpy as np
 
-from src.core.utils.colors import decode_rgb_vectorized
+from src.core.utils.colors import decode_rgb, decode_rgb_vectorized
 from src.core.utils.rounding import adjust_vectorized
 from . import constants as consts
 
@@ -12,25 +12,34 @@ class Formatter:
     @staticmethod
     def format_contexts(strategy_contexts: dict) -> dict:
         result = {}
-        
+
         for cid, context in strategy_contexts.items():
-            formatted = {
+            market_data = context['market_data']
+            instance = context['instance']
+            min_move = market_data['p_precision']
+            precision = (
+                len(str(min_move).split('.')[1])
+                if '.' in str(min_move) else 0
+            )
+
+            result[cid] = {
                 'name': '-'.join(
                     word.capitalize()
                     for word in context['name'].split('_')
                 ),
                 'exchange': context['client'].EXCHANGE,
-                'symbol': context['market_data']['symbol'],
-                'market': context['market_data']['market'].value,
-                'interval': context['market_data']['interval'],
-                'mintick': context['market_data']['p_precision'],
-                'params': {
-                    k: v for k, v in context['instance'].params.items()
+                'symbol': market_data['symbol'],
+                'market': market_data['market'].value,
+                'interval': market_data['interval'],
+                'minMove': min_move,
+                'precision': precision,
+                'strategyParams': {
+                    k: v 
+                    for k, v in instance.params.items() 
                     if k != 'feeds'
                 },
-                'indicators': context['instance'].indicator_options
+                'indicatorOptions': instance.indicator_options
             }
-            result[cid] = formatted
 
         return result
 
@@ -100,7 +109,6 @@ class Formatter:
     @staticmethod
     def _format_indicators(market_data: dict, indicators: dict) -> dict:
         result = {}
-
         klines = market_data['klines']
         timestamps = klines[:, 0] * 0.001
 
@@ -108,43 +116,37 @@ class Formatter:
             values = adjust_vectorized(
                 indicator['values'], market_data['p_precision']
             )
-            color_data = indicator.get('colors')
-            color_array = np.full(values.shape, 'transparent', dtype=object)
+            colors = np.full(values.shape, 'transparent', dtype=object)
+            color_data = indicator.get('colors') 
 
             if color_data is None:
-                color_array[~np.isnan(values)] = indicator['options']['color']
+                r, g, b = decode_rgb(indicator['options']['color'])
+                valid_mask = ~np.isnan(values)
+                colors[valid_mask] = f'rgb({r}, {g}, {b})'
             else:
-                valid_color_mask = ~np.isnan(color_data)
+                valid_mask = ~np.isnan(values)
 
-                if np.any(valid_color_mask):
-                    rgb_components = decode_rgb_vectorized(
-                        color_data[valid_color_mask]
-                            .astype(np.uint32)
-                            .reshape(-1, 1),
+                if np.any(valid_mask):
+                    rgb = decode_rgb_vectorized(
+                        color_data[valid_mask].astype(np.uint32).reshape(-1, 1),
                         np.empty(
-                            (np.count_nonzero(valid_color_mask), 3),
+                            (np.count_nonzero(valid_mask), 3),
                             dtype=np.uint8
                         )
                     )
-                    color_array[valid_color_mask] = (
-                        'rgb('
-                        + rgb_components[:, 0].astype(str) + ', ' 
-                        + rgb_components[:, 1].astype(str) + ', ' 
-                        + rgb_components[:, 2].astype(str) + ')'
+                    colors[valid_mask] = (
+                        f'rgb({rgb[:, 0]}, {rgb[:, 1]}, {rgb[:, 2]})'
                     )
 
-            mask = np.isnan(values)
-            idx = np.where(~mask, np.arange(values.shape[0]), 0)
-            np.maximum.accumulate(idx, out=idx)
-            values = values[idx]
+            is_first_nan = np.isnan(values) & ~np.isnan(np.roll(values, 1))
+            values[is_first_nan] = np.roll(values, 1)[is_first_nan]
 
-            if np.isnan(values[0]):
-                first_valid = values[~np.isnan(values)][0]
-                values[:np.argmax(~np.isnan(values))] = first_valid
+            is_nan = np.isnan(values)
+            values[is_nan] = klines[:, 4][is_nan]
 
             result[name] = [
                 {'time': t, 'value': v, 'color': c}
-                for t, v, c in zip(timestamps, values, color_array)
+                for t, v, c in zip(timestamps, values, colors)
             ]
 
         return result

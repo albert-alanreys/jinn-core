@@ -24,11 +24,11 @@ OPTIMIZATION_CONFIG = {
     'end': '2025-01-01'
 }
 TESTING_CONFIG = {
-    'strategy': enums.Strategy.DAILY_PROFIT_V1,
+    'strategy': enums.Strategy.SANDBOX_V1,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
-    'interval': '30m',
-    'start': '2024-05-25',
-    'end': '2024-11-10'
+    'interval': '1h',
+    'start': '2017-05-25',
+    'end': '2025-11-10'
 }

@@ -62,11 +62,28 @@ class DailyProfitV1(BaseStrategy):
 
     # For frontend
     indicator_options = {
-        'SL': {'color': '#FF0000', 'lineWidth': 2},
-        'TP #1': {'color': '#008000', 'lineWidth': 2},
-        'TP #2': {'color': '#008000', 'lineWidth': 2},
-        'ST ↑' : {'color': '#006400','lineWidth': 1, 'lineStyle': 2},
-        'ST ↓' : {'color': '#8B0000','lineWidth': 1, 'lineStyle': 2},
+        'SL': {
+            'color': encode_rgb(255, 0, 0),
+            'lineWidth': 2
+        },
+        'TP #1': {
+            'color': encode_rgb(0, 128, 0),
+            'lineWidth': 2
+        },
+        'TP #2': {
+            'color': encode_rgb(0, 128, 0),
+            'lineWidth': 2
+        },
+        'ST ↑' : {
+            'color': encode_rgb(0, 100, 0),
+            'lineWidth': 1,
+            'lineStyle': 2
+        },
+        'ST ↓' : {
+            'color': encode_rgb(139, 0, 0),
+            'lineWidth': 1,
+            'lineStyle': 2
+        },
         'VWAP': {'lineWidth': 3},
         'VWAP UB': {'lineWidth': 1},
         'VWAP LB': {'lineWidth': 1}

@@ -3,6 +3,7 @@ import numba as nb
 
 import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.utils.colors import encode_rgb
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
@@ -49,14 +50,38 @@ class SisterV1(BaseStrategy):
 
     # For frontend
     indicator_options = {
-        'SL': {'color': '#FF0000', 'lineWidth': 2},
-        'TP': {'color': '#008000', 'lineWidth': 2},
-        'SMA ST': {'color': '#9400D3', 'lineWidth': 1},
-        'SMA MT': {'color': '#000080', 'lineWidth': 1},
-        'SMA L Entry': {'color': '#FF7F50', 'lineWidth': 1},
-        'SMA L Exit': {'color': '#BDB76B', 'lineWidth': 1},
-        'SMA S Entry': {'color': '#1E90FF', 'lineWidth': 1},
-        'SMA S Exit': {'color': '#008080', 'lineWidth': 1}
+        'SL': {
+            'color': encode_rgb(255, 0, 0),
+            'lineWidth': 2
+        },
+        'TP': {
+            'color': encode_rgb(0, 128, 0),
+            'lineWidth': 2
+        },
+        'SMA ST': {
+            'color': encode_rgb(148, 0, 211),
+            'lineWidth': 1
+        },
+        'SMA MT': {
+            'color': encode_rgb(0, 0, 128),
+            'lineWidth': 1
+        },
+        'SMA L Entry': {
+            'color': encode_rgb(255, 127, 80),
+            'lineWidth': 1
+        },
+        'SMA L Exit': {
+            'color': encode_rgb(189, 183, 107),
+            'lineWidth': 1
+        },
+        'SMA S Entry': {
+            'color': encode_rgb(30, 144, 255),
+            'lineWidth': 1
+        },
+        'SMA S Exit': {
+            'color': encode_rgb(0, 128, 128),
+            'lineWidth': 1
+        }
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:

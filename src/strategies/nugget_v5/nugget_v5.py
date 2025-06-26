@@ -5,6 +5,7 @@ import numba as nb
 
 import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.utils.colors import encode_rgb
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
@@ -101,12 +102,30 @@ class NuggetV5(BaseStrategy):
 
     # For frontend
     indicator_options = {
-        'SL': {'color': '#FF0000', 'lineWidth': 2},
-        'TP #1': {'color': '#008000', 'lineWidth': 2},
-        'TP #2': {'color': '#008000', 'lineWidth': 2},
-        'TP #3': {'color': '#008000', 'lineWidth': 2},
-        'TP #4': {'color': '#008000', 'lineWidth': 2},
-        'TP #5': {'color': '#008000', 'lineWidth': 2}
+        'SL': {
+            'color': encode_rgb(255, 0, 0),
+            'lineWidth': 2
+        },
+        'TP #1': {
+            'color': encode_rgb(0, 128, 0),
+            'lineWidth': 2
+        },
+        'TP #2': {
+            'color': encode_rgb(0, 128, 0),
+            'lineWidth': 2
+        },
+        'TP #3': {
+            'color': encode_rgb(0, 128, 0),
+            'lineWidth': 2
+        },
+        'TP #4': {
+            'color': encode_rgb(0, 128, 0),
+            'lineWidth': 2
+        },
+        'TP #5': {
+            'color': encode_rgb(0, 128, 0),
+            'lineWidth': 2
+        }
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:

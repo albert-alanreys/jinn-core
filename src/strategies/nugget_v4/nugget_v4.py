@@ -3,6 +3,7 @@ import numba as nb
 
 import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.utils.colors import encode_rgb
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
@@ -122,17 +123,17 @@ class NuggetV4(BaseStrategy):
 
     # For frontend
     indicator_options = {
-        'SL': {'color': '#FF0000'},
-        'TP #1': {'color': '#008000'},
-        'TP #2': {'color': '#008000'},
-        'TP #3': {'color': '#008000'},
-        'TP #4': {'color': '#008000'},
-        'TP #5': {'color': '#008000'},
-        'TP #6': {'color': '#008000'},
-        'TP #7': {'color': '#008000'},
-        'TP #8': {'color': '#008000'},
-        'TP #9': {'color': '#008000'},
-        'TP #10': {'color': '#008000'}
+        'SL': {'color': encode_rgb(255, 0, 0)},
+        'TP #1': {'color': encode_rgb(0, 128, 0)},
+        'TP #2': {'color': encode_rgb(0, 128, 0)},
+        'TP #3': {'color': encode_rgb(0, 128, 0)},
+        'TP #4': {'color': encode_rgb(0, 128, 0)},
+        'TP #5': {'color': encode_rgb(0, 128, 0)},
+        'TP #6': {'color': encode_rgb(0, 128, 0)},
+        'TP #7': {'color': encode_rgb(0, 128, 0)},
+        'TP #8': {'color': encode_rgb(0, 128, 0)},
+        'TP #9': {'color': encode_rgb(0, 128, 0)},
+        'TP #10': {'color': encode_rgb(0, 128, 0)}
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:

@@ -3,6 +3,7 @@ import numba as nb
 
 import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.utils.colors import encode_rgb
 from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
@@ -68,10 +69,10 @@ class MeanStrikeV1(BaseStrategy):
 
     # For frontend
     indicator_options = {
-        'EP #2': {'color': '#311b92'},
-        'EP #3': {'color': '#311b92'},
-        'EP #4': {'color': '#311b92'},
-        'TP': {'color': '#4caf50'}
+        'EP #2': {'color': encode_rgb(49, 27, 146)},
+        'EP #3': {'color': encode_rgb(49, 27, 146)},
+        'EP #4': {'color': encode_rgb(49, 27, 146)},
+        'TP': {'color': encode_rgb(76, 175, 80)}
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
