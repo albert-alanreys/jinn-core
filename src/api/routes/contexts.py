@@ -80,9 +80,14 @@ def update_context(context_id):
     def _parse_value(raw):
         if isinstance(raw, list):
             return [float(x) for x in raw]
+
         if isinstance(raw, str):
-            raw = raw.capitalize()
-        return literal_eval(raw)
+            try:
+                return literal_eval(raw.capitalize())
+            except (ValueError, SyntaxError):
+                return raw.capitalize()
+
+        return raw
 
     data = flask.request.get_json()
     param = data.get('param')
@@ -95,8 +100,11 @@ def update_context(context_id):
     old_value = params[param]
     new_value = _parse_value(raw_value)
 
-    if isinstance(old_value, float) and isinstance(new_value, int):
-        new_value = float(new_value)
+    if (
+        isinstance(old_value, (int, float)) and
+        isinstance(new_value, (int, float))
+    ):
+        new_value = type(old_value)(new_value)
     elif type(old_value) != type(new_value):
         raise TypeError()
 
