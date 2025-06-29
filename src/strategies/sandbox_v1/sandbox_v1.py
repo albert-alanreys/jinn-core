@@ -34,7 +34,6 @@ class SandboxV1(BaseStrategy):
         "st_factor": 3.0,
         "feeds": [
             ["symbol", '1d'],
-            # ["symbol", 1],
         ]
     }
 

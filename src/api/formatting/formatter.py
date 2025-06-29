@@ -134,9 +134,21 @@ class Formatter:
                             dtype=np.uint8
                         )
                     )
-                    colors[valid_mask] = (
-                        f'rgb({rgb[:, 0]}, {rgb[:, 1]}, {rgb[:, 2]})'
-                    )
+                    parts = [
+                        'rgb(',
+                        rgb[:, 0].astype(str),
+                        ', ',
+                        rgb[:, 1].astype(str),
+                        ', ',
+                        rgb[:, 2].astype(str),
+                        ')'
+                    ]
+                    colors[valid_mask] = np.char.add(parts[0], 
+                        np.char.add(parts[1], 
+                        np.char.add(parts[2], 
+                        np.char.add(parts[3], 
+                        np.char.add(parts[4], 
+                        np.char.add(parts[5], parts[6]))))))
 
             is_first_nan = np.isnan(values) & ~np.isnan(np.roll(values, 1))
             values[is_first_nan] = np.roll(values, 1)[is_first_nan]
@@ -156,6 +168,9 @@ class Formatter:
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
+        if not completed_deals_log.size and not open_deals_log.size:
+            return []
+
         completed_deals = completed_deals_log.reshape((-1, 13)).tolist()
         open_deals = list(
             filter(
@@ -309,6 +324,9 @@ class Formatter:
         equity: np.ndarray,
         metrics: list
     ) -> dict:
+        if not completed_deals_log.size:
+            return {'metrics': [], 'equity': []}
+
         metrics_dict = {m['title']: m['all'] for m in metrics}
         formatted_metrics = []
 
@@ -342,6 +360,8 @@ class Formatter:
 
     @staticmethod
     def _format_metrics(metrics: list) -> list:
+        if len(metrics) == 0: return []
+
         result = []
 
         for metric in metrics:
@@ -370,13 +390,12 @@ class Formatter:
 
         return result
 
-
     @staticmethod
     def _format_trades(
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
-        if not completed_deals_log.size or not open_deals_log.size:
+        if not completed_deals_log.size and not open_deals_log.size:
             return []
         
         completed_deals = completed_deals_log.reshape((-1, 13))[:, :12]
