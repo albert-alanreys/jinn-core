@@ -580,9 +580,9 @@ class SandboxV1(BaseStrategy):
         #     self.debug = True
 
         #     self.alert_open_long = True
-        #     self.entry_price_2[-1] = 103500.0
-        #     self.entry_price_3[-1] = 102500.0
-        #     self.entry_price_4[-1] = 101500.0
+        #     self.entry_price_2[-1] = 99500.0
+        #     self.entry_price_3[-1] = 98500.0
+        #     self.entry_price_4[-1] = 96500.0
 
         if self.order_ids is None:
             self.order_ids = self.cache.load(self.symbol)

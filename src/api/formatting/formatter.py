@@ -376,6 +376,9 @@ class Formatter:
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
+        if not completed_deals_log.size or not open_deals_log.size:
+            return []
+        
         completed_deals = completed_deals_log.reshape((-1, 13))[:, :12]
         result = []
 

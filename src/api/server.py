@@ -40,6 +40,7 @@ class Server(Flask):
         self.updated_contexts = []
         self.strategy_alerts = {}
         self.new_alerts = {}
+        self.alert_id = 1
 
         if self.mode is Mode.AUTOMATION:
             Thread(target=self._handle_strategy_updates, daemon=True).start()
@@ -52,16 +53,7 @@ class Server(Flask):
                         alerts = context['client'].alerts
 
                         if alerts:
-                            for alert in alerts:
-                                alert_id = str(len(self.strategy_alerts) + 1)
-                                alert_obj = {
-                                    'id': alert_id,
-                                    'cid': cid,
-                                    **alert
-                                }
-                                self.strategy_alerts[alert_id] = alert_obj
-                                self.new_alerts[alert_id] = alert_obj
-                            
+                            self._process_alerts(cid, context, alerts)
                             alerts.clear()
 
                         self._register_context_update(cid)
@@ -70,6 +62,28 @@ class Server(Flask):
                     self.logger.error(f'{type(e).__name__} - {e}')
 
             sleep(5.0)
+
+    def _process_alerts(
+        self,
+        context_id: str,
+        context: dict,
+        alerts: list
+    ) -> None:
+        for alert in alerts:
+            alert_id = str(self.alert_id)
+            strategy_name = '-'.join(
+                word.capitalize()
+                for word in context['name'].split('_')
+            )
+            alert_obj = {
+                'context-id': context_id,
+                'strategy': strategy_name,
+                **alert
+            }
+
+            self.strategy_alerts[alert_id] = alert_obj
+            self.new_alerts[alert_id] = alert_obj
+            self.alert_id += 1
 
     def _register_context_update(self, context_id: str) -> None:
         if context_id not in self.updated_contexts:

@@ -10,21 +10,20 @@ class TelegramClient(HttpClient):
         self.chat = getenv('TELEGRAM_CHAT_ID')
         self.logger = getLogger(__name__)
 
-    def send_order_alert(self, order_data: dict) -> None:
+    def send_order_alert(self, alert: dict) -> None:
         try:
-            data = order_data['message']
             msg = (
                 f"📊 <b>Информация об ордере</b>\n"
                 f"════════════════════\n"
-                f"│ Биржа: <b>{data['exchange']}</b>\n"
-                f"│ Тип: <b>{data['type']}</b>\n"
-                f"│ Статус: <b>{data['status']}</b>\n"
-                f"│ Направление: <b>{data['side']}</b>\n"
-                f"│ Символ: <code>#{data['symbol']}</code>\n"
-                f"│ Количество: <b>{data['qty']}</b>\n"
-                f"│ Цена: <b>{data['price']}</b>\n"
+                f"│ Биржа: <b>{alert['exchange']}</b>\n"
+                f"│ Тип: <b>{alert['type']}</b>\n"
+                f"│ Статус: <b>{alert['status']}</b>\n"
+                f"│ Направление: <b>{alert['side']}</b>\n"
+                f"│ Символ: <code>#{alert['symbol']}</code>\n"
+                f"│ Количество: <b>{alert['qty']}</b>\n"
+                f"│ Цена: <b>{alert['price']}</b>\n"
                 f"════════════════════\n"
-                f"🕒 {order_data['time']}"
+                f"🕒 {alert['time']}"
             )
             self.send_message(msg)
         except Exception as e:

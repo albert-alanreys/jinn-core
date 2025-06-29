@@ -854,15 +854,13 @@ class TradeClient(BaseClient):
             ).strftime('%Y/%m/%d %H:%M:%S')
 
         alert = {
-            'message': {
-                'exchange': self.EXCHANGE,
-                'type': order_type,
-                'status': status,
-                'side': side,
-                'symbol': symbol,
-                'qty': qty,
-                'price': price
-            },
+            'exchange': self.EXCHANGE,
+            'type': order_type,
+            'status': status,
+            'side': side,
+            'symbol': symbol,
+            'qty': qty,
+            'price': price,
             'time': order_time
         }
         return alert
