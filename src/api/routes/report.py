@@ -1,4 +1,5 @@
 from json import dumps
+
 import flask
 
 from src.api.formatting import Formatter
@@ -12,28 +13,53 @@ report_bp = flask.Blueprint(
 )
 
 
-@report_bp.route('/overview/<string:context_id>', methods=['GET'])
+@report_bp.route('/overview/<string:context_id>/metrics', methods=['GET'])
 @handle_api_errors
-def get_overview(context_id):
+def get_overview_metrics(context_id):
     """
-    Get overview report data for a specific strategy context.
+    Get formatted overview metrics data for a specific strategy context.
 
     Args:
         context_id (str): Unique identifier of the strategy context.
 
     Returns:
-        Response: JSON response containing formatted overview data.
+        Response: JSON response containing formatted metrics data.
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    overview = Formatter._format_overview(
-        completed_deals_log=context['instance'].completed_deals_log,
-        equity=context['stats']['equity'],
-        metrics=context['stats']['metrics']
+    metrics = Formatter._format_overview_metrics(
+        metrics=context['stats']['metrics'],
+        completed_deals_log=context['instance'].completed_deals_log
     )
 
     return flask.Response(
-        response=dumps(overview),
+        response=dumps(metrics),
+        status=200,
+        mimetype='application/json'
+    )
+
+
+@report_bp.route('/overview/<string:context_id>/equity', methods=['GET'])
+@handle_api_errors
+def get_overview_equity(context_id):
+    """
+    Get formatted equity curve data for a specific strategy context.
+
+    Args:
+        context_id (str): Unique identifier of the strategy context.
+
+    Returns:
+        Response: JSON response containing formatted equity data.
+    """
+
+    context = flask.current_app.strategy_contexts[context_id]
+    equity = Formatter._format_overview_equity(
+        completed_deals_log=context['instance'].completed_deals_log,
+        equity=context['stats']['equity']
+    )
+
+    return flask.Response(
+        response=dumps(equity),
         status=200,
         mimetype='application/json'
     )

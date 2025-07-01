@@ -159,7 +159,7 @@ def get_updated_contexts():
     """
 
     updated_contexts = flask.current_app.updated_contexts.copy()
-    flask.current_app.context_updates.clear()
+    flask.current_app.updated_contexts.clear()
 
     return flask.Response(
         response=dumps(updated_contexts),

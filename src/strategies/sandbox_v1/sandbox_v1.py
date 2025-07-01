@@ -33,7 +33,7 @@ class SandboxV1(BaseStrategy):
         "st_atr_period": 10,
         "st_factor": 3.0,
         "feeds": [
-            ["symbol", '1d'],
+            ["symbol", '5m'],
         ]
     }
 

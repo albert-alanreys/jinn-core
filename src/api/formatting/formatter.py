@@ -319,13 +319,12 @@ class Formatter:
         return sorted(result, key=lambda x: x['time'])
 
     @staticmethod
-    def _format_overview(
-        completed_deals_log: np.ndarray,
-        equity: np.ndarray,
-        metrics: list
+    def _format_overview_metrics(
+        metrics: list,
+        completed_deals_log: np.ndarray
     ) -> dict:
         if not completed_deals_log.size:
-            return {'metrics': [], 'equity': []}
+            return []
 
         metrics_dict = {m['title']: m['all'] for m in metrics}
         formatted_metrics = []
@@ -337,6 +336,16 @@ class Formatter:
             for i, value in enumerate(target_metric):
                 suffix = suffixes[i] if i < len(suffixes) else ''
                 formatted_metrics.append(f'{value}{suffix}')
+
+        return formatted_metrics
+
+    @staticmethod
+    def _format_overview_equity(
+        completed_deals_log: np.ndarray,
+        equity: np.ndarray
+    ) -> list:
+        if not completed_deals_log.size:
+            return []
 
         timestamps = completed_deals_log[4::13] * 0.001
         values = adjust_vectorized(equity, 0.01)
@@ -353,15 +362,10 @@ class Formatter:
             used_timestamps.add(adjusted_time)
             formatted_equity.append({'time': adjusted_time, 'value': v})
 
-        return {
-            'metrics': formatted_metrics,
-            'equity': formatted_equity
-        }
+        return formatted_equity
 
     @staticmethod
     def _format_metrics(metrics: list) -> list:
-        if len(metrics) == 0: return []
-
         result = []
 
         for metric in metrics:
@@ -395,9 +399,6 @@ class Formatter:
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
-        if not completed_deals_log.size and not open_deals_log.size:
-            return []
-        
         completed_deals = completed_deals_log.reshape((-1, 13))[:, :12]
         result = []
 
@@ -439,6 +440,9 @@ class Formatter:
                 f'{deal[11]}%'
             ]
             result.append(formatted)
+
+        if np.all(np.isnan(open_deals_log)):
+            return result
 
         open_deals = open_deals_log.reshape((-1, 5))
         mask = ~np.isnan(open_deals).any(axis=1)

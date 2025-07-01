@@ -24,7 +24,7 @@ OPTIMIZATION_CONFIG = {
     'end': '2025-01-01'
 }
 TESTING_CONFIG = {
-    'strategy': enums.Strategy.SANDBOX_V1,
+    'strategy': enums.Strategy.NUGGET_V2,
     'exchange': enums.Exchange.BYBIT,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
