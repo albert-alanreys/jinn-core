@@ -6,9 +6,6 @@ from .chart import chart_bp
 from .contexts import contexts_bp
 from .report import report_bp
 
-# deprecated
-from .routes_data import api_bp
-
 if TYPE_CHECKING:
     from flask import Flask
 
@@ -26,6 +23,3 @@ def register_routes(app: 'Flask') -> None:
     app.register_blueprint(contexts_bp)
     app.register_blueprint(chart_bp)
     app.register_blueprint(report_bp)
-
-    # deprecated
-    app.register_blueprint(api_bp)

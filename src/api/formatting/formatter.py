@@ -43,57 +43,6 @@ class Formatter:
 
         return result
 
-    # deprecated
-    @staticmethod
-    def format_summary(strategy_contexts: dict) -> dict:
-        result = {}
-
-        for cid, context in strategy_contexts.items():
-            result[cid] = {
-                'name': '-'.join(
-                    word.capitalize()
-                    for word in context['name'].split('_')
-                ),
-                'exchange': context['client'].EXCHANGE,
-                'symbol': context['market_data']['symbol'],
-                'market': context['market_data']['market'].value,
-                'interval': context['market_data']['interval'],
-                'mintick': context['market_data']['p_precision'],
-                'params': {
-                    k: v for k, v in context['instance'].params.items()
-                    if k != 'feeds'
-                }
-            }
-
-        return result
-
-    # deprecated
-    @staticmethod
-    def format_chart_details(strategy_context: dict) -> dict:
-        return {
-            'name': '-'.join(
-                word.capitalize()
-                for word in strategy_context['name'].split('_')
-            ),
-            'exchange': strategy_context['client'].EXCHANGE,
-            'symbol': strategy_context['market_data']['symbol'],
-            'market': strategy_context['market_data']['market'].value,
-            'interval': strategy_context['market_data']['interval'],
-            'mintick': strategy_context['market_data']['p_precision'],
-            'klines': Formatter._format_klines(
-                strategy_context['market_data']['klines']
-            ),
-            'indicators': Formatter._format_indicators(
-                strategy_context['market_data'],
-                strategy_context['instance'].indicators
-            ),
-            'indicator_options': strategy_context['instance'].indicator_options,
-            'markers': Formatter._format_markers(
-                strategy_context['instance'].completed_deals_log,
-                strategy_context['instance'].open_deals_log
-            )
-        }
-
     @staticmethod
     def _format_klines(klines: np.ndarray) -> list:
         return [

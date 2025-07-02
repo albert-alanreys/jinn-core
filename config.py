@@ -10,7 +10,7 @@ MODE = enums.Mode.TESTING
 # Settings for different modes
 AUTOMATION_CONFIG = {
     'strategy': enums.Strategy.SANDBOX_V1,
-    'exchange': enums.Exchange.BINANCE,
+    'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': 1
 }
@@ -24,8 +24,8 @@ OPTIMIZATION_CONFIG = {
     'end': '2025-01-01'
 }
 TESTING_CONFIG = {
-    'strategy': enums.Strategy.NUGGET_V2,
-    'exchange': enums.Exchange.BYBIT,
+    'strategy': enums.Strategy.SANDBOX_V1,
+    'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
