@@ -138,12 +138,9 @@ class MarketClient(BaseClient):
             return []
 
     @lru_cache
-    def get_price_precision(self, symbol: str) -> float:
+    def get_price_precision(self, market: Market, symbol: str) -> float:
         try:
-            symbols_info = self._get_exchange_info()['symbols']
-            symbol_info = next(
-                filter(lambda x: x['symbol'] == symbol, symbols_info)
-            )
+            symbol_info = self._get_symbol_info(market, symbol)
             return float(symbol_info['filters'][0]['tickSize'])
         except Exception as e:
             self.logger.error(
@@ -152,12 +149,9 @@ class MarketClient(BaseClient):
             )
 
     @lru_cache
-    def get_qty_precision(self, symbol: str) -> float:
+    def get_qty_precision(self, market: Market, symbol: str) -> float:
         try:
-            symbols_info = self._get_exchange_info()['symbols']
-            symbol_info = next(
-                filter(lambda x: x['symbol'] == symbol, symbols_info)
-            )
+            symbol_info = self._get_symbol_info(market, symbol)
             return float(symbol_info['filters'][1]['stepSize'])
         except Exception as e:
             self.logger.error(
@@ -175,9 +169,6 @@ class MarketClient(BaseClient):
             return self.intervals[interval]
         
         raise ValueError(f'Invalid interval: {interval}')
-
-    def _get_exchange_info(self) -> dict:
-        return self.get(f'{self.FUTURES_ENDPOINT}/fapi/v1/exchangeInfo')
 
     def _get_klines(
         self,
@@ -203,3 +194,15 @@ class MarketClient(BaseClient):
             params['endTime'] = end
 
         return self.get(url, params, logging=False)
+
+    def _get_symbol_info(self, market: Market, symbol: str) -> dict:
+        match market:
+            case Market.FUTURES:
+                url = f'{self.FUTURES_ENDPOINT}/fapi/v1/exchangeInfo'
+            case Market.SPOT:
+                url = f'{self.SPOT_ENDPOINT}/api/v3/exchangeInfo'
+
+        symbols_info = self.get(url)['symbols']
+        return next(
+            filter(lambda x: x['symbol'] == symbol, symbols_info)
+        )

@@ -138,11 +138,9 @@ class MarketClient(BaseClient):
             return []
 
     @lru_cache
-    def get_price_precision(self, symbol: str) -> float:
+    def get_price_precision(self, market: Market, symbol: str) -> float:
         try:
-            symbol_info = (
-                self._get_symbol_info(symbol)['result']['list'][0]
-            )
+            symbol_info = self._get_symbol_info(market, symbol)
             return float(symbol_info['priceFilter']['tickSize'])
         except Exception as e:
             self.logger.error(
@@ -151,12 +149,16 @@ class MarketClient(BaseClient):
             )
 
     @lru_cache
-    def get_qty_precision(self, symbol: str) -> float:
+    def get_qty_precision(self, market: Market, symbol: str) -> float:
         try:
-            symbol_info = (
-                self._get_symbol_info(symbol)['result']['list'][0]
-            )
-            return float(symbol_info['lotSizeFilter']['qtyStep'])
+            symbol_info = self._get_symbol_info(market, symbol)
+            lot_size_filter = symbol_info['lotSizeFilter']
+
+            match market:
+                case Market.FUTURES:
+                    return float(lot_size_filter['qtyStep'])
+                case Market.SPOT:
+                    return float(lot_size_filter['basePrecision'])
         except Exception as e:
             self.logger.error(
                 f'Failed to get qty precision for {symbol} | '
@@ -207,7 +209,15 @@ class MarketClient(BaseClient):
         response = self.get(url, params, logging=False)
         return response['result']['list'][::-1]
 
-    def _get_symbol_info(self, symbol: str) -> dict:
+    def _get_symbol_info(self, market: Market, symbol: str) -> dict:
         url = f'{self.BASE_ENDPOINT}/v5/market/instruments-info'
-        params = {'category': 'linear', 'symbol': symbol}
-        return self.get(url, params)
+
+        match market:
+            case Market.FUTURES:
+                category = 'linear'
+            case Market.SPOT:
+                category = 'spot'
+
+        params = {'category': category, 'symbol': symbol}
+        response = self.get(url, params)
+        return response['result']['list'][0]

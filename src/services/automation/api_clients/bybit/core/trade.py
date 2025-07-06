@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING
 
+from src.core.enums import Market
 from src.core.utils.rounding import adjust
 from .base import BaseClient
 
@@ -270,7 +271,10 @@ class TradeClient(BaseClient):
         hedge: bool
     ) -> str | None:
         try:
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self.market.get_price_precision(
+                market=Market.FUTURES,
+                symbol=symbol
+            )
             adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_close(
                 side='Buy',
@@ -336,7 +340,10 @@ class TradeClient(BaseClient):
         hedge: bool
     ) -> str | None:
         try:
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self.market.get_price_precision(
+                market=Market.FUTURES,
+                symbol=symbol
+            )
             adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_close(
                 side='Sell',
@@ -417,7 +424,10 @@ class TradeClient(BaseClient):
 
             self.position.set_leverage(symbol, str(leverage), str(leverage))
 
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self.market.get_price_precision(
+                market=Market.FUTURES,
+                symbol=symbol
+            )
             adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_open(symbol, size, leverage, price)
 
@@ -487,7 +497,10 @@ class TradeClient(BaseClient):
 
             self.position.set_leverage(symbol, str(leverage), str(leverage))
 
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self.market.get_price_precision(
+                market=Market.FUTURES,
+                symbol=symbol
+            )
             adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_open(symbol, size, leverage, price)
 
@@ -542,7 +555,10 @@ class TradeClient(BaseClient):
         hedge: bool
     ) -> str | None:
         try:
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self.market.get_price_precision(
+                market=Market.FUTURES,
+                symbol=symbol
+            )
             adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_close(
                 side='Buy',
@@ -607,7 +623,10 @@ class TradeClient(BaseClient):
         hedge: bool
     ) -> str | None:
         try:
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self.market.get_price_precision(
+                market=Market.FUTURES,
+                symbol=symbol
+            )
             adjusted_price = adjust(price, p_precision)
             qty = self._get_quantity_to_close(
                 side='Sell',
@@ -931,7 +950,10 @@ class TradeClient(BaseClient):
 
             qty = size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(symbol)
+        q_precision = self.market.get_qty_precision(
+            market=Market.FUTURES,
+            symbol=symbol
+        )
         return adjust(qty, q_precision)
 
     def _get_quantity_to_open(
@@ -957,7 +979,10 @@ class TradeClient(BaseClient):
             size_val = float(size.rstrip('u'))
             qty = leverage * size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(symbol)
+        q_precision = self.market.get_qty_precision(
+            market=Market.FUTURES,
+            symbol=symbol
+        )
         return adjust(qty, q_precision)
 
     def _get_position_size(self, side: str, symbol: str) -> float:

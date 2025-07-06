@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import src.core.enums as enums
+from src.core.enums import Market
 from src.core.utils.klines import has_last_historical_kline
 from src.core.utils.klines import has_realtime_kline
 
@@ -26,8 +26,8 @@ class RealtimeProvider():
         interval: str,
         feeds: list | None
     ) -> dict:
-        p_precision = client.get_price_precision(symbol)
-        q_precision = client.get_qty_precision(symbol)   
+        p_precision = client.get_price_precision(Market.FUTURES, symbol)
+        q_precision = client.get_qty_precision(Market.FUTURES, symbol)   
 
         valid_interval = client.get_valid_interval(interval)
         klines = np.array(
@@ -65,7 +65,7 @@ class RealtimeProvider():
                 klines_by_feed[key] = extra_klines
 
         return {
-            'market': enums.Market.FUTURES,
+            'market': Market.FUTURES,
             'symbol': symbol,
             'interval': valid_interval,
             'p_precision': p_precision,

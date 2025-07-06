@@ -29,14 +29,16 @@ class HistoryProvider():
         end: str,
         feeds: list | None
     ) -> dict:
-        p_precision, q_precision = self._fetch_precisions(client, symbol)
-
-        valid_interval = client.get_valid_interval(interval)
+        p_precision, q_precision = self._fetch_precisions(
+            client=client,
+            market=market,
+            symbol=symbol
+        )
         klines = self._fetch_klines(
             client=client,
             market=market,
             symbol=symbol,
-            interval=valid_interval,
+            interval=client.get_valid_interval(interval),
             start=start,
             end=end
         )
@@ -99,13 +101,13 @@ class HistoryProvider():
         start_to_request_ms = start_ms
         end_to_request_ms = end_ms
 
-        klines = self.db_manager.load_many(database_name, table_name)
+        klines = self.db_manager.fetch_all(database_name, table_name)
 
         if not klines or len(klines) < 2:
             request_required = True
 
         if not request_required and start_ms < klines[0][0]:
-            first_kline = self.db_manager.load_one(
+            first_kline = self.db_manager.fetch_one(
                 database_name=database_name,
                 table_name='klines_metadata',
                 key_column='klines_key',
@@ -142,14 +144,14 @@ class HistoryProvider():
                 database_name=database_name,
                 table_name=table_name,
                 columns={
-                    'time': 'TIMESTAMP PRIMARY KEY',
+                    'time': 'INTEGER PRIMARY KEY',
                     'open': 'REAL',
                     'high': 'REAL',
                     'low': 'REAL',
                     'close': 'REAL',
                     'volume': 'REAL'
                 },
-                data=klines,
+                rows=klines,
                 drop=True
             )
 
@@ -161,7 +163,7 @@ class HistoryProvider():
                         'klines_key': 'TEXT PRIMARY KEY',
                         'has_first_kline': 'BOOLEAN'
                     },
-                    data=[[table_name, True]],
+                    rows=[[table_name, True]],
                     drop=False
                 )
 
@@ -237,22 +239,25 @@ class HistoryProvider():
     def _fetch_precisions(
         self,
         client: 'BinanceClient | BybitClient',
+        market: 'Market',
         symbol: str,
     ) -> tuple[float, float]:
         database_name = f'{client.EXCHANGE.lower()}.db'
-        precision_data = self.db_manager.load_one(
+        symbol_key = f'{market.value}_{symbol}'
+
+        precision_data = self.db_manager.fetch_one(
             database_name=database_name,
             table_name='symbol_precisions',
             key_column='symbol',
-            key_value=symbol
+            key_value=symbol_key
         )
 
         if precision_data:
             p_precision = precision_data[1]
             q_precision = precision_data[2]
         else:
-            p_precision = client.get_price_precision(symbol)
-            q_precision = client.get_qty_precision(symbol)
+            p_precision = client.get_price_precision(market, symbol)
+            q_precision = client.get_qty_precision(market, symbol)
 
             if p_precision is not None and q_precision is not None:
                 self.db_manager.save(
@@ -263,7 +268,7 @@ class HistoryProvider():
                         'price_precision': 'REAL',
                         'qty_precision': 'REAL'
                     },
-                    data=[[symbol, p_precision, q_precision]],
+                    rows=[[symbol_key, p_precision, q_precision]],
                     drop=False
                 )
 
