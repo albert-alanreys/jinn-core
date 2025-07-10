@@ -1,12 +1,15 @@
 import numpy as np
 import numba as nb
 
+from src.core.quantklines.volatility import atr
 
-@nb.jit(
+
+@nb.njit(
     nb.types.Tuple((nb.float64[:], nb.float64[:]))(
         nb.float64[:], nb.float64[:], nb.float64[:], nb.float32, nb.int16
     ),
-    cache=True, nopython=True, nogil=True
+    cache=True,
+    nogil=True
 )
 def dst(
     high: np.ndarray,
@@ -15,53 +18,47 @@ def dst(
     factor: np.float32,
     atr_length: np.int16
 ) -> tuple[np.ndarray, np.ndarray]:
-    # tr
-    hl = high - low
-    hc = np.absolute(
-        high - np.concatenate((np.full(1, np.nan), close[:-1]))
-    )
-    lc = np.absolute(
-        low - np.concatenate((np.full(1, np.nan), close[:-1]))
-    )
-    hc[0] = abs(high[0] - close[0])
-    lc[0] = abs(low[0] - close[0])
-    tr = np.maximum(np.maximum(hl, hc), lc)
+    """
+    Calculate Double SuperTrend (DST) indicator bands.
 
-    # atr
-    atr = tr.copy()
-    alpha = 1 / atr_length
-    na_sum = np.isnan(atr).sum()
-    atr[: atr_length + na_sum - 1] = np.nan
-    atr[atr_length + na_sum - 1] = tr[na_sum : atr_length + na_sum].mean()
+    The function computes two persistent bands (upper and lower)
+    based on ATR-adjusted midpoints of high-low prices.
+    Unlike standard SuperTrend, maintains both bands.
 
-    for i in range(atr_length + na_sum, atr.shape[0]):
-        atr[i] = alpha * atr[i] + (1 - alpha) * atr[i - 1]
+    Args:
+        high (np.ndarray): High price series.
+        low (np.ndarray): Low price series.
+        close (np.ndarray): Close price series.
+        factor (float): Multiplier for ATR band width.
+        atr_length (int): Period length for ATR calculation.
 
-    # values
-    hl2 = (high + low) / 2
-    upper_band = hl2 + factor * atr
-    lower_band = hl2 - factor * atr
+    Returns:
+        Tuple[np.ndarray, np.ndarray]:
+            - First array: Upper band values
+            - Second array: Lower band values
+    """
 
-    for i in range(1, atr.shape[0]):
-        if not np.isnan(upper_band[i - 1]):
-            prev_upper_band = upper_band[i - 1]
-        else:
-            prev_upper_band = 0
+    n = high.shape[0]
+    atr_values = atr(high, low, close, atr_length)
+    
+    hl2 = 0.5 * (high + low)
+    upper_band = hl2 + factor * atr_values
+    lower_band = hl2 - factor * atr_values
 
-        if not np.isnan(lower_band[i - 1]):
-            prev_lower_band = lower_band[i - 1]
-        else:
-            prev_lower_band = 0
+    for i in range(1, n):
+        if np.isnan(atr_values[i]) or np.isnan(atr_values[i - 1]):
+            continue
 
-        if not (upper_band[i] < prev_upper_band
-                or close[i - 1] > prev_upper_band):
-            upper_band[i] = prev_upper_band
+        if (
+            upper_band[i] >= upper_band[i - 1] and
+            close[i - 1] <= upper_band[i - 1]
+        ):
+            upper_band[i] = upper_band[i - 1]
 
-        if not (lower_band[i] > prev_lower_band
-                or close[i - 1] < prev_lower_band):
-            lower_band[i] = prev_lower_band
+        if (
+            lower_band[i] <= lower_band[i - 1] and
+            close[i - 1] >= lower_band[i - 1]
+        ):
+            lower_band[i] = lower_band[i - 1]
 
-    upper_band[upper_band == 0] = np.nan
-    lower_band[lower_band == 0] = np.nan
-    values = (upper_band, lower_band)
-    return values
+    return upper_band, lower_band

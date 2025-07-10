@@ -2,31 +2,50 @@ import numpy as np
 import numba as nb
 
 
-@nb.jit(
-    nb.float64[:](nb.float64[:], nb.float64[:], nb.float64[:], nb.boolean),
-    cache=True, nopython=True, nogil=True
+@nb.njit(
+    nb.float64[:](
+        nb.float64[:], nb.float64[:], nb.float64[:], nb.boolean
+    ),
+    cache=True,
+    nogil=True
 )
 def tr(
     high: np.ndarray,
     low: np.ndarray,
     close: np.ndarray,
-    handle_na: np.bool_
+    handle_nan: np.bool_
 ) -> np.ndarray:
-    hl = high - low
-    hc = np.absolute(
-        high - np.concatenate((np.full(1, np.nan), close[:-1]))
-    )
-    lc = np.absolute(
-        low - np.concatenate((np.full(1, np.nan), close[:-1]))
-    )
+    """
+    Calculate True Range (TR) values from price series.
 
-    if handle_na:
-        hc[0] = abs(high[0] - close[0])
-        lc[0] = abs(low[0] - close[0])
-    else:
-        hl[0] = np.nan
-        hc[0] = np.nan
-        lc[0] = np.nan
+    Args:
+        high (np.ndarray): High price series.
+        low (np.ndarray): Low price series.
+        close (np.ndarray): Close price series.
+        handle_nan (bool): If True, computes first bar TR using current close,
+                           if False, returns NaN for first bar.
 
-    values = np.maximum(np.maximum(hl, hc), lc)
-    return values
+    Returns:
+        np.ndarray: True Range values array, NaN where invalid.
+    """
+
+    n = high.shape[0]
+    result = np.full(n, np.nan, dtype=np.float64)
+
+    for i in range(n):
+        hl = high[i] - low[i]
+
+        if i == 0:
+            if handle_nan:
+                hc = abs(high[i] - close[i])
+                lc = abs(low[i] - close[i])
+            else:
+                result[i] = np.nan
+                continue
+        else:
+            hc = abs(high[i] - close[i - 1])
+            lc = abs(low[i] - close[i - 1])
+
+        result[i] = max(hl, hc, lc)
+
+    return result

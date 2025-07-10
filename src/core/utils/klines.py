@@ -9,7 +9,7 @@ def has_first_historical_kline(klines: list | ndarray, start: int) -> bool:
     after the start time.
 
     Args:
-        klines (list | ndarray): klines, each with timestamp at index 0.
+        klines (list | ndarray): Klines, each with timestamp at index 0.
         start (int): Start timestamp in milliseconds.
 
     Returns:
@@ -27,7 +27,7 @@ def has_last_historical_kline(klines: list | ndarray) -> bool:
     in the given data.
 
     Args:
-        klines (list | ndarray): klines, each with timestamp at index 0.
+        klines (list | ndarray): Klines, each with timestamp at index 0.
 
     Returns:
         bool: True if the last kline is the most recent closed one.
@@ -44,7 +44,7 @@ def has_realtime_kline(klines: list | ndarray) -> bool:
     Check if the last kline is realtime (not fully closed).
 
     Args:
-        klines (list | ndarray): klines, each with timestamp at index 0.
+        klines (list | ndarray): Klines, each with timestamp at index 0.
 
     Returns:
         bool: True if last kline is realtime (still forming), False if closed.

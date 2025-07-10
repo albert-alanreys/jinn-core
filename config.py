@@ -25,10 +25,10 @@ OPTIMIZATION_CONFIG = {
 }
 TESTING_CONFIG = {
     'strategy': enums.Strategy.NUGGET_V2,
-    'exchange': enums.Exchange.BYBIT,
-    'market': enums.Market.FUTURES,
+    'exchange': enums.Exchange.BINANCE,
+    'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
-    'start': '2022-05-25',
+    'start': '2017-05-25',
     'end': '2025-05-10'
 }

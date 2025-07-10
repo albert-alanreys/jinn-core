@@ -1,38 +1,44 @@
 import numpy as np
 import numba as nb
 
+from src.core.quantklines.math import sma, stdev
 
-@nb.jit(
+
+@nb.njit(
     nb.types.Tuple((nb.float64[:], nb.float64[:], nb.float64[:]))(
         nb.float64[:], nb.int16, nb.float32
-    ), 
-    cache=True, nopython=True, nogil=True
+    ),
+    cache=True,
+    nogil=True
 )
 def bb(
     source: np.ndarray,
     length: np.int16,
     mult: np.float32
-) -> np.ndarray:
-    # sma
-    rolling = np.lib.stride_tricks.sliding_window_view(source, length)
-    sma = np.full(rolling.shape[0], np.nan)
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Calculate Bollinger Bands indicator values.
 
-    for i in range(rolling.shape[0]):
-        sma[i] = rolling[i].mean()
+    The function computes three lines:
+    middle band (SMA), upper band (SMA + mult * std),
+    and lower band (SMA - mult * std) for the given period.
 
-    sma = np.concatenate((np.full(length - 1, np.nan), sma))
+    Args:
+        source (np.ndarray): Input price series.
+        length (int): Period length for moving average and standard deviation.
+        mult (float): Multiplier for standard deviation bands width.
 
-    # stdev
-    rolling = np.lib.stride_tricks.sliding_window_view(source, length)
-    stdev = np.full(rolling.shape[0], np.nan)
+    Returns:
+        Tuple[np.ndarray, np.ndarray, np.ndarray]: Three arrays containing:
+            - Middle band (SMA)
+            - Upper band
+            - Lower band
+    """
 
-    for i in range(rolling.shape[0]):
-        stdev[i] = rolling[i].std()
+    mean = sma(source, length)
+    std = stdev(source, length)
 
-    stdev = np.concatenate((np.full(length - 1, np.nan), stdev))
+    upper = mean + mult * std
+    lower = mean - mult * std
 
-    # values
-    upper = sma + mult * stdev
-    lower = sma - mult * stdev
-    values = (sma, upper, lower)
-    return values
+    return mean, upper, lower

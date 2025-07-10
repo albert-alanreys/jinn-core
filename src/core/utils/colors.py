@@ -11,15 +11,15 @@ def encode_rgb(r: np.uint8, g: np.uint8, b: np.uint8) -> np.uint32:
     Encodes RGB values (0-255) into a single 32-bit unsigned integer.
 
     Memory layout (big-endian):
-    0x00RRGGBB (alpha channel unused)
+    0x00RRGGBB (alpha channel unused).
 
     Args:
-        r (uint8): Red channel (0-255)
-        g (uint8): Green channel (0-255)
-        b (uint8): Blue channel (0-255)
+        r (uint8): Red channel (0-255).
+        g (uint8): Green channel (0-255).
+        b (uint8): Blue channel (0-255).
         
     Returns:
-        uint32: Packed color value
+        uint32: Packed color value.
     """
 
     return (r << 16) | (g << 8) | b
@@ -34,10 +34,10 @@ def decode_rgb(color: np.uint32) -> tuple[np.uint8, np.uint8, np.uint8]:
     Decodes a 32-bit unsigned integer into RGB values.
 
     Args:
-        color (uint32): Packed color value
+        color (uint32): Packed color value.
  
     Returns:
-        tuple: (R, G, B) components as uint8
+        tuple: (R, G, B) components as uint8.
     """
 
     r = (color >> 16) & 0xFF
@@ -60,10 +60,10 @@ def decode_rgb_vectorized(
     Decodes a packed 32-bit unsigned integer into RGB components.
 
     Args:
-        color (uint32): Packed color value
+        color (uint32): Packed color value.
 
     Returns:
-        uint8[3]: 1D array containing (R, G, B) components
+        uint8[3]: 1D array containing (R, G, B) components.
     """
 
     color = colors[0]

@@ -291,7 +291,7 @@ class DailyProfitV1(BaseStrategy):
         }
 
     @staticmethod
-    @nb.jit(cache=True, nopython=True, nogil=True)
+    @nb.njit(cache=True, nogil=True)
     def _calculate(
         direction: int,
         initial_capital: float,

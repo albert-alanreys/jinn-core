@@ -185,7 +185,7 @@ class MeanStrikeV1(BaseStrategy):
         }
 
     @staticmethod
-    @nb.jit(cache=True, nopython=True, nogil=True)
+    @nb.njit(cache=True, nogil=True)
     def _calculate(
         initial_capital: float,
         commission: float,

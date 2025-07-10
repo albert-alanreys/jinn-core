@@ -1,12 +1,16 @@
 import numpy as np
 import numba as nb
 
+from src.core.quantklines.math import rma
+from src.core.quantklines.volatility import tr
 
-@nb.jit(
+
+@nb.njit(
     nb.types.Tuple((nb.float64[:], nb.float64[:], nb.float64[:]))(
         nb.float64[:], nb.float64[:], nb.float64[:], nb.int16, nb.int16
     ),
-    cache=True, nopython=True, nogil=True
+    cache=True, 
+    nogil=True
 )
 def dmi(
     high: np.ndarray,
@@ -15,101 +19,70 @@ def dmi(
     di_length: np.int16,
     adx_length: np.int16
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    # change_high
-    change_high = (
-        high - np.concatenate((np.full(1, np.nan), high[: -1]))
-    )
+    """
+    Calculate Directional Movement Index (DMI) indicators.
 
-    # change_low
-    change_low = (
-        low - np.concatenate((np.full(1, np.nan), low[: -1]))
-    )
+    Computes three components of the DMI system:
+    - +DI (Positive Directional Indicator)
+    - -DI (Negative Directional Indicator) 
+    - ADX (Average Directional Movement Index)
 
-    # tr
-    hl = high - low
-    hc = np.absolute(
-        high - np.concatenate((np.full(1, np.nan), close[:-1]))
-    )
-    lc = np.absolute(
-        low - np.concatenate((np.full(1, np.nan), close[:-1]))
-    )
-    hl[0] = np.nan
-    hc[0] = np.nan
-    lc[0] = np.nan
-    tr = np.maximum(np.maximum(hl, hc), lc)
+    Args:
+        high (np.ndarray): Array of high prices.
+        low (np.ndarray): Array of low prices.
+        close (np.ndarray): Array of closing prices.
+        di_length (int): Period for DI calculations.
+        adx_length (int): Smoothing period for ADX calculation.
 
-    # rma_tr
-    rma_tr = tr.copy()
-    alpha = 1 / di_length
-    na_sum = np.isnan(rma_tr).sum()
-    rma_tr[: di_length + na_sum - 1] = np.nan
-    rma_tr[di_length + na_sum - 1] = (
-        tr[na_sum : di_length + na_sum].mean()
-    )
+    Returns:
+        Tuple[np.ndarray, np.ndarray, np.ndarray]: Three arrays containing:
+            - +DI values
+            - -DI values
+            - ADX values
+    """
 
-    for i in range(di_length + na_sum, rma_tr.shape[0]):
-        rma_tr[i] = alpha * rma_tr[i] + (1 - alpha) * rma_tr[i - 1]
+    n = high.shape[0]
 
-    # rma_plus_dmi
-    plus_dmi = change_high.copy()
-    plus_dmi[~((change_high > -change_low) & (change_high > 0))] = 0
-    plus_dmi[0] = np.nan
+    change_high = np.empty(n, dtype=np.float64)
+    change_low = np.empty(n, dtype=np.float64)
+    change_high[0] = np.nan
+    change_low[0] = np.nan
 
-    rma_plus_dmi = plus_dmi.copy()
-    alpha = 1 / di_length
-    na_sum = np.isnan(rma_plus_dmi).sum()
-    rma_plus_dmi[: di_length + na_sum - 1] = np.nan
-    rma_plus_dmi[di_length + na_sum - 1] = (
-        plus_dmi[na_sum : di_length + na_sum].mean()
-    )
+    for i in range(1, n):
+        change_high[i] = high[i] - high[i - 1]
+        change_low[i] = low[i - 1] - low[i]
 
-    for i in range(di_length + na_sum, plus_dmi.shape[0]):
-        rma_plus_dmi[i] = (alpha * rma_plus_dmi[i] +
-            (1 - alpha) * rma_plus_dmi[i - 1])
+    tr_values = tr(high, low, close, handle_nan=False)
 
-    # rma_minus_dmi
-    minus_dmi = -change_low.copy()
-    minus_dmi[~((-change_low > change_high) & (-change_low > 0))] = 0
-    minus_dmi[0] = np.nan
+    plus_dm = np.empty(n, dtype=np.float64)
+    plus_dm[0] = np.nan
 
-    rma_minus_dmi = minus_dmi.copy()
-    alpha = 1 / di_length
-    na_sum = np.isnan(rma_minus_dmi).sum()
-    rma_minus_dmi[: di_length + na_sum - 1] = np.nan
-    rma_minus_dmi[di_length + na_sum - 1] = (
-        minus_dmi[na_sum : di_length + na_sum].mean()
-    )
+    for i in range(1, n):
+        if change_high[i] > change_low[i] and change_high[i] > 0:
+            plus_dm[i] = change_high[i]
+        else:
+            plus_dm[i] = 0.0
 
-    for i in range(di_length + na_sum, minus_dmi.shape[0]):
-        rma_minus_dmi[i] = (alpha * rma_minus_dmi[i] +
-            (1 - alpha) * rma_minus_dmi[i - 1])
+    minus_dm = np.empty(n, dtype=np.float64)
+    minus_dm[0] = np.nan
 
-    # plus
-    plus = 100 * rma_plus_dmi / rma_tr
+    for i in range(1, n):
+        if change_low[i] > change_high[i] and change_low[i] > 0:
+            minus_dm[i] = change_low[i]
+        else:
+            minus_dm[i] = 0.0
 
-    # minus
-    minus = 100 * rma_minus_dmi / rma_tr
-    
-    # rma
-    diff = plus - minus
-    sum = plus + minus
-    sum[sum == 0] = 1
-    source = np.absolute(diff) / sum
-    rma = source.copy()
-    alpha = 1 / adx_length
-    na_sum = np.isnan(rma).sum()
-    rma[: adx_length + na_sum - 1] = np.nan
-    rma[adx_length + na_sum - 1] = (
-        source[na_sum : adx_length + na_sum].mean()
-    )
+    rma_tr = rma(tr_values, di_length)
+    rma_plus_dm = rma(plus_dm, di_length)
+    rma_minus_dm = rma(minus_dm, di_length)
 
-    for i in range(adx_length + na_sum, source.shape[0]):
-        rma[i] = (alpha * rma[i] +
-            (1 - alpha) * rma[i - 1])
+    plus = 100 * rma_plus_dm / rma_tr
+    minus = 100 * rma_minus_dm / rma_tr
+    dx = np.abs(plus - minus) / (plus + minus)
 
-    # adx
-    adx = 100 * rma
+    for i in range(dx.shape[0]):
+        if plus[i] + minus[i] == 0:
+            dx[i] = np.nan
 
-    # values
-    values = (plus, minus, adx)
-    return values
+    adx = 100 * rma(dx, adx_length)
+    return plus, minus, adx

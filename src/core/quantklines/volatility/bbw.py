@@ -1,34 +1,38 @@
 import numpy as np
 import numba as nb
 
+from src.core.quantklines.math import sma, stdev
 
-@nb.jit(
-    nb.float64[:](nb.float64[:], nb.int16, nb.float32), 
-    cache=True, nopython=True, nogil=True
+
+@nb.njit(
+    nb.float64[:](nb.float64[:], nb.int16, nb.float32),
+    cache=True,
+    nogil=True
 )
 def bbw(
     source: np.ndarray,
     length: np.int16,
     mult: np.float32
 ) -> np.ndarray:
-    # sma
-    rolling = np.lib.stride_tricks.sliding_window_view(source, length)
-    sma = np.full(rolling.shape[0], np.nan)
+    """
+    Calculate Bollinger Bands Width (BBW) indicator values.
 
-    for i in range(rolling.shape[0]):
-        sma[i] = rolling[i].mean()
+    The function computes the normalized width between upper and
+    lower Bollinger Bands, expressed as a percentage of the middle band (SMA).
 
-    sma = np.concatenate((np.full(length - 1, np.nan), sma))
+    Args:
+        source (np.ndarray): Input price series.
+        length (int): Period length for moving average and standard deviation.
+        mult (float): Multiplier for standard deviation bands width.
 
-    # stdev
-    rolling = np.lib.stride_tricks.sliding_window_view(source, length)
-    stdev = np.full(rolling.shape[0], np.nan)
+    Returns:
+        np.ndarray: Array containing Bollinger Bands Width values.
+    """
 
-    for i in range(rolling.shape[0]):
-        stdev[i] = rolling[i].std()
+    mean = sma(source, length)
+    std = stdev(source, length)
 
-    stdev = np.concatenate((np.full(length - 1, np.nan), stdev))
+    upper = mean + mult * std
+    lower = mean - mult * std
 
-    # values
-    values = (((sma + mult * stdev) - (sma - mult * stdev)) / sma)
-    return values
+    return (upper - lower) / mean

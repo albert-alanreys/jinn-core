@@ -1,10 +1,13 @@
 import numpy as np
 import numba as nb
 
+from src.core.quantklines.utils import highest, lowest
 
-@nb.jit(
+
+@nb.njit(
     nb.float64[:](nb.float64[:], nb.float64[:], nb.float64[:], nb.int16),
-    cache=True, nopython=True, nogil=True
+    cache=True,
+    nogil=True
 )
 def stoch(
     source: np.ndarray,
@@ -12,33 +15,48 @@ def stoch(
     low: np.ndarray,
     length: np.int16
 ) -> np.ndarray:
-    # highest
-    high = high.copy()
-    high[np.isnan(high)] = -np.inf
-    rolling = np.lib.stride_tricks.sliding_window_view(high, length)
-    highest = np.full(rolling.shape[0], np.nan)
+    """
+    Calculate stochastic oscillator values for the input series.
 
-    for i in range(rolling.shape[0]):
-        highest[i] = rolling[i].max()
+    The function computes the percentage of current closing price relative to
+    the high-low range over the specified period (0-100 scale).
 
-    highest = np.concatenate((np.full(length - 1, np.nan), highest))
-    highest[highest == -np.inf] = np.nan
+    Args:
+        source (np.ndarray): Closing price series.
+        high (np.ndarray): High price series.
+        low (np.ndarray): Low price series.
+        length (int): Lookback period for high/low calculation.
 
-    # lowest
-    low = low.copy()
-    low[np.isnan(low)] = np.inf
-    rolling = np.lib.stride_tricks.sliding_window_view(low, length)
-    lowest = np.full(rolling.shape[0], np.nan)
+    Returns:
+        np.ndarray: Stochastic oscillator values (0-100), NaN where invalid.
+    """
 
-    for i in range(rolling.shape[0]):
-        lowest[i] = rolling[i].min()
+    n = source.shape[0]
+    result = np.full(n, np.nan, dtype=np.float64)
 
-    lowest = np.concatenate((np.full(length - 1, np.nan), lowest))
-    lowest[lowest == np.inf] = np.nan
+    highest_values = highest(high, length)
+    lowest_values = lowest(low, length)
 
-    # values
-    values = 100 * (source - lowest) / (highest - lowest)
-    values = np.where(values > 100, 100, values)
-    values = np.where(values < 0, 0, values)
+    for i in range(n):
+        hi = highest_values[i]
+        lo = lowest_values[i]
+        val = source[i]
 
-    return values
+        if np.isnan(hi) or np.isnan(lo) or np.isnan(val):
+            continue
+
+        denom = hi - lo
+
+        if denom == 0:
+            result[i] = 0.0
+        else:
+            r = 100.0 * (val - lo) / denom
+
+            if r > 100.0:
+                r = 100.0
+            elif r < 0.0:
+                r = 0.0
+
+            result[i] = r
+
+    return result

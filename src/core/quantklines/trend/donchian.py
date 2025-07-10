@@ -1,45 +1,38 @@
 import numpy as np
 import numba as nb
 
+from src.core.quantklines.utils import highest, lowest
 
-@nb.jit(
+
+@nb.njit(
     nb.types.Tuple((nb.float64[:], nb.float64[:], nb.float64[:]))(
         nb.float64[:], nb.float64[:], nb.int16
     ), 
-    cache=True, nopython=True, nogil=True
+    cache=True,
+    nogil=True
 )
 def donchian(
-    source1: np.ndarray,
-    source2: np.ndarray,
+    high: np.ndarray,
+    low: np.ndarray,
     length: np.int16
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    # upper
-    source1 = source1.copy()
-    source1[np.isnan(source1)] = -np.inf
-    rolling = np.lib.stride_tricks.sliding_window_view(source1, length)
-    upper = np.full(rolling.shape[0], np.nan)
+    """
+    Calculate Donchian Channel indicators (upper, lower, middle bands).
 
-    for i in range(rolling.shape[0]):
-        upper[i] = rolling[i].max()
+    Args:
+        high (np.ndarray): Array of high prices.
+        low (np.ndarray): Array of low prices.
+        length (int): Lookback period for calculations.
 
-    upper = np.concatenate((np.full(length - 1, np.nan), upper))
-    upper[upper == -np.inf] = np.nan
+    Returns:
+        Tuple[np.ndarray, np.ndarray, np.ndarray]: Three arrays containing:
+            - Upper band values
+            - Lower band values
+            - Middle band values
+    """
 
-    # lower
-    source2 = source2.copy()
-    source2[np.isnan(source2)] = np.inf
-    rolling = np.lib.stride_tricks.sliding_window_view(source2, length)
-    lower = np.full(rolling.shape[0], np.nan)
-
-    for i in range(rolling.shape[0]):
-        lower[i] = rolling[i].min()
-
-    lower = np.concatenate((np.full(length - 1, np.nan), lower))
-    lower[lower == np.inf] = np.nan 
-
-    # middle
+    upper = highest(high, length)
+    lower = lowest(low, length)
     middle = (upper + lower) / 2
 
-    # values
-    values = (upper, lower, middle)
-    return values
+    return upper, lower, middle

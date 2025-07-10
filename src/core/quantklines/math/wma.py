@@ -2,22 +2,42 @@ import numpy as np
 import numba as nb
 
 
-@nb.jit(
-    nb.float64[:](nb.float64[:], nb.int16),
-    cache=True, nopython=True, nogil=True
-)
+@nb.njit(nb.float64[:](nb.float64[:], nb.int16), cache=True, nogil=True)
 def wma(source: np.ndarray, length: np.int16) -> np.ndarray:
-    rolling = np.lib.stride_tricks.sliding_window_view(source, length)
-    values = np.full(rolling.shape[0], np.nan)
-    weights = np.full(length, np.nan)
+    """
+    Calculate WMA (Weighted Moving Average) with linear weights.
 
-    for i in range(weights.shape[0]):
-        weights[i] = 2 / (length * (length + 1)) * (length - i)
+    Args:
+        source (np.ndarray): Input series (leading NaNs are skipped).
+        length (int): WMA period length.
 
-    weights = weights[::-1]
+    Returns:
+        np.ndarray: WMA values array.
+    """
 
-    for i in range(rolling.shape[0]):
-        values[i] = (rolling[i] * weights).sum()
+    n = source.shape[0]
+    result = np.empty(n, dtype=np.float64)
+    weight_sum = length * (length + 1) / 2.0
 
-    values = np.concatenate((np.full(length - 1, np.nan), values))
-    return values
+    for i in range(n):
+        if i < length - 1 or np.isnan(source[i]):
+            result[i] = np.nan
+            continue
+
+        weighted_sum = 0.0
+        for j in range(length):
+            weight = (j + 1)
+            val = source[i - length + 1 + j]
+
+            if np.isnan(val):
+                weighted_sum = np.nan
+                break
+
+            weighted_sum += val * weight
+
+        if not np.isnan(weighted_sum):
+            result[i] = weighted_sum / weight_sum
+        else:
+            result[i] = np.nan
+
+    return result

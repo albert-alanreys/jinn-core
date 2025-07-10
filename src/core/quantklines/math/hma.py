@@ -1,60 +1,58 @@
 import numpy as np
 import numba as nb
 
+from .wma import wma
 
-@nb.jit(
-    nb.float64[:](nb.float64[:], nb.int16),
-    cache=True, nopython=True, nogil=True
-)
+
+@nb.njit(nb.float64[:](nb.float64[:], nb.int16), cache=True, nogil=True)
 def hma(source: np.ndarray, length: np.int16) -> np.ndarray:
-    # wma1
-    wma1_length = length // 2
-    rolling = np.lib.stride_tricks.sliding_window_view(source, wma1_length)
-    wma1 = np.full(rolling.shape[0], np.nan)
-    weights = np.full(wma1_length, np.nan)
+    """
+    Calculate HMA (Hull Moving Average).
 
-    for i in range(weights.shape[0]):
-        weights[i] = 2 / (wma1_length * (wma1_length + 1)) * (wma1_length - i)
+    The HMA is calculated in three steps:
+    1. Compute WMA of the source with half the given length (length // 2).
+    2. Compute WMA of the source with the full given length.
+    3. Compute a raw HMA as: 2 * WMA(half_length) - WMA(full_length).
+    4. Apply WMA to the raw HMA with period sqrt(length) to get the final HMA.
 
-    weights = weights[::-1]
+    Args:
+        source (np.ndarray): Input series (leading NaNs are skipped).
+        length (int): HMA period length.
 
-    for i in range(rolling.shape[0]):
-        wma1[i] = (rolling[i] * weights).sum()
+    Returns:
+        np.ndarray: HMA values array.
+    """
 
-    wma1 = np.concatenate((np.full(wma1_length - 1, np.nan), wma1))
-    
-    # wma2
-    wma2_length = length
-    rolling = np.lib.stride_tricks.sliding_window_view(source, wma2_length)
-    wma2 = np.full(rolling.shape[0], np.nan)
-    weights = np.full(wma2_length, np.nan)
+    n = source.shape[0]
+    wma_half = wma(source, length // 2)
+    wma_full = wma(source, length)
 
-    for i in range(weights.shape[0]):
-        weights[i] = 2 / (wma2_length * (wma2_length + 1)) * (wma2_length - i)
+    # raw_hma = 2 * wma_half - wma_full
+    raw_hma = np.full(n, np.nan, dtype=np.float64)
+    for i in range(n):
+        val1 = wma_half[i]
+        val2 = wma_full[i]
 
-    weights = weights[::-1]
+        if not np.isnan(val1) and not np.isnan(val2):
+            raw_hma[i] = 2.0 * val1 - val2
 
-    for i in range(rolling.shape[0]):
-        wma2[i] = (rolling[i] * weights).sum()
-
-    wma2 = np.concatenate((np.full(wma2_length - 1, np.nan), wma2))
-
-    # raw_hma
-    raw_hma = 2 * wma1 - wma2
-
-    # values
     hma_length = int(length ** 0.5)
-    rolling = np.lib.stride_tricks.sliding_window_view(raw_hma, hma_length)
-    values = np.full(rolling.shape[0], np.nan)
-    weights = np.full(hma_length, np.nan)
+    weight_sum = hma_length * (hma_length + 1) / 2.0
+    result = np.full(n, np.nan, dtype=np.float64)
 
-    for i in range(weights.shape[0]):
-        weights[i] = 2 / (hma_length * (hma_length + 1)) * (hma_length - i)
+    for i in range(hma_length - 1, n):
+        weighted_sum = 0.0
+        valid = True
+        for j in range(hma_length):
+            val = raw_hma[i - hma_length + 1 + j]
 
-    weights = weights[::-1]
+            if np.isnan(val):
+                valid = False
+                break
 
-    for i in range(rolling.shape[0]):
-        values[i] = (rolling[i] * weights).sum()
+            weighted_sum += val * (j + 1)
 
-    values = np.concatenate((np.full(hma_length - 1, np.nan), values))
-    return values
+        if valid:
+            result[i] = weighted_sum / weight_sum
+
+    return result
