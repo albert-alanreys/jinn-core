@@ -1,7 +1,7 @@
 import os
 from logging import getLogger
 
-from src.api.server import create_app
+from src.api import create_app
 from src.core.enums import Mode
 
 

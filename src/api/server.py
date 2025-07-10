@@ -3,7 +3,7 @@ from flask_cors import CORS
 
 from src.core.enums import Mode
 from .routes import register_routes
-from .strategy_update_handler import StrategyUpdateHandler
+from .handlers import StrategyUpdateHandler
 
 
 def create_app(
