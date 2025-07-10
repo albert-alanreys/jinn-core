@@ -1,7 +1,7 @@
 import os
 from logging import getLogger
 
-from src.api.server import Server
+from src.api.server import create_app
 from src.core.enums import Mode
 
 
@@ -66,11 +66,11 @@ class Controller():
             self._start_server()
 
     def _start_server(self) -> None:
-        server = Server(
+        app = create_app(
             import_name=__name__,
             static_folder=self.static_path,
             template_folder=self.templates_path,
             strategy_contexts=self.strategy_contexts,
             mode=self.mode
         )
-        server.run()
+        app.run()

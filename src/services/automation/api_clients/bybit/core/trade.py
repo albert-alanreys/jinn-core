@@ -7,7 +7,6 @@ from src.core.utils.rounding import adjust
 from .base import BaseClient
 
 if TYPE_CHECKING:
-    from src.services.automation.api_clients.telegram import TelegramClient
     from .account import AccountClient
     from .market import MarketClient
     from .position import PositionClient
@@ -24,7 +23,6 @@ class TradeClient(BaseClient):
         account: 'AccountClient',
         market: 'MarketClient',
         position: 'PositionClient',
-        telegram: 'TelegramClient',
         alerts: list
     ) -> None:
         super().__init__()
@@ -32,7 +30,6 @@ class TradeClient(BaseClient):
         self.account = account
         self.market = market
         self.position = position
-        self.telegram = telegram
         self.alerts = alerts
 
         self.logger = getLogger(__name__)
@@ -82,6 +79,7 @@ class TradeClient(BaseClient):
                     price=order_info['avgPrice'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='рыночный ордер',
@@ -92,12 +90,9 @@ class TradeClient(BaseClient):
                     price=None,
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
-
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
         except Exception:
             self.logger.exception('Failed to execute market_open_long')
 
@@ -146,6 +141,7 @@ class TradeClient(BaseClient):
                     price=order_info['avgPrice'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='рыночный ордер',
@@ -156,12 +152,9 @@ class TradeClient(BaseClient):
                     price=None,
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
-
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
         except Exception:
             self.logger.exception('Failed to execute market_open_short')
 
@@ -195,6 +188,7 @@ class TradeClient(BaseClient):
                     price=order_info['avgPrice'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='рыночный ордер',
@@ -205,12 +199,9 @@ class TradeClient(BaseClient):
                     price=None,
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
-
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
         except Exception:
             self.logger.exception('Failed to execute market_close_long')
 
@@ -244,6 +235,7 @@ class TradeClient(BaseClient):
                     price=order_info['avgPrice'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='рыночный ордер',
@@ -254,12 +246,9 @@ class TradeClient(BaseClient):
                     price=None,
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
-
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
         except Exception:
             self.logger.exception('Failed to execute market_close_short')
 
@@ -312,6 +301,7 @@ class TradeClient(BaseClient):
                     price=order_info['triggerPrice'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='рыночный стоп',
@@ -322,12 +312,10 @@ class TradeClient(BaseClient):
                     price=str(adjusted_price),
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
 
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
             return order['result']['orderId']
         except Exception:
             self.logger.exception('Failed to execute market_stop_close_long')
@@ -381,6 +369,7 @@ class TradeClient(BaseClient):
                     price=order_info['triggerPrice'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='рыночный стоп',
@@ -391,12 +380,10 @@ class TradeClient(BaseClient):
                     price=str(adjusted_price),
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
 
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
             return order['result']['orderId']
         except Exception:
             self.logger.exception('Failed to execute market_stop_close_short')
@@ -454,6 +441,7 @@ class TradeClient(BaseClient):
                     price=order_info['price'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='лимитный ордер',
@@ -464,12 +452,10 @@ class TradeClient(BaseClient):
                     price=str(adjusted_price),
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
 
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
             return order['result']['orderId']
         except Exception:
             self.logger.exception('Failed to execute limit_open_long')
@@ -527,6 +513,7 @@ class TradeClient(BaseClient):
                     price=order_info['price'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='лимитный ордер',
@@ -537,12 +524,10 @@ class TradeClient(BaseClient):
                     price=str(adjusted_price),
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
 
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
             return order['result']['orderId']
         except Exception:
             self.logger.exception('Failed to execute limit_open_short')
@@ -595,6 +580,7 @@ class TradeClient(BaseClient):
                     price=order_info['price'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='лимитный ордер',
@@ -605,12 +591,10 @@ class TradeClient(BaseClient):
                     price=str(adjusted_price),
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
 
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
             return order['result']['orderId']
         except Exception:
             self.logger.exception('Failed to execute limit_close_long')
@@ -663,6 +647,7 @@ class TradeClient(BaseClient):
                     price=order_info['price'],
                     created_time=order_info['createdTime']
                 )
+                self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='лимитный ордер',
@@ -673,12 +658,10 @@ class TradeClient(BaseClient):
                     price=str(adjusted_price),
                     created_time=None
                 )
-                self.telegram.send_order_alert(alert)
+                self.alerts.append(alert)
                 self.logger.warning(e)
                 return
 
-            self.alerts.append(alert)
-            self.telegram.send_order_alert(alert)
             return order['result']['orderId']
         except Exception:
             self.logger.exception('Failed to execute limit_close_short')
@@ -777,7 +760,6 @@ class TradeClient(BaseClient):
                     created_time=order_info['updatedTime']
                 )
                 self.alerts.append(alert)
-                self.telegram.send_order_alert(alert)
 
             return active_order_ids
         except Exception:
@@ -820,7 +802,6 @@ class TradeClient(BaseClient):
                     created_time=order_info['updatedTime']
                 )
                 self.alerts.append(alert)
-                self.telegram.send_order_alert(alert)
 
             return active_order_ids
         except Exception:

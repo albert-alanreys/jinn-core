@@ -3,11 +3,10 @@ import os
 from datetime import datetime, timedelta
 from logging import getLogger
 
-import src.core.enums as enums
+from src.core.enums import Exchange, Market, Strategy
 from src.core.storage.history_provider import HistoryProvider
 from src.services.automation.api_clients.binance import BinanceClient
 from src.services.automation.api_clients.bybit import BybitClient
-from src.services.automation.api_clients.telegram import TelegramClient
 
 
 class OptimizationBuilder:
@@ -21,16 +20,15 @@ class OptimizationBuilder:
         self.end = config['end']
 
         self.history_provider = HistoryProvider()
-        self.telegram_client = TelegramClient()
-        self.binance_client = BinanceClient(self.telegram_client)
-        self.bybit_client = BybitClient(self.telegram_client)
+        self.binance_client = BinanceClient()
+        self.bybit_client = BybitClient()
 
         self.logger = getLogger(__name__)
 
     def build(self) -> dict:
         strategy_contexts = {}
 
-        for strategy in enums.Strategy:
+        for strategy in Strategy:
             file_path = os.path.abspath(
                 os.path.join(
                     'src',
@@ -60,16 +58,16 @@ class OptimizationBuilder:
                 end = config['end']
 
                 match exchange:
-                    case enums.Exchange.BINANCE.name:
+                    case Exchange.BINANCE.name:
                         client = self.binance_client
-                    case enums.Exchange.BYBIT.name:
+                    case Exchange.BYBIT.name:
                         client = self.bybit_client
 
                 match market:
-                    case enums.Market.FUTURES.name:
-                        market = enums.Market.FUTURES
-                    case enums.Market.SPOT.name:
-                        market = enums.Market.SPOT
+                    case Market.FUTURES.name:
+                        market = Market.FUTURES
+                    case Market.SPOT.name:
+                        market = Market.SPOT
 
                 try:
                     market_data = self._get_market_data(
@@ -93,9 +91,9 @@ class OptimizationBuilder:
 
         if not strategy_contexts:
             match self.exchange:
-                case enums.Exchange.BINANCE:
+                case Exchange.BINANCE:
                     client = self.binance_client
-                case enums.Exchange.BYBIT:
+                case Exchange.BYBIT:
                     client = self.bybit_client
 
             try:
@@ -123,7 +121,7 @@ class OptimizationBuilder:
     def _get_market_data(
         self,
         client: BinanceClient | BybitClient,
-        market: enums.Market,
+        market: Market,
         symbol: str,
         interval: str,
         start: str,

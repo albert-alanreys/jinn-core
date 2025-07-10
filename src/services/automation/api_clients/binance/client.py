@@ -1,16 +1,13 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 from .core import AccountClient
 from .core import MarketClient
 from .core import PositionClient
 from .core import TradeClient
 
-if TYPE_CHECKING:
-    from src.services.automation.api_clients.telegram import TelegramClient
-
 
 class BinanceClient():
-    def __init__(self, telegram_client: 'TelegramClient') -> None:
+    def __init__(self) -> None:
         self.alerts = []
 
         self.account = AccountClient()
@@ -20,7 +17,6 @@ class BinanceClient():
             account=self.account,
             market=self.market,
             position=self.position,
-            telegram=telegram_client,
             alerts=self.alerts
         )
 

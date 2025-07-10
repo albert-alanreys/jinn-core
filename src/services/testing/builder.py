@@ -4,11 +4,10 @@ import re
 from glob import glob
 from logging import getLogger
 
-import src.core.enums as enums
+from src.core.enums import Exchange, Market, Strategy
 from src.core.storage.history_provider import HistoryProvider
 from src.services.automation.api_clients.binance import BinanceClient
 from src.services.automation.api_clients.bybit import BybitClient
-from src.services.automation.api_clients.telegram import TelegramClient
 from .tester import Tester
 
 
@@ -23,16 +22,15 @@ class TestingBuilder:
         self.strategy = config['strategy']
 
         self.history_provider = HistoryProvider()
-        self.telegram_client = TelegramClient()
-        self.binance_client = BinanceClient(self.telegram_client)
-        self.bybit_client = BybitClient(self.telegram_client)
+        self.binance_client = BinanceClient()
+        self.bybit_client = BybitClient()
 
         self.logger = getLogger(__name__)
 
     def build(self) -> dict:
         strategy_contexts = {}
 
-        for strategy in enums.Strategy:
+        for strategy in Strategy:
             folder_path = os.path.abspath(
                 os.path.join(
                     'src',
@@ -55,16 +53,16 @@ class TestingBuilder:
                 )
 
                 match exchange:
-                    case enums.Exchange.BINANCE.name:
+                    case Exchange.BINANCE.name:
                         client = self.binance_client
-                    case enums.Exchange.BYBIT.name:
+                    case Exchange.BYBIT.name:
                         client = self.bybit_client
 
                 match market:
-                    case enums.Market.FUTURES.name:
-                        market = enums.Market.FUTURES
-                    case enums.Market.SPOT.name:
-                        market = enums.Market.SPOT
+                    case Market.FUTURES.name:
+                        market = Market.FUTURES
+                    case Market.SPOT.name:
+                        market = Market.SPOT
 
                 with open(file_path, 'r') as file:
                     try:
@@ -107,9 +105,9 @@ class TestingBuilder:
 
         if not strategy_contexts:
             match self.exchange:
-                case enums.Exchange.BINANCE:
+                case Exchange.BINANCE:
                     client = self.binance_client
-                case enums.Exchange.BYBIT:
+                case Exchange.BYBIT:
                     client = self.bybit_client
 
             try:

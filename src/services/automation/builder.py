@@ -4,8 +4,7 @@ import re
 from glob import glob
 from logging import getLogger
 
-import src.core.enums as enums
-from src.services.automation.api_clients.telegram import TelegramClient
+from src.core.enums import Exchange, Strategy
 from src.services.testing.tester import Tester
 from .realtime_provider import RealtimeProvider
 from .api_clients.binance import BinanceClient
@@ -20,16 +19,15 @@ class AutomationBuilder():
         self.strategy = config['strategy']
 
         self.realtime_provider = RealtimeProvider()
-        self.telegram_client = TelegramClient()
-        self.binance_client = BinanceClient(self.telegram_client)
-        self.bybit_client = BybitClient(self.telegram_client)
+        self.binance_client = BinanceClient()
+        self.bybit_client = BybitClient()
 
         self.logger = getLogger(__name__)
 
     def build(self) -> dict:
         strategy_contexts = {}
 
-        for strategy in enums.Strategy:
+        for strategy in Strategy:
             folder_path = os.path.abspath(
                 os.path.join(
                     'src',
@@ -93,9 +91,9 @@ class AutomationBuilder():
                             continue
 
                 match exchange:
-                    case enums.Exchange.BINANCE.name:
+                    case Exchange.BINANCE.name:
                         client = self.binance_client
-                    case enums.Exchange.BYBIT.name:
+                    case Exchange.BYBIT.name:
                         client = self.bybit_client
 
                 try:
@@ -124,9 +122,9 @@ class AutomationBuilder():
 
         if not strategy_contexts:
             match self.exchange:
-                case enums.Exchange.BINANCE:
+                case Exchange.BINANCE:
                     client = self.binance_client
-                case enums.Exchange.BYBIT:
+                case Exchange.BYBIT:
                     client = self.bybit_client
 
             try:
