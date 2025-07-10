@@ -14,7 +14,7 @@ chart_bp = flask.Blueprint(
 
 @chart_bp.route('/klines/<string:context_id>', methods=['GET'])
 @handle_api_errors
-def get_klines(context_id):
+def get_klines(context_id: str) -> flask.Response:
     """
     Get formatted klines (candlestick) data for chart visualization.
 
@@ -39,7 +39,7 @@ def get_klines(context_id):
 
 @chart_bp.route('/indicators/<string:context_id>', methods=['GET'])
 @handle_api_errors
-def get_indicators(context_id):
+def get_indicators(context_id: str) -> flask.Response:
     """
     Get calculated technical indicators for chart visualization.
 
@@ -65,7 +65,7 @@ def get_indicators(context_id):
 
 @chart_bp.route('/markers/<string:context_id>', methods=['GET'])
 @handle_api_errors
-def get_markers(context_id):
+def get_markers(context_id: str) -> flask.Response:
     """
     Get trade markers (entry/exit points) for chart visualization.
 

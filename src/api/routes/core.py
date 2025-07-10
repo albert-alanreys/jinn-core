@@ -7,7 +7,7 @@ core_bp = flask.Blueprint('core', __name__)
 
 
 @core_bp.route('/', methods=['GET'])
-def index():
+def index() -> str:
     """
     Serve main frontend application page.
     

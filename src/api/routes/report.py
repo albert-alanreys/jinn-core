@@ -15,7 +15,7 @@ report_bp = flask.Blueprint(
 
 @report_bp.route('/overview/<string:context_id>/metrics', methods=['GET'])
 @handle_api_errors
-def get_overview_metrics(context_id):
+def get_overview_metrics(context_id: str) -> flask.Response:
     """
     Get formatted overview metrics data for a specific strategy context.
 
@@ -41,7 +41,7 @@ def get_overview_metrics(context_id):
 
 @report_bp.route('/overview/<string:context_id>/equity', methods=['GET'])
 @handle_api_errors
-def get_overview_equity(context_id):
+def get_overview_equity(context_id: str) -> flask.Response:
     """
     Get formatted equity curve data for a specific strategy context.
 
@@ -67,7 +67,7 @@ def get_overview_equity(context_id):
 
 @report_bp.route('/metrics/<string:context_id>', methods=['GET'])
 @handle_api_errors
-def get_metrics(context_id):
+def get_metrics(context_id: str) -> flask.Response:
     """
     Get metrics data for a specific strategy context.
 
@@ -90,7 +90,7 @@ def get_metrics(context_id):
 
 @report_bp.route('/trades/<string:context_id>', methods=['GET'])
 @handle_api_errors
-def get_trades(context_id):
+def get_trades(context_id: str) -> flask.Response:
     """
     Get trades data for a specific strategy context.
 

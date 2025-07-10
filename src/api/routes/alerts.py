@@ -9,7 +9,7 @@ alerts_bp = flask.Blueprint('alerts_api', __name__, url_prefix='/api/alerts')
 
 @alerts_bp.route('', methods=['GET'])
 @handle_api_errors
-def get_all_alerts():
+def get_all_alerts() -> flask.Response:
     """
     Get all active strategy alerts.
 
@@ -37,7 +37,7 @@ def get_all_alerts():
 
 @alerts_bp.route('/<string:alert_id>', methods=['DELETE'])
 @handle_api_errors
-def delete_alert(alert_id):
+def delete_alert(alert_id: str) -> flask.Response:
     """
     Remove alert from active alerts collection.
 
@@ -59,7 +59,7 @@ def delete_alert(alert_id):
 
 @alerts_bp.route('/new', methods=['GET'])
 @handle_api_errors
-def get_new_alerts():
+def get_new_alerts() -> flask.Response:
     """
     Get new alerts that haven't been fetched yet and
     clear the new alerts buffer.

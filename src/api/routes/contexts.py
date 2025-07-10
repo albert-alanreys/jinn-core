@@ -16,7 +16,7 @@ contexts_bp = flask.Blueprint(
 
 @contexts_bp.route('', methods=['GET'])
 @handle_api_errors
-def get_all_contexts():
+def get_all_contexts() -> flask.Response:
     """
     Get summary information for all strategy contexts.
 
@@ -36,7 +36,7 @@ def get_all_contexts():
 
 @contexts_bp.route('/<string:context_id>', methods=['GET'])
 @handle_api_errors
-def get_context(context_id):
+def get_context(context_id: str) -> flask.Response:
     """
     Get summary information for specific strategy context.
 
@@ -60,7 +60,7 @@ def get_context(context_id):
 
 @contexts_bp.route('/<string:context_id>', methods=['PATCH'])
 @handle_api_errors
-def update_context(context_id):
+def update_context(context_id: str) -> flask.Response:
     """
     Update parameter in strategy context and restart strategy.
 
@@ -127,7 +127,7 @@ def update_context(context_id):
 
 @contexts_bp.route('/<string:context_id>', methods=['DELETE'])
 @handle_api_errors
-def delete_context(context_id):
+def delete_context(context_id: str) -> flask.Response:
     """
     Remove strategy context from active contexts.
 
@@ -149,7 +149,7 @@ def delete_context(context_id):
 
 @contexts_bp.route('/updates', methods=['GET'])
 @handle_api_errors
-def get_updated_contexts():
+def get_updated_contexts() -> flask.Response:
     """
     Get IDs of contexts that were recently updated and
     clear the updates buffer.
