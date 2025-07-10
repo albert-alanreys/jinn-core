@@ -2,12 +2,14 @@ import numpy as np
 import numba as nb
 
 
-@nb.jit(
+@nb.njit(
     nb.float64[:](
-        nb.float64[:], nb.float64, nb.float64, nb.float64, nb.float64,
-        nb.float64, nb.float64, nb.float64, nb.float64, nb.float64, nb.float64
+        nb.float64[:], nb.float64, nb.float64, nb.float64,
+        nb.float64, nb.float64, nb.float64, nb.float64,
+        nb.float64, nb.float64, nb.float64
     ),
-    cache=True, nopython=True, nogil=True
+    cache=True,
+    nogil=True
 )
 def create_log_entry(
     log: np.ndarray,
@@ -22,6 +24,52 @@ def create_log_entry(
     position_size: float,
     initial_capital: float
 ) -> np.ndarray:
+    """
+    Creates a log entry for a trading deal with calculated PnL metrics.
+
+    Processes trading deal parameters to create a structured log entry with:
+    - Deal type and signal information
+    - Entry/exit dates and prices
+    - Position size and commission
+    - Calculated PnL (absolute and percentage)
+    - Cumulative PnL (absolute and percentage)
+
+    Args:
+        log (float64[:]): Existing log array (empty for first entry).
+        commission (float64): Broker commission rate in percent.
+        deal_type (float64): Type of deal (0 for long, other for short).
+        entry_signal (float64): Signal value at entry.
+        exit_signal (float64): Signal value at exit.
+        entry_date (float64): Timestamp of entry.
+        exit_date (float64): Timestamp of exit.
+        entry_price (float64): Price at entry.
+        exit_price (float64): Price at exit.
+        position_size (float64): Size of the position.
+        initial_capital (float64): Initial capital for PnL calculations.
+
+    Returns:
+        float64[13]: Array containing structured log entry with fields:
+            [0] - deal_type
+            [1] - entry_signal
+            [2] - exit_signal
+            [3] - entry_date
+            [4] - exit_date
+            [5] - entry_price
+            [6] - exit_price
+            [7] - position_size
+            [8] - pnl (absolute)
+            [9] - pnl (percentage)
+            [10] - cumulative_pnl (absolute)
+            [11] - cumulative_pnl (percentage)
+            [12] - total_commission
+
+    Notes:
+        - All monetary values are rounded to 2 decimal places.
+        - Returns empty array if position_size is 0.
+        - For first entry, cumulative PnL equals the current deal PnL.
+        - For short deals (deal_type != 0), PnL calculation is inverted.
+    """
+
     total_commission = round(
         (position_size * entry_price * commission / 100.0) +
         (position_size * exit_price * commission / 100.0),

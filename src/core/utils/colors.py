@@ -2,9 +2,10 @@ import numba as nb
 import numpy as np
 
 
-@nb.jit(
+@nb.njit(
     nb.uint32(nb.uint8, nb.uint8, nb.uint8),
-    cache=True, nopython=True, nogil=True
+    cache=True,
+    nogil=True
 )
 def encode_rgb(r: np.uint8, g: np.uint8, b: np.uint8) -> np.uint32:
     """
@@ -25,9 +26,10 @@ def encode_rgb(r: np.uint8, g: np.uint8, b: np.uint8) -> np.uint32:
     return (r << 16) | (g << 8) | b
 
 
-@nb.jit(
+@nb.njit(
     nb.types.UniTuple(nb.uint8, 3)(nb.uint32),
-    cache=True, nopython=True, nogil=True
+    cache=True,
+    nogil=True
 )
 def decode_rgb(color: np.uint32) -> tuple[np.uint8, np.uint8, np.uint8]:
     """

@@ -2,9 +2,10 @@ import numba as nb
 import numpy as np
 
 
-@nb.jit(
+@nb.njit(
     nb.float64(nb.float64, nb.float64),
-    cache=True, nopython=True, nogil=True
+    cache=True,
+    nogil=True
 )
 def adjust(value: float, step: float) -> float:
     """
@@ -23,7 +24,8 @@ def adjust(value: float, step: float) -> float:
 
 @nb.guvectorize(
     ['void(float64[:], float64, float64[:])'], '(n),()->(n)',
-    nopython=True, cache=True
+    nopython=True,
+    cache=True
 )
 def adjust_vectorized(
     values: np.ndarray,
@@ -31,8 +33,8 @@ def adjust_vectorized(
     result: np.ndarray
 ) -> np.ndarray:
     """
-    Vectorized adjustment of an array of float values to the nearest multiple
-    of a given step with 10 decimal precision.
+    Vectorized adjustment of an array of float values to the nearest
+    multiple of a given step with 10 decimal precision.
 
     For each element in the input array:
     - If the value is NaN, the result will also be NaN.
@@ -42,7 +44,8 @@ def adjust_vectorized(
     Args:
         values (float64[:]): 1D array of input float values.
         step (float64): Adjustment step size.
-        result (float64[:]): 1D array where the adjusted values will be stored.
+        result (float64[:]): 1D array where the adjusted values
+                             will be stored.
 
     Returns:
         None: The results are written in-place to the `result` array.
