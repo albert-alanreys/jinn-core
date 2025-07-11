@@ -128,7 +128,7 @@ class NuggetV2(BaseStrategy):
     def __init__(self, client, all_params = None, opt_params = None) -> None:
         super().__init__(client, all_params, opt_params)
 
-    def start(self, market_data) -> None:
+    def calculate(self, market_data) -> None:
         self.open_deals_log = np.full(5, np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -217,7 +217,7 @@ class NuggetV2(BaseStrategy):
             self.alert_open_short,
             self.alert_long_new_stop,
             self.alert_short_new_stop
-        ) = self._calculate(
+        ) = self._calculate_loop(
             self.params['direction'],
             self.params['initial_capital'],
             self.params['min_capital'],
@@ -308,7 +308,7 @@ class NuggetV2(BaseStrategy):
 
     @staticmethod
     @nb.njit(cache=True, nogil=True)
-    def _calculate(
+    def _calculate_loop(
         direction: int,
         initial_capital: float,
         min_capital: float,

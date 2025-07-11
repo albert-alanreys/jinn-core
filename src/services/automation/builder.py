@@ -104,7 +104,7 @@ class AutomationBuilder():
                         interval=interval,
                         feeds=instance.params.get('feeds')
                     )
-                    instance.start(market_data)
+                    instance.calculate(market_data)
                     stats = Tester.test(instance)
 
                     context = {
@@ -135,7 +135,7 @@ class AutomationBuilder():
                     interval=self.interval,
                     feeds=instance.params.get('feeds')
                 )
-                instance.start(market_data)
+                instance.calculate(market_data)
                 stats = Tester.test(instance)
 
                 context = {

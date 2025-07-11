@@ -87,7 +87,7 @@ class SandboxV1(BaseStrategy):
     def __init__(self, client, all_params = None, opt_params = None) -> None:
         super().__init__(client, all_params, opt_params)
 
-    def start(self, market_data) -> None:
+    def calculate(self, market_data) -> None:
         self.open_deals_log = np.full((4, 5), np.nan)
         self.completed_deals_log = np.array([])
         self.position_size = np.nan
@@ -189,7 +189,7 @@ class SandboxV1(BaseStrategy):
             self.take_price,
             self.alert_open_long,
             self.alert_close_long
-        ) = self._calculate(
+        ) = self._calculate_loop(
             self.params['initial_capital'],
             self.params['commission'],
             self.params['order_size_type'],
@@ -252,7 +252,7 @@ class SandboxV1(BaseStrategy):
 
     @staticmethod
     @nb.njit(cache=True, nogil=True)
-    def _calculate(
+    def _calculate_loop(
         initial_capital: float,
         commission: float,
         order_size_type: int,

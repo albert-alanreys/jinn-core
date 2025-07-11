@@ -113,7 +113,7 @@ def update_context(context_id: str) -> flask.Response:
         client=context['client'],
         all_params=params
     )
-    instance.start(context['market_data'])
+    instance.calculate(context['market_data'])
 
     context['instance'] = instance
     context['stats'] = Tester.test(instance)

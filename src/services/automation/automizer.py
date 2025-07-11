@@ -43,7 +43,7 @@ class Automizer():
         context = self.strategy_contexts[context_id]
 
         instance = context['instance']
-        instance.start(context['market_data'])
+        instance.calculate(context['market_data'])
         instance.trade()
 
         context['stats'] = Tester.test(instance)

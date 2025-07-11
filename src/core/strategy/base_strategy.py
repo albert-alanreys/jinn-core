@@ -41,7 +41,7 @@ class BaseStrategy(ABC):
         self.order_ids = None
 
     @abstractmethod
-    def start(self, market_data: dict) -> None:
+    def calculate(self, market_data: dict) -> None:
         pass
 
     @abstractmethod

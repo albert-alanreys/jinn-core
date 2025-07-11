@@ -93,7 +93,7 @@ class Optimizer:
 
     def _evaluate(self, sample: list, market_data: dict) -> float:
         strategy_instance = self.strategy(self.client, opt_params=sample)
-        strategy_instance.start(market_data)
+        strategy_instance.calculate(market_data)
 
         score = round(
             strategy_instance.completed_deals_log[8::13].sum() /
