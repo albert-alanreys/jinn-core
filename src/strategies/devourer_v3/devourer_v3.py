@@ -11,18 +11,7 @@ from src.core.utils.rounding import adjust
 class DevourerV3(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
-
-    # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
-    # direction: 0 - "all", 1 — "longs", 2 — "shorts"
-    # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
     params = {
-        "margin_type": 0,
-        "direction": 0,
-        "initial_capital": 10000.0,
-        "commission": 0.05,
-        "order_size_type": 0,
-        "order_size": 100.0,
-        "leverage": 1,
         "stop_atr_p2": 0.5,
         "stop_atr_p3": 1.0,
         "take_atr_p3": 3.0,
@@ -79,34 +68,23 @@ class DevourerV3(BaseStrategy):
         super().__init__(client, all_params, opt_params)
 
     def calculate(self, market_data) -> None:
-        self.open_deals_log = np.full(5, np.nan)
-        self.completed_deals_log = np.array([])
-        self.position_size = np.nan
-        self.entry_signal = np.nan
-        self.entry_price = np.nan
-        self.entry_date = np.nan
-        self.deal_type = np.nan
-
-        self.symbol = market_data['symbol']
-        self.time = market_data['klines'][:, 0]
-        self.open = market_data['klines'][:, 1]
-        self.high = market_data['klines'][:, 2]
-        self.low = market_data['klines'][:, 3]
-        self.close = market_data['klines'][:, 4]
-        self.p_precision = market_data['p_precision']
-        self.q_precision = market_data['q_precision']
+        super().init_variables(market_data)
 
         self.equity = self.params['initial_capital']
+
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
+
         self.deal_p1 = False
         self.deal_p2 = False
         self.deal_p3 = False
+
         self.filter1_p1 = False
         self.filter2_p1 = False
         self.filter3_p1 = False
         self.short_allowed_p3 = False
+
         self.close_under_ema_counter_p3 = 0
 
         self.macd_p1 = (
@@ -590,7 +568,7 @@ class DevourerV3(BaseStrategy):
                     position_size = adjust(
                         position_size, q_precision
                     )
-                    open_deals_log = np.array(
+                    open_deals_log[0] = np.array(
                         [
                             deal_type, entry_signal, entry_date,
                             entry_price, position_size
@@ -708,7 +686,7 @@ class DevourerV3(BaseStrategy):
                 position_size = adjust(
                     position_size, q_precision
                 )
-                open_deals_log = np.array(
+                open_deals_log[0] = np.array(
                     [
                         deal_type, entry_signal, entry_date,
                         entry_price, position_size
@@ -833,7 +811,7 @@ class DevourerV3(BaseStrategy):
                 position_size = adjust(
                     position_size, q_precision
                 )
-                open_deals_log = np.array(
+                open_deals_log[0] = np.array(
                     [
                         deal_type, entry_signal, entry_date,
                         entry_price, position_size

@@ -11,16 +11,8 @@ from src.core.utils.rounding import adjust
 class MeanStrikeV1(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
-
-    # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
-    # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
     params = {
-        "margin_type":  0,
-        "initial_capital":  10000.0,
-        "commission":  0.075,
-        "order_size_type":  0,
         "order_size":  50,
-        "leverage":  1,
         "entry_volume":  [10.0, 15.0, 25.0, 50.0],
         "entry_percent_2":  2.0,
         "entry_percent_3":  6.0,
@@ -31,7 +23,6 @@ class MeanStrikeV1(BaseStrategy):
         "mult":  2.0,
         "range_threshold":  30.0
     }
-
 
     # Parameters to be optimized and their possible values
     opt_params = {
@@ -79,22 +70,7 @@ class MeanStrikeV1(BaseStrategy):
         super().__init__(client, all_params, opt_params)
 
     def calculate(self, market_data) -> None:
-        self.open_deals_log = np.full((4, 5), np.nan)
-        self.completed_deals_log = np.array([])
-        self.position_size = np.nan
-        self.entry_signal = np.nan
-        self.entry_price = np.nan
-        self.entry_date = np.nan
-        self.deal_type = np.nan
-
-        self.symbol = market_data['symbol']
-        self.time = market_data['klines'][:, 0]
-        self.open = market_data['klines'][:, 1]
-        self.high = market_data['klines'][:, 2]
-        self.low = market_data['klines'][:, 3]
-        self.close = market_data['klines'][:, 4]
-        self.p_precision = market_data['p_precision']
-        self.q_precision = market_data['q_precision']
+        super().init_variables(market_data, 4)
 
         self.equity = self.params['initial_capital']
         self.qty_entry = np.full(4, np.nan)
@@ -256,8 +232,8 @@ class MeanStrikeV1(BaseStrategy):
                         )
                         equity += log_entry[8]
 
-                open_deals_log = np.full((4, 5), np.nan)
-                qty_entry = np.full(4, np.nan)
+                open_deals_log[:] = np.nan
+                qty_entry[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
                 entry_date = np.nan
@@ -293,8 +269,8 @@ class MeanStrikeV1(BaseStrategy):
                                 )
                                 equity += log_entry[8]
 
-                        open_deals_log = np.full((4, 5), np.nan)
-                        qty_entry = np.full(4, np.nan)
+                        open_deals_log[:] = np.nan
+                        qty_entry[:] = np.nan
                         deal_type = np.nan
                         entry_signal = np.nan
                         entry_date = np.nan
@@ -406,8 +382,8 @@ class MeanStrikeV1(BaseStrategy):
                                 )
                                 equity += log_entry[8]
 
-                        open_deals_log = np.full((4, 5), np.nan)
-                        qty_entry = np.full(4, np.nan)
+                        open_deals_log[:] = np.nan
+                        qty_entry[:] = np.nan
                         deal_type = np.nan
                         entry_signal = np.nan
                         entry_date = np.nan

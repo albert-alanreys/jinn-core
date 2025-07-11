@@ -13,19 +13,8 @@ from src.core.utils.rounding import adjust
 class NuggetV5(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
-
-    # margin_type: 0 — 'ISOLATED', 1 — 'CROSSED'
-    # direction: 0 - "all", 1 — "longs", 2 — "shorts"
-    # order_size_type: 0 — "PERCENT", 1 — "CURRENCY"
     params = {
-        "margin_type": 0,
-        "direction": 0,
-        "initial_capital": 10000.0,
         "min_capital": 100.0,
-        "commission": 0.075,
-        "order_size_type": 0,
-        "order_size": 100,
-        "leverage": 1,
         "stop": 2.8,
         "atr_length": 14,
         "take_value": [3.0, 4.0, 5.0, 6.0, 7.0],
@@ -132,21 +121,7 @@ class NuggetV5(BaseStrategy):
         super().__init__(client, all_params, opt_params)
 
     def calculate(self, market_data) -> None:
-        self.open_deals_log = np.full(5, np.nan)
-        self.completed_deals_log = np.array([])
-        self.position_size = np.nan
-        self.entry_signal = np.nan
-        self.entry_price = np.nan
-        self.entry_date = np.nan
-        self.deal_type = np.nan
-
-        self.symbol = market_data['symbol']
-        self.time = market_data['klines'][:, 0]
-        self.high = market_data['klines'][:, 2]
-        self.low = market_data['klines'][:, 3]
-        self.close = market_data['klines'][:, 4]
-        self.p_precision = market_data['p_precision']
-        self.q_precision = market_data['q_precision']
+        super().init_variables(market_data)
 
         self.equity = self.params['initial_capital']
         self.stop_price = np.full(self.time.shape[0], np.nan)
@@ -664,7 +639,7 @@ class NuggetV5(BaseStrategy):
                 qty_take[4] = adjust(
                     position_size * take_volume[4] / 100, q_precision
                 )
-                open_deals_log = np.array(
+                open_deals_log[0] = np.array(
                     [
                         deal_type, entry_signal, entry_date,
                         entry_price, position_size
@@ -915,7 +890,7 @@ class NuggetV5(BaseStrategy):
                 qty_take[4] = adjust(
                     position_size * take_volume[4] / 100, q_precision
                 )
-                open_deals_log = np.array(
+                open_deals_log[0] = np.array(
                     [
                         deal_type, entry_signal, entry_date,
                         entry_price, position_size
