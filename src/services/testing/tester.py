@@ -25,11 +25,14 @@ class Tester:
         initial_capital: float,
         deals_log: np.ndarray
     ) -> np.ndarray:
-        log = deals_log.reshape((-1, 13))
+        if deals_log.shape[0] == 0:
+            return np.array([], dtype=np.float64)
 
-        equity = np.empty(log.shape[0] + 1)
+        pnl = deals_log[:, 8]
+        equity = np.empty(pnl.shape[0] + 1, dtype=np.float64)
         equity[0] = initial_capital
-        equity[1:] = log[:, 8]
+        equity[1:] = pnl
+
         return equity.cumsum()[1:]
 
     @staticmethod
@@ -37,12 +40,10 @@ class Tester:
         def _mean(array: np.ndarray) -> float:
             return round(array.mean(), 2) if array.size else np.nan
 
-        log = deals_log.reshape((-1, 13))
-
-        log_col_0 = log[:, 0]
-        log_col_8 = log[:, 8]
-        log_col_9 = log[:, 9]
-        log_col_12 = log[:, 12]
+        log_col_0 = deals_log[:, 0]
+        log_col_8 = deals_log[:, 8]
+        log_col_9 = deals_log[:, 9]
+        log_col_12 = deals_log[:, 12]
 
         # Gross profit
         all_gross_profit = round(log_col_8[log_col_8 > 0].sum(), 2)
@@ -142,25 +143,25 @@ class Tester:
         short_commission_paid = round(log_col_12[log_col_0 == 1].sum(), 2)
 
         # Total closed trades
-        all_total_closed_trades = log.shape[0]
-        long_total_closed_trades = log[log_col_0 == 0].shape[0]
-        short_total_closed_trades = log[log_col_0 == 1].shape[0]
+        all_total_closed_trades = deals_log.shape[0]
+        long_total_closed_trades = deals_log[log_col_0 == 0].shape[0]
+        short_total_closed_trades = deals_log[log_col_0 == 1].shape[0]
 
         # Number winning trades
-        all_number_winning_trades = log[log_col_8 > 0].shape[0]
-        long_number_winning_trades = log[
+        all_number_winning_trades = deals_log[log_col_8 > 0].shape[0]
+        long_number_winning_trades = deals_log[
             (log_col_8 > 0) & (log_col_0 == 0)
         ].shape[0]
-        short_number_winning_trades = log[
+        short_number_winning_trades = deals_log[
             (log_col_8 > 0) & (log_col_0 == 1)
         ].shape[0]
 
         # Number losing trades
-        all_number_losing_trades = log[log_col_8 <= 0].shape[0]
-        long_number_losing_trades = log[
+        all_number_losing_trades = deals_log[log_col_8 <= 0].shape[0]
+        long_number_losing_trades = deals_log[
             (log_col_8 <= 0) & (log_col_0 == 0)
         ].shape[0]
-        short_number_losing_trades = log[
+        short_number_losing_trades = deals_log[
             (log_col_8 <= 0) & (log_col_0 == 1)
         ].shape[0]
 

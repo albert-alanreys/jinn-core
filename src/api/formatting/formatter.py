@@ -120,7 +120,7 @@ class Formatter:
         if not completed_deals_log.size and not open_deals_log.size:
             return []
 
-        completed_deals = completed_deals_log.reshape((-1, 13)).tolist()
+        completed_deals = completed_deals_log.tolist()
         open_deals = list(
             filter(
                 lambda deal: not np.isnan(deal[0]),
@@ -296,7 +296,7 @@ class Formatter:
         if not completed_deals_log.size:
             return []
 
-        timestamps = completed_deals_log[4::13] * 0.001
+        timestamps = completed_deals_log[:, 4] * 0.001
         values = adjust_vectorized(equity, 0.01)
 
         formatted_equity = []
@@ -348,7 +348,7 @@ class Formatter:
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
-        completed_deals = completed_deals_log.reshape((-1, 13))[:, :12]
+        completed_deals = completed_deals_log[:, :12]
         result = []
 
         for num, deal in enumerate(completed_deals, 1):

@@ -112,6 +112,7 @@ class BaseStrategy(ABC):
         - Position tracking variables
         - Market data references
         - Precision parameters
+        - Equity tracking
 
         Args:
             market_data: Dictionary containing:
@@ -126,15 +127,15 @@ class BaseStrategy(ABC):
                             Each deal will have exactly 5 tracking values.
         """
 
+        self.completed_deals_log = np.empty((0, 13), dtype=np.float64)
         self.open_deals_log = np.full((max_open_deals, 5), np.nan)
-        self.completed_deals_log = np.array([])
 
         self.position_size = np.nan
         self.entry_signal = np.nan
         self.entry_price = np.nan
         self.entry_date = np.nan
         self.deal_type = np.nan
-        
+
         self.symbol = market_data['symbol']
         self.time = market_data['klines'][:, 0]
         self.open = market_data['klines'][:, 1]
@@ -143,8 +144,11 @@ class BaseStrategy(ABC):
         self.close = market_data['klines'][:, 4]
         self.volume = market_data['klines'][:, 5]
         self.extra_klines = market_data['extra_klines']
+
         self.p_precision = market_data['p_precision']
         self.q_precision = market_data['q_precision']
+
+        self.equity = self.params['initial_capital']
 
     @abstractmethod
     def calculate(self, market_data: dict) -> None:

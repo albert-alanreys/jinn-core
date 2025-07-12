@@ -3,8 +3,8 @@ import numba as nb
 
 import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.strategy.deal_logger import update_completed_deals_log
 from src.core.utils.colors import encode_rgb
-from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
 
@@ -131,7 +131,6 @@ class NuggetV4(BaseStrategy):
     def calculate(self, market_data) -> None:
         super().init_variables(market_data)
 
-        self.equity = self.params['initial_capital']
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.array(
             [
@@ -148,9 +147,12 @@ class NuggetV4(BaseStrategy):
             ]
         )
         self.liquidation_price = np.nan
+
         self.qty_take_1 = np.full(5, np.nan)
         self.qty_take_2 = np.full(10, np.nan)
+
         self.stop_moved = False
+
         self.grid_type = np.nan
         self.pivot_LH_bar_index = np.array([])
         self.pivot_HL_bar_index = np.array([])
@@ -486,7 +488,7 @@ class NuggetV4(BaseStrategy):
 
             # Check of liquidation
             if (deal_type == 0 and low[i] <= liquidation_price):
-                log_entry = create_log_entry(
+                completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
                     deal_type,
@@ -499,10 +501,7 @@ class NuggetV4(BaseStrategy):
                     position_size,
                     initial_capital
                 )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
+                equity += pnl
                 
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
@@ -520,7 +519,7 @@ class NuggetV4(BaseStrategy):
                 alert_cancel = True
 
             if (deal_type == 1 and high[i] >= liquidation_price):
-                log_entry = create_log_entry(
+                completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
                     deal_type,
@@ -533,10 +532,7 @@ class NuggetV4(BaseStrategy):
                     position_size,
                     initial_capital
                 )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
+                equity += pnl
 
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
@@ -556,7 +552,7 @@ class NuggetV4(BaseStrategy):
             # Trading logic (longs)
             if deal_type == 0:
                 if low[i] <= stop_price[i]:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -569,10 +565,7 @@ class NuggetV4(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -655,7 +648,7 @@ class NuggetV4(BaseStrategy):
                 if grid_type == 0:
                     if (not np.isnan(take_price[0, i]) and 
                             high[i] >= take_price[0, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -668,10 +661,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_1[0],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_1[0], 8)
                         open_deals_log[4] = position_size
@@ -680,7 +670,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[1, i]) and 
                             high[i] >= take_price[1, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -693,10 +683,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_1[1],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_1[1], 8)
                         open_deals_log[4] = position_size
@@ -705,7 +692,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[2, i]) and 
                             high[i] >= take_price[2, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -718,10 +705,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_1[2],
                             initial_capital
                         ) 
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_1[2], 8)
                         open_deals_log[4] = position_size
@@ -730,7 +714,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[3, i]) and 
                             high[i] >= take_price[3, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -743,10 +727,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_1[3],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_1[3], 8)
                         open_deals_log[4] = position_size
@@ -755,7 +736,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[4, i]) and 
                             high[i] >= take_price[4, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -768,10 +749,7 @@ class NuggetV4(BaseStrategy):
                             round(qty_take_1[4], 8),
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         open_deals_log[:] = np.nan
                         deal_type = np.nan
@@ -788,7 +766,7 @@ class NuggetV4(BaseStrategy):
                 elif grid_type == 1:
                     if (not np.isnan(take_price[0, i]) and 
                             high[i] >= take_price[0, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -801,10 +779,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[0],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[0], 8)
                         open_deals_log[4] = position_size
@@ -813,7 +788,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[1, i]) and 
                             high[i] >= take_price[1, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -826,10 +801,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[1],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[1], 8)
                         open_deals_log[4] = position_size
@@ -838,7 +810,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[2, i]) and 
                             high[i] >= take_price[2, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -851,10 +823,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[2],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[2], 8)
                         open_deals_log[4] = position_size
@@ -863,7 +832,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[3, i]) and 
                             high[i] >= take_price[3, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -876,10 +845,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[3],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[3], 8)
                         open_deals_log[4] = position_size
@@ -888,7 +854,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[4, i]) and 
                             high[i] >= take_price[4, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -901,10 +867,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[4],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[4], 8)
                         open_deals_log[4] = position_size
@@ -913,7 +876,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[5, i]) and 
                             high[i] >= take_price[5, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -926,10 +889,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[5],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[5], 8)
                         open_deals_log[4] = position_size
@@ -938,7 +898,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[6, i]) and 
                             high[i] >= take_price[6, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -951,10 +911,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[6],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[6], 8)
                         open_deals_log[4] = position_size
@@ -963,7 +920,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[7, i]) and 
                             high[i] >= take_price[7, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -976,10 +933,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[7],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[7], 8)
                         open_deals_log[4] = position_size
@@ -988,7 +942,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[8, i]) and 
                             high[i] >= take_price[8, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1001,10 +955,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[8],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[8], 8)
                         open_deals_log[4] = position_size
@@ -1013,7 +964,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[9, i]) and 
                             high[i] >= take_price[9, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1026,10 +977,7 @@ class NuggetV4(BaseStrategy):
                             round(qty_take_2[9], 8),
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         open_deals_log[:] = np.nan
                         deal_type = np.nan
@@ -1268,7 +1216,7 @@ class NuggetV4(BaseStrategy):
             # Trading logic (shorts)
             if deal_type == 1:
                 if high[i] >= stop_price[i]:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -1281,10 +1229,7 @@ class NuggetV4(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -1367,7 +1312,7 @@ class NuggetV4(BaseStrategy):
                 if grid_type == 0:
                     if (not np.isnan(take_price[0, i]) and 
                             low[i] <= take_price[0, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1380,10 +1325,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_1[0],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_1[0], 8)
                         open_deals_log[4] = position_size
@@ -1392,7 +1334,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[1, i]) and 
                             low[i] <= take_price[1, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1405,10 +1347,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_1[1],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_1[1], 8)
                         open_deals_log[4] = position_size
@@ -1417,7 +1356,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[2, i]) and 
                             low[i] <= take_price[2, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1430,10 +1369,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_1[2],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_1[2], 8)
                         open_deals_log[4] = position_size
@@ -1442,7 +1378,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[3, i]) and 
                             low[i] <= take_price[3, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1455,10 +1391,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_1[3],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_1[3], 8)
                         open_deals_log[4] = position_size
@@ -1467,7 +1400,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[4, i]) and 
                             low[i] <= take_price[4, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1480,10 +1413,7 @@ class NuggetV4(BaseStrategy):
                             round(qty_take_1[4], 8),
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         open_deals_log[:] = np.nan
                         deal_type = np.nan
@@ -1500,7 +1430,7 @@ class NuggetV4(BaseStrategy):
                 elif grid_type == 1:
                     if (not np.isnan(take_price[0, i]) and 
                             low[i] <= take_price[0, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1513,10 +1443,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[0],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[0], 8)
                         open_deals_log[4] = position_size
@@ -1525,7 +1452,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[1, i]) and 
                             low[i] <= take_price[1, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1538,10 +1465,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[1],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[1], 8)
                         open_deals_log[4] = position_size
@@ -1550,7 +1474,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[2, i]) and 
                             low[i] <= take_price[2, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1563,10 +1487,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[2],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[2], 8)
                         open_deals_log[4] = position_size
@@ -1575,7 +1496,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[3, i]) and 
                             low[i] <= take_price[3, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1588,10 +1509,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[3],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[3], 8)
                         open_deals_log[4] = position_size
@@ -1600,7 +1518,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[4, i]) and 
                             low[i] <= take_price[4, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1613,10 +1531,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[4],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[4], 8)
                         open_deals_log[4] = position_size
@@ -1625,7 +1540,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[5, i]) and 
                             low[i] <= take_price[5, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1638,10 +1553,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[5],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[5], 8)
                         open_deals_log[4] = position_size
@@ -1650,7 +1562,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[6, i]) and 
                             low[i] <= take_price[6, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1663,10 +1575,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[6],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[6], 8)
                         open_deals_log[4] = position_size
@@ -1675,7 +1584,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[7, i]) and 
                             low[i] <= take_price[7, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1688,10 +1597,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[7],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[7], 8)
                         open_deals_log[4] = position_size
@@ -1700,7 +1606,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[8, i]) and 
                             low[i] <= take_price[8, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1713,10 +1619,7 @@ class NuggetV4(BaseStrategy):
                             qty_take_2[8],
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         position_size = round(position_size - qty_take_2[8], 8)
                         open_deals_log[4] = position_size
@@ -1725,7 +1628,7 @@ class NuggetV4(BaseStrategy):
 
                     if (not np.isnan(take_price[9, i]) and 
                             low[i] <= take_price[9, i]):
-                        log_entry = create_log_entry(
+                        completed_deals_log, pnl = update_completed_deals_log(
                             completed_deals_log,
                             commission,
                             deal_type,
@@ -1738,10 +1641,7 @@ class NuggetV4(BaseStrategy):
                             round(qty_take_2[9], 8),
                             initial_capital
                         )
-                        completed_deals_log = np.concatenate(
-                            (completed_deals_log, log_entry)
-                        )
-                        equity += log_entry[8]
+                        equity += pnl
 
                         open_deals_log[:] = np.nan
                         deal_type = np.nan

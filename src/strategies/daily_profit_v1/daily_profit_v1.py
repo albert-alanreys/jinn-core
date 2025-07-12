@@ -3,8 +3,8 @@ import numba as nb
 
 import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.strategy.deal_logger import update_completed_deals_log
 from src.core.utils.colors import encode_rgb
-from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
 
@@ -86,19 +86,17 @@ class DailyProfitV1(BaseStrategy):
     def calculate(self, market_data) -> None:
         super().init_variables(market_data)
 
-        self.equity = self.params['initial_capital']
-        self.liquidation_price = np.nan
-
         self.stop_prices = np.full(self.time.shape[0], np.nan)
-        self.moved_stop_price_1 = np.nan
-        self.moved_stop_price_2 = np.nan
-
         self.take_prices = np.array(
             [
                 np.full(self.time.shape[0], np.nan),
                 np.full(self.time.shape[0], np.nan)
             ]
         )
+        self.moved_stop_price_1 = np.nan
+        self.moved_stop_price_2 = np.nan
+        self.liquidation_price = np.nan
+
         self.take_volumes = np.full(2, np.nan)
 
         self.dst_upper_band, self.dst_lower_band = qk.dst(
@@ -327,7 +325,7 @@ class DailyProfitV1(BaseStrategy):
 
             # Check of liquidation
             if (deal_type == 0 and low[i] <= liquidation_price):
-                log_entry = create_log_entry(
+                completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
                     deal_type,
@@ -340,10 +338,7 @@ class DailyProfitV1(BaseStrategy):
                     position_size,
                     initial_capital
                 )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
+                equity += pnl
                 
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
@@ -358,7 +353,7 @@ class DailyProfitV1(BaseStrategy):
                 alert_cancel = True
 
             if (deal_type == 1 and high[i] >= liquidation_price):
-                log_entry = create_log_entry(
+                completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
                     deal_type,
@@ -371,10 +366,7 @@ class DailyProfitV1(BaseStrategy):
                     position_size,
                     initial_capital
                 )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
+                equity += pnl
 
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
@@ -391,7 +383,7 @@ class DailyProfitV1(BaseStrategy):
             # Trading logic (longs)
             if deal_type == 0:
                 if low[i] <= stop_prices[i]:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -404,10 +396,7 @@ class DailyProfitV1(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -425,7 +414,7 @@ class DailyProfitV1(BaseStrategy):
                     not np.isnan(take_prices[0, i])
                     and high[i] >= take_prices[0, i]
                 ):
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -438,10 +427,7 @@ class DailyProfitV1(BaseStrategy):
                         take_volumes[0],
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     position_size = round(position_size - take_volumes[0], 8)
                     open_deals_log[4] = position_size
@@ -456,7 +442,7 @@ class DailyProfitV1(BaseStrategy):
                     not np.isnan(take_prices[1, i])
                     and high[i] >= take_prices[1, i]
                 ):
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -469,10 +455,7 @@ class DailyProfitV1(BaseStrategy):
                         take_volumes[1],
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
                     position_size = round(position_size - take_volumes[1], 8)
 
                     if position_size == 0:
@@ -508,7 +491,7 @@ class DailyProfitV1(BaseStrategy):
                 )
 
                 if is_exit_long:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -521,10 +504,7 @@ class DailyProfitV1(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -620,7 +600,7 @@ class DailyProfitV1(BaseStrategy):
             # Trading logic (shorts)
             if deal_type == 1:
                 if high[i] >= stop_prices[i]:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -633,10 +613,7 @@ class DailyProfitV1(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -654,7 +631,7 @@ class DailyProfitV1(BaseStrategy):
                     not np.isnan(take_prices[0, i])
                     and low[i] <= take_prices[0, i]
                 ):
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -667,10 +644,7 @@ class DailyProfitV1(BaseStrategy):
                         take_volumes[0],
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     position_size = round(position_size - take_volumes[0], 8)
                     open_deals_log[4] = position_size
@@ -684,7 +658,7 @@ class DailyProfitV1(BaseStrategy):
                     not np.isnan(take_prices[1, i])
                     and low[i] <= take_prices[1, i]
                 ):
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -697,10 +671,7 @@ class DailyProfitV1(BaseStrategy):
                         take_volumes[1],
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
                     position_size = round(position_size - take_volumes[1], 8)
 
                     if position_size == 0:
@@ -736,7 +707,7 @@ class DailyProfitV1(BaseStrategy):
                 )
 
                 if is_exit_short:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -749,10 +720,7 @@ class DailyProfitV1(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan

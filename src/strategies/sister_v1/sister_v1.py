@@ -3,8 +3,8 @@ import numba as nb
 
 import src.core.quantklines as qk
 from src.core.strategy.base_strategy import BaseStrategy
+from src.core.strategy.deal_logger import update_completed_deals_log
 from src.core.utils.colors import encode_rgb
-from src.core.utils.deals import create_log_entry
 from src.core.utils.rounding import adjust
 
 
@@ -78,7 +78,6 @@ class SisterV1(BaseStrategy):
     def calculate(self, market_data) -> None:
         super().init_variables(market_data)
 
-        self.equity = self.params['initial_capital']
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
@@ -299,7 +298,7 @@ class SisterV1(BaseStrategy):
 
             # Check of liquidation
             if (deal_type == 0 and low[i] <= liquidation_price):
-                log_entry = create_log_entry(
+                completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
                     deal_type,
@@ -312,10 +311,7 @@ class SisterV1(BaseStrategy):
                     position_size,
                     initial_capital
                 )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
+                equity += pnl
                 
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
@@ -329,7 +325,7 @@ class SisterV1(BaseStrategy):
                 alert_cancel = True
 
             if (deal_type == 1 and high[i] >= liquidation_price):
-                log_entry = create_log_entry(
+                completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
                     deal_type,
@@ -342,10 +338,7 @@ class SisterV1(BaseStrategy):
                     position_size,
                     initial_capital
                 )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
+                equity += pnl
 
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
@@ -371,7 +364,7 @@ class SisterV1(BaseStrategy):
 
             if deal_type == 0:
                 if low[i] <= stop_price[i]:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -384,10 +377,7 @@ class SisterV1(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -401,7 +391,7 @@ class SisterV1(BaseStrategy):
                     alert_cancel = True
 
                 if high[i] >= take_price[i]:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -414,10 +404,7 @@ class SisterV1(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -447,7 +434,7 @@ class SisterV1(BaseStrategy):
             )
 
             if exit_long:
-                log_entry = create_log_entry(
+                completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
                     deal_type,
@@ -460,10 +447,7 @@ class SisterV1(BaseStrategy):
                     position_size,
                     initial_capital
                 )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
+                equity += pnl
 
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
@@ -531,7 +515,7 @@ class SisterV1(BaseStrategy):
 
             if deal_type == 1:
                 if high[i] >= stop_price[i]:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -544,10 +528,7 @@ class SisterV1(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -561,7 +542,7 @@ class SisterV1(BaseStrategy):
                     alert_cancel = True 
 
                 if low[i] <= take_price[i]:
-                    log_entry = create_log_entry(
+                    completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
                         deal_type,
@@ -574,10 +555,7 @@ class SisterV1(BaseStrategy):
                         position_size,
                         initial_capital
                     )
-                    completed_deals_log = np.concatenate(
-                        (completed_deals_log, log_entry)
-                    )
-                    equity += log_entry[8]
+                    equity += pnl
 
                     open_deals_log[:] = np.nan
                     deal_type = np.nan
@@ -607,7 +585,7 @@ class SisterV1(BaseStrategy):
             )
 
             if exit_short:
-                log_entry = create_log_entry(
+                completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
                     deal_type,
@@ -620,10 +598,7 @@ class SisterV1(BaseStrategy):
                     position_size,
                     initial_capital
                 )
-                completed_deals_log = np.concatenate(
-                    (completed_deals_log, log_entry)
-                )
-                equity += log_entry[8]
+                equity += pnl
 
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
