@@ -52,6 +52,18 @@ class BaseStrategy(ABC):
                 - 'type': str — chart type ('line' or 'histogram')
                 - 'lineWidth': int — optional line thickness
                 - 'color': str — optional encoded color
+                - 'lineStyle': int — optional line pattern. Allowed values:
+                    0: solid
+                    1: dotted
+                    2: dashed
+                    3: large dashed
+                    4: sparse dotted
+                - 'lineType': int — optional line shape. Allowed values:
+                    0: Simple
+                    1: WithSteps
+                    2: Curved
+                - 'lineVisible': bool — optional flag to control 
+                                        line visibility
 
         indicators (dict): Actual indicator values to render.
             Key: Indicator name (str)
