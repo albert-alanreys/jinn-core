@@ -41,7 +41,7 @@ def stretch(
 
     i = 0
     for j in range(1, n):
-        if main_time[j] == time_close:
+        if main_time[j] >= time_close:
             result[j] = source[i]
             i += 1
 

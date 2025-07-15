@@ -58,10 +58,18 @@ class DevourerV3(BaseStrategy):
         'close_under_ema_p3': [i for i in range(1, 5)]
     }
 
-    # For frontend
+    # Frontend rendering settings for indicators
     indicator_options = {
-        'SL': {'color': encode_rgb(255, 0, 0)},
-        'TP': {'color': encode_rgb(0, 128, 0)}
+        'SL': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(255, 0, 0)
+        },
+        'TP': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(0, 128, 0)
+        }
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:

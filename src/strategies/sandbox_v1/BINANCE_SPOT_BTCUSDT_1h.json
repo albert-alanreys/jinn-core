@@ -1,0 +1,19 @@
+[
+  {
+    "period": {
+      "start": "2017-01-01",
+      "end": "2025-01-01"
+    },
+    "params": {
+      "entry_volume": [7.0, 13.0, 37.0, 43.0],
+      "entry_percent_2": 2.5,
+      "entry_percent_3": 6.6,
+      "entry_percent_4": 14.5,
+      "take_profit": 1.6,
+      "lookback": 3,
+      "ma_length": 86,
+      "mult": 1.0,
+      "range_threshold": 90.0
+    }
+  }
+]

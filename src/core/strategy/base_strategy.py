@@ -43,6 +43,22 @@ class BaseStrategy(ABC):
         order_size (float):      Order size 
                                  (% or USDT based on order_size_type)
                                  (default: 100.0)
+
+    Indicator Configuration (for frontend rendering):
+        indicator_options (dict): Display settings for each indicator.
+            Key: Indicator name (str)
+            Value: dict with options:
+                - 'pane': int — panel number (0 = main, 1+ = subpanels)
+                - 'type': str — chart type ('line' or 'histogram')
+                - 'lineWidth': int — optional line thickness
+                - 'color': str — optional encoded color
+
+        indicators (dict): Actual indicator values to render.
+            Key: Indicator name (str)
+            Value: dict with:
+                - 'options': reference to indicator_options[name]
+                - 'values': sequence of values
+                - 'colors': optional sequence of point-specific colors
     """
 
     # Common trading parameters for all strategies
@@ -58,6 +74,12 @@ class BaseStrategy(ABC):
         "order_size": 100.0,         # Size in % or absolute value
         "commission": 0.05,          # Fee percentage (0.05 = 0.05%)
     }
+
+    # Frontend rendering settings for indicators
+    indicator_options = {}
+
+    # Indicator values for visualization
+    indicators = {}
 
     def __init__(
         self,

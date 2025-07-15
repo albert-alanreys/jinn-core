@@ -15,7 +15,7 @@ AUTOMATION_CONFIG = {
     'interval': 1
 }
 OPTIMIZATION_CONFIG = {
-    'strategy': enums.Strategy.NUGGET_V2,
+    'strategy': enums.Strategy.SANDBOX_V1,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
@@ -24,7 +24,7 @@ OPTIMIZATION_CONFIG = {
     'end': '2025-01-01'
 }
 TESTING_CONFIG = {
-    'strategy': enums.Strategy.NUGGET_V2,
+    'strategy': enums.Strategy.SANDBOX_V1,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',

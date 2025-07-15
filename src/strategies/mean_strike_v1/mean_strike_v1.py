@@ -58,12 +58,28 @@ class MeanStrikeV1(BaseStrategy):
         'range_threshold': [float(i) for i in range(10, 100)]
     }
 
-    # For frontend
+    # Frontend rendering settings for indicators
     indicator_options = {
-        'EP #2': {'color': encode_rgb(49, 27, 146)},
-        'EP #3': {'color': encode_rgb(49, 27, 146)},
-        'EP #4': {'color': encode_rgb(49, 27, 146)},
-        'TP': {'color': encode_rgb(76, 175, 80)}
+        'EP #2': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(49, 27, 146)
+        },
+        'EP #3': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(49, 27, 146)
+        },
+        'EP #4': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(49, 27, 146)
+        },
+        'TP': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(76, 175, 80)
+        }
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:

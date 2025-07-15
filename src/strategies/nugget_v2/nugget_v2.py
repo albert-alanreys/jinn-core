@@ -104,14 +104,38 @@ class NuggetV2(BaseStrategy):
         'adx_short_lower_limit': [float(i) for i in range(1, 69)]
     }
 
-    # For frontend
+    # Frontend rendering settings for indicators
     indicator_options = {
-        'SL': {'color': encode_rgb(255, 0, 0)},
-        'TP #1': {'color': encode_rgb(0, 128, 0)},
-        'TP #2': {'color': encode_rgb(0, 128, 0)},
-        'TP #3': {'color': encode_rgb(0, 128, 0)},
-        'TP #4': {'color': encode_rgb(0, 128, 0)},
-        'TP #5': {'color': encode_rgb(0, 128, 0)}
+        'SL': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(255, 0, 0)
+        },
+        'TP #1': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(0, 128, 0)
+        },
+        'TP #2': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(0, 128, 0)
+        },
+        'TP #3': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(0, 128, 0)
+        },
+        'TP #4': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(0, 128, 0)
+        },
+        'TP #5': {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(0, 128, 0)
+        }
     }
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
@@ -495,7 +519,7 @@ class NuggetV2(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[0], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[0, i] = np.nan
                     qty_take[0] = np.nan
 
@@ -516,7 +540,7 @@ class NuggetV2(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[1], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[1, i] = np.nan
                     qty_take[1] = np.nan
 
@@ -537,7 +561,7 @@ class NuggetV2(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[2], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[2, i] = np.nan
                     qty_take[2] = np.nan
 
@@ -558,7 +582,7 @@ class NuggetV2(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[3], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[3, i] = np.nan
                     qty_take[3] = np.nan
 
@@ -757,7 +781,7 @@ class NuggetV2(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[0], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[0, i] = np.nan
                     qty_take[0] = np.nan
 
@@ -778,7 +802,7 @@ class NuggetV2(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[1], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[1, i] = np.nan
                     qty_take[1] = np.nan      
 
@@ -799,7 +823,7 @@ class NuggetV2(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[2], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[2, i] = np.nan
                     qty_take[2] = np.nan
 
@@ -820,7 +844,7 @@ class NuggetV2(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[3], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[3, i] = np.nan
                     qty_take[3] = np.nan     
 

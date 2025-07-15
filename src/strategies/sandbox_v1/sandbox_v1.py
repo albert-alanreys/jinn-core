@@ -25,7 +25,7 @@ class SandboxV1(BaseStrategy):
         "st_atr_period": 10,
         "st_factor": 3.0,
         "feeds": [
-            ["symbol", '5m'],
+            ["symbol", '1d'],
         ]
     }
 
@@ -64,17 +64,53 @@ class SandboxV1(BaseStrategy):
         'range_threshold': [float(i) for i in range(10, 100)]
     }
 
-    # For frontend
+    # Frontend rendering settings for indicators
     indicator_options = {
-        'HTF C' : {'lineWidth': 2},
-        'ST ↑' : {'lineWidth': 2},
-        'ST ↓' : {'lineWidth': 2}
+        'HTF C' : {
+            'pane': 0,
+            'type': 'line',
+            'lineWidth': 2
+        },
+        'ST ↑' : {
+            'pane': 0,
+            'type': 'line',
+            'lineWidth': 2
+        },
+        'ST ↓' : {
+            'pane': 0,
+            'type': 'line',
+            'lineWidth': 2
+        },
+        'Volume': {
+            'pane': 1,
+            'type': 'histogram'
+        },
+        'RSI': {
+            'pane': 2,
+            'type': 'line',
+            'color': encode_rgb(30, 80, 150),
+            'lineWidth': 2
+        },
+        '%K': {
+            'pane': 3,
+            'type': 'line',
+            'color': encode_rgb(172, 89, 235),
+            'lineWidth': 2
+        },
+        '%D': {
+            'pane': 3,
+            'type': 'line',
+            'color': encode_rgb(235, 159, 89),
+            'lineWidth': 1
+        }
     }
 
     htf_color_1 = encode_rgb(0, 100, 0)
     htf_color_2 = encode_rgb(139, 0, 0)
     supertrend_color_1 = encode_rgb(76, 175, 80)
     supertrend_color_2 = encode_rgb(255, 82, 82)
+    volume_color_1 = encode_rgb(0, 137, 132)
+    volume_color_2 = encode_rgb(242, 54, 69)
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
         super().__init__(client, all_params, opt_params)
@@ -124,6 +160,16 @@ class SandboxV1(BaseStrategy):
             atr_length=self.params['st_atr_period']
         )
 
+        self.rsi = qk.rsi(self.close, 16)
+
+        self.k = qk.stoch(
+            source=self.close,
+            high=self.high,
+            low=self.low,
+            length=14
+        )
+        self.d = qk.sma(source=self.k, length=6)
+
         self.alert_open_long = False
         self.alert_close_long = False
 
@@ -154,6 +200,11 @@ class SandboxV1(BaseStrategy):
             ~np.isnan(self.st_down),
             self.supertrend_color_2,
             np.nan
+        )
+        self.volume_colors = np.where(
+            self.close >= self.open,
+            self.volume_color_1,
+            self.volume_color_2
         )
 
         (
@@ -223,6 +274,23 @@ class SandboxV1(BaseStrategy):
                 'options': self.indicator_options['ST ↓'],
                 'values': self.st_down,
                 'colors': self.st_down_colors
+            },
+            'Volume': {
+                'options': self.indicator_options['Volume'],
+                'values': self.volume,
+                'colors': self.volume_colors
+            },
+            'RSI': {
+                'options': self.indicator_options['RSI'],
+                'values': self.rsi
+            },
+            '%K': {
+                'options': self.indicator_options['%K'],
+                'values': self.k
+            },
+            '%D': {
+                'options': self.indicator_options['%D'],
+                'values': self.d
             }
         }
 

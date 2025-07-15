@@ -36,37 +36,53 @@ class SisterV1(BaseStrategy):
         'length_medium_trend': [i for i in range(25, 135, 5)]
     }
 
-    # For frontend
+    # Frontend rendering settings for indicators
     indicator_options = {
         'SL': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(255, 0, 0),
             'lineWidth': 2
         },
         'TP': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 0),
             'lineWidth': 2
         },
         'SMA ST': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(148, 0, 211),
             'lineWidth': 1
         },
         'SMA MT': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 0, 128),
             'lineWidth': 1
         },
         'SMA L Entry': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(255, 127, 80),
             'lineWidth': 1
         },
         'SMA L Exit': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(189, 183, 107),
             'lineWidth': 1
         },
         'SMA S Entry': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(30, 144, 255),
             'lineWidth': 1
         },
         'SMA S Exit': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 128),
             'lineWidth': 1
         }

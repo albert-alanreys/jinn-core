@@ -89,29 +89,41 @@ class NuggetV5(BaseStrategy):
         'adx_short_lower_limit': [float(i) for i in range(1, 69)]
     }
 
-    # For frontend
+    # Frontend rendering settings for indicators
     indicator_options = {
         'SL': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(255, 0, 0),
             'lineWidth': 2
         },
         'TP #1': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 0),
             'lineWidth': 2
         },
         'TP #2': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 0),
             'lineWidth': 2
         },
         'TP #3': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 0),
             'lineWidth': 2
         },
         'TP #4': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 0),
             'lineWidth': 2
         },
         'TP #5': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 0),
             'lineWidth': 2
         }
@@ -446,7 +458,7 @@ class NuggetV5(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[0], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[0, i] = np.nan
                     qty_take[0] = np.nan
 
@@ -467,7 +479,7 @@ class NuggetV5(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[1], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[1, i] = np.nan
                     qty_take[1] = np.nan
 
@@ -488,7 +500,7 @@ class NuggetV5(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[2], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[2, i] = np.nan
                     qty_take[2] = np.nan
 
@@ -509,7 +521,7 @@ class NuggetV5(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[3], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[3, i] = np.nan
                     qty_take[3] = np.nan
 
@@ -679,7 +691,7 @@ class NuggetV5(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[0], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[0, i] = np.nan
                     qty_take[0] = np.nan
 
@@ -700,7 +712,7 @@ class NuggetV5(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[1], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[1, i] = np.nan
                     qty_take[1] = np.nan      
 
@@ -721,7 +733,7 @@ class NuggetV5(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[2], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[2, i] = np.nan
                     qty_take[2] = np.nan
 
@@ -742,7 +754,7 @@ class NuggetV5(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - qty_take[3], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_price[3, i] = np.nan
                     qty_take[3] = np.nan     
 

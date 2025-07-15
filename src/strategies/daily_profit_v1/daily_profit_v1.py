@@ -48,33 +48,55 @@ class DailyProfitV1(BaseStrategy):
         'vwap_close': [True, False]
     }
 
-    # For frontend
+    # Frontend rendering settings for indicators
     indicator_options = {
         'SL': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(255, 0, 0),
             'lineWidth': 2
         },
         'TP #1': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 0),
             'lineWidth': 2
         },
         'TP #2': {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 128, 0),
             'lineWidth': 2
         },
         'ST ↑' : {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(0, 100, 0),
             'lineWidth': 1,
             'lineStyle': 2
         },
         'ST ↓' : {
+            'pane': 0,
+            'type': 'line',
             'color': encode_rgb(139, 0, 0),
             'lineWidth': 1,
             'lineStyle': 2
         },
-        'VWAP': {'lineWidth': 3},
-        'VWAP UB': {'lineWidth': 1},
-        'VWAP LB': {'lineWidth': 1}
+        'VWAP': {
+            'pane': 0,
+            'type': 'line',
+            'lineWidth': 3
+        },
+        'VWAP UB': {
+            'pane': 0,
+            'type': 'line',
+            'lineWidth': 1
+        },
+        'VWAP LB': {
+            'pane': 0,
+            'type': 'line',
+            'lineWidth': 1
+        }
     }
 
     vwap_color_1 = encode_rgb(30, 144, 255)
@@ -430,7 +452,7 @@ class DailyProfitV1(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - take_volumes[0], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_prices[0, i] = np.nan
                     take_volumes[0] = np.nan
 
@@ -471,7 +493,7 @@ class DailyProfitV1(BaseStrategy):
                         take_volumes[:] = np.nan
                         alert_cancel = True
                     else:
-                        open_deals_log[4] = position_size
+                        open_deals_log[0][4] = position_size
                         take_prices[1, i] = np.nan
                         take_volumes[1] = np.nan
 
@@ -647,7 +669,7 @@ class DailyProfitV1(BaseStrategy):
                     equity += pnl
 
                     position_size = round(position_size - take_volumes[0], 8)
-                    open_deals_log[4] = position_size
+                    open_deals_log[0][4] = position_size
                     take_prices[0, i] = np.nan
                     take_volumes[0] = np.nan
 
@@ -687,7 +709,7 @@ class DailyProfitV1(BaseStrategy):
                         take_volumes[:] = np.nan
                         alert_cancel = True
                     else:
-                        open_deals_log[4] = position_size
+                        open_deals_log[0][4] = position_size
                         take_prices[1, i] = np.nan
                         take_volumes[1] = np.nan
 
