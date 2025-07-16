@@ -8,9 +8,9 @@ import numba as nb
     nogil=True
 )
 def shrink(
-    source: np.ndarray,
-    main_time: np.ndarray,
-    lower_time: np.ndarray
+    lower_tf_source: np.ndarray,
+    lower_tf_time: np.ndarray,
+    target_tf_time: np.ndarray
 ) -> np.ndarray:
     """
     Adapt lower timeframe data to current timeframe by aligning values.
@@ -20,41 +20,44 @@ def shrink(
     with corresponding lower timeframe values.
 
     Args:
-        source (np.ndarray): Data values from lower timeframe.
-        main_time (np.ndarray): Timestamps of main (target) timeframe.
-        lower_time (np.ndarray): Timestamps of lower (source) timeframe.
+        lower_tf_source (np.ndarray): Data values from lower timeframe.
+        lower_tf_time (np.ndarray): Timestamps of lower (source) timeframe.
+        target_tf_time (np.ndarray): Timestamps of main (target) timeframe.
 
     Returns:
         np.ndarray: 2D array with lower TF values aligned to main TF.
     """
 
-    n = main_time.shape[0]
-    m = lower_time.shape[0]
+    n_lower = lower_tf_time.shape[0]
+    n_target = target_tf_time.shape[0]
     
-    if n < 2:
-        return np.full((n, m), np.nan)
+    if n_target < 2:
+        return np.full((n_target, n_lower), np.nan)
 
-    main_duration = main_time[1] - main_time[0]
-    sub_duration = lower_time[1] - lower_time[0]
-    subbars = int(main_duration / sub_duration + 0.5)
+    lower_duration = lower_tf_time[1] - lower_tf_time[0]
+    target_duration = target_tf_time[1] - target_tf_time[0]
+    subbars = int(target_duration / lower_duration + 0.5)
 
-    result = np.full((n, subbars), np.nan)
+    result = np.full((n_target, subbars), np.nan)
 
-    i = 0
-    j = 0
+    target_idx = 0
+    lower_idx = 0
 
-    k_offset = int((main_time[1] - lower_time[0]) / sub_duration + 0.5)
+    k_offset = int(
+        (target_tf_time[1] - lower_tf_time[0]) /
+        lower_duration + 0.5
+    )
     k = subbars - k_offset
 
-    while i < n and j < m:
-        time_close = main_time[i] + main_duration
+    while target_idx < n_target and lower_idx < n_lower:
+        time_close = target_tf_time[target_idx] + target_duration
 
-        if lower_time[j] < time_close:
-            result[i, k] = source[j]
-            j += 1
+        if lower_tf_time[lower_idx] < time_close:
+            result[target_idx, k] = lower_tf_source[lower_idx]
+            lower_idx += 1
             k += 1
         else:
-            i += 1
+            target_idx += 1
             k = 0
 
     return result

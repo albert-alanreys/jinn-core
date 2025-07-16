@@ -30,6 +30,7 @@ def stretch(
 
     n_higher = higher_tf_time.shape[0]
     n_target = target_tf_time.shape[0]
+
     result = np.full(n_target, np.nan)
 
     if n_higher < 2:
