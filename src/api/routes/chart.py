@@ -63,27 +63,27 @@ def get_indicators(context_id: str) -> flask.Response:
     )
 
 
-@chart_bp.route('/markers/<string:context_id>', methods=['GET'])
+@chart_bp.route('/deals/<string:context_id>', methods=['GET'])
 @handle_api_errors
-def get_markers(context_id: str) -> flask.Response:
+def get_deals(context_id: str) -> flask.Response:
     """
-    Get trade markers (entry/exit points) for chart visualization.
+    Get deals (entry/exit points) for chart visualization.
 
     Args:
         context_id (str): Unique identifier of the strategy context.
 
     Returns:
-        Response: JSON response containing formatted trade markers.
+        Response: JSON response containing formatted deals data.
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    markers = Formatter._format_markers(
+    deals = Formatter._format_deals(
         context['instance'].completed_deals_log,
         context['instance'].open_deals_log
     )
 
     return flask.Response(
-        response=dumps(markers),
+        response=dumps(deals),
         status=200,
         mimetype='application/json'
     )

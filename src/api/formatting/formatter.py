@@ -113,7 +113,7 @@ class Formatter:
         return result
 
     @staticmethod
-    def _format_markers(
+    def _format_deals(
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
@@ -146,19 +146,19 @@ class Formatter:
                 )
 
                 if deal[0] == 0:
-                    styles = consts.MARKER_STYLES['open']['buy']
+                    styles = consts.DEAL_STYLES['open']['buy']
                     text = f'{comment} | +{deal[4]}'
 
                 else:
-                    styles = consts.MARKER_STYLES['open']['sell']
+                    styles = consts.DEAL_STYLES['open']['sell']
                     text = f'{comment} | -{deal[4]}'
 
-                marker = {
+                deal = {
                     'time': deal[2] * 0.001,
                     'text': text,
                     **styles
                 }
-                result.append(marker)
+                result.append(deal)
                 
             return result
 
@@ -175,18 +175,18 @@ class Formatter:
                     )
 
                     if prev_deal[0] == 0:
-                        styles = consts.MARKER_STYLES['open']['buy']
+                        styles = consts.DEAL_STYLES['open']['buy']
                         text = f'{comment} | +{position_size}'
                     else:
-                        styles = consts.MARKER_STYLES['open']['sell']
+                        styles = consts.DEAL_STYLES['open']['sell']
                         text = f'{comment} | -{position_size}'
 
-                    marker = {
+                    deal = {
                         'time': prev_deal[3] * 0.001,
                         'text': text,
                         **styles
                     }
-                    result.insert(len(result) - deals_count, marker)
+                    result.insert(len(result) - deals_count, deal)
 
                     position_size = Decimal('0.0')
                     deals_count = 0
@@ -199,18 +199,18 @@ class Formatter:
             )
 
             if deal[0] == 0:
-                styles = consts.MARKER_STYLES['close']['sell']
+                styles = consts.DEAL_STYLES['close']['sell']
                 text = f'{comment} | -{deal[7]}'
             else:
-                styles = consts.MARKER_STYLES['close']['buy']
+                styles = consts.DEAL_STYLES['close']['buy']
                 text = f'{comment} | +{deal[7]}'
 
-            marker = {
+            deal = {
                 'time': deal[4] * 0.001,
                 'text': text,
                 **styles
             }
-            result.append(marker)
+            result.append(deal)
 
             position_size += Decimal(str(deal[7]))
             deals_count += 1
@@ -229,18 +229,18 @@ class Formatter:
         )
 
         if last_deal[0] == 0:
-            styles = consts.MARKER_STYLES['open']['buy']
+            styles = consts.DEAL_STYLES['open']['buy']
             text = f'{comment} | +{position_size}'
         else:
-            styles = consts.MARKER_STYLES['open']['sell']
+            styles = consts.DEAL_STYLES['open']['sell']
             text = f'{comment} | -{position_size}'
 
-        marker = {
+        deal = {
             'time': last_deal[3] * 0.001,
             'text': text,
             **styles
         }
-        result.insert(len(result) - deals_count, marker)
+        result.insert(len(result) - deals_count, deal)
 
         for deal in open_deals:
             if deal[2] != last_deal[3]:
@@ -252,18 +252,18 @@ class Formatter:
                 )
 
                 if deal[0] == 0:
-                    styles = consts.MARKER_STYLES['open']['buy']
+                    styles = consts.DEAL_STYLES['open']['buy']
                     text = f'{comment} | +{deal[4]}'
                 else:
-                    styles = consts.MARKER_STYLES['open']['sell']
+                    styles = consts.DEAL_STYLES['open']['sell']
                     text = f'{comment} | -{deal[4]}'
 
-                marker = {
+                deal = {
                     'time': deal[2] * 0.001,
                     'text': text,
                     **styles
                 }
-                result.append(marker)
+                result.append(deal)
 
         return sorted(result, key=lambda x: x['time'])
 

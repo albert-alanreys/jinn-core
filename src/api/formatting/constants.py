@@ -20,7 +20,7 @@ CLOSE_SIGNAL_CODES: dict[int, str] = {
     800: 'Close Short | Liquidation'
 }
 
-MARKER_STYLES = {
+DEAL_STYLES = {
     'open': {
         'buy': {
             'position': 'belowBar',
