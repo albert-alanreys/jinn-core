@@ -47,6 +47,7 @@ class MarketClient(BaseClient):
         end: int
     ) -> list:
         try:
+            interval = self.get_valid_interval(interval)
             interval_ms = self.interval_ms[interval]
             step = interval_ms * 1000
 
@@ -90,6 +91,8 @@ class MarketClient(BaseClient):
         limit: int = 1000
     ) -> list:
         try:
+            interval = self.get_valid_interval(interval)
+
             if limit <= 1000:
                 return self._get_klines(
                     market=Market.FUTURES,
@@ -138,6 +141,13 @@ class MarketClient(BaseClient):
             return []
 
     @lru_cache
+    def get_valid_interval(self, interval: str | int) -> str:
+        if interval in self.intervals:
+            return self.intervals[interval]
+        
+        raise ValueError(f'Invalid interval: {interval}')
+
+    @lru_cache
     def get_price_precision(self, market: Market, symbol: str) -> float:
         try:
             symbol_info = self._get_symbol_info(market, symbol)
@@ -163,12 +173,6 @@ class MarketClient(BaseClient):
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/premiumIndex'
         params = {'symbol': symbol}
         return self.get(url, params)
-    
-    def get_valid_interval(self, interval: str | int) -> str:
-        if interval in self.intervals:
-            return self.intervals[interval]
-        
-        raise ValueError(f'Invalid interval: {interval}')
 
     def _get_klines(
         self,

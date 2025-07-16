@@ -151,37 +151,46 @@ class BaseStrategy(ABC):
         Args:
             market_data: Dictionary containing:
                 - symbol: str - Trading pair symbol
-                - klines: np.ndarray - OHLCV data with columns:
-                    [time, open, high, low, close, volume]
-                - extra_klines: dict - Additional timeframe data
                 - p_precision: float - Price precision step
                 - q_precision: float - Quantity precision step
+                - klines: np.ndarray - OHLCV data with columns:
+                    [time, open, high, low, close, volume]
+                - feeds: dict - Additional data
             max_open_deals: Maximum number of simultaneously open deals.
                             Determines number of rows in open_deals_log.
                             Each deal will have exactly 5 tracking values.
         """
 
+        # Deal logs
         self.completed_deals_log = np.empty((0, 13), dtype=np.float64)
         self.open_deals_log = np.full((max_open_deals, 5), np.nan)
 
+        # Position tracking
         self.position_size = np.nan
         self.entry_signal = np.nan
         self.entry_price = np.nan
         self.entry_date = np.nan
         self.deal_type = np.nan
 
+        # Market identity
         self.symbol = market_data['symbol']
+
+        # Precision parameters
+        self.p_precision = market_data['p_precision']
+        self.q_precision = market_data['q_precision']
+
+        # Core market data (klines)
         self.time = market_data['klines'][:, 0]
         self.open = market_data['klines'][:, 1]
         self.high = market_data['klines'][:, 2]
         self.low = market_data['klines'][:, 3]
         self.close = market_data['klines'][:, 4]
         self.volume = market_data['klines'][:, 5]
-        self.extra_klines = market_data['extra_klines']
 
-        self.p_precision = market_data['p_precision']
-        self.q_precision = market_data['q_precision']
+        # Supplementary feeds
+        self.feeds = market_data['feeds']
 
+        # Strategy parameters
         self.equity = self.params['initial_capital']
 
     @abstractmethod

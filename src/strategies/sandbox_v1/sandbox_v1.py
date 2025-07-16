@@ -24,9 +24,12 @@ class SandboxV1(BaseStrategy):
         "range_threshold":  30.0,
         "st_atr_period": 10,
         "st_factor": 3.0,
-        "feeds": [
-            ["symbol", '1d'],
-        ]
+        "feeds": {
+            "klines": {
+                "htf_1": ["symbol", '2h'],
+                "htf_2": ["symbol", '1d'],
+            }
+        }
     }
 
     # Parameters to be optimized and their possible values
@@ -66,9 +69,16 @@ class SandboxV1(BaseStrategy):
 
     # Frontend rendering settings for indicators
     indicator_options = {
-        'HTF C' : {
+        'HTF #1' : {
             'pane': 0,
             'type': 'line',
+            'color': encode_rgb(100, 140, 60),
+            'lineWidth': 2
+        },
+        'HTF #2' : {
+            'pane': 0,
+            'type': 'line',
+            'color': encode_rgb(80, 50, 180),
             'lineWidth': 2
         },
         'ST ↑' : {
@@ -105,8 +115,6 @@ class SandboxV1(BaseStrategy):
         }
     }
 
-    htf_color_1 = encode_rgb(0, 100, 0)
-    htf_color_2 = encode_rgb(139, 0, 0)
     supertrend_color_1 = encode_rgb(76, 175, 80)
     supertrend_color_2 = encode_rgb(255, 82, 82)
     volume_color_1 = encode_rgb(0, 137, 132)
@@ -118,22 +126,16 @@ class SandboxV1(BaseStrategy):
     def calculate(self, market_data) -> None:
         super().init_variables(market_data, 4)
 
-        extra_klines_values = list(self.extra_klines.values())
-        htf_time = extra_klines_values[0][:, 0]
-        htf_close = extra_klines_values[0][:, 4]
-        self.htf_close = qk.stretch(
-            source=htf_close,
-            main_time=self.time,
-            higher_time=htf_time
+        self.htf_1_c = qk.stretch(
+            higher_tf_source=self.feeds['klines']['htf_1'][:, 4],
+            higher_tf_time=self.feeds['klines']['htf_1'][:, 0],
+            target_tf_time=self.time
         )
-
-        # ltf_time = extra_klines[1][:, 0]
-        # ltf_close = extra_klines[1][:, 4]
-        # self.ltf_close = qk.shrink(
-        #     source=ltf_close,
-        #     main_time=self.time,
-        #     lower_time=ltf_time
-        # )
+        self.htf_2_c = qk.stretch(
+            higher_tf_source=self.feeds['klines']['htf_2'][:, 4],
+            higher_tf_time=self.feeds['klines']['htf_2'][:, 0],
+            target_tf_time=self.time
+        )
 
         self.entry_price_2 = np.full(self.time.shape[0], np.nan)
         self.entry_price_3 = np.full(self.time.shape[0], np.nan)
@@ -174,12 +176,6 @@ class SandboxV1(BaseStrategy):
         self.alert_close_long = False
 
         # graphics
-        self.htf_colors = np.where(
-            self.close > self.htf_close,
-            self.htf_color_1,
-            self.htf_color_2
-        )
-
         self.st_up = np.where(
             self.direcion == -1,
             self.supertrend,
@@ -257,13 +253,13 @@ class SandboxV1(BaseStrategy):
         )
 
         self.indicators = {
-            'HTF C' + (
-                f' {self.params['feeds'][-1][0]}'
-                if self.params['feeds'][-1][0] != 'symbol' else ''
-            ): {
-                'options': self.indicator_options['HTF C'],
-                'values': self.htf_close,
-                'colors': self.htf_colors
+            'HTF #1': {
+                'options': self.indicator_options['HTF #1'],
+                'values': self.htf_1_c
+            },
+            'HTF #2': {
+                'options': self.indicator_options['HTF #2'],
+                'values': self.htf_2_c
             },
             'ST ↑': {
                 'options': self.indicator_options['ST ↑'],
@@ -295,7 +291,7 @@ class SandboxV1(BaseStrategy):
         }
 
     @staticmethod
-    @nb.njit(cache=True, nogil=True)
+    # @nb.njit(cache=True, nogil=True)
     def _calculate_loop(
         initial_capital: float,
         commission: float,

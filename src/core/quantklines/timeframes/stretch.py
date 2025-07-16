@@ -8,9 +8,9 @@ import numba as nb
     nogil=True
 )
 def stretch(
-    source: np.ndarray,
-    main_time: np.ndarray,
-    higher_time: np.ndarray
+    higher_tf_source: np.ndarray,
+    higher_tf_time: np.ndarray,
+    target_tf_time: np.ndarray
 ) -> np.ndarray:
     """
     Adapt higher timeframe data to current timeframe by expanding values.
@@ -20,34 +20,35 @@ def stretch(
     the next higher timeframe boundary.
 
     Args:
-        source (np.ndarray): Data values from higher timeframe.
-        main_time (np.ndarray): Timestamps of main (target) timeframe.
-        higher_time (np.ndarray): Timestamps of higher (source) timeframe.
+        higher_tf_source: Data values from higher timeframe.
+        higher_tf_time: Timestamps of higher (source) timeframe.
+        target_tf_time: Timestamps of target (main) timeframe.
 
     Returns:
         np.ndarray: Array with higher TF values expanded to main TF.
     """
 
-    n = main_time.shape[0]
-    m = source.shape[0]
+    n_higher = higher_tf_time.shape[0]
+    n_target = target_tf_time.shape[0]
+    result = np.full(n_target, np.nan)
 
-    result = np.full(n, np.nan)
-
-    if m < 2:
+    if n_higher < 2:
         return result
 
-    duration = higher_time[1] - higher_time[0]
-    time_close = higher_time[0] + duration
+    duration = higher_tf_time[1] - higher_tf_time[0]
+    next_boundary = higher_tf_time[1]
 
-    i = 0
-    for j in range(1, n):
-        if main_time[j] >= time_close:
-            result[j] = source[i]
-            i += 1
+    higher_idx = 0
+    for target_idx in range(1, n_target):
+        if target_tf_time[target_idx] >= next_boundary:
+            result[target_idx] = higher_tf_source[higher_idx]
+            higher_idx += 1
 
-            if i < m:
-                time_close = higher_time[i] + duration
+            if higher_idx < n_higher:
+                next_boundary = higher_tf_time[higher_idx] + duration
+            else:
+                next_boundary = np.inf
         else:
-            result[j] = result[j - 1]
+            result[target_idx] = result[target_idx - 1]
 
     return result

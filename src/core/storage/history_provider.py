@@ -24,55 +24,87 @@ class HistoryProvider():
         client: 'BinanceClient | BybitClient',
         market: 'Market',
         symbol: str,
-        interval: str,
+        interval: str | int,
         start: str,
         end: str,
-        feeds: list | None
+        feeds: dict | None
     ) -> dict:
         p_precision, q_precision = self._fetch_precisions(
             client=client,
             market=market,
             symbol=symbol
         )
+
+        valid_interval = client.get_valid_interval(interval)
         klines = self._fetch_klines(
             client=client,
             market=market,
             symbol=symbol,
-            interval=client.get_valid_interval(interval),
+            interval=valid_interval,
             start=start,
             end=end
         )
 
-        klines_by_feed = {}
+        additional_data = self._fetch_additional_data(
+            client=client,
+            market=market,
+            symbol=symbol,
+            start=start,
+            end=end,
+            feeds=feeds
+        ) if feeds else {}
 
-        if feeds:
-            for feed in feeds:
-                extra_symbol = symbol if feed[0] == 'symbol' else feed[0]
-                extra_interval = client.get_valid_interval(feed[1])
-
-                extra_klines = self._fetch_klines(
-                    client=client,
-                    market=market,
-                    symbol=extra_symbol,
-                    interval=extra_interval,
-                    start=start,
-                    end=end
-                )
-
-                key = (extra_symbol, extra_interval)
-                klines_by_feed[key] = extra_klines
-
-        return {
+        result = {
             'market': market,
             'symbol': symbol,
-            'interval': interval,
+            'interval': valid_interval,
+            'start': start,
+            'end': end,
             'p_precision': p_precision,
             'q_precision': q_precision,
             'klines': klines,
-            'extra_klines': klines_by_feed,
-            'start': start,
-            'end': end
+            **additional_data
         }
+
+        return result
+
+    def _fetch_precisions(
+        self,
+        client: 'BinanceClient | BybitClient',
+        market: 'Market',
+        symbol: str,
+    ) -> tuple[float, float]:
+        database_name = f'{client.EXCHANGE.lower()}.db'
+        symbol_key = f'{market.value}_{symbol}'
+
+        precision_data = self.db_manager.fetch_one(
+            database_name=database_name,
+            table_name='symbol_precisions',
+            key_column='symbol',
+            key_value=symbol_key
+        )
+
+        if precision_data:
+            p_precision = precision_data[1]
+            q_precision = precision_data[2]
+        else:
+            p_precision = client.get_price_precision(market, symbol)
+            q_precision = client.get_qty_precision(market, symbol)
+
+            if p_precision is not None and q_precision is not None:
+                self.db_manager.save(
+                    database_name=database_name,
+                    table_name='symbol_precisions',
+                    columns={
+                        'symbol': 'TEXT PRIMARY KEY',
+                        'price_precision': 'REAL',
+                        'qty_precision': 'REAL'
+                    },
+                    rows=[[symbol_key, p_precision, q_precision]],
+                    drop=False
+                )
+
+        return p_precision, q_precision
 
     def _fetch_klines(
         self,
@@ -235,41 +267,37 @@ class HistoryProvider():
             [float(value) for value in kline[:6]]
             for kline in klines
         ]
-    
-    def _fetch_precisions(
+
+    def _fetch_additional_data(
         self,
         client: 'BinanceClient | BybitClient',
         market: 'Market',
         symbol: str,
-    ) -> tuple[float, float]:
-        database_name = f'{client.EXCHANGE.lower()}.db'
-        symbol_key = f'{market.value}_{symbol}'
+        start: str,
+        end: str,
+        feeds: dict
+    ) -> dict:
+        result = {}
 
-        precision_data = self.db_manager.fetch_one(
-            database_name=database_name,
-            table_name='symbol_precisions',
-            key_column='symbol',
-            key_value=symbol_key
-        )
+        if 'klines' in feeds:
+            klines_data = {}
 
-        if precision_data:
-            p_precision = precision_data[1]
-            q_precision = precision_data[2]
-        else:
-            p_precision = client.get_price_precision(market, symbol)
-            q_precision = client.get_qty_precision(market, symbol)
-
-            if p_precision is not None and q_precision is not None:
-                self.db_manager.save(
-                    database_name=database_name,
-                    table_name='symbol_precisions',
-                    columns={
-                        'symbol': 'TEXT PRIMARY KEY',
-                        'price_precision': 'REAL',
-                        'qty_precision': 'REAL'
-                    },
-                    rows=[[symbol_key, p_precision, q_precision]],
-                    drop=False
+            for feed_name, feed_config in feeds['klines'].items():
+                feed_symbol = (
+                    symbol if feed_config[0] == 'symbol' else feed_config[0]
                 )
+                feed_interval = feed_config[1]
 
-        return p_precision, q_precision
+                klines_data[feed_name] = self._fetch_klines(
+                    client=client,
+                    market=market,
+                    symbol=feed_symbol,
+                    interval=feed_interval,
+                    start=start,
+                    end=end
+                )
+            
+            if klines_data:
+                result['feeds'] = {'klines': klines_data}
+        
+        return result
