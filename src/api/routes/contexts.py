@@ -4,7 +4,7 @@ import flask
 
 from src.api.formatting import Formatter
 from src.api.utils.error_handling import handle_api_errors
-from src.services.testing.tester import Tester
+from src.services.backtesting.backtester import Backtester
 
 
 contexts_bp = flask.Blueprint(
@@ -116,7 +116,7 @@ def update_context(context_id: str) -> flask.Response:
     instance.calculate(context['market_data'])
 
     context['instance'] = instance
-    context['stats'] = Tester.test(instance)
+    context['stats'] = Backtester.test(instance)
 
     return flask.Response(
         response=dumps({'status': 'success'}),

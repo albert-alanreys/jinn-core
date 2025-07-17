@@ -8,10 +8,10 @@ from src.core.enums import Exchange, Market, Strategy
 from src.core.storage.history_provider import HistoryProvider
 from src.services.automation.api_clients.binance import BinanceClient
 from src.services.automation.api_clients.bybit import BybitClient
-from .tester import Tester
+from .backtester import Backtester
 
 
-class TestingBuilder:
+class BacktestingBuilder:
     def __init__(self, config: dict) -> None:
         self.exchange = config['exchange']
         self.market = config['market']
@@ -89,7 +89,7 @@ class TestingBuilder:
                             feeds=instance.params.get('feeds')
                         )
                         instance.calculate(market_data)
-                        stats = Tester.test(instance)
+                        stats = Backtester.test(instance)
 
                         context = {
                             'name': strategy.name,
@@ -122,7 +122,7 @@ class TestingBuilder:
                     feeds=instance.params.get('feeds')
                 )
                 instance.calculate(market_data)
-                stats = Tester.test(instance)
+                stats = Backtester.test(instance)
 
                 context = {
                     'name': self.strategy.name,

@@ -1,6 +1,6 @@
 Variable MODE (mode):
   1. enums.Mode.OPTIMIZATION — strategy optimization mode
-  2. enums.Mode.TESTING — testing mode
+  2. enums.Mode.BACKTESTING — backtesting mode
   3. enums.Mode.AUTOMATION — automation mode
 
 Key exchange:

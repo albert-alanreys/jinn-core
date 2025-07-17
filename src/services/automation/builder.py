@@ -5,7 +5,7 @@ from glob import glob
 from logging import getLogger
 
 from src.core.enums import Exchange, Strategy
-from src.services.testing.tester import Tester
+from src.services.backtesting.backtester import Backtester
 from .realtime_provider import RealtimeProvider
 from .api_clients.binance import BinanceClient
 from .api_clients.bybit import BybitClient
@@ -105,7 +105,7 @@ class AutomationBuilder():
                         feeds=instance.params.get('feeds')
                     )
                     instance.calculate(market_data)
-                    stats = Tester.test(instance)
+                    stats = Backtester.test(instance)
 
                     context = {
                         'name': strategy.name,
@@ -136,7 +136,7 @@ class AutomationBuilder():
                     feeds=instance.params.get('feeds')
                 )
                 instance.calculate(market_data)
-                stats = Tester.test(instance)
+                stats = Backtester.test(instance)
 
                 context = {
                     'name': self.strategy.name,

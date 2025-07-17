@@ -11,9 +11,9 @@ from src.strategies import SisterV1
 
 
 class Mode(Enum):
-    AUTOMATION = 'AUTOMATION'
     OPTIMIZATION = 'OPTIMIZATION'
-    TESTING = 'TESTING'
+    BACKTESTING = 'BACKTESTING'
+    AUTOMATION = 'AUTOMATION'
 
 
 class Exchange(Enum):

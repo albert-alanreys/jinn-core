@@ -139,13 +139,13 @@ py main.py
 1. Set the mode in `config.py`:
 
 ```python
-MODE = enums.Mode.TESTING
+MODE = enums.Mode.BACKTESTING
 ```
 
-2. Specify testing parameters in the `TESTING_CONFIG` dictionary:
+2. Specify testing parameters in the `BACKTESTING_CONFIG` dictionary:
 
 ```python
-TESTING_CONFIG = {
+BACKTESTING_CONFIG = {
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
@@ -171,7 +171,7 @@ py main.py
 1. Set the mode in `config.py`:
 
 ```python
-MODE = enums.Mode.TESTING
+MODE = enums.Mode.BACKTESTING
 ```
 
 2. Move the optimized parameter files from the `optimization` folder into the `backtesting` folder of the corresponding strategies. Adjust time periods if necessary.

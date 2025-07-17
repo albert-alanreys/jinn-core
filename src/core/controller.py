@@ -9,14 +9,15 @@ class Controller():
     def __init__(
         self,
         mode: Mode,
-        automation_config: dict,
         optimization_config: dict,
-        testing_config: dict
+        backtesting_config: dict,
+        automation_config: dict
     ) -> None:
         self.mode = mode
-        self.automation_config = automation_config
+
         self.optimization_config = optimization_config
-        self.testing_config = testing_config
+        self.backtesting_config = backtesting_config
+        self.automation_config = automation_config
 
         self.static_path = os.path.abspath(
             os.path.join('src', 'frontend', 'static')
@@ -30,18 +31,18 @@ class Controller():
 
     def _init_service(self) -> None:
         match self.mode:
-            case Mode.AUTOMATION:
-                from src.services.automation.builder import AutomationBuilder
-
-                builder = AutomationBuilder(self.automation_config)
             case Mode.OPTIMIZATION:
                 from src.services.optimization.builder import OptimizationBuilder
 
                 builder = OptimizationBuilder(self.optimization_config)
-            case Mode.TESTING:
-                from src.services.testing.builder import TestingBuilder
+            case Mode.BACKTESTING:
+                from src.services.backtesting.builder import BacktestingBuilder
 
-                builder = TestingBuilder(self.testing_config)
+                builder = BacktestingBuilder(self.backtesting_config)
+            case Mode.AUTOMATION:
+                from src.services.automation.builder import AutomationBuilder
+
+                builder = AutomationBuilder(self.automation_config)
             case _:
                 raise ValueError(f'Unsupported mode: {self.mode}')
 
@@ -62,7 +63,7 @@ class Controller():
                 optimizer = Optimizer(self.strategy_contexts)
                 optimizer.run()
 
-        if self.mode in (Mode.AUTOMATION, Mode.TESTING):
+        if self.mode in (Mode.AUTOMATION, Mode.BACKTESTING):
             self._start_server()
 
     def _start_server(self) -> None:

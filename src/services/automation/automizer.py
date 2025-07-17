@@ -2,7 +2,7 @@ from logging import getLogger
 from threading import Thread
 from time import sleep
 
-from src.services.testing.tester import Tester
+from src.services.backtesting.backtester import Backtester
 from .realtime_provider import RealtimeProvider
 
 
@@ -46,4 +46,4 @@ class Automizer():
         instance.calculate(context['market_data'])
         instance.trade()
 
-        context['stats'] = Tester.test(instance)
+        context['stats'] = Backtester.test(instance)
