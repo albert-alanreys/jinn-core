@@ -19,10 +19,10 @@ def get_klines(context_id: str) -> flask.Response:
     Get formatted klines (candlestick) data for chart visualization.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted klines data.
+        Response: JSON response containing formatted klines data
     """
 
     context = flask.current_app.strategy_contexts[context_id]
@@ -44,10 +44,10 @@ def get_indicators(context_id: str) -> flask.Response:
     Get calculated technical indicators for chart visualization.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted indicators data.
+        Response: JSON response containing formatted indicators data
     """
 
     context = flask.current_app.strategy_contexts[context_id]
@@ -70,10 +70,10 @@ def get_deals(context_id: str) -> flask.Response:
     Get deals (entry/exit points) for chart visualization.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted deals data.
+        Response: JSON response containing formatted deals data
     """
 
     context = flask.current_app.strategy_contexts[context_id]

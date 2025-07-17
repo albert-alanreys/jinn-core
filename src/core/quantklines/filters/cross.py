@@ -8,15 +8,15 @@ def cross(source1: np.ndarray, source2: np.ndarray) -> np.ndarray:
     Detects crossover points between two data series.
 
     The function identifies points where:
-    - source1 crosses above source2 (from below).
-    - source1 crosses below source2 (from above).
+    - source1 crosses above source2 (from below)
+    - source1 crosses below source2 (from above)
 
     Args:
-        source1 (np.ndarray): First input data series.
-        source2 (np.ndarray): Second input data series.
+        source1 (np.ndarray): First input data series
+        source2 (np.ndarray): Second input data series
 
     Returns:
-        np.ndarray[bool]: Boolean array with True values at crossover points.
+        np.ndarray[bool]: Boolean array with True values at crossover points
     """
 
     diff = source1 - source2

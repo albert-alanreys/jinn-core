@@ -12,7 +12,38 @@ from .backtester import Backtester
 
 
 class BacktestingBuilder:
+    """
+    Builds backtesting contexts for trading strategies.
+
+    Handles the creation of strategy contexts by loading configuration files,
+    fetching historical market data, and preparing strategy instances
+    for backtesting.
+
+    Args:
+        config (dict): Configuration dictionary containing:
+            - exchange: Exchange name (e.g., BINANCE, BYBIT)
+            - market: Market type (e.g., FUTURES, SPOT)
+            - symbol: Trading symbol (e.g., BTCUSDT)
+            - interval: Time interval for data (e.g., '1h')
+            - start: Start date for data (format: 'YYYY-MM-DD')
+            - end: End date for data (format: 'YYYY-MM-DD')
+            - strategy: Trading strategy to backtest
+    """
+
     def __init__(self, config: dict) -> None:
+        """
+        Initialize BacktestingBuilder with configuration parameters.
+
+        Sets up instance variables from configuration dictionary
+        and initializes history provider, Binance client,
+        Bybit client, and logger.
+
+        Args:
+            config (dict): Configuration dictionary containing exchange,
+                           market, symbol, interval, start, end,
+                           and strategy parameters
+        """
+
         self.exchange = config['exchange']
         self.market = config['market']
         self.symbol = config['symbol']
@@ -28,6 +59,25 @@ class BacktestingBuilder:
         self.logger = getLogger(__name__)
 
     def build(self) -> dict:
+        """
+        Construct backtesting contexts for all strategies.
+
+        Loads backtesting configurations from JSON files,
+        fetches historical market data, creates strategy instances,
+        and runs backtests. Falls back to instance config if no
+        strategy files are found.
+
+        Returns:
+            dict: Dictionary of strategy contexts keyed by context ID,
+                  each containing:
+                    - name: Strategy name
+                    - type: Strategy type
+                    - instance: Strategy instance
+                    - client: Exchange API client
+                    - market_data: Historical market data
+                    - stats: Backtesting statistics
+        """
+
         strategy_contexts = {}
 
         for strategy in Strategy:

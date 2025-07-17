@@ -12,7 +12,7 @@ def index() -> str:
     Serve main frontend application page.
     
     Returns:
-        Rendered HTML template with initial configuration.
+        Rendered HTML template with initial configuration
     """
 
     return flask.render_template(

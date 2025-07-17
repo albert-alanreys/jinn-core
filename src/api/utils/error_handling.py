@@ -11,10 +11,10 @@ def handle_api_errors(f: Callable) -> Callable:
     Returns JSON responses in a frontend-friendly format.
 
     Handles:
-    - KeyError: Context not found (404) or invalid data structure (400).
-    - TypeError: Data type mismatch (400).
-    - ValueError: Invalid request (400).
-    - Exception: All other errors (500).
+    - KeyError: Context not found (404) or invalid data structure (400)
+    - TypeError: Data type mismatch (400)
+    - ValueError: Invalid request (400)
+    - Exception: All other errors (500)
 
     Example error response:
     {
@@ -24,10 +24,10 @@ def handle_api_errors(f: Callable) -> Callable:
     }
 
     Args:
-        f (Callable): Flask route function to wrap.
+        f (Callable): Flask route function to wrap
 
     Returns:
-        Callable: Wrapped function with error handling.
+        Callable: Wrapped function with error handling
     """
 
     @wraps(f)

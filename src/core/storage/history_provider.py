@@ -15,7 +15,21 @@ if TYPE_CHECKING:
 
 
 class HistoryProvider():
+    """
+    Provides historical market data (klines, precisions) from exchanges
+    (Binance, Bybit) with local database caching functionality.
+    
+    Handles:
+    - Fetching price/quantity precisions with local caching
+    - Fetching klines data with smart local database management
+    - Optional additional data feeds
+    """
+
     def __init__(self) -> None:
+        """
+        Initializes the HistoryProvider with DBManager instance and logger.
+        """
+
         self.db_manager = DBManager()
         self.logger = getLogger(__name__)
 
@@ -29,6 +43,27 @@ class HistoryProvider():
         end: str,
         feeds: dict | None
     ) -> dict:
+        """
+        Fetches complete market data package including
+        klines, precisions and optional feeds.
+        
+        Args:
+            client: Exchange API client (Binance/Bybit)
+            market: Market type (spot/futures)
+            symbol: Trading symbol (e.g. 'BTCUSDT')
+            interval: Kline interval (str or int)
+            start: Start date in 'YYYY-MM-DD' format
+            end: End date in 'YYYY-MM-DD' format
+            feeds: Optional additional data feeds configuration
+            
+        Returns:
+            dict: Complete market data package including:
+                - Market metadata
+                - Price/quantity precisions
+                - Klines data
+                - Additional feeds if requested
+        """
+        
         p_precision, q_precision = self._fetch_precisions(
             client=client,
             market=market,
@@ -74,6 +109,19 @@ class HistoryProvider():
         market: 'Market',
         symbol: str,
     ) -> tuple[float, float]:
+        """
+        Fetches price and quantity precisions for a symbol
+        with local database caching.
+        
+        Args:
+            client: Exchange API client
+            market: Market type
+            symbol: Trading symbol
+            
+        Returns:
+            tuple: (price_precision, quantity_precision)
+        """
+
         database_name = f'{client.EXCHANGE.lower()}.db'
         symbol_key = f'{market.value}_{symbol}'
 
@@ -115,6 +163,30 @@ class HistoryProvider():
         start: str,
         end: str
     ) -> np.ndarray:
+        """
+        Smart klines fetcher with local database management.
+
+        Implements:
+        - Database caching
+        - Automatic gap filling
+        - Real-time kline validation
+        - Date range filtering
+
+        Args:
+            client: Exchange API client
+            market: Market type
+            symbol: Trading symbol
+            interval: Kline interval
+            start: Start date in 'YYYY-MM-DD' format
+            end: End date in 'YYYY-MM-DD' format
+
+        Returns:
+            np.ndarray: Array of klines data
+
+        Raises:
+            ValueError: If no klines available for requested period
+        """
+
         request_required = False
 
         database_name = f'{client.EXCHANGE.lower()}.db'
@@ -234,6 +306,24 @@ class HistoryProvider():
         start: int,
         end: int
     ) -> list:
+        """
+        Direct exchange API call for klines data with timestamp conversion.
+        
+        Args:
+            client: Exchange API client
+            market: Market type
+            symbol: Trading symbol
+            interval: Kline interval
+            start: Start timestamp in milliseconds
+            end: End timestamp in milliseconds
+            
+        Returns:
+            list: Raw klines data from exchange
+            
+        Raises:
+            ValueError: If no klines available from exchange
+        """
+        
         self.logger.info(
             f'Requesting klines | '
             f'{client.EXCHANGE} | '
@@ -277,6 +367,24 @@ class HistoryProvider():
         end: str,
         feeds: dict
     ) -> dict:
+        """
+        Fetches additional data feeds specified in the configuration.
+        
+        Currently supports:
+        - Secondary klines feeds with different symbols/intervals
+            
+        Args:
+            client: Exchange API client
+            market: Market type
+            symbol: Base trading symbol
+            start: Start date in 'YYYY-MM-DD' format
+            end: End date in 'YYYY-MM-DD' format
+            feeds: Feeds configuration dictionary
+            
+        Returns:
+            dict: Dictionary containing all requested additional feeds
+        """
+
         result = {}
 
         if 'klines' in feeds:

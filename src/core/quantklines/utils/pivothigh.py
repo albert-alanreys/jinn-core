@@ -22,13 +22,14 @@ def pivothigh(
 
     Args:
         source (np.ndarray): Input price series
-                             (leading and trailing NaNs are skipped).
-        leftbars (int): Number of bars to look back (left window size).
-        rightbars (int): Number of bars to look forward (right window size).
+                             (leading and trailing NaNs are skipped)
+        leftbars (int): Number of bars to look back (left window size)
+        rightbars (int): Number of bars to look forward (right window size)
 
     Returns:
-        np.ndarray: Array with pivot high values marked at their right window
-        edges, NaN elsewhere.
+        np.ndarray: Array with pivot high values marked
+                    at their right window edges,
+                    NaN elsewhere
     """
 
     n = source.shape[0]

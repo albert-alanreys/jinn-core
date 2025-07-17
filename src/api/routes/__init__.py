@@ -15,7 +15,7 @@ def register_routes(app: 'Flask') -> None:
     Register all application routes.
     
     Args:
-        app: Flask application instance.
+        app: Flask application instance
     """
 
     app.register_blueprint(core_bp)

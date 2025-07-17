@@ -103,9 +103,9 @@ class BaseStrategy(ABC):
         Initialize the trading strategy with a client and parameters.
 
         Args:
-            client: Exchange API client instance (Binance or Bybit).
-            all_params: Dictionary of parameters to override defaults.
-            opt_params: Parameters for optimization, either as a dict or list.
+            client: Exchange API client instance (Binance or Bybit)
+            all_params: Dictionary of parameters to override defaults
+            opt_params: Parameters for optimization, either as a dict or list
         """
 
         self.params = {

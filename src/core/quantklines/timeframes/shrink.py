@@ -20,12 +20,12 @@ def shrink(
     with corresponding lower timeframe values.
 
     Args:
-        lower_tf_source (np.ndarray): Data values from lower timeframe.
-        lower_tf_time (np.ndarray): Timestamps of lower (source) timeframe.
-        target_tf_time (np.ndarray): Timestamps of main (target) timeframe.
+        lower_tf_source (np.ndarray): Data values from lower timeframe
+        lower_tf_time (np.ndarray): Timestamps of lower (source) timeframe
+        target_tf_time (np.ndarray): Timestamps of main (target) timeframe
 
     Returns:
-        np.ndarray: 2D array with lower TF values aligned to main TF.
+        np.ndarray: 2D array with lower TF values aligned to main TF
     """
 
     n_lower = lower_tf_time.shape[0]

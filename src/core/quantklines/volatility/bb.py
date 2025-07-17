@@ -24,9 +24,9 @@ def bb(
     and lower band (SMA - mult * std) for the given period.
 
     Args:
-        source (np.ndarray): Input price series.
-        length (int): Period length for moving average and standard deviation.
-        mult (float): Multiplier for standard deviation bands width.
+        source (np.ndarray): Input price series
+        length (int): Period length for moving average and standard deviation
+        mult (float): Multiplier for standard deviation bands width
 
     Returns:
         Tuple[np.ndarray, np.ndarray, np.ndarray]: Three arrays containing:

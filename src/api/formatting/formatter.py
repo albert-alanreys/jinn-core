@@ -9,8 +9,24 @@ from . import constants as consts
 
 
 class Formatter:
+    """
+    Provides static methods for formatting strategy data, including
+    contexts, klines, indicators, deals, metrics, and trades. Intended
+    for preparing data for UI display.
+    """
+
     @staticmethod
     def format_contexts(strategy_contexts: dict) -> dict:
+        """
+        Formats raw strategy contexts into a concise dictionary suitable.
+
+        Args:
+            strategy_contexts (dict): Dictionary of strategy contexts
+
+        Returns:
+            dict: Formatted context data
+        """
+
         result = {}
 
         for cid, context in strategy_contexts.items():
@@ -45,6 +61,18 @@ class Formatter:
 
     @staticmethod
     def _format_klines(klines: np.ndarray) -> list:
+        """
+        Formats raw klines into a list of dictionaries
+        with OHLC data and timestamp.
+
+        Args:
+            klines (np.ndarray): 2D array of klines
+                                 [timestamp, open, high, low, close]
+
+        Returns:
+            list: Formatted klines
+        """
+
         return [
             {
                 'time': kline[0] * 0.001,
@@ -57,6 +85,19 @@ class Formatter:
 
     @staticmethod
     def _format_indicators(market_data: dict, indicators: dict) -> dict:
+        """
+        Formats indicator values and assigns corresponding colors.
+
+        Args:
+            market_data (dict): Market data containing klines
+                                and price precision
+            indicators (dict): Dictionary of indicators with values
+                               and optional colors
+
+        Returns:
+            dict: Formatted indicator series
+        """
+
         result = {}
         klines = market_data['klines']
         timestamps = klines[:, 0] * 0.001
@@ -117,6 +158,17 @@ class Formatter:
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
+        """
+        Formats completed and open deals into a list of dictionaries.
+
+        Args:
+            completed_deals_log (np.ndarray): Log of completed deals
+            open_deals_log (np.ndarray): Log of currently open deals
+
+        Returns:
+            list: Formatted deals
+        """
+
         if not completed_deals_log.size and not open_deals_log.size:
             return []
 
@@ -272,6 +324,17 @@ class Formatter:
         metrics: list,
         completed_deals_log: np.ndarray
     ) -> dict:
+        """
+        Formats raw metric values into labeled structures with suffixes.
+
+        Args:
+            metrics (list): List of metric dicts with 'title'
+                            and numeric series
+
+        Returns:
+            list: List of formatted metric objects
+        """
+
         if not completed_deals_log.size:
             return []
 
@@ -293,6 +356,17 @@ class Formatter:
         completed_deals_log: np.ndarray,
         equity: np.ndarray
     ) -> list:
+        """
+        Formats equity curve from completed deals and equity values.
+
+        Args:
+            completed_deals_log (np.ndarray): Completed deals log
+            equity (np.ndarray): Corresponding equity values
+
+        Returns:
+            list: Formatted list of equity time series points
+        """
+
         if not completed_deals_log.size:
             return []
 
@@ -315,6 +389,17 @@ class Formatter:
 
     @staticmethod
     def _format_metrics(metrics: list) -> list:
+        """
+        Formats raw metric values into labeled structures with suffixes.
+
+        Args:
+            metrics (list): List of metric dicts with 'title'
+                            and numeric series
+
+        Returns:
+            list: List of formatted metric objects
+        """
+
         result = []
 
         for metric in metrics:
@@ -348,6 +433,18 @@ class Formatter:
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray
     ) -> list:
+        """
+        Formats completed and open deals into structured trade rows
+        for tabular display.
+
+        Args:
+            completed_deals_log (np.ndarray): Log of closed trades
+            open_deals_log (np.ndarray): Log of currently open trades
+
+        Returns:
+            list: Table of formatted trade rows
+        """
+
         completed_deals = completed_deals_log[:, :12]
         result = []
 

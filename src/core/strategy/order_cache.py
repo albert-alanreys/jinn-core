@@ -17,8 +17,8 @@ class OrderCache:
         Initialize the order cache with storage location and exchange name.
 
         Args:
-            base_dir: Root directory for cache storage.
-            exchange: Name of the exchange. Used in cache filenames.
+            base_dir: Root directory for cache storage
+            exchange: Name of the exchange. Used in cache filenames
         """
 
         self.base_dir = base_dir
@@ -33,14 +33,14 @@ class OrderCache:
         Load cached order IDs for a specific trading symbol.
 
         Args:
-            symbol: Trading pair symbol (e.g., 'BTCUSDT').
+            symbol: Trading pair symbol (e.g., 'BTCUSDT')
 
         Returns:
             Dictionary containing:
             - stop_ids: List of active stop order IDs
             - limit_ids: List of active limit IDs
             
-            Returns empty lists for both if cache doesn't exist or is invalid.
+            Returns empty lists for both if cache doesn't exist or is invalid
         """
 
         path = self._get_cache_path(symbol)
@@ -65,7 +65,7 @@ class OrderCache:
         Save current order IDs to cache for a specific trading symbol.
 
         Args:
-            symbol: Trading pair symbol (e.g., 'BTCUSDT').
+            symbol: Trading pair symbol (e.g., 'BTCUSDT')
             order_ids: Dictionary containing:
                       - stop_ids: List of stop order IDs to cache
                       - limit_ids: List of limit IDs to cache
@@ -91,7 +91,7 @@ class OrderCache:
         Generate cache file path for a trading symbol.
 
         Args:
-            symbol: Trading pair symbol (e.g., 'BTCUSDT').
+            symbol: Trading pair symbol (e.g., 'BTCUSDT')
 
         Returns:
             Full path to the cache file in format:

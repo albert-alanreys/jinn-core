@@ -8,6 +8,16 @@ from src.services.automation.api_clients.telegram import TelegramClient
 
 
 class Optimizer:
+    """
+    Optimizes trading strategy parameters using genetic algorithm.
+
+    Performs parameter optimization across multiple strategies in parallel,
+    using a combination of selection, recombination and mutation operations.
+
+    Args:
+        strategy_contexts (dict): Dictionary of strategy contexts from Builder
+    """
+
     ITERATIONS = 10000
     POPULATION_SIZE = 100
     MAX_POPULATION_SIZE = 500
@@ -19,6 +29,16 @@ class Optimizer:
         self.logger = getLogger(__name__)
 
     def run(self) -> None:
+        """
+        Execute the optimization process.
+
+        Manages the complete optimization workflow:
+        1. Logs optimization start.
+        2. Runs parallel optimizations.
+        3. Saves best parameters.
+        4. Logs completion.
+        """
+
         summary = [
             ' | '.join([
                 item['name'],
@@ -49,6 +69,21 @@ class Optimizer:
         self.telegram_client.send_message('✅ Optimization completed')
 
     def _optimize(self, strategy_context: dict) -> list:
+        """
+        Optimize parameters for a single strategy.
+
+        Executes genetic algorithm optimization cycle consisting of:
+        population creation, selection, recombination, mutation, and 
+        population management over multiple iterations.
+
+        Args:
+            strategy_context (dict): Context dictionary for the strategy
+                                     containing type, client, and market data
+
+        Returns:
+            list: Best parameters found during optimization (3 parameter sets)
+        """
+
         self._init_optimization(strategy_context)
 
         for _ in range(3):
@@ -68,6 +103,16 @@ class Optimizer:
         return self.best_params
 
     def _init_optimization(self, strategy_context: dict) -> None:
+        """
+        Initialize optimization variables for a single strategy.
+
+        Sets up strategy instance, client, training/test data,
+        population dictionary, and best parameters list.
+
+        Args:
+            strategy_context (dict): Context dictionary for the strategy
+        """
+
         self.strategy = strategy_context['type']
         self.client = strategy_context['client']
         self.train_data = strategy_context['market_data']['train']
@@ -77,6 +122,14 @@ class Optimizer:
         self.best_params = []
 
     def _create(self) -> None:
+        """
+        Create initial population of random parameter combinations.
+
+        Generates POPULATION_SIZE random samples from strategy's optimization
+        parameter space, evaluates their fitness on training data, and
+        stores them in population dictionary.
+        """
+
         samples = [
             [               
                 random.choice(values)
@@ -92,6 +145,21 @@ class Optimizer:
         self.sample_len = len(self.strategy.opt_params)
 
     def _evaluate(self, sample: list, market_data: dict) -> float:
+        """
+        Evaluate strategy performance with given parameters.
+
+        Instantiates strategy with provided parameters, runs calculation
+        on market data, and computes fitness score based on completed
+        deals performance relative to initial capital.
+
+        Args:
+            sample (list): Parameter set to evaluate
+            market_data (dict): Dataset to evaluate against
+
+        Returns:
+            float: Fitness score (performance metric as percentage)
+        """
+
         strategy_instance = self.strategy(self.client, opt_params=sample)
         strategy_instance.calculate(market_data)
 
@@ -103,6 +171,14 @@ class Optimizer:
         return score
 
     def _select(self) -> None:
+        """
+        Select two parent samples for recombination.
+
+        Uses tournament selection: 50% chance to select best individual
+        plus random individual, 50% chance to select two random individuals.
+        Selected parents are stored in self.parents.
+        """
+
         if random.randint(0, 1) == 0:
             best_score = max(self.population)
             parent_1 = self.population[best_score]
@@ -116,6 +192,16 @@ class Optimizer:
             self.parents = random.sample(list(self.population.values()), 2)
 
     def _recombine(self) -> None:
+        """
+        Create offspring through crossover of selected parents.
+
+        Implements two crossover strategies:
+        - Single-point crossover: splits at random position
+        - Two-point crossover: exchanges middle segment between parents
+        
+        Resulting child is stored in self.child.
+        """
+
         r_number = random.randint(0, 1)
 
         if r_number == 0:
@@ -136,6 +222,14 @@ class Optimizer:
             )
 
     def _mutate(self) -> None:
+        """
+        Apply mutation to the offspring.
+
+        With 90% probability mutates single random gene,
+        with 10% probability mutates all genes.
+        Mutation selects random values from corresponding parameter ranges.
+        """
+
         if random.random() <= 0.9:
             gene_num = random.randint(0, self.sample_len - 1)
             gene_value = random.choice(
@@ -149,14 +243,35 @@ class Optimizer:
                 )
 
     def _expand(self) -> None:
+        """
+        Add mutated offspring to population.
+
+        Evaluates fitness of the child on training data and
+        adds it to the population dictionary.
+        """
+
         fitness = self._evaluate(self.child, self.train_data)
         self.population[fitness] = self.child
 
     def _kill(self) -> None:
+        """
+        Remove worst individuals to maintain population size.
+
+        Removes individuals with lowest fitness scores until
+        population size is within MAX_POPULATION_SIZE limit.
+        """
+
         while len(self.population) > self.MAX_POPULATION_SIZE:
             self.population.pop(min(self.population))
 
     def _destroy(self) -> None:
+        """
+        Catastrophic population reduction event.
+
+        With 0.1% probability removes bottom 50% of population
+        to prevent premature convergence and maintain diversity.
+        """
+
         if random.random() > 0.001:
             return
 
@@ -168,7 +283,18 @@ class Optimizer:
         for i in range(int(len(self.population) * 0.5)):
             self.population.pop(sorted_population[i][0])
 
-    def _get_best_sample(self) -> None:
+    def _get_best_sample(self) -> list:
+        """
+        Select best parameter set based on combined train/test performance.
+
+        Evaluates all population samples on test data and selects
+        the one with highest combined fitness (50% train + 50% test).
+
+        Returns:
+            list: Best parameter sample considering
+                  both training and test results
+        """
+
         best_score = float('-inf')
         best_sample = None
 
@@ -183,6 +309,14 @@ class Optimizer:
         return best_sample
 
     def _save_params(self) -> None:
+        """
+        Save optimized parameters to strategy JSON files.
+
+        Preserves existing optimization results while adding new ones.
+        Files are organized by exchange/market/symbol/interval structure
+        and stored in strategy-specific optimization directories.
+        """
+
         for strategy in self.strategy_contexts.values():
             filename = (
                 f'{strategy['client'].EXCHANGE}_'

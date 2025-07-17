@@ -7,6 +7,14 @@ from src.core.controller import Controller
 
 
 def main() -> None:
+    """
+    Entry point for the Jinn trading application.
+
+    Initializes the application environment by loading environment variables,
+    setting up logging configuration, and starting the controller with
+    configuration parameters from the config module.
+    """
+
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
 

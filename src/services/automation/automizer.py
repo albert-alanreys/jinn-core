@@ -7,13 +7,42 @@ from .realtime_provider import RealtimeProvider
 
 
 class Automizer():
+    """
+    Automates trading strategies execution in real-time.
+
+    Manages continuous execution of trading strategies by monitoring
+    market data updates and triggering strategy calculations and trades.
+    Runs in a separate daemon thread to avoid blocking the main application.
+
+    Args:
+        strategy_contexts (dict): Dictionary of strategy contexts to automate,
+                                  prepared by AutomationBuilder
+    """
+
     def __init__(self, strategy_contexts: dict) -> None:
+        """
+        Initialize Automizer with strategy contexts.
+
+        Sets up strategy contexts, realtime data provider, and logger.
+
+        Args:
+            strategy_contexts (dict): Prepared strategy contexts with
+                                      instances, clients, and market data
+        """
+
         self.strategy_contexts = strategy_contexts
 
         self.realtime_provider = RealtimeProvider()
         self.logger = getLogger(__name__)
 
     def run(self) -> None:
+        """
+        Start the automation process.
+
+        Logs summary of strategies being automated and launches
+        the automation thread.
+        """
+
         summary = [
             ' | '.join([
                 item['name'],
@@ -28,6 +57,14 @@ class Automizer():
         Thread(target=self._automate, daemon=True).start()
 
     def _automate(self) -> None:
+        """
+        Continuous automation loop (runs in background thread).
+
+        Periodically checks for market data updates and executes
+        strategies when new data is available. Runs indefinitely
+        with 1-second intervals between checks.
+        """
+
         while True:
             for cid, context in self.strategy_contexts.items():
                 try:
@@ -40,6 +77,15 @@ class Automizer():
             sleep(1.0)
 
     def _execute_strategy(self, context_id: str) -> None:
+        """
+        Execute a single strategy's calculations and trades.
+
+        Args:
+            context_id (str): ID of the strategy context to execute
+
+        Updates strategy statistics after execution using Backtester.
+        """
+
         context = self.strategy_contexts[context_id]
 
         instance = context['instance']

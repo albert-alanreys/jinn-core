@@ -8,11 +8,11 @@ def sma(source: np.ndarray, length: np.int16) -> np.ndarray:
     Calculate SMA (Simple Moving Average) of a data series.
 
     Args:
-        source (np.ndarray): Input series (leading NaNs are skipped).
-        length (int): SMA period length.
+        source (np.ndarray): Input series (leading NaNs are skipped)
+        length (int): SMA period length
 
     Returns:
-        np.ndarray: SMA values array.
+        np.ndarray: SMA values array
     """
 
     n = source.shape[0]

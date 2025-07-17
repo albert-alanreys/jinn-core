@@ -10,7 +10,37 @@ from src.services.automation.api_clients.bybit import BybitClient
 
 
 class OptimizationBuilder:
+    """
+    Builds optimization contexts for trading strategies.
+
+    Handles the creation of strategy contexts by loading configuration files,
+    fetching market data, and preparing data splits for training and testing.
+
+    Args:
+        config (dict): Configuration dictionary containing:
+            - strategy: Trading strategy to optimize
+            - exchange: Exchange name (e.g., BINANCE, BYBIT)
+            - market: Market type (e.g., FUTURES, SPOT)
+            - symbol: Trading symbol (e.g., BTCUSDT)
+            - interval: Time interval for data (e.g., '1h')
+            - start: Start date for data (format: 'YYYY-MM-DD')
+            - end: End date for data (format: 'YYYY-MM-DD')
+    """
+
     def __init__(self, config: dict) -> None:
+        """
+        Initialize OptimizationBuilder with configuration parameters.
+
+        Sets up instance variables from configuration dictionary
+        and initializes history provider, Binance client,
+        Bybit client, and logger.
+
+        Args:
+            config (dict): Configuration dictionary containing strategy,
+                           exchange, market, symbol, interval,
+                           start, and end parameters
+        """
+
         self.strategy = config['strategy']
         self.exchange = config['exchange']
         self.market = config['market']
@@ -26,6 +56,22 @@ class OptimizationBuilder:
         self.logger = getLogger(__name__)
 
     def build(self) -> dict:
+        """
+        Construct optimization contexts for all strategies.
+
+        Loads optimization configurations from JSON files,
+        fetches market data, and creates contexts for each strategy.
+        Falls back to instance config if no strategy files are found.
+
+        Returns:
+            dict: Dictionary of strategy contexts keyed by context ID,
+                  each containing:
+                    - name: Strategy name
+                    - type: Strategy type
+                    - client: Exchange API client
+                    - market_data: Training and test data
+        """
+
         strategy_contexts = {}
 
         for strategy in Strategy:
@@ -128,6 +174,29 @@ class OptimizationBuilder:
         end: str,
         feeds: list | None
     ) -> dict:
+        """
+        Fetch and split market data into training and test sets.
+
+        Splits the total date range into 70% training and 30% test periods,
+        then fetches historical data for both periods
+        using the history provider.
+
+        Args:
+            client (BinanceClient | BybitClient): Exchange API client instance
+            market (Market): Market type (FUTURES/SPOT)
+            symbol (str): Trading symbol
+            interval (str): Time interval for data
+            start (str): Start date (format: 'YYYY-MM-DD')
+            end (str): End date (format: 'YYYY-MM-DD')
+            feeds (list | None): Optional list of data feeds
+                                 required by strategy
+
+        Returns:
+            dict: Dictionary containing:
+                - train: Training dataset (70% of period)
+                - test: Test dataset (remaining 30%)
+        """
+
         start_date = datetime.strptime(start, '%Y-%m-%d')
         end_date = datetime.strptime(end, '%Y-%m-%d')
 

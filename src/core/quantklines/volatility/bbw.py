@@ -21,12 +21,12 @@ def bbw(
     lower Bollinger Bands, expressed as a percentage of the middle band (SMA).
 
     Args:
-        source (np.ndarray): Input price series.
-        length (int): Period length for moving average and standard deviation.
-        mult (float): Multiplier for standard deviation bands width.
+        source (np.ndarray): Input price series
+        length (int): Period length for moving average and standard deviation
+        mult (float): Multiplier for standard deviation bands width
 
     Returns:
-        np.ndarray: Array containing Bollinger Bands Width values.
+        np.ndarray: Array containing Bollinger Bands Width values
     """
 
     mean = sma(source, length)

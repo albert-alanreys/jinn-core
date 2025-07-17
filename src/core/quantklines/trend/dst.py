@@ -26,11 +26,11 @@ def dst(
     Unlike standard SuperTrend, maintains both bands.
 
     Args:
-        high (np.ndarray): High price series.
-        low (np.ndarray): Low price series.
-        close (np.ndarray): Close price series.
-        factor (float): Multiplier for ATR band width.
-        atr_length (int): Period length for ATR calculation.
+        high (np.ndarray): High price series
+        low (np.ndarray): Low price series
+        close (np.ndarray): Close price series
+        factor (float): Multiplier for ATR band width
+        atr_length (int): Period length for ATR calculation
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:

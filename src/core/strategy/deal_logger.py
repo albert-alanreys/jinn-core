@@ -31,40 +31,40 @@ def update_completed_deals_log(
     Returns updated log and calculated PnL.
 
     Args:
-        completed_deals_log: Existing log array [n,13] or empty [0,13].
-        commission (float64): Broker commission rate in percent.
-        deal_type (float64): Type of deal (0 for long, 1 for short).
-        entry_signal (float64): Signal value at entry.
-        exit_signal (float64): Signal value at exit.
-        entry_date (float64): Timestamp of entry.
-        exit_date (float64): Timestamp of exit.
-        entry_price (float64): Price at entry.
-        exit_price (float64): Price at exit.
-        position_size (float64): Size of the position.
-        initial_capital (float64): Initial capital for PnL calculations.
+        completed_deals_log: Existing log array [n,13] or empty [0,13]
+        commission (float64): Broker commission rate in percent
+        deal_type (float64): Type of deal (0 for long, 1 for short)
+        entry_signal (float64): Signal value at entry
+        exit_signal (float64): Signal value at exit
+        entry_date (float64): Timestamp of entry
+        exit_date (float64): Timestamp of exit
+        entry_price (float64): Price at entry
+        exit_price (float64): Price at exit
+        position_size (float64): Size of the position
+        initial_capital (float64): Initial capital for PnL calculations
 
     Returns:
         tuple: (updated_log, pnl) where:
             updated_log: New log array [n+1,13] with fields:
-                [:, 0] - deal_type (0=long, 1=short).
-                [:, 1] - entry_signal (signal code).
-                [:, 2] - exit_signal (signal code).
-                [:, 3] - entry_date (timestamp).
-                [:, 4] - exit_date (timestamp).
-                [:, 5] - entry_price (USDT).
-                [:, 6] - exit_price (USDT).
-                [:, 7] - position_size (units).
-                [:, 8] - pnl (absolute USDT).
-                [:, 9] - pnl (percentage).
-                [:,10] - cumulative_pnl (USDT).
-                [:,11] - cumulative_pnl (%).
-                [:,12] - total_commission (USDT).
-            pnl: Calculated profit/loss for this deal in USDT.
+                [:, 0] - deal_type (0=long, 1=short)
+                [:, 1] - entry_signal (signal code)
+                [:, 2] - exit_signal (signal code)
+                [:, 3] - entry_date (timestamp)
+                [:, 4] - exit_date (timestamp)
+                [:, 5] - entry_price (USDT)
+                [:, 6] - exit_price (USDT)
+                [:, 7] - position_size (units)
+                [:, 8] - pnl (absolute USDT)
+                [:, 9] - pnl (percentage)
+                [:,10] - cumulative_pnl (USDT)
+                [:,11] - cumulative_pnl (%)
+                [:,12] - total_commission (USDT)
+            pnl: Calculated profit/loss for this deal in USDT
 
     Notes:
-        - For empty position_size returns original log and 0 pnl.
-        - Automatically handles empty input log case.
-        - All monetary values rounded to 2 decimal places.
+        For empty position_size returns original log and 0 pnl.
+        Automatically handles empty input log case.
+        All monetary values rounded to 2 decimal places.
     """
 
     total_commission = round(

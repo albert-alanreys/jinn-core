@@ -13,6 +13,25 @@ def create_app(
     strategy_contexts: dict,
     mode: Mode
 ) -> Flask:
+    """
+    Creates and configures a Flask application instance with necessary
+    routes, CORS settings, and strategy context integration.
+
+    Depending on the mode, it may also launch a background handler
+    to monitor and process strategy updates.
+
+    Args:
+        import_name (str): Name of the application package
+        static_folder (str): Path to the folder with static files
+        template_folder (str): Path to the folder with HTML templates
+        strategy_contexts (dict): Dictionary mapping strategy IDs
+                                  to their contexts
+        mode (Mode): Operating mode of the application
+
+    Returns:
+        Flask: Configured Flask application instance
+    """
+
     app = Flask(
         import_name=import_name,
         static_folder=static_folder,

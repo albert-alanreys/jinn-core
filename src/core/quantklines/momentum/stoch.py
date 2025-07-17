@@ -22,13 +22,13 @@ def stoch(
     the high-low range over the specified period (0-100 scale).
 
     Args:
-        source (np.ndarray): Closing price series.
-        high (np.ndarray): High price series.
-        low (np.ndarray): Low price series.
-        length (int): Lookback period for high/low calculation.
+        source (np.ndarray): Closing price series
+        high (np.ndarray): High price series
+        low (np.ndarray): Low price series
+        length (int): Lookback period for high/low calculation
 
     Returns:
-        np.ndarray: Stochastic oscillator values (0-100), NaN where invalid.
+        np.ndarray: Stochastic oscillator values (0-100), NaN where invalid
     """
 
     n = source.shape[0]

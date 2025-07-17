@@ -19,14 +19,14 @@ def tr(
     Calculate True Range (TR) values from price series.
 
     Args:
-        high (np.ndarray): High price series.
-        low (np.ndarray): Low price series.
-        close (np.ndarray): Close price series.
+        high (np.ndarray): High price series
+        low (np.ndarray): Low price series
+        close (np.ndarray): Close price series
         handle_nan (bool): If True, computes first bar TR using current close,
-                           if False, returns NaN for first bar.
+                           if False, returns NaN for first bar
 
     Returns:
-        np.ndarray: True Range values array, NaN where invalid.
+        np.ndarray: True Range values array, NaN where invalid
     """
 
     n = high.shape[0]

@@ -22,13 +22,13 @@ def wpr(
     the high-low range over the specified period (-100 to 0 scale).
 
     Args:
-        close (np.ndarray): Closing price series.
-        high (np.ndarray): High price series.
-        low (np.ndarray): Low price series.
-        length (int): Lookback period for high/low calculation.
+        close (np.ndarray): Closing price series
+        high (np.ndarray): High price series
+        low (np.ndarray): Low price series
+        length (int): Lookback period for high/low calculation
 
     Returns:
-        np.ndarray: WPR values (-100 to 0), NaN where invalid.
+        np.ndarray: WPR values (-100 to 0), NaN where invalid
     """
 
     n = close.shape[0]

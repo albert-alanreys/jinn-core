@@ -12,7 +12,34 @@ from .api_clients.bybit import BybitClient
 
 
 class AutomationBuilder():
+    """
+    Builds automation contexts for trading strategies.
+
+    Handles the creation of strategy contexts by loading configuration files,
+    fetching real-time market data, and preparing strategy instances
+    for automated trading.
+
+    Args:
+        config (dict): Configuration dictionary containing:
+            - exchange: Exchange name (e.g., BINANCE, BYBIT)
+            - symbol: Trading symbol (e.g., BTCUSDT)
+            - interval: Time interval for data (e.g., '1h')
+            - strategy: Trading strategy to automate
+    """
+
     def __init__(self, config: dict) -> None:
+        """
+        Initialize AutomationBuilder with configuration parameters.
+
+        Sets up instance variables from configuration dictionary
+        and initializes realtime provider, Binance client,
+        Bybit client, and logger.
+
+        Args:
+            config (dict): Configuration dictionary containing exchange,
+                           symbol, interval, and strategy parameters
+        """
+
         self.exchange = config['exchange']
         self.symbol = config['symbol']
         self.interval = config['interval']
@@ -25,6 +52,26 @@ class AutomationBuilder():
         self.logger = getLogger(__name__)
 
     def build(self) -> dict:
+        """
+        Construct automation contexts for all strategies.
+
+        Loads automation configurations from JSON files,
+        fetches real-time market data, creates strategy instances,
+        and runs backtests. Falls back to instance config if no
+        strategy files are found.
+
+        Returns:
+            dict: Dictionary of strategy contexts keyed by context ID,
+                  each containing:
+                    - name: Strategy name
+                    - type: Strategy type
+                    - instance: Strategy instance
+                    - client: Exchange API client
+                    - market_data: Current market data
+                    - stats: Backtesting statistics
+                    - updated: Flag indicating if context was updated
+        """
+
         strategy_contexts = {}
 
         for strategy in Strategy:

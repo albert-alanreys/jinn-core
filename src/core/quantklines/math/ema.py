@@ -8,11 +8,11 @@ def ema(source: np.ndarray, length: np.int16) -> np.ndarray:
     Calculate the Exponential Moving Average (EMA) of a data series.
 
     Args:
-        source (np.ndarray): Input series (leading NaNs are skipped).
-        length (np.int16): EMA period length.
+        source (np.ndarray): Input series (leading NaNs are skipped)
+        length (np.int16): EMA period length
 
     Returns:
-        np.ndarray: EMA values array.
+        np.ndarray: EMA values array
     """
 
     n = source.shape[0]

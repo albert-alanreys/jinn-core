@@ -5,10 +5,33 @@ from logging import getLogger
 
 
 class DBManager():
+    """
+    A class for managing SQLite database operations such as fetching
+    and saving data, with built-in error handling and logging.
+    """
+
     def __init__(self) -> None:
+        """
+        Initialize the DBManager instance with a logger.
+        """
+
         self.logger = getLogger(__name__)
 
     def fetch_all(self, database_name: str, table_name: str) -> list:
+        """
+        Retrieve all rows from the specified table
+        in the given SQLite database.
+
+        If the table does not exist, an empty list is returned.
+
+        Args:
+            database_name (str): Name of the database file
+            table_name (str): Name of the table to fetch data from
+
+        Returns:
+            list: A list of rows from the table, or an empty list on failure
+        """
+
         try:
             with self._db_session(database_name) as cursor:
                 query_to_check = (
@@ -36,6 +59,22 @@ class DBManager():
         key_column: str,
         key_value: str
     ) -> list:
+        """
+        Retrieve a single row from the specified table where the key column
+        matches the provided key value.
+
+        If the table or row does not exist, an empty list is returned.
+
+        Args:
+            database_name (str): Name of the database file
+            table_name (str): Name of the table to query
+            key_column (str): Column name used as a key
+            key_value (str): Value to match in the key column
+
+        Returns:
+            list: The matched row as a list, or an empty list on failure
+        """
+
         try:
             with self._db_session(database_name) as cursor:
                 query_to_check = (
@@ -72,6 +111,20 @@ class DBManager():
         rows: list,
         drop: bool
     ) -> None:
+        """
+        Save multiple rows into the specified table in the SQLite database.
+
+        If the table does not exist, it will be created using the provided
+        column definitions. Optionally drops the table before inserting.
+
+        Args:
+            database_name (str): Name of the database file
+            table_name (str): Name of the table to save data into
+            columns (dict): Dictionary mapping column names to SQLite types
+            rows (list): List of rows (tuples) to be inserted
+            drop (bool): If True, the table will be dropped before insertion
+        """
+
         try:
             with self._db_session(database_name) as cursor:
                 if drop:
@@ -107,6 +160,19 @@ class DBManager():
 
     @contextmanager
     def _db_session(self, database_name: str):
+        """
+        Internal context manager for handling database connections
+        and transactions safely.
+
+        Commits the transaction if successful, otherwise rolls back.
+
+        Args:
+            database_name (str): Name of the database file
+
+        Yields:
+            sqlite3.Cursor: Cursor object for executing SQL commands
+        """
+
         db_path = os.path.join(
             os.path.dirname(__file__), 'databases', database_name
         )

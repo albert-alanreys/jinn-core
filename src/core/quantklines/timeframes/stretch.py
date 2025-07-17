@@ -20,12 +20,12 @@ def stretch(
     the next higher timeframe boundary.
 
     Args:
-        higher_tf_source: Data values from higher timeframe.
-        higher_tf_time: Timestamps of higher (source) timeframe.
-        target_tf_time: Timestamps of target (main) timeframe.
+        higher_tf_source: Data values from higher timeframe
+        higher_tf_time: Timestamps of higher (source) timeframe
+        target_tf_time: Timestamps of target (main) timeframe
 
     Returns:
-        np.ndarray: Array with higher TF values expanded to main TF.
+        np.ndarray: Array with higher TF values expanded to main TF
     """
 
     n_higher = higher_tf_time.shape[0]

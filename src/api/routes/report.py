@@ -20,10 +20,10 @@ def get_overview_metrics(context_id: str) -> flask.Response:
     Get formatted overview metrics data for a specific strategy context.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted metrics data.
+        Response: JSON response containing formatted metrics data
     """
 
     context = flask.current_app.strategy_contexts[context_id]
@@ -46,10 +46,10 @@ def get_overview_equity(context_id: str) -> flask.Response:
     Get formatted equity curve data for a specific strategy context.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted equity data.
+        Response: JSON response containing formatted equity data
     """
 
     context = flask.current_app.strategy_contexts[context_id]
@@ -72,10 +72,10 @@ def get_metrics(context_id: str) -> flask.Response:
     Get metrics data for a specific strategy context.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted metrics data.
+        Response: JSON response containing formatted metrics data
     """
 
     context = flask.current_app.strategy_contexts[context_id]
@@ -95,10 +95,10 @@ def get_trades(context_id: str) -> flask.Response:
     Get trades data for a specific strategy context.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted trades data.
+        Response: JSON response containing formatted trades data
     """
 
     context = flask.current_app.strategy_contexts[context_id]

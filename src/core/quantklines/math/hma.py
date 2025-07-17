@@ -16,11 +16,11 @@ def hma(source: np.ndarray, length: np.int16) -> np.ndarray:
     4. Apply WMA to the raw HMA with period sqrt(length) to get the final HMA.
 
     Args:
-        source (np.ndarray): Input series (leading NaNs are skipped).
-        length (int): HMA period length.
+        source (np.ndarray): Input series (leading NaNs are skipped)
+        length (int): HMA period length
 
     Returns:
-        np.ndarray: HMA values array.
+        np.ndarray: HMA values array
     """
 
     n = source.shape[0]

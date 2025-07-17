@@ -22,7 +22,7 @@ def get_all_contexts() -> flask.Response:
 
     Returns:
         Response: JSON response containing summarized data 
-                  for all active strategy contexts.
+                  for all active strategy contexts
     """
 
     contexts = Formatter.format_contexts(flask.current_app.strategy_contexts)
@@ -41,10 +41,10 @@ def get_context(context_id: str) -> flask.Response:
     Get summary information for specific strategy context.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing base context data.
+        Response: JSON response containing base context data
     """
 
     context = Formatter.format_contexts(
@@ -65,7 +65,7 @@ def update_context(context_id: str) -> flask.Response:
     Update parameter in strategy context and restart strategy.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Request Body:
         {
@@ -74,7 +74,7 @@ def update_context(context_id: str) -> flask.Response:
         }
 
     Returns:
-        Response: JSON response with operation status.
+        Response: JSON response with operation status
     """
 
     def _parse_value(raw):
@@ -132,10 +132,10 @@ def delete_context(context_id: str) -> flask.Response:
     Remove strategy context from active contexts.
 
     Args:
-        context_id (str): Unique identifier of the strategy context.
+        context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response with operation status.
+        Response: JSON response with operation status
     """
 
     flask.current_app.strategy_contexts.pop(context_id)
@@ -155,7 +155,7 @@ def get_updated_contexts() -> flask.Response:
     clear the updates buffer.
 
     Returns:
-        Response: JSON response containing list of updated context IDs.
+        Response: JSON response containing list of updated context IDs
     """
 
     updated_contexts = flask.current_app.updated_contexts.copy()

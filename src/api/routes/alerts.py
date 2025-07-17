@@ -15,11 +15,11 @@ def get_all_alerts() -> flask.Response:
 
     Query Parameters:
         limit (int, optional): Maximum number of recent alerts to return.
-                               If not provided, returns all alerts.
+                               If not provided, returns all alerts
 
     Returns:
         Response: JSON response containing dictionary
-                  of active alerts (id -> alert).
+                  of active alerts (id -> alert)
     """
 
     alerts = flask.current_app.strategy_alerts
@@ -42,10 +42,10 @@ def delete_alert(alert_id: str) -> flask.Response:
     Remove alert from active alerts collection.
 
     Args:
-        alert_id (str): Unique identifier of the alert.
+        alert_id (str): Unique identifier of the alert
 
     Returns:
-        Response: JSON response with operation status.
+        Response: JSON response with operation status
     """
 
     flask.current_app.strategy_alerts.pop(alert_id)
@@ -63,10 +63,10 @@ def get_new_alerts() -> flask.Response:
     """
     Get new alerts that haven't been fetched yet and
     clear the new alerts buffer.
-    
+
     Returns:
         Response: JSON response containing dictionary
-                  of new alerts {id: alert}.
+                  of new alerts {id: alert}
     """
 
     new_alerts = flask.current_app.new_alerts.copy()

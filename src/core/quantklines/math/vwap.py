@@ -25,14 +25,14 @@ def vwap(time: np.ndarray,
     Typical price is calculated as (high + low + close) / 3 for each period.
 
     Args:
-        time (np.ndarray): Timestamps in milliseconds.
-        high (np.ndarray): High prices for each period.
-        low (np.ndarray): Low prices for each period.
-        close (np.ndarray): Close prices for each period.
-        volume (np.ndarray): Trading volume for each period.
+        time (np.ndarray): Timestamps in milliseconds
+        high (np.ndarray): High prices for each period
+        low (np.ndarray): Low prices for each period
+        close (np.ndarray): Close prices for each period
+        volume (np.ndarray): Trading volume for each period
 
     Returns:
-        np.ndarray: VWAP values array.
+        np.ndarray: VWAP values array
     """
 
     n = time.shape[0]

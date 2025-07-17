@@ -14,9 +14,26 @@ if TYPE_CHECKING:
 
 
 class RealtimeProvider():
+    """
+    Provides real-time market data for automated trading.
+
+    Handles fetching and updating of real-time market data including
+    klines and additional feed data required by strategies.
+    Manages data precision and validity checks.
+
+    Attributes:
+        KLINES_LIMIT (int): Maximum number of klines to fetch (default: 3000)
+    """
+
     KLINES_LIMIT = 3000
 
     def __init__(self) -> None:
+        """
+        Initialize RealtimeProvider.
+
+        Sets up logger instance for data operations.
+        """
+
         self.logger = getLogger(__name__)
 
     def fetch_data(
@@ -26,6 +43,25 @@ class RealtimeProvider():
         interval: str | int,
         feeds: dict | None
     ) -> dict:
+        """
+        Fetch initial real-time market data for a symbol.
+
+        Args:
+            client: Exchange API client instance
+            symbol: Trading symbol to fetch data for
+            interval: Time interval for klines
+            feeds: Additional data feeds configuration
+
+        Returns:
+            dict: Complete market data dictionary including:
+                - market: Market type
+                - symbol: Trading symbol
+                - interval: Validated interval
+                - precision: Price and quantity precision
+                - klines: Historical kline data
+                - additional feeds (if configured)
+        """
+
         p_precision = client.get_price_precision(Market.FUTURES, symbol)
         q_precision = client.get_qty_precision(Market.FUTURES, symbol)   
 
@@ -60,7 +96,17 @@ class RealtimeProvider():
 
         return result
 
-    def update_data(self, strategy_context: dict) -> None:
+    def update_data(self, strategy_context: dict) -> bool:
+        """
+        Update market data for a strategy context.
+
+        Args:
+            strategy_context: Strategy context to update
+
+        Returns:
+            bool: True if data was updated, False otherwise
+        """
+
         market_data = strategy_context['market_data']
         feeds = market_data.get('feeds', {})
         updated = False
@@ -102,6 +148,19 @@ class RealtimeProvider():
         main_klines: np.ndarray,
         feeds: dict
     ) -> dict:
+        """
+        Fetch additional feed data required by strategies.
+
+        Args:
+            client: Exchange API client
+            symbol: Main trading symbol
+            main_klines: Primary kline data
+            feeds: Feed configuration dictionary
+
+        Returns:
+            dict: Dictionary containing all additional feed data
+        """
+
         result = {}
         
         if 'klines' in feeds:
@@ -140,6 +199,19 @@ class RealtimeProvider():
         symbol: str,
         interval: str | int,
     ) -> np.ndarray:
+        """
+        Append the latest kline to existing kline data.
+
+        Args:
+            klines: Existing kline array
+            client: Exchange API client
+            symbol: Trading symbol
+            interval: Kline interval
+
+        Returns:
+            np.ndarray: Updated kline array with new data
+        """
+
         max_retries = 5
 
         for _ in range(max_retries):
