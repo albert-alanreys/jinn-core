@@ -4,7 +4,7 @@ from time import sleep
 
 from flask import Flask
 
-from src.services.automation.api_clients.telegram import TelegramClient
+from src.infrastructure.clients.messaging.telegram import TelegramClient
 
 
 class StrategyUpdateHandler:

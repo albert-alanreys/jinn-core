@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 from logging import getLogger
 
 from src.core.enums import Exchange, Market, Strategy
-from src.core.storage.history_provider import HistoryProvider
-from src.services.automation.api_clients.binance import BinanceClient
-from src.services.automation.api_clients.bybit import BybitClient
+from src.infrastructure.clients.exchanges.binance import BinanceClient
+from src.infrastructure.clients.exchanges.bybit import BybitClient
+from src.infrastructure.providers import HistoryProvider
 
 
 class OptimizationBuilder:

@@ -2,11 +2,11 @@ from logging import getLogger
 from threading import Thread
 from time import sleep
 
-from src.services.backtesting.backtester import Backtester
-from .realtime_provider import RealtimeProvider
+from src.features.backtesting import BacktestingService
+from src.infrastructure.providers import RealtimeProvider
 
 
-class Automizer():
+class AutomationService():
     """
     Automates trading strategies execution in real-time.
 
@@ -21,7 +21,7 @@ class Automizer():
 
     def __init__(self, strategy_contexts: dict) -> None:
         """
-        Initialize Automizer with strategy contexts.
+        Initialize AutomationService with strategy contexts.
 
         Sets up strategy contexts, realtime data provider, and logger.
 
@@ -83,7 +83,7 @@ class Automizer():
         Args:
             context_id (str): ID of the strategy context to execute
 
-        Updates strategy statistics after execution using Backtester.
+        Updates strategy statistics after execution using BacktestingService.
         """
 
         context = self.strategy_contexts[context_id]
@@ -92,4 +92,4 @@ class Automizer():
         instance.calculate(context['market_data'])
         instance.trade()
 
-        context['stats'] = Backtester.test(instance)
+        context['stats'] = BacktestingService.test(instance)

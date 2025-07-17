@@ -6,12 +6,12 @@ import numpy as np
 
 from src.core.utils.klines import has_first_historical_kline
 from src.core.utils.klines import has_realtime_kline
-from .db_manager import DBManager
+from src.infrastructure.db import DBManager
 
 if TYPE_CHECKING:
     from src.core.enums import Market
-    from src.services.automation.api_clients.binance import BinanceClient
-    from src.services.automation.api_clients.bybit import BybitClient
+    from src.infrastructure.clients.exchanges.binance import BinanceClient
+    from src.infrastructure.clients.exchanges.bybit import BybitClient
 
 
 class HistoryProvider():

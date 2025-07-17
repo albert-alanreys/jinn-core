@@ -4,10 +4,10 @@ import os
 import random
 from logging import getLogger
 
-from src.services.automation.api_clients.telegram import TelegramClient
+from src.infrastructure.clients.messaging.telegram import TelegramClient
 
 
-class Optimizer:
+class OptimizationService:
     """
     Optimizes trading strategy parameters using genetic algorithm.
 

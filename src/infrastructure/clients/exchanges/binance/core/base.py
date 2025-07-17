@@ -4,7 +4,7 @@ from logging import getLogger
 from os import getenv
 from time import time
 
-from src.services.automation.api_clients.http_client import HttpClient
+from src.infrastructure.clients.http_client import HttpClient
 
 
 class BaseClient(HttpClient):

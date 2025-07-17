@@ -6,15 +6,15 @@ if TYPE_CHECKING:
     from src.core.strategy.base_strategy import BaseStrategy
 
 
-class Backtester:
+class BacktestingService:
     @staticmethod
     def test(strategy_instance: 'BaseStrategy') -> dict:
         return {
-            'equity': Backtester._get_equity(
+            'equity': BacktestingService._get_equity(
                 initial_capital=strategy_instance.params['initial_capital'],
                 deals_log=strategy_instance.completed_deals_log
             ),
-            'metrics': Backtester._get_metrics(
+            'metrics': BacktestingService._get_metrics(
                 initial_capital=strategy_instance.params['initial_capital'],
                 deals_log=strategy_instance.completed_deals_log
             )

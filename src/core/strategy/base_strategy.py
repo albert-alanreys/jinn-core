@@ -9,8 +9,8 @@ import numpy as np
 from .order_cache import OrderCache
 
 if TYPE_CHECKING:
-    from src.services.automation.api_clients.binance import BinanceClient
-    from src.services.automation.api_clients.bybit import BybitClient
+    from src.infrastructure.clients.exchanges.binance import BinanceClient
+    from src.infrastructure.clients.exchanges.bybit import BybitClient
 
 
 class BaseStrategy(ABC):

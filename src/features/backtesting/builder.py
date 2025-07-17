@@ -5,10 +5,10 @@ from glob import glob
 from logging import getLogger
 
 from src.core.enums import Exchange, Market, Strategy
-from src.core.storage.history_provider import HistoryProvider
-from src.services.automation.api_clients.binance import BinanceClient
-from src.services.automation.api_clients.bybit import BybitClient
-from .backtester import Backtester
+from src.infrastructure.clients.exchanges.binance import BinanceClient
+from src.infrastructure.clients.exchanges.bybit import BybitClient
+from src.infrastructure.providers import HistoryProvider
+from .service import BacktestingService
 
 
 class BacktestingBuilder:
@@ -139,7 +139,7 @@ class BacktestingBuilder:
                             feeds=instance.params.get('feeds')
                         )
                         instance.calculate(market_data)
-                        stats = Backtester.test(instance)
+                        stats = BacktestingService.test(instance)
 
                         context = {
                             'name': strategy.name,
@@ -172,7 +172,7 @@ class BacktestingBuilder:
                     feeds=instance.params.get('feeds')
                 )
                 instance.calculate(market_data)
-                stats = Backtester.test(instance)
+                stats = BacktestingService.test(instance)
 
                 context = {
                     'name': self.strategy.name,

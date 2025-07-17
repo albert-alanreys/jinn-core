@@ -9,8 +9,8 @@ from src.core.utils.klines import has_last_historical_kline
 from src.core.utils.klines import has_realtime_kline
 
 if TYPE_CHECKING:
-    from src.services.automation.api_clients.binance import BinanceClient
-    from src.services.automation.api_clients.bybit import BybitClient
+    from src.infrastructure.clients.exchanges.binance import BinanceClient
+    from src.infrastructure.clients.exchanges.bybit import BybitClient
 
 
 class RealtimeProvider():
