@@ -38,7 +38,7 @@ class OrderCache:
         Returns:
             Dictionary containing:
             - stop_ids: List of active stop order IDs
-            - limit_ids: List of active limit order IDs
+            - limit_ids: List of active limit IDs
             
             Returns empty lists for both if cache doesn't exist or is invalid.
         """
@@ -68,7 +68,7 @@ class OrderCache:
             symbol: Trading pair symbol (e.g., 'BTCUSDT').
             order_ids: Dictionary containing:
                       - stop_ids: List of stop order IDs to cache
-                      - limit_ids: List of limit order IDs to cache
+                      - limit_ids: List of limit IDs to cache
         """
 
         path = self._get_cache_path(symbol)

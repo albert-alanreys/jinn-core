@@ -13,15 +13,15 @@ class TelegramClient(HttpClient):
     def send_order_alert(self, alert: dict) -> None:
         try:
             msg = (
-                f"📊 <b>Информация об ордере</b>\n"
+                f"📊 <b>Order Information</b>\n"
                 f"════════════════════\n"
-                f"│ Биржа: <b>{alert['exchange']}</b>\n"
-                f"│ Тип: <b>{alert['type']}</b>\n"
-                f"│ Статус: <b>{alert['status']}</b>\n"
-                f"│ Направление: <b>{alert['side']}</b>\n"
-                f"│ Символ: <code>#{alert['symbol']}</code>\n"
-                f"│ Количество: <b>{alert['qty']}</b>\n"
-                f"│ Цена: <b>{alert['price']}</b>\n"
+                f"│ Exchange: <b>{alert['exchange']}</b>\n"
+                f"│ Type: <b>{alert['type']}</b>\n"
+                f"│ Status: <b>{alert['status']}</b>\n"
+                f"│ Side: <b>{alert['side']}</b>\n"
+                f"│ Symbol: <code>#{alert['symbol']}</code>\n"
+                f"│ Quantity: <b>{alert['qty']}</b>\n"
+                f"│ Price: <b>{alert['price']}</b>\n"
                 f"════════════════════\n"
                 f"🕒 {alert['time']}"
             )

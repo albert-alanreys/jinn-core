@@ -32,7 +32,7 @@ class Optimizer:
             for item in self.strategy_contexts.values()
         ]
         self.logger.info(f"Optimization started for:\n{'\n'.join(summary)}")
-        self.telegram_client.send_message('🔥 Оптимизация началась')
+        self.telegram_client.send_message('🔥 Optimization started')
 
         with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
             best_params = pool.map(
@@ -46,7 +46,7 @@ class Optimizer:
         self._save_params()
 
         self.logger.info('Optimization completed')
-        self.telegram_client.send_message('✅ Оптимизация завершена')
+        self.telegram_client.send_message('✅ Optimization completed')
 
     def _optimize(self, strategy_context: dict) -> list:
         self._init_optimization(strategy_context)

@@ -48,29 +48,29 @@ DEAL_STYLES = {
 }
 
 OVERVIEW_METRICS = [
-    'Чистая прибыль',
-    'Фактор прибыли',
-    'Максимальная просадка',
-    'Средняя по сделке',
-    'Процент прибыльных сделок',
-    'Всего закрытых сделок'
+    'Net Profit',
+    'Profit Factor',
+    'Maximum Drawdown',
+    'Average per Trade',
+    'Winning Trade Percentage',
+    'Total Closed Trades'
 ]
 
 METRIC_SUFFIXES = {
-    'Чистая прибыль': [' USDT', '%'],
-    'Валовая прибыль':  [' USDT', '%'],
-    'Валовой убыток': [' USDT', '%'],
-    'Выплаченная комиссия': [' USDT'],
-    'Процент прибыльных сделок': ['%'],
-    'Средняя по сделке': [' USDT', '%'],
-    'Средняя прибыль по сделке': [' USDT', '%'],
-    'Средний убыток по сделке': [' USDT', '%'],
-    'Самая прибыльная сделка': [' USDT', '%'],
-    'Самая убыточная сделка': [' USDT', '%'],
-    'Максимальная просадка': [' USDT', '%']
+    'Net Profit': [' USDT', '%'],
+    'Gross Profit':  [' USDT', '%'],
+    'Gross Loss': [' USDT', '%'],
+    'Commission Paid': [' USDT'],
+    'Winning Trade Percentage': ['%'],
+    'Average per Trade': [' USDT', '%'],
+    'Average Profit per Trade': [' USDT', '%'],
+    'Average Loss per Trade': [' USDT', '%'],
+    'Most Profitable Trade': [' USDT', '%'],
+    'Most Unprofitable Trade': [' USDT', '%'],
+    'Maximum Drawdown': [' USDT', '%']
 }
 
 TRADE_TYPE_LABELS = {
-  0: ['Выход из длинной позиции', 'Вход в длинную позицию'],
-  1: ['Выход из короткой позиции', 'Вход в короткую позицию']
+    0: ['Exit Long', 'Enter Long'],
+    1: ['Exit Short', 'Enter Short']
 }

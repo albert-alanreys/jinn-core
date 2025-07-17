@@ -1,70 +1,69 @@
 # Jinn
 
-Jinn — это фреймворк для алгоритмических торговых стратегий.
+Jinn is a framework for algorithmic trading strategies.
 
-**Актуальная версия:** `3.1.1`
-
----
-
-## Основные возможности
-
-- 🚀 **Сбор данных:** загрузка ценовых данных с Binance и Bybit.
-- 📈 **Оптимизация:** подбор оптимальных параметров торговых стратегий.
-- 🔍 **Тестирование:** анализ стратегий с визуализацией графиков и статистики.
-- 🤖 **Автоматизация:** запуск стратегий в режиме реальной торговли с визуализацией.
+**Current version:** `3.1.1`
 
 ---
 
-## Установка и настройка
+## Key Features
 
-### Требования
+- 📈 **Optimization:** Finds optimal parameters for trading strategies to maximize performance.
+- 🔍 **Backtesting:** Tests strategies on historical data with detailed trading statistics.
+- 🤖 **Automation:** Executes strategies in real-time market conditions.
 
-1. Python версии **3.13**.
-2. Установленные зависимости из файла `requirements.txt`.
-3. Действующие API-ключи от Binance и/или Bybit.
-4. Telegram-бот для уведомлений.
+---
 
-### Шаги для начала работы
+## Installation and Setup
 
-#### 1. Установка Python
+### Requirements
 
-Скачайте и установите [Python](https://www.python.org/downloads/). При установке активируйте опцию **Add Python to PATH**.
+1. Python version **3.13**.
+2. Dependencies installed from `requirements.txt`.
+3. Valid API keys from Binance and/or Bybit.
+4. Telegram bot for notifications.
 
-#### 2. Установка зависимостей
+### Getting Started
 
-- **Через файл** `requirements.txt`
+#### 1. Install Python
 
-Откройте терминал (или командную строку), перейдите в директорию `Jinn` (например, с помощью команды `cd C:\Trading\Jinn`), и выполните следующую команду:
+Download and install [Python](https://www.python.org/downloads/). Ensure the **Add Python to PATH** option is enabled during installation.
+
+#### 2. Install Dependencies
+
+- **Using** `requirements.txt`
+
+Open a terminal (or command prompt), navigate to the `Jinn` directory (e.g., `cd C:\Trading\Jinn`), and run:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-- **Вручную**
+- **Manually**
 
-Откройте терминал и установите каждый пакет из `requirements.txt`:
+Open a terminal and install each package listed in `requirements.txt` individually:
 
 ```bash
-pip install "имя_пакета"
+pip install "package_name"
 ```
 
-#### 3. Создание `.env` файла
+#### 3. Create `.env` File
 
-В корне проекта создайте файл `.env` и заполните его своими данными, используя пример из файла `help\.env.example`. В этом файле будут храниться все конфиденциальные данные проекта.
+Create a `.env` file in the project root and fill it with your credentials, using the example file at `help\.env.example` as a template. This file stores all sensitive project data.
 
-## Запуск программы
+## Running the Program
 
-### Оптимизация
+### Optimization
 
-#### Оптимизация одной стратегии
+#### Optimizing a Single Strategy
 
-1. В файле `config.py` установите значение переменной `MODE`:
+1. In `config.py`, set the `MODE` variable:
 
 ```python
 MODE = enums.Mode.OPTIMIZATION
 ```
 
-2. Укажите параметры оптимизации в словаре `OPTIMIZATION_CONFIG`:
+2. Specify optimization parameters in the `OPTIMIZATION_CONFIG` dictionary:
 
 ```python
 OPTIMIZATION_CONFIG = {
@@ -78,23 +77,23 @@ OPTIMIZATION_CONFIG = {
 }
 ```
 
-Возможные значения параметров перечислены в файле `help\config_enums.txt`.
+Valid parameter values are listed in `help\config_enums.txt`.
 
-3. Запустите программу в терминале из корневой директории проекта:
+3. Launch the program from the project's root directory using the terminal:
 
 ```bash
 py main.py
 ```
 
-#### Оптимизация нескольких стратегий
+#### Optimizing Multiple Strategies
 
-1. В файле `config.py` установите значение переменной `MODE`:
+1. In `config.py`, set:
 
 ```python
 MODE = enums.Mode.OPTIMIZATION
 ```
 
-2. Создайте JSON-файлы оптимизации `optimization.json` в соответствующих папках стратегий (например, `Jinn\src\strategies\nugget_v2\optimization`). Пример JSON-файла (`help\optimization.json`):
+2. Create JSON optimization files named `optimization.json` inside each strategy folder (e.g., `Jinn\src\strategies\nugget_v2\optimization`). Example JSON (`help\optimization.json`):
 
 ```json
 [
@@ -125,25 +124,25 @@ MODE = enums.Mode.OPTIMIZATION
 ]
 ```
 
-Возможные значения ключей JSON-файла перечислены в файле `help\json_enums.txt`.
+Allowed keys and values are documented in `help\json_enums.txt`.
 
-3. Запустите программу в терминале из корневой директории проекта:
+3. Launch the program from the project's root directory using the terminal:
 
 ```bash
 py main.py
 ```
 
-### Тестирование
+### Backtesting
 
-#### Тестирование одной стратегии
+#### Backtesting a Single Strategy
 
-1. В файле `config.py` установите значение переменной `MODE`:
+1. Set the mode in `config.py`:
 
 ```python
 MODE = enums.Mode.TESTING
 ```
 
-2. Укажите параметры тестирования в словаре `TESTING_CONFIG`:
+2. Specify testing parameters in the `TESTING_CONFIG` dictionary:
 
 ```python
 TESTING_CONFIG = {
@@ -157,45 +156,45 @@ TESTING_CONFIG = {
 }
 ```
 
-Возможные значения параметров перечислены в файле `help\config_enums.txt`.
+Refer to `help\config_enums.txt` for valid values.
 
-3. Запустите программу в терминале из корневой директории проекта:
+3. Launch the program from the project's root directory using the terminal:
 
 ```bash
 py main.py
 ```
 
-4. Перейдите в браузере по адресу http://127.0.0.1:5000 для просмотра результатов.
+4. Open your browser and navigate to http://127.0.0.1:5000 to view results.
 
-#### Тестирование нескольких стратегий
+#### Backtesting Multiple Strategies
 
-1. В файле `config.py` установите значение переменной `MODE`:
+1. Set the mode in `config.py`:
 
 ```python
 MODE = enums.Mode.TESTING
 ```
 
-2. Перенесите файлы с оптимальными параметрами из папки `optimization` в папку `backtesting` соответствующих стратегий. При необходимости отредактируйте временные периоды в файлах.
+2. Move the optimized parameter files from the `optimization` folder into the `backtesting` folder of the corresponding strategies. Adjust time periods if necessary.
 
-3. Запустите программу в терминале из корневой директории проекта:
+3. Launch the program from the project's root directory using the terminal:
 
 ```bash
 py main.py
 ```
 
-4. Перейдите в браузере по адресу http://127.0.0.1:5000 для просмотра результатов.
+4. Open your browser and navigate to http://127.0.0.1:5000 to view results.
 
-### Автоматизация
+### Automation
 
-#### Автоматизация одной стратегии
+#### Automating a Single Strategy
 
-1. В файле `config.py` установите значение переменной `MODE`:
+1. Set the mode in `config.py`:
 
 ```python
 MODE = enums.Mode.AUTOMATION
 ```
 
-2. Укажите параметры автоматизации в словаре `AUTOMATION_CONFIG`:
+2. Define automation parameters in `AUTOMATION_CONFIG`:
 
 ```python
 AUTOMATION_CONFIG = {
@@ -206,38 +205,38 @@ AUTOMATION_CONFIG = {
 }
 ```
 
-Возможные значения параметров перечислены в файле `help\config_enums.txt`.
+Refer to `help\config_enums.txt` for valid values.
 
-3. Запустите программу в терминале из корневой директории проекта:
+3. Launch the program from the project's root directory using the terminal:
 
 ```bash
 py main.py
 ```
 
-4. Перейдите в браузере по адресу http://127.0.0.1:5000 для просмотра результатов.
+4. Open your browser and navigate to http://127.0.0.1:5000 to view results.
 
-#### Автоматизация нескольких стратегий
+#### Automating Multiple Strategies
 
-1. В файле `config.py` установите значение переменной `MODE`:
+1. Set the mode in `config.py`:
 
 ```python
 MODE = enums.Mode.AUTOMATION
 ```
 
-2. Разместите JSON-файлы автоматизации в соответствующих папках стратегий (например, `Jinn\src\strategies\nugget_v2\automation`). Возможны два варианта автоматизации:
+2. Place automation JSON files in the respective strategy folders (e.g., `Jinn\src\strategies\nugget_v2\automation`). Two approaches:
 
-- **Вариант 1:** Файлы со всеми параметрами стратегии и их значениями. Имена файлов должны содержать название биржи, тикер и таймфрейм (например, `BYBIT_BTCUSDT_1.json`). Параметры определены в соответствующих модулях (например, `nugget_v2.py`). Пример файла доступен в папке `help`.
-- **Вариант 2:** Файлы с оптимальными параметрами, полученными из папки `optimization`. Их также можно размещать в папках `automation`. В этом случае будет использоваться первый набор параметров.
+- **Option 1:** Files with complete strategy parameters and their values. File names must include exchange, ticker, and interval (e.g., `BYBIT_BTCUSDT_1.json`). Parameters are defined in respective modules (e.g., `nugget_v2.py`). Example files are available in `help`.
+- **Option 2:** Files with optimal parameters from the `optimization` folder, which can be reused in `automation`. The first parameter set will be applied.
 
-3. Запустите программу в терминале из корневой директории проекта:
+3. Launch the program from the project's root directory using the terminal:
 
 ```bash
 py main.py
 ```
 
-4. Перейдите в браузере по адресу http://127.0.0.1:5000 для просмотра результатов.
+4. Open your browser and navigate to http://127.0.0.1:5000 to view results.
 
-## Дополнительная информация
+## Additional Information
 
-- Для корректной работы программы требуется стабильное интернет-соединение.
-- Рекомендуется регулярно синхронизировать системное время на вашем устройстве.
+- A stable internet connection is required for proper operation.
+- It is recommended to keep your system time synchronized regularly.

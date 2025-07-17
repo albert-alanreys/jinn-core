@@ -370,7 +370,7 @@ class Tester:
 
         return [
             {
-                'title': 'Чистая прибыль',
+                'title': 'Net Profit',
                 'all': [
                     all_net_profit,
                     all_net_profit_per
@@ -385,7 +385,7 @@ class Tester:
                 ]
             },
             {
-                'title': 'Валовая прибыль',
+                'title': 'Gross Profit',
                 'all': [
                     all_gross_profit,
                     all_gross_profit_per
@@ -400,7 +400,7 @@ class Tester:
                 ]
             },
             {
-                'title': 'Валовой убыток',
+                'title': 'Gross Loss',
                 'all': [
                     all_gross_loss,
                     all_gross_loss_per
@@ -415,43 +415,43 @@ class Tester:
                 ]
             },
             {
-                'title': 'Фактор прибыли',
+                'title': 'Profit Factor',
                 'all': [all_profit_factor],
                 'long': [long_profit_factor],
                 'short': [short_profit_factor]
             },
             {
-                'title': 'Выплаченная комиссия',
+                'title': 'Commission Paid',
                 'all': [all_commission_paid],
                 'long': [long_commission_paid],
                 'short': [short_commission_paid]
             },
             {
-                'title': 'Всего закрытых сделок',
+                'title': 'Total Closed Trades',
                 'all': [all_total_closed_trades],
                 'long': [long_total_closed_trades],
                 'short': [short_total_closed_trades]
             },
             {
-                'title': 'Количество прибыльных сделок',
+                'title': 'Number of Winning Trades',
                 'all': [all_number_winning_trades],
                 'long': [long_number_winning_trades],
                 'short': [short_number_winning_trades]
             },
             {
-                'title': 'Количество убыточных сделок',
+                'title': 'Number of Losing Trades',
                 'all': [all_number_losing_trades],
                 'long': [long_number_losing_trades],
                 'short': [short_number_losing_trades]
             },
             {
-                'title': 'Процент прибыльных сделок',
+                'title': 'Winning Trade Percentage',
                 'all': [all_percent_profitable],
                 'long': [long_percent_profitable],
                 'short': [short_percent_profitable]
             },
             {
-                'title': 'Средняя по сделке',
+                'title': 'Average per Trade',
                 'all': [
                     all_avg_trade,
                     all_avg_trade_per
@@ -466,7 +466,7 @@ class Tester:
                 ]
             },
             {
-                'title': 'Средняя прибыль по сделке',
+                'title': 'Average Profit per Trade',
                 'all': [
                     all_avg_winning_trade,
                     all_avg_winning_trade_per
@@ -481,7 +481,7 @@ class Tester:
                 ]
             },
             {
-                'title': 'Средний убыток по сделке',
+                'title': 'Average Loss per Trade',
                 'all': [
                     all_avg_losing_trade,
                     all_avg_losing_trade_per
@@ -496,13 +496,13 @@ class Tester:
                 ]
             },
             {
-                'title': 'Коэффициент средней прибыли / среднего убытка',
+                'title': 'Average Win / Average Loss Ratio',
                 'all': [all_ratio_avg_win_loss],
                 'long': [long_ratio_avg_win_loss],
                 'short': [short_ratio_avg_win_loss]
             },
             {
-                'title': 'Самая прибыльная сделка',
+                'title': 'Most Profitable Trade',
                 'all': [
                     all_largest_winning_trade,
                     all_largest_winning_trade_per
@@ -517,7 +517,7 @@ class Tester:
                 ]
             },
             {
-                'title': 'Самая убыточная сделка',
+                'title': 'Most Unprofitable Trade',
                 'all': [
                     all_largest_losing_trade,
                     all_largest_losing_trade_per
@@ -532,7 +532,7 @@ class Tester:
                 ]
             },
             {
-                'title': 'Максимальная просадка',
+                'title': 'Maximum Drawdown',
                 'all': [
                     all_max_drawdown,
                     all_max_drawdown_per
@@ -541,7 +541,7 @@ class Tester:
                 'short': []
             },
             {
-                'title': 'Коэффициент Сортино',
+                'title': 'Sortino Ratio',
                 'all': [all_sortino_ratio],
                 'long': [],
                 'short': []

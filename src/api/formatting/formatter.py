@@ -153,13 +153,13 @@ class Formatter:
                     styles = consts.DEAL_STYLES['open']['sell']
                     text = f'{comment} | -{deal[4]}'
 
-                deal = {
+                formatted_deal = {
                     'time': deal[2] * 0.001,
                     'text': text,
                     **styles
                 }
-                result.append(deal)
-                
+                result.append(formatted_deal)
+
             return result
 
         for index, deal in enumerate(completed_deals):
@@ -181,12 +181,12 @@ class Formatter:
                         styles = consts.DEAL_STYLES['open']['sell']
                         text = f'{comment} | -{position_size}'
 
-                    deal = {
+                    formatted_deal = {
                         'time': prev_deal[3] * 0.001,
                         'text': text,
                         **styles
                     }
-                    result.insert(len(result) - deals_count, deal)
+                    result.insert(len(result) - deals_count, formatted_deal)
 
                     position_size = Decimal('0.0')
                     deals_count = 0
@@ -205,12 +205,12 @@ class Formatter:
                 styles = consts.DEAL_STYLES['close']['buy']
                 text = f'{comment} | +{deal[7]}'
 
-            deal = {
+            formatted_deal = {
                 'time': deal[4] * 0.001,
                 'text': text,
                 **styles
             }
-            result.append(deal)
+            result.append(formatted_deal)
 
             position_size += Decimal(str(deal[7]))
             deals_count += 1
@@ -235,12 +235,12 @@ class Formatter:
             styles = consts.DEAL_STYLES['open']['sell']
             text = f'{comment} | -{position_size}'
 
-        deal = {
+        formatted_deal = {
             'time': last_deal[3] * 0.001,
             'text': text,
             **styles
         }
-        result.insert(len(result) - deals_count, deal)
+        result.insert(len(result) - deals_count, formatted_deal)
 
         for deal in open_deals:
             if deal[2] != last_deal[3]:
@@ -258,12 +258,12 @@ class Formatter:
                     styles = consts.DEAL_STYLES['open']['sell']
                     text = f'{comment} | -{deal[4]}'
 
-                deal = {
+                formatted_deal = {
                     'time': deal[2] * 0.001,
                     'text': text,
                     **styles
                 }
-                result.append(deal)
+                result.append(formatted_deal)
 
         return sorted(result, key=lambda x: x['time'])
 

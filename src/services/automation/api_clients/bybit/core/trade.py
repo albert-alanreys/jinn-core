@@ -71,9 +71,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='рыночный ордер',
-                    status='исполнен',
-                    side='покупка',
+                    order_type='market',
+                    status='filled',
+                    side='buy',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['avgPrice'],
@@ -82,9 +82,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='рыночный ордер',
-                    status='не удалось создать',
-                    side='покупка',
+                    order_type='market',
+                    status='failed to create',
+                    side='buy',
                     symbol=symbol,
                     qty=str(qty),
                     price=None,
@@ -133,9 +133,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='рыночный ордер',
-                    status='исполнен',
-                    side='продажа',
+                    order_type='market',
+                    status='filled',
+                    side='sell',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['avgPrice'],
@@ -144,9 +144,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='рыночный ордер',
-                    status='не удалось создать',
-                    side='продажа',
+                    order_type='market',
+                    status='failed to create',
+                    side='sell',
                     symbol=symbol,
                     qty=str(qty),
                     price=None,
@@ -180,9 +180,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='рыночный ордер',
-                    status='исполнен',
-                    side='продажа',
+                    order_type='market',
+                    status='filled',
+                    side='sell',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['avgPrice'],
@@ -191,9 +191,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='рыночный ордер',
-                    status='не удалось создать',
-                    side='продажа',
+                    order_type='market',
+                    status='failed to create',
+                    side='sell',
                     symbol=symbol,
                     qty=str(qty),
                     price=None,
@@ -227,9 +227,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='рыночный ордер',
-                    status='исполнен',
-                    side='покупка',
+                    order_type='market',
+                    status='filled',
+                    side='buy',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['avgPrice'],
@@ -238,9 +238,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='рыночный ордер',
-                    status='не удалось создать',
-                    side='покупка',
+                    order_type='market',
+                    status='failed to create',
+                    side='buy',
                     symbol=symbol,
                     qty=str(qty),
                     price=None,
@@ -293,9 +293,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='рыночный стоп',
-                    status='ожидает исполнения',
-                    side='продажа',
+                    order_type='stop market',
+                    status='pending',
+                    side='sell',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['triggerPrice'],
@@ -304,9 +304,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='рыночный стоп',
-                    status='не удалось создать',
-                    side='продажа',
+                    order_type='stop market',
+                    status='failed to create',
+                    side='sell',
                     symbol=symbol,
                     qty=str(qty),
                     price=str(adjusted_price),
@@ -361,9 +361,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='рыночный стоп',
-                    status='ожидает исполнения',
-                    side='покупка',
+                    order_type='stop market',
+                    status='pending',
+                    side='buy',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['triggerPrice'],
@@ -372,9 +372,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='рыночный стоп',
-                    status='не удалось создать',
-                    side='покупка',
+                    order_type='stop market',
+                    status='failed to create',
+                    side='buy',
                     symbol=symbol,
                     qty=str(qty),
                     price=str(adjusted_price),
@@ -433,9 +433,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
-                    status='ожидает исполнения',
-                    side='покупка',
+                    order_type='limit',
+                    status='pending',
+                    side='buy',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['price'],
@@ -444,9 +444,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
-                    status='не удалось создать',
-                    side='покупка',
+                    order_type='limit',
+                    status='failed to create',
+                    side='buy',
                     symbol=symbol,
                     qty=str(qty),
                     price=str(adjusted_price),
@@ -505,9 +505,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
-                    status='ожидает исполнения',
-                    side='продажа',
+                    order_type='limit',
+                    status='pending',
+                    side='sell',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['price'],
@@ -516,9 +516,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
-                    status='не удалось создать',
-                    side='покупка',
+                    order_type='limit',
+                    status='failed to create',
+                    side='buy',
                     symbol=symbol,
                     qty=str(qty),
                     price=str(adjusted_price),
@@ -572,9 +572,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
-                    status='ожидает исполнения',
-                    side='продажа',
+                    order_type='limit',
+                    status='pending',
+                    side='sell',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['price'],
@@ -583,9 +583,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
-                    status='не удалось создать',
-                    side='покупка',
+                    order_type='limit',
+                    status='failed to create',
+                    side='buy',
                     symbol=symbol,
                     qty=str(qty),
                     price=str(adjusted_price),
@@ -639,9 +639,9 @@ class TradeClient(BaseClient):
                 )['result']['list'][0]
 
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
-                    status='ожидает исполнения',
-                    side='покупка',
+                    order_type='limit',
+                    status='pending',
+                    side='buy',
                     symbol=order_info['symbol'],
                     qty=order_info['qty'],
                     price=order_info['price'],
@@ -650,9 +650,9 @@ class TradeClient(BaseClient):
                 self.alerts.append(alert)
             except OrderCreationError as e:
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
-                    status='не удалось создать',
-                    side='покупка',
+                    order_type='limit',
+                    status='failed to create',
+                    side='buy',
                     symbol=symbol,
                     qty=str(qty),
                     price=str(adjusted_price),
@@ -739,19 +739,19 @@ class TradeClient(BaseClient):
                     continue
 
                 if order_info['orderStatus'] == 'Filled':
-                    status = 'исполнен'
+                    status = 'filled'
                     price = order_info['avgPrice']
                 else:
-                    status = 'отменён'
+                    status = 'cancelled'
                     price = order_info['triggerPrice']
 
                 if order_info['side'] == 'Buy':
-                    side = 'покупка'
+                    side = 'buy'
                 else:
-                    side = 'продажа'
+                    side = 'sell'
 
                 alert = self._create_order_alert(
-                    order_type='рыночный стоп',
+                    order_type='stop market',
                     status=status,
                     side=side,
                     symbol=order_info['symbol'],
@@ -783,17 +783,17 @@ class TradeClient(BaseClient):
                     continue
 
                 if order_info['orderStatus'] == 'Filled':
-                    status = 'исполнен'
+                    status = 'filled'
                 else:
-                    status = 'отменён'
+                    status = 'cancelled'
 
                 if order_info['side'] == 'Buy':
-                    side = 'покупка'
+                    side = 'buy'
                 else:
-                    side = 'продажа'
+                    side = 'sell'
 
                 alert = self._create_order_alert(
-                    order_type='лимитный ордер',
+                    order_type='limit',
                     status=status,
                     side=side,
                     symbol=order_info['symbol'],
