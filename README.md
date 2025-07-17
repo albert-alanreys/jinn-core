@@ -2,7 +2,7 @@
 
 Jinn is a framework for algorithmic trading strategies.
 
-**Current version:** `3.1.1`
+**Current version:** `3.1.2`
 
 ---
 
