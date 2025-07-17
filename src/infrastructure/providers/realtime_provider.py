@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from src.core.enums import Market
-from src.core.utils.klines import has_last_historical_kline
-from src.core.utils.klines import has_realtime_kline
+from src.utils.klines import has_last_historical_kline
+from src.utils.klines import has_realtime_kline
 
 if TYPE_CHECKING:
     from src.infrastructure.clients.exchanges.binance import BinanceClient

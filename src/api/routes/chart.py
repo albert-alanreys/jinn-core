@@ -2,7 +2,7 @@ from json import dumps
 import flask
 
 from src.api.formatting import Formatter
-from src.api.utils.error_handling import handle_api_errors
+from src.api.utils import handle_api_errors
 
 
 chart_bp = flask.Blueprint(

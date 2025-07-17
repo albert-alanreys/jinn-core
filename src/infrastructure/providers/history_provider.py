@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from src.core.utils.klines import has_first_historical_kline
-from src.core.utils.klines import has_realtime_kline
+from src.utils.klines import has_first_historical_kline
+from src.utils.klines import has_realtime_kline
 from src.infrastructure.db import DBManager
 
 if TYPE_CHECKING:

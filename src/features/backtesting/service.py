@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from src.core.strategy.base_strategy import BaseStrategy
+    from src.core.strategy import BaseStrategy
 
 
 class BacktestingService:

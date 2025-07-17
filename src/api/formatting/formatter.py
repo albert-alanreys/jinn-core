@@ -3,8 +3,8 @@ from decimal import Decimal
 
 import numpy as np
 
-from src.core.utils.colors import decode_rgb, decode_rgb_vectorized
-from src.core.utils.rounding import adjust_vectorized
+from src.utils.colors import decode_rgb, decode_rgb_vectorized
+from src.utils.rounding import adjust_vectorized
 from . import constants as consts
 
 

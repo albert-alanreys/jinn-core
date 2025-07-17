@@ -1,7 +1,7 @@
 from json import dumps
 import flask
 
-from src.api.utils.error_handling import handle_api_errors
+from src.api.utils import handle_api_errors
 
 
 alerts_bp = flask.Blueprint('alerts_api', __name__, url_prefix='/api/alerts')

@@ -57,7 +57,7 @@ Create a `.env` file in the project root and fill it with your credentials, usin
 
 #### Optimizing a Single Strategy
 
-1. In `config.py`, set the `MODE` variable:
+1. In `settings.py`, set the `MODE` variable:
 
 ```python
 MODE = enums.Mode.OPTIMIZATION
@@ -87,7 +87,7 @@ py main.py
 
 #### Optimizing Multiple Strategies
 
-1. In `config.py`, set:
+1. In `settings.py`, set:
 
 ```python
 MODE = enums.Mode.OPTIMIZATION
@@ -136,7 +136,7 @@ py main.py
 
 #### Backtesting a Single Strategy
 
-1. Set the mode in `config.py`:
+1. Set the mode in `settings.py`:
 
 ```python
 MODE = enums.Mode.BACKTESTING
@@ -168,7 +168,7 @@ py main.py
 
 #### Backtesting Multiple Strategies
 
-1. Set the mode in `config.py`:
+1. Set the mode in `settings.py`:
 
 ```python
 MODE = enums.Mode.BACKTESTING
@@ -188,7 +188,7 @@ py main.py
 
 #### Automating a Single Strategy
 
-1. Set the mode in `config.py`:
+1. Set the mode in `settings.py`:
 
 ```python
 MODE = enums.Mode.AUTOMATION
@@ -217,7 +217,7 @@ py main.py
 
 #### Automating Multiple Strategies
 
-1. Set the mode in `config.py`:
+1. Set the mode in `settings.py`:
 
 ```python
 MODE = enums.Mode.AUTOMATION

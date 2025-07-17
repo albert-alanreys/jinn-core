@@ -3,7 +3,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from src.core.enums import Market
-from src.core.utils.rounding import adjust
+from src.utils.rounding import adjust
 from .base import BaseClient
 
 if TYPE_CHECKING:
