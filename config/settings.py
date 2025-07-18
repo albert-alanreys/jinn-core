@@ -5,7 +5,7 @@ import src.core.enums as enums
 #    OPTIMIZATION - optimization
 #    BACKTESTING - backtesting
 #    AUTOMATION - automation
-MODE = enums.Mode.OPTIMIZATION
+MODE = enums.Mode.BACKTESTING
 
 # Settings for different modes
 OPTIMIZATION_CONFIG = {
@@ -18,7 +18,7 @@ OPTIMIZATION_CONFIG = {
     'end': '2025-01-01'
 }
 BACKTESTING_CONFIG = {
-    'strategy': enums.Strategy.NUGGET_V2,
+    'strategy': enums.Strategy.SANDBOX_V1,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',

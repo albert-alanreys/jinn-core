@@ -2,9 +2,9 @@ import numpy as np
 import numba as nb
 
 import src.core.quantklines as qk
-from src.core.strategy import BaseStrategy
-from src.core.strategy import update_completed_deals_log
-from src.utils.colors import encode_rgb
+import src.constants.colors as colors
+from src.core.strategy.base_strategy import BaseStrategy
+from src.core.strategy.deal_logger import update_completed_deals_log
 from src.utils.rounding import adjust
 
 
@@ -63,22 +63,22 @@ class MeanStrikeV1(BaseStrategy):
         'EP #2': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(49, 27, 146)
+            'color': colors.INDIGO
         },
         'EP #3': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(49, 27, 146)
+            'color': colors.INDIGO
         },
         'EP #4': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(49, 27, 146)
+            'color': colors.INDIGO
         },
         'TP': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(76, 175, 80)
+            'color': colors.FOREST_GREEN
         }
     }
 

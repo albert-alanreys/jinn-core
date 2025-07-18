@@ -2,9 +2,9 @@ import numpy as np
 import numba as nb
 
 import src.core.quantklines as qk
-from src.core.strategy import BaseStrategy
-from src.core.strategy import update_completed_deals_log
-from src.utils.colors import encode_rgb
+import src.constants.colors as colors
+from src.core.strategy.base_strategy import BaseStrategy
+from src.core.strategy.deal_logger import update_completed_deals_log
 from src.utils.rounding import adjust
 
 
@@ -41,49 +41,49 @@ class SisterV1(BaseStrategy):
         'SL': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(255, 0, 0),
+            'color': colors.CRIMSON,
             'lineWidth': 2
         },
         'TP': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0),
+            'color': colors.GREEN,
             'lineWidth': 2
         },
         'SMA ST': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(148, 0, 211),
+            'color': colors.BLUE_VIOLET,
             'lineWidth': 1
         },
         'SMA MT': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 0, 128),
+            'color': colors.INDIGO,
             'lineWidth': 1
         },
         'SMA L Entry': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(255, 127, 80),
+            'color': colors.CORAL,
             'lineWidth': 1
         },
         'SMA L Exit': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(189, 183, 107),
+            'color': colors.PALE_GOLDENROD,
             'lineWidth': 1
         },
         'SMA S Entry': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(30, 144, 255),
+            'color': colors.DEEP_SKY_BLUE,
             'lineWidth': 1
         },
         'SMA S Exit': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 128),
+            'color': colors.TEAL,
             'lineWidth': 1
         }
     }

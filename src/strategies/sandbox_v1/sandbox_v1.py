@@ -2,9 +2,9 @@ import numpy as np
 import numba as nb
 
 import src.core.quantklines as qk
-from src.core.strategy import BaseStrategy
-from src.core.strategy import update_completed_deals_log
-from src.utils.colors import encode_rgb
+import src.constants.colors as colors
+from src.core.strategy.base_strategy import BaseStrategy
+from src.core.strategy.deal_logger import update_completed_deals_log
 from src.utils.rounding import adjust
 
 
@@ -72,13 +72,13 @@ class SandboxV1(BaseStrategy):
         'HTF #1' : {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(100, 140, 60),
+            'color': colors.SEA_GREEN,
             'lineWidth': 2
         },
         'HTF #2' : {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(80, 50, 180),
+            'color': colors.DARK_ORCHID,
             'lineWidth': 2
         },
         'ST ↑' : {
@@ -98,27 +98,27 @@ class SandboxV1(BaseStrategy):
         'RSI': {
             'pane': 2,
             'type': 'line',
-            'color': encode_rgb(30, 80, 150),
+            'color': colors.CORNFLOWER_BLUE,
             'lineWidth': 2
         },
         '%K': {
             'pane': 3,
             'type': 'line',
-            'color': encode_rgb(172, 89, 235),
+            'color': colors.BLUE_VIOLET,
             'lineWidth': 2
         },
         '%D': {
             'pane': 3,
             'type': 'line',
-            'color': encode_rgb(235, 159, 89),
+            'color': colors.DARK_ORANGE,
             'lineWidth': 1
         }
     }
 
-    supertrend_color_1 = encode_rgb(76, 175, 80)
-    supertrend_color_2 = encode_rgb(255, 82, 82)
-    volume_color_1 = encode_rgb(0, 137, 132)
-    volume_color_2 = encode_rgb(242, 54, 69)
+    supertrend_color_1 = colors.SEA_GREEN
+    supertrend_color_2 = colors.ORANGE_RED
+    volume_color_1 = colors.PEACOCK_GREEN
+    volume_color_2 = colors.CHERRY_RED
 
     def __init__(self, client, all_params = None, opt_params = None) -> None:
         super().__init__(client, all_params, opt_params)
@@ -291,7 +291,7 @@ class SandboxV1(BaseStrategy):
         }
 
     @staticmethod
-    # @nb.njit(cache=True, nogil=True)
+    @nb.njit(cache=True, nogil=True)
     def _calculate_loop(
         initial_capital: float,
         commission: float,

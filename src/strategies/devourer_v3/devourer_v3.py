@@ -2,9 +2,9 @@ import numpy as np
 import numba as nb
 
 import src.core.quantklines as qk
-from src.core.strategy import BaseStrategy
-from src.core.strategy import update_completed_deals_log
-from src.utils.colors import encode_rgb
+import src.constants.colors as colors
+from src.core.strategy.base_strategy import BaseStrategy
+from src.core.strategy.deal_logger import update_completed_deals_log
 from src.utils.rounding import adjust
 
 
@@ -63,12 +63,12 @@ class DevourerV3(BaseStrategy):
         'SL': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(255, 0, 0)
+            'color': colors.CRIMSON
         },
         'TP': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         }
     }
 

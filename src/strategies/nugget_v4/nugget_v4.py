@@ -2,9 +2,9 @@ import numpy as np
 import numba as nb
 
 import src.core.quantklines as qk
-from src.core.strategy import BaseStrategy
-from src.core.strategy import update_completed_deals_log
-from src.utils.colors import encode_rgb
+import src.constants.colors as colors
+from src.core.strategy.base_strategy import BaseStrategy
+from src.core.strategy.deal_logger import update_completed_deals_log
 from src.utils.rounding import adjust
 
 
@@ -115,57 +115,57 @@ class NuggetV4(BaseStrategy):
         'SL': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(255, 0, 0)
+            'color': colors.CRIMSON
         },
         'TP #1': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #2': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #3': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #4': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #5': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #6': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #7': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #8': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #9': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         },
         'TP #10': {
             'pane': 0,
             'type': 'line',
-            'color': encode_rgb(0, 128, 0)
+            'color': colors.GREEN
         }
     }
 
