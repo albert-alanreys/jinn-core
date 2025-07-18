@@ -13,11 +13,40 @@ if TYPE_CHECKING:
 
 
 class OrderCreationError(Exception):
+    """
+    Exception raised for order creation failures in trading operations.
+
+    Signals unsuccessful order placement attempts due to invalid parameters,
+    exchange restrictions, or other trading rules violations.
+    Carries detailed error message for troubleshooting.
+    """
+
     def __init__(self, msg: str) -> None:
+        """
+        Initialize the order creation error with diagnostic message.
+
+        Args:
+            msg (str): Detailed error explanation
+        """
+
         super().__init__(msg)
 
 
 class TradeClient(BaseClient):
+    """
+    Client for Binance trading operations.
+    
+    Handles order placement, cancellation, and monitoring for futures trading.
+    Supports market, limit, and stop orders with various position modes.
+    
+    Instance Attributes:
+        account (AccountClient): Account client
+        market (MarketClient): Market client
+        position (PositionClient): Position client
+        alerts (list): List to store trading alerts and notifications
+        logger: Logger instance for this module
+    """
+
     def __init__(
         self,
         account: 'AccountClient',
@@ -25,6 +54,16 @@ class TradeClient(BaseClient):
         position: 'PositionClient',
         alerts: list
     ) -> None:
+        """
+        Initialize trade client with required dependencies.
+        
+        Args:
+            account (AccountClient): Account client instance
+            market (MarketClient): Market client instance
+            position (PositionClient): Position client instance
+            alerts (list): List for storing trading alerts
+        """
+
         super().__init__()
 
         self.account = account
@@ -42,6 +81,20 @@ class TradeClient(BaseClient):
         leverage: int,
         hedge: bool
     ) -> None:
+        """
+        Open long position with market order.
+        
+        Places market buy order to open long position with specified
+        size, margin mode, and leverage settings.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Position size ('10%', '100u', etc.)
+            margin (str): Margin mode ('cross' or 'isolated')
+            leverage (int): Leverage multiplier
+            hedge (bool): Use hedge mode for position
+        """
+
         try:
             if hedge:
                 self.position.switch_position_mode(True)
@@ -80,7 +133,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='market',
-                    status='failed to create',
+                    status='failed',
                     side='buy',
                     symbol=symbol,
                     qty=str(qty),
@@ -101,6 +154,20 @@ class TradeClient(BaseClient):
         leverage: int,
         hedge: bool
     ) -> None:
+        """
+        Open short position with market order.
+        
+        Places market sell order to open short position with specified
+        size, margin mode, and leverage settings.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Position size ('10%', '100u', etc.)
+            margin (str): Margin mode ('cross' or 'isolated')
+            leverage (int): Leverage multiplier
+            hedge (bool): Use hedge mode for position
+        """
+
         try:
             if hedge:
                 self.position.switch_position_mode(True)
@@ -139,7 +206,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='market',
-                    status='failed to create',
+                    status='failed',
                     side='sell',
                     symbol=symbol,
                     qty=str(qty),
@@ -153,6 +220,18 @@ class TradeClient(BaseClient):
             self.logger.exception('Failed to execute market_open_short')
 
     def market_close_long(self, symbol: str, size: str, hedge: bool) -> None:
+        """
+        Close long position with market order.
+        
+        Places market sell order to close existing long position.
+        Supports partial closing with size specification.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Amount to close ('100%', '50u', etc.)
+            hedge (bool): Use hedge mode for position
+        """
+
         try:
             qty = self._get_quantity_to_close('LONG', symbol, size, hedge)
 
@@ -184,7 +263,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='market',
-                    status='failed to create',
+                    status='failed',
                     side='sell',
                     symbol=symbol,
                     qty=str(qty),
@@ -198,6 +277,18 @@ class TradeClient(BaseClient):
             self.logger.exception('Failed to execute market_close_long')
 
     def market_close_short(self, symbol: str, size: str, hedge: bool) -> None:
+        """
+        Close short position with market order.
+        
+        Places market buy order to close existing short position.
+        Supports partial closing with size specification.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Amount to close ('100%', '50u', etc.)
+            hedge (bool): Use hedge mode for position
+        """
+
         try:
             qty = self._get_quantity_to_close('SHORT', symbol, size, hedge)
 
@@ -229,7 +320,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='market',
-                    status='failed to create',
+                    status='failed',
                     side='buy',
                     symbol=symbol,
                     qty=str(qty),
@@ -249,6 +340,22 @@ class TradeClient(BaseClient):
         price: float,
         hedge: bool
     ) -> int:
+        """
+        Place stop-loss order to close long position.
+        
+        Creates stop-market order that will trigger when price falls
+        to specified level, closing the long position.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Amount to close ('100%', '50u', etc.)
+            price (float): Stop price trigger level
+            hedge (bool): Use hedge mode for position
+            
+        Returns:
+            int: Order ID of created stop order
+        """
+
         try:
             p_precision = self.market.get_price_precision(
                 market=Market.FUTURES,
@@ -291,7 +398,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='stop market',
-                    status='failed to create',
+                    status='failed',
                     side='sell',
                     symbol=symbol,
                     qty=str(qty),
@@ -313,6 +420,22 @@ class TradeClient(BaseClient):
         price: float,
         hedge: bool
     ) -> int:
+        """
+        Place stop-loss order to close short position.
+        
+        Creates stop-market order that will trigger when price rises
+        to specified level, closing the short position.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Amount to close ('100%', '50u', etc.)
+            price (float): Stop price trigger level
+            hedge (bool): Use hedge mode for position
+            
+        Returns:
+            int: Order ID of created stop order
+        """
+
         try:
             p_precision = self.market.get_price_precision(
                 market=Market.FUTURES,
@@ -355,7 +478,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='stop market',
-                    status='failed to create',
+                    status='failed',
                     side='buy',
                     symbol=symbol,
                     qty=str(qty),
@@ -379,6 +502,24 @@ class TradeClient(BaseClient):
         price: float,
         hedge: bool
     ) -> int:
+        """
+        Open long position with limit order.
+        
+        Places limit buy order to open long position at specified price
+        with configured margin mode and leverage.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Position size ('10%', '100u', etc.)
+            margin (str): Margin mode ('cross' or 'isolated')
+            leverage (int): Leverage multiplier
+            price (float): Limit order price
+            hedge (bool): Use hedge mode for position
+            
+        Returns:
+            int: Order ID of created limit order
+        """
+
         try:
             if hedge:
                 self.position.switch_position_mode(True)
@@ -424,7 +565,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='limit',
-                    status='failed to create',
+                    status='failed',
                     side='buy',
                     symbol=symbol,
                     qty=str(qty),
@@ -448,6 +589,24 @@ class TradeClient(BaseClient):
         price: float,
         hedge: bool
     ) -> int:
+        """
+        Open short position with limit order.
+        
+        Places limit sell order to open short position at specified price
+        with configured margin mode and leverage.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Position size ('10%', '100u', etc.)
+            margin (str): Margin mode ('cross' or 'isolated')
+            leverage (int): Leverage multiplier
+            price (float): Limit order price
+            hedge (bool): Use hedge mode for position
+            
+        Returns:
+            int: Order ID of created limit order
+        """
+
         try:
             if hedge:
                 self.position.switch_position_mode(True)
@@ -493,7 +652,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='limit',
-                    status='failed to create',
+                    status='failed',
                     side='sell',
                     symbol=symbol,
                     qty=str(qty),
@@ -515,6 +674,22 @@ class TradeClient(BaseClient):
         price: float,
         hedge: bool
     ) -> int:
+        """
+        Close long position with limit order (take profit).
+        
+        Places take-profit order to close long position when price
+        reaches specified level.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Amount to close ('100%', '50u', etc.)
+            price (float): Take profit price level
+            hedge (bool): Use hedge mode for position
+            
+        Returns:
+            int: Order ID of created take profit order
+        """
+
         try:
             p_precision = self.market.get_price_precision(
                 market=Market.FUTURES,
@@ -559,7 +734,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='limit',
-                    status='failed to create',
+                    status='failed',
                     side='sell',
                     symbol=symbol,
                     qty=str(qty),
@@ -581,6 +756,22 @@ class TradeClient(BaseClient):
         price: float,
         hedge: bool
     ) -> int:
+        """
+        Close short position with limit order (take profit).
+        
+        Places take-profit order to close short position when price
+        reaches specified level.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Amount to close ('100%', '50u', etc.)
+            price (float): Take profit price level
+            hedge (bool): Use hedge mode for position
+        
+        Returns:
+            int: Order ID of created take profit order
+        """
+
         try:
             p_precision = self.market.get_price_precision(
                 market=Market.FUTURES,
@@ -625,7 +816,7 @@ class TradeClient(BaseClient):
             except OrderCreationError as e:
                 alert = self._create_order_alert(
                     order_type='limit',
-                    status='failed to create',
+                    status='failed',
                     side='buy',
                     symbol=symbol,
                     qty=str(qty),
@@ -641,12 +832,33 @@ class TradeClient(BaseClient):
             self.logger.exception('Failed to execute limit_close_short')
 
     def cancel_all_orders(self, symbol: str) -> None:
+        """
+        Cancel all open orders for specified symbol.
+        
+        Cancels all pending orders (limit, stop, etc.) for the symbol
+        across all position sides.
+        
+        Args:
+            symbol (str): Trading symbol
+        """
+
         try:
             self._cancel_all_orders(symbol)
         except Exception:
             self.logger.exception('Failed to execute cancel_all_orders')
 
     def cancel_orders(self, symbol: str, side: str) -> None:
+        """
+        Cancel all orders for specified symbol and side.
+        
+        Cancels all pending orders matching the specified side
+        (buy or sell) for the symbol.
+        
+        Args:
+            symbol (str): Trading symbol
+            side (str): Order side ('buy' or 'sell')
+        """
+
         try:
             orders_info = self._get_orders(symbol)
             one_sided_orders = list(
@@ -662,6 +874,17 @@ class TradeClient(BaseClient):
             self.logger.exception('Failed to execute cancel_orders')
 
     def cancel_limit_orders(self, symbol: str, side: str) -> None:
+        """
+        Cancel limit orders for specified symbol and side.
+        
+        Cancels only limit orders matching the specified side
+        for the symbol.
+        
+        Args:
+            symbol (str): Trading symbol
+            side (str): Order side ('buy' or 'sell')
+        """
+
         try:
             orders_info = self._get_orders(symbol)
             limit_orders = list(
@@ -679,6 +902,17 @@ class TradeClient(BaseClient):
             self.logger.exception('Failed to execute cancel_limit_orders')
 
     def cancel_stop_orders(self, symbol: str, side: str) -> None:
+        """
+        Cancel stop orders for specified symbol and side.
+        
+        Cancels only stop-market orders matching the specified side
+        for the symbol.
+        
+        Args:
+            symbol (str): Trading symbol
+            side (str): Order side ('buy' or 'sell')
+        """
+
         try:
             orders_info = self._get_orders(symbol)
             stop_orders = list(
@@ -696,6 +930,20 @@ class TradeClient(BaseClient):
             self.logger.exception('Failed to execute cancel_stop_orders')
 
     def check_stop_orders(self, symbol: str, order_ids: list) -> list:
+        """
+        Check status of stop orders and update alerts.
+        
+        Monitors stop orders for status changes (filled, cancelled) and
+        creates appropriate alerts. Returns list of still active orders.
+        
+        Args:
+            symbol (str): Trading symbol
+            order_ids (list): List of order IDs to check
+            
+        Returns:
+            list: List of order IDs that are still active
+        """
+
         active_order_ids = []
 
         try:
@@ -740,6 +988,20 @@ class TradeClient(BaseClient):
             return order_ids
 
     def check_limit_orders(self, symbol: str, order_ids: list) -> list:
+        """
+        Check status of limit orders and update alerts.
+        
+        Monitors limit orders for status changes (filled, cancelled) and
+        creates appropriate alerts. Returns list of still active orders.
+        
+        Args:
+            symbol (str): Trading symbol
+            order_ids (list): List of order IDs to check
+            
+        Returns:
+            list: List of order IDs that are still active
+        """
+
         active_order_ids = []
 
         try:
@@ -780,12 +1042,33 @@ class TradeClient(BaseClient):
             return order_ids
 
     def _cancel_all_orders(self, symbol: str) -> dict:
+        """
+        Internal method to cancel all orders via API.
+        
+        Args:
+            symbol (str): Trading symbol
+            
+        Returns:
+            dict: API response
+        """
+
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/allOpenOrders'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.delete(url, params=params, headers=headers)
 
     def _cancel_order(self, symbol: str, order_id: str) -> dict:
+        """
+        Internal method to cancel specific order via API.
+        
+        Args:
+            symbol (str): Trading symbol
+            order_id (str): Order ID to cancel
+            
+        Returns:
+            dict: API response
+        """
+
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
         params = {'symbol': symbol, 'orderId': order_id}
         params, headers = self.build_signed_request(params)
@@ -803,6 +1086,30 @@ class TradeClient(BaseClient):
         price: float = None,
         stop_price: float = None
     ) -> dict:
+        """
+        Internal method to create order via API.
+        
+        Constructs and submits order request to Binance futures API
+        with specified parameters.
+        
+        Args:
+            symbol (str): Trading symbol
+            side (str): Order side ('BUY' or 'SELL')
+            position_side (str): Position side ('LONG', 'SHORT', 'BOTH')
+            order_type (str): Order type ('MARKET', 'LIMIT' etc.)
+            qty (float): Order quantity
+            time_in_force (str, optional): Time in force ('GTC', 'IOC', 'FOK')
+            reduce_only (str, optional): Reduce only flag
+            price (float, optional): Order price for limit orders
+            stop_price (float, optional): Stop price for stop orders
+        
+        Returns:
+            dict: API response with order details
+            
+        Raises:
+            OrderCreationError: If order creation fails
+        """
+        
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
         params = {
             'symbol': symbol,
@@ -842,6 +1149,26 @@ class TradeClient(BaseClient):
         price: str | None,
         created_time: int | None
     ) -> dict:
+        """
+        Create alert object for order events.
+        
+        Formats order information into standardized alert structure
+        for logging and notification purposes.
+        
+        Args:
+            order_type (str): Type of order ('market', 'limit', 'stop market')
+            status (str): Order status ('filled', 'pending',
+                          'cancelled', 'failed')
+            side (str): Order side ('buy' or 'sell')
+            symbol (str): Trading symbol
+            qty (str): Order quantity
+            price (str | None): Order price
+            created_time (int | None): Order timestamp in milliseconds
+            
+        Returns:
+            dict: Formatted alert object
+        """
+
         if created_time is not None:
             order_time = datetime.fromtimestamp(
                 timestamp=created_time / 1000,
@@ -866,12 +1193,33 @@ class TradeClient(BaseClient):
         return alert
 
     def _get_order(self, symbol: str, order_id: str) -> dict:
+        """
+        Internal method to retrieve order information via API.
+        
+        Args:
+            symbol (str): Trading symbol
+            order_id (str): Order ID to retrieve
+            
+        Returns:
+            dict: Order information from API
+        """
+
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
         params = {'symbol': symbol, 'orderId': order_id}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)
 
     def _get_orders(self, symbol: str) -> list:
+        """
+        Internal method to retrieve all open orders via API.
+        
+        Args:
+            symbol (str): Trading symbol
+            
+        Returns:
+            list: List of open orders
+        """
+
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/openOrders'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
@@ -885,6 +1233,23 @@ class TradeClient(BaseClient):
         hedge: bool,
         price: float | None = None
     ) -> float:
+        """
+        Calculate quantity needed to close position.
+        
+        Determines the quantity to close based on current position size
+        and requested close amount (percentage or absolute value).
+        
+        Args:
+            side (str): Position side ('LONG' or 'SHORT')
+            symbol (str): Trading symbol
+            size (str): Close amount ('100%', '50u', etc.)
+            hedge (bool): Use hedge mode for position
+            price (float | None): Price for USDT-based size calculation
+            
+        Returns:
+            float: Quantity to close (adjusted for precision)
+        """
+
         position_size = self._get_position_size(side, symbol, hedge)
 
         if size.endswith('%'):
@@ -913,6 +1278,22 @@ class TradeClient(BaseClient):
         leverage: int,
         price: float | None = None
     ) -> float:
+        """
+        Calculate quantity needed to open position.
+        
+        Determines the quantity to open based on account balance,
+        requested size, and leverage settings.
+        
+        Args:
+            symbol (str): Trading symbol
+            size (str): Position size ('10%', '100u', etc.)
+            leverage (int): Leverage multiplier
+            price (float | None): Price for quantity calculation
+            
+        Returns:
+            float: Quantity to open (adjusted for precision)
+        """
+
         effective_price = price
 
         if price is None:
@@ -948,6 +1329,22 @@ class TradeClient(BaseClient):
         symbol: str,
         hedge: bool
     ) -> float:
+        """
+        Get current position size for specified side.
+        
+        Retrieves the current position amount for the specified
+        side and symbol, considering hedge mode settings.
+        
+        Args:
+            side (str): Position side ('LONG' or 'SHORT')
+            symbol (str): Trading symbol
+            hedge (bool): Use hedge mode for position
+            
+        Returns:
+            float: Current position size
+                   (positive for long, negative for short)
+        """
+
         try:
             positions = self._get_positions(symbol)
             multiplier = 1 if side == 'LONG' else -1
@@ -963,6 +1360,16 @@ class TradeClient(BaseClient):
             return 0.0
 
     def _get_positions(self, symbol: str) -> list:
+        """
+        Internal method to retrieve position information via API.
+        
+        Args:
+            symbol (str): Trading symbol
+            
+        Returns:
+            list: Position information from API
+        """
+
         url = f'{self.FUTURES_ENDPOINT}/fapi/v3/positionRisk'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)

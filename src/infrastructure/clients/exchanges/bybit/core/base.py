@@ -9,15 +9,60 @@ from src.infrastructure.clients.http_client import HttpClient
 
 
 class BaseClient(HttpClient):
+    """
+    Base client for ByBit API operations.
+    
+    Provides common functionality for all ByBit API clients including
+    authentication, request signing, and endpoint configuration.
+    
+    Attributes:
+        BASE_ENDPOINT (str): ByBit API base endpoint
+        EXCHANGE (str): Exchange identifier
+
+    Instance Attributes:
+        api_key (str): ByBit API key from environment
+        api_secret (str): ByBit API secret from environment
+        logger: Logger instance for this module
+    """
+
     BASE_ENDPOINT = 'https://api.bybit.com'
     EXCHANGE = 'BYBIT'
 
     def __init__(self) -> None:
+        """
+        Initialize base client with credentials
+        from environment variables.
+        
+        Reads the following environment variables:
+        - BYBIT_API_KEY: API key for ByBit authentication
+        - BYBIT_API_SECRET: API secret for request signing
+        
+        Initializes:
+        - api_key (str): Stores the ByBit API key
+        - api_secret (str): Stores the ByBit API secret
+        - logger: Logger instance for this module
+        """
+
         self.api_key = getenv('BYBIT_API_KEY')
         self.api_secret = getenv('BYBIT_API_SECRET')
+
         self.logger = getLogger(__name__)
 
     def get_headers(self, params: dict, method: str) -> dict:
+        """
+        Generate authenticated headers for ByBit API requests.
+        
+        Creates required authentication headers including timestamp,
+        signature, and API key based on request parameters and method.
+        
+        Args:
+            params (dict): Request parameters
+            method (str): HTTP method ('GET' or 'POST')
+            
+        Returns:
+            dict: Complete headers dictionary with authentication
+        """
+
         timestamp = str(int(time() * 1000))
         recv_window = '5000'
 

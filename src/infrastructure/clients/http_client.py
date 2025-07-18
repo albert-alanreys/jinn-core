@@ -4,6 +4,13 @@ from time import sleep
 
 
 class HttpClient:
+    """
+    Base HTTP client for making API requests with retry logic.
+    
+    Provides common HTTP methods (GET, POST, DELETE) with error handling,
+    retry mechanism, and logging capabilities.
+    """
+
     logger = getLogger(__name__)
 
     def get(
@@ -14,6 +21,20 @@ class HttpClient:
         attempts: int = 3,
         logging: bool = True
     ) -> dict | list | None:
+        """
+        Make a GET request with retry logic.
+        
+        Args:
+            url (str): Target URL for the request
+            params (dict, optional): Query parameters
+            headers (dict, optional): Request headers
+            attempts (int): Number of retry attempts
+            logging (bool): Whether to log errors
+            
+        Returns:
+            dict | list | None: Response data or None if all attempts fail
+        """
+
         for _ in range(attempts):
             try:
                 response = requests.get(
@@ -56,6 +77,21 @@ class HttpClient:
         attempts: int = 3,
         logging: bool = True
     ) -> dict | None:
+        """
+        Make a POST request with retry logic.
+        
+        Args:
+            url (str): Target URL for the request
+            json (dict, optional): JSON payload
+            params (dict, optional): Query parameters
+            headers (dict, optional): Request headers
+            attempts (int): Number of retry attempts
+            logging (bool): Whether to log errors
+            
+        Returns:
+            dict | None: Response data or None if all attempts fail
+        """
+
         for _ in range(attempts):
             try:
                 response = requests.post(
@@ -99,6 +135,21 @@ class HttpClient:
         attempts: int = 3,
         logging: bool = True
     ) -> dict | None:
+        """
+        Make a DELETE request with retry logic.
+        
+        Args:
+            url (str): Target URL for the request
+            json (dict, optional): JSON payload
+            params (dict, optional): Query parameters
+            headers (dict, optional): Request headers
+            attempts (int): Number of retry attempts
+            logging (bool): Whether to log errors
+            
+        Returns:
+            dict | None: Response data or None if all attempts fail
+        """
+
         for _ in range(attempts):
             try:
                 response = requests.delete(

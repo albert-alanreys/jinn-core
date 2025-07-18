@@ -9,7 +9,7 @@ from src.infrastructure.clients.messaging.telegram import TelegramClient
 
 class OptimizationService:
     """
-    Optimizes trading strategy parameters using genetic algorithm.
+    Core optimization service for trading strategy parameter tuning.
 
     Performs parameter optimization across multiple strategies in parallel,
     using a combination of selection, recombination and mutation operations.

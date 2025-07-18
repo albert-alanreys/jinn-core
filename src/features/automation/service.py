@@ -8,7 +8,7 @@ from src.infrastructure.providers import RealtimeProvider
 
 class AutomationService():
     """
-    Automates trading strategies execution in real-time.
+    Core automation service for real-time trading strategy execution.
 
     Manages continuous execution of trading strategies by monitoring
     market data updates and triggering strategy calculations and trades.

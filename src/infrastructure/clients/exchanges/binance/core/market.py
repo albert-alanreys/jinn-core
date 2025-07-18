@@ -8,6 +8,21 @@ from .base import BaseClient
 
 
 class MarketClient(BaseClient):
+    """
+    Client for Binance market data operations.
+    
+    Handles market data retrieval including klines, tickers,
+    symbol information, and precision data.
+    Supports both futures and spot markets.
+    
+    Attributes:
+        intervals (dict): Mapping of interval formats to standard intervals
+        interval_ms (dict): Interval durations in milliseconds
+
+    Instance Attributes:
+        logger: Logger instance for this module
+    """
+
     intervals = {
         '1m': '1m', '1': '1m', 1: '1m',
         '5m': '5m', '5': '5m', 5: '5m',
@@ -34,6 +49,8 @@ class MarketClient(BaseClient):
     }
 
     def __init__(self) -> None:
+        """Initialize market client with base client functionality."""
+
         super().__init__()
 
         self.logger = getLogger(__name__)
@@ -46,6 +63,23 @@ class MarketClient(BaseClient):
         start: int,
         end: int
     ) -> list:
+        """
+        Retrieve historical kline data for specified time range.
+        
+        Fetches kline data by breaking large time ranges into smaller chunks
+        and processing them concurrently for improved performance.
+        
+        Args:
+            market (Market): Market type (FUTURES or SPOT)
+            symbol (str): Trading symbol (e.g., 'BTCUSDT')
+            interval (str): Kline interval (e.g., '1m', '1h', '1d')
+            start (int): Start time in milliseconds
+            end (int): End time in milliseconds
+            
+        Returns:
+            list: Historical kline data with OHLCV information
+        """
+
         try:
             interval = self.get_valid_interval(interval)
             interval_ms = self.interval_ms[interval]
@@ -90,6 +124,21 @@ class MarketClient(BaseClient):
         interval: str,
         limit: int = 1000
     ) -> list:
+        """
+        Retrieve recent kline data for specified symbol.
+        
+        Fetches the most recent kline data up to the specified limit.
+        For limits > 1000, uses time range chunking with concurrent requests.
+        
+        Args:
+            symbol (str): Trading symbol (e.g., 'BTCUSDT')
+            interval (str): Kline interval (e.g., '1m', '1h', '1d')
+            limit (int): Number of klines to retrieve (default: 1000)
+            
+        Returns:
+            list: Recent kline data with OHLCV information
+        """
+
         try:
             interval = self.get_valid_interval(interval)
 
@@ -142,6 +191,22 @@ class MarketClient(BaseClient):
 
     @lru_cache
     def get_valid_interval(self, interval: str | int) -> str:
+        """
+        Convert interval input to valid Binance interval format.
+        
+        Validates and normalizes interval input, supporting various formats
+        including strings and integers.
+        
+        Args:
+            interval (str | int): Interval in various formats
+            
+        Returns:
+            str: Standardized interval string
+            
+        Raises:
+            ValueError: If interval format is invalid
+        """
+
         if interval in self.intervals:
             return self.intervals[interval]
         
@@ -149,6 +214,20 @@ class MarketClient(BaseClient):
 
     @lru_cache
     def get_price_precision(self, market: Market, symbol: str) -> float:
+        """
+        Get price precision (tick size) for specified symbol.
+        
+        Retrieves the minimum price increment for the symbol
+        from exchange info. Result is cached for performance.
+        
+        Args:
+            market (Market): Market type (FUTURES or SPOT)
+            symbol (str): Trading symbol
+            
+        Returns:
+            float: Price precision value (tick size)
+        """
+
         try:
             symbol_info = self._get_symbol_info(market, symbol)
             return float(symbol_info['filters'][0]['tickSize'])
@@ -160,6 +239,20 @@ class MarketClient(BaseClient):
 
     @lru_cache
     def get_qty_precision(self, market: Market, symbol: str) -> float:
+        """
+        Get quantity precision (step size) for specified symbol.
+        
+        Retrieves the minimum quantity increment for the symbol
+        from exchange info. Result is cached for performance.
+        
+        Args:
+            market (Market): Market type (FUTURES or SPOT)
+            symbol (str): Trading symbol
+            
+        Returns:
+            float: Quantity precision value (step size)
+        """
+
         try:
             symbol_info = self._get_symbol_info(market, symbol)
             return float(symbol_info['filters'][1]['stepSize'])
@@ -170,6 +263,16 @@ class MarketClient(BaseClient):
             )
 
     def get_tickers(self, symbol: str) -> dict:
+        """
+        Get ticker information including mark price for futures symbol.
+        
+        Args:
+            symbol (str): Trading symbol
+            
+        Returns:
+            dict: Ticker information with prices and rates
+        """
+
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/premiumIndex'
         params = {'symbol': symbol}
         return self.get(url, params)
@@ -183,6 +286,24 @@ class MarketClient(BaseClient):
         end: int = None,
         limit: int = 1000
     ) -> list:
+        """
+        Internal method to fetch kline data from Binance API.
+        
+        Makes direct API call to retrieve kline data with specified params.
+        Used internally by public kline methods.
+        
+        Args:
+            market (Market): Market type (FUTURES or SPOT)
+            symbol (str): Trading symbol
+            interval (str): Kline interval
+            start (int, optional): Start time in milliseconds
+            end (int, optional): End time in milliseconds
+            limit (int): Maximum number of klines (default: 1000)
+            
+        Returns:
+            list: Raw kline data from API
+        """
+
         match market:
             case Market.FUTURES:
                 url = f'{self.FUTURES_ENDPOINT}/fapi/v1/klines'
@@ -200,6 +321,20 @@ class MarketClient(BaseClient):
         return self.get(url, params, logging=False)
 
     def _get_symbol_info(self, market: Market, symbol: str) -> dict:
+        """
+        Get symbol information from exchange info.
+        
+        Retrieves detailed symbol information including filters, precision,
+        and trading rules from exchange info endpoint.
+        
+        Args:
+            market (Market): Market type (FUTURES or SPOT)
+            symbol (str): Trading symbol
+            
+        Returns:
+            dict: Symbol information with filters and rules
+        """
+
         match market:
             case Market.FUTURES:
                 url = f'{self.FUTURES_ENDPOINT}/fapi/v1/exchangeInfo'
