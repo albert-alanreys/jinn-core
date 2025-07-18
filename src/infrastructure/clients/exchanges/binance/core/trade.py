@@ -108,7 +108,12 @@ class TradeClient(BaseClient):
                     self.position.switch_margin_mode(symbol, 'ISOLATED')
 
             self.position.set_leverage(symbol, leverage)
-            qty = self._get_quantity_to_open(symbol, size, leverage)
+
+            qty = self.position.get_quantity_to_open(
+                symbol=symbol,
+                size=size,
+                leverage=leverage
+            )
 
             try:
                 order = self._create_order(
@@ -181,7 +186,12 @@ class TradeClient(BaseClient):
                     self.position.switch_margin_mode(symbol, 'ISOLATED')
 
             self.position.set_leverage(symbol, leverage)
-            qty = self._get_quantity_to_open(symbol, size, leverage)
+
+            qty = self.position.get_quantity_to_open(
+                symbol=symbol,
+                size=size,
+                leverage=leverage
+            )
 
             try:
                 order = self._create_order(
@@ -233,7 +243,12 @@ class TradeClient(BaseClient):
         """
 
         try:
-            qty = self._get_quantity_to_close('LONG', symbol, size, hedge)
+            qty = self.position.get_quantity_to_close(
+                side='LONG',
+                symbol=symbol,
+                size=size,
+                hedge=hedge
+            )
 
             if not qty:
                 self.logger.info(f'No position to close for {symbol}')
@@ -290,7 +305,12 @@ class TradeClient(BaseClient):
         """
 
         try:
-            qty = self._get_quantity_to_close('SHORT', symbol, size, hedge)
+            qty = self.position.get_quantity_to_close(
+                side='SHORT',
+                symbol=symbol,
+                size=size,
+                hedge=hedge
+            )
 
             if not qty:
                 self.logger.info(f'No position to close for {symbol}')
@@ -362,7 +382,8 @@ class TradeClient(BaseClient):
                 symbol=symbol
             )
             adjusted_price = adjust(price, p_precision)
-            qty = self._get_quantity_to_close(
+
+            qty = self.position.get_quantity_to_close(
                 side='LONG',
                 symbol=symbol,
                 size=size,
@@ -442,7 +463,8 @@ class TradeClient(BaseClient):
                 symbol=symbol
             )
             adjusted_price = adjust(price, p_precision)
-            qty = self._get_quantity_to_close(
+
+            qty = self.position.get_quantity_to_close(
                 side='SHORT',
                 symbol=symbol,
                 size=size,
@@ -539,7 +561,13 @@ class TradeClient(BaseClient):
                 symbol=symbol
             )
             adjusted_price = adjust(price, p_precision)
-            qty = self._get_quantity_to_open(symbol, size, leverage, price)
+
+            qty = self.position.get_quantity_to_open(
+                symbol=symbol,
+                size=size,
+                leverage=leverage,
+                price=price
+            )
 
             try:
                 order = self._create_order(
@@ -626,7 +654,13 @@ class TradeClient(BaseClient):
                 symbol=symbol
             )
             adjusted_price = adjust(price, p_precision)
-            qty = self._get_quantity_to_open(symbol, size, leverage, price)
+
+            qty = self.position.get_quantity_to_open(
+                symbol=symbol,
+                size=size,
+                leverage=leverage,
+                price=price
+            )
 
             try:
                 order = self._create_order(
@@ -696,7 +730,8 @@ class TradeClient(BaseClient):
                 symbol=symbol
             )
             adjusted_price = adjust(price, p_precision)
-            qty = self._get_quantity_to_close(
+
+            qty = self.position.get_quantity_to_close(
                 side='LONG',
                 symbol=symbol,
                 size=size,
@@ -778,7 +813,8 @@ class TradeClient(BaseClient):
                 symbol=symbol
             )
             adjusted_price = adjust(price, p_precision)
-            qty = self._get_quantity_to_close(
+
+            qty = self.position.get_quantity_to_close(
                 side='SHORT',
                 symbol=symbol,
                 size=size,
@@ -1150,7 +1186,7 @@ class TradeClient(BaseClient):
         created_time: int | None
     ) -> dict:
         """
-        Create alert object for order events.
+        Internal method to create alert object for order events.
         
         Formats order information into standardized alert structure
         for logging and notification purposes.
@@ -1221,156 +1257,6 @@ class TradeClient(BaseClient):
         """
 
         url = f'{self.FUTURES_ENDPOINT}/fapi/v1/openOrders'
-        params = {'symbol': symbol}
-        params, headers = self.build_signed_request(params)
-        return self.get(url, params, headers)
-    
-    def _get_quantity_to_close(
-        self,
-        side: str,
-        symbol: str,
-        size: str,
-        hedge: bool,
-        price: float | None = None
-    ) -> float:
-        """
-        Calculate quantity needed to close position.
-        
-        Determines the quantity to close based on current position size
-        and requested close amount (percentage or absolute value).
-        
-        Args:
-            side (str): Position side ('LONG' or 'SHORT')
-            symbol (str): Trading symbol
-            size (str): Close amount ('100%', '50u', etc.)
-            hedge (bool): Use hedge mode for position
-            price (float | None): Price for USDT-based size calculation
-            
-        Returns:
-            float: Quantity to close (adjusted for precision)
-        """
-
-        position_size = self._get_position_size(side, symbol, hedge)
-
-        if size.endswith('%'):
-            size_val = float(size.rstrip('%'))
-            qty = position_size * size_val * 0.01
-        elif size.endswith('u'):
-            size_val = float(size.rstrip('u'))
-            effective_price = price
-
-            if price is None:
-                market_data = self.market.get_tickers(symbol)
-                effective_price = float(market_data['markPrice'])
-
-            qty = size_val / effective_price
-
-        q_precision = self.market.get_qty_precision(
-            market=Market.FUTURES,
-            symbol=symbol
-        )
-        return adjust(qty, q_precision)
-
-    def _get_quantity_to_open(
-        self,
-        symbol: str,
-        size: str,
-        leverage: int,
-        price: float | None = None
-    ) -> float:
-        """
-        Calculate quantity needed to open position.
-        
-        Determines the quantity to open based on account balance,
-        requested size, and leverage settings.
-        
-        Args:
-            symbol (str): Trading symbol
-            size (str): Position size ('10%', '100u', etc.)
-            leverage (int): Leverage multiplier
-            price (float | None): Price for quantity calculation
-            
-        Returns:
-            float: Quantity to open (adjusted for precision)
-        """
-
-        effective_price = price
-
-        if price is None:
-            market_data = self.market.get_tickers(symbol)
-            effective_price = float(market_data['markPrice'])
-
-        balance_info = self.account.get_wallet_balance()['assets']
-        balance = float(
-            next(
-                filter(
-                    lambda balance: balance['asset'] == 'USDT',
-                    balance_info
-                )
-            )['availableBalance']
-        )
-
-        if size.endswith('%'):
-            size_val = float(size.rstrip('%'))
-            qty = balance * leverage * size_val * 0.01 / effective_price
-        elif size.endswith('u'):
-            size_val = float(size.rstrip('u'))
-            qty = leverage * size_val / effective_price
-
-        q_precision = self.market.get_qty_precision(
-            market=Market.FUTURES,
-            symbol=symbol
-        )
-        return adjust(qty, q_precision)
-
-    def _get_position_size(
-        self,
-        side: str,
-        symbol: str,
-        hedge: bool
-    ) -> float:
-        """
-        Get current position size for specified side.
-        
-        Retrieves the current position amount for the specified
-        side and symbol, considering hedge mode settings.
-        
-        Args:
-            side (str): Position side ('LONG' or 'SHORT')
-            symbol (str): Trading symbol
-            hedge (bool): Use hedge mode for position
-            
-        Returns:
-            float: Current position size
-                   (positive for long, negative for short)
-        """
-
-        try:
-            positions = self._get_positions(symbol)
-            multiplier = 1 if side == 'LONG' else -1
-            position_side = side if hedge else 'BOTH'
-            position = next(
-                filter(
-                    lambda pos: pos['positionSide'] == position_side,
-                    positions
-                )
-            )
-            return multiplier * float(position['positionAmt'])
-        except Exception:
-            return 0.0
-
-    def _get_positions(self, symbol: str) -> list:
-        """
-        Internal method to retrieve position information via API.
-        
-        Args:
-            symbol (str): Trading symbol
-            
-        Returns:
-            list: Position information from API
-        """
-
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v3/positionRisk'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)

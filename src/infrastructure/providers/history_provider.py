@@ -87,7 +87,7 @@ class HistoryProvider():
             start=start,
             end=end,
             feeds=feeds
-        ) if feeds else {}
+        ) if feeds else {'feeds': {}}
 
         result = {
             'market': market,

@@ -16,14 +16,14 @@ class MarketClient(BaseClient):
     Supports both futures and spot markets.
     
     Attributes:
-        intervals (dict): Mapping of interval formats to standard intervals
-        interval_ms (dict): Interval durations in milliseconds
+        INTERVALS (dict): Mapping of interval formats to standard intervals
+        INTERVAL_MS (dict): Interval durations in milliseconds
 
     Instance Attributes:
         logger: Logger instance for this module
     """
 
-    intervals = {
+    INTERVALS = {
         1: 1, '1': 1, '1m': 1,
         5: 5, '5': 5, '5m': 5,
         15: 15, '15': 15, '15m': 15,
@@ -35,7 +35,7 @@ class MarketClient(BaseClient):
         720: 720, '720': 720, '12h': 720,
         'D': 'D', 'd': 'D', '1d': 'D',
     }
-    interval_ms = {
+    INTERVAL_MS = {
         1: 60000,
         5: 300000,
         15: 900000,
@@ -82,7 +82,7 @@ class MarketClient(BaseClient):
 
         try:
             interval = self.get_valid_interval(interval)
-            interval_ms = self.interval_ms[interval]
+            interval_ms = self.INTERVAL_MS[interval]
             step = interval_ms * 1000
 
             time_ranges = [
@@ -150,7 +150,7 @@ class MarketClient(BaseClient):
                     limit=limit
                 )
 
-            interval_ms = self.interval_ms[interval]
+            interval_ms = self.INTERVAL_MS[interval]
             end = int(time() * 1000)
             end = end - (end % interval_ms)
             start = end - interval_ms * limit
@@ -207,8 +207,8 @@ class MarketClient(BaseClient):
             ValueError: If interval format is invalid
         """
 
-        if interval in self.intervals:
-            return self.intervals[interval]
+        if interval in self.INTERVALS:
+            return self.INTERVALS[interval]
         
         raise ValueError(f'Invalid interval: {interval}')
 

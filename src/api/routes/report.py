@@ -2,7 +2,12 @@ from json import dumps
 
 import flask
 
-from src.api.formatting import Formatter
+from src.api.formatting import (
+  format_overview_metrics,
+  format_overview_equity,
+  format_metrics,
+  format_trades
+)
 from src.api.utils import handle_api_errors
 
 
@@ -27,7 +32,7 @@ def get_overview_metrics(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    metrics = Formatter._format_overview_metrics(
+    metrics = format_overview_metrics(
         metrics=context['stats']['metrics'],
         completed_deals_log=context['instance'].completed_deals_log
     )
@@ -53,7 +58,7 @@ def get_overview_equity(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    equity = Formatter._format_overview_equity(
+    equity = format_overview_equity(
         completed_deals_log=context['instance'].completed_deals_log,
         equity=context['stats']['equity']
     )
@@ -79,7 +84,7 @@ def get_metrics(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    metrics = Formatter._format_metrics(context['stats']['metrics'])
+    metrics = format_metrics(context['stats']['metrics'])
     
     return flask.Response(
         response=dumps(metrics),
@@ -102,7 +107,7 @@ def get_trades(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    trades = Formatter._format_trades(
+    trades = format_trades(
         completed_deals_log=context['instance'].completed_deals_log,
         open_deals_log=context['instance'].open_deals_log
     )

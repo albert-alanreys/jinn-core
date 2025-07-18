@@ -82,7 +82,7 @@ class RealtimeProvider():
             symbol=symbol,
             main_klines=klines,
             feeds=feeds
-        ) if feeds else {}
+        ) if feeds else {'feeds': {}}
 
         result = {
             'market': Market.FUTURES,
@@ -171,7 +171,7 @@ class RealtimeProvider():
                     symbol if feed_config[0] == 'symbol' else feed_config[0]
                 )
                 feed_interval = client.get_valid_interval(feed_config[1])
-                interval_ms = client.interval_ms[feed_interval]
+                interval_ms = client.INTERVAL_MS[feed_interval]
                 limit = int((time() * 1000 - main_klines[0][0]) / interval_ms)
 
                 feed_klines = np.array(

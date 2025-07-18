@@ -34,7 +34,10 @@ class BybitClient():
 
         self.account = AccountClient()
         self.market = MarketClient()
-        self.position = PositionClient()
+        self.position = PositionClient(
+            account=self.account,
+            market=self.market
+        )
         self.trade = TradeClient(
             account=self.account,
             market=self.market,

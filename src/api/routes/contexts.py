@@ -2,7 +2,7 @@ from ast import literal_eval
 from json import dumps
 import flask
 
-from src.api.formatting import Formatter
+from src.api.formatting import format_contexts
 from src.api.utils import handle_api_errors
 from src.features.backtesting import BacktestingService
 
@@ -25,7 +25,7 @@ def get_all_contexts() -> flask.Response:
                   for all active strategy contexts
     """
 
-    contexts = Formatter.format_contexts(flask.current_app.strategy_contexts)
+    contexts = format_contexts(flask.current_app.strategy_contexts)
 
     return flask.Response(
         response=dumps(contexts),
@@ -47,7 +47,7 @@ def get_context(context_id: str) -> flask.Response:
         Response: JSON response containing base context data
     """
 
-    context = Formatter.format_contexts(
+    context = format_contexts(
         {context_id: flask.current_app.strategy_contexts[context_id]}  
     )
 
