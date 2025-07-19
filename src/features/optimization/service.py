@@ -9,7 +9,8 @@ from src.infrastructure.clients.messaging.telegram import TelegramClient
 
 class OptimizationService:
     """
-    Core optimization service for trading strategy parameter tuning.
+    Core service responsible for optimizing
+    trading strategy parameters.
 
     Performs parameter optimization across multiple strategies in parallel,
     using a combination of selection, recombination and mutation operations.

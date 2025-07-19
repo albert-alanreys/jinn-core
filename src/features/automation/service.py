@@ -8,6 +8,9 @@ from src.infrastructure.providers import RealtimeProvider
 
 class AutomationService():
     """
+    Core service responsible for executing
+    trading strategies in real time.
+
     Core automation service for real-time trading strategy execution.
 
     Manages continuous execution of trading strategies by monitoring
@@ -92,4 +95,4 @@ class AutomationService():
         instance.calculate(context['market_data'])
         instance.trade()
 
-        context['stats'] = BacktestingService.test(instance)
+        context['metrics'] = BacktestingService.test(instance)

@@ -116,7 +116,7 @@ def update_context(context_id: str) -> flask.Response:
     instance.calculate(context['market_data'])
 
     context['instance'] = instance
-    context['stats'] = BacktestingService.test(instance)
+    context['metrics'] = BacktestingService.test(instance)
 
     return flask.Response(
         response=dumps({'status': 'success'}),

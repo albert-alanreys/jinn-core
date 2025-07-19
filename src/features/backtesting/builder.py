@@ -75,7 +75,7 @@ class BacktestingBuilder:
                     - instance: Strategy instance
                     - client: Exchange API client
                     - market_data: Historical market data
-                    - stats: Backtesting statistics
+                    - metrics: Strategy metrics from backtesting
         """
 
         strategy_contexts = {}
@@ -139,7 +139,7 @@ class BacktestingBuilder:
                             feeds=instance.params.get('feeds')
                         )
                         instance.calculate(market_data)
-                        stats = BacktestingService.test(instance)
+                        metrics = BacktestingService.test(instance)
 
                         context = {
                             'name': strategy.name,
@@ -147,7 +147,7 @@ class BacktestingBuilder:
                             'instance': instance,
                             'client': client,
                             'market_data': market_data,
-                            'stats': stats,
+                            'metrics': metrics,
                         }
                         strategy_contexts[str(id(context))] = context
                     except Exception:
@@ -172,7 +172,7 @@ class BacktestingBuilder:
                     feeds=instance.params.get('feeds')
                 )
                 instance.calculate(market_data)
-                stats = BacktestingService.test(instance)
+                metrics = BacktestingService.test(instance)
 
                 context = {
                     'name': self.strategy.name,
@@ -180,7 +180,7 @@ class BacktestingBuilder:
                     'instance': instance,
                     'client': client,
                     'market_data': market_data,
-                    'stats': stats,
+                    'metrics': metrics,
                 }
                 strategy_contexts[str(id(context))] = context
             except Exception:

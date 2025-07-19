@@ -4,8 +4,9 @@ import flask
 
 from src.api.formatting import (
   format_overview_metrics,
-  format_overview_equity,
-  format_metrics,
+  format_performance_metrics,
+  format_trade_metrics,
+  format_risk_metrics,
   format_trades
 )
 from src.api.utils import handle_api_errors
@@ -18,7 +19,7 @@ report_bp = flask.Blueprint(
 )
 
 
-@report_bp.route('/overview/<string:context_id>/metrics', methods=['GET'])
+@report_bp.route('/metrics/<string:context_id>/overview', methods=['GET'])
 @handle_api_errors
 def get_overview_metrics(context_id: str) -> flask.Response:
     """
@@ -28,12 +29,12 @@ def get_overview_metrics(context_id: str) -> flask.Response:
         context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted metrics data
+        Response: JSON response containing formatted metrics
     """
 
     context = flask.current_app.strategy_contexts[context_id]
     metrics = format_overview_metrics(
-        metrics=context['stats']['metrics'],
+        metrics=context['metrics']['overview'],
         completed_deals_log=context['instance'].completed_deals_log
     )
 
@@ -44,47 +45,21 @@ def get_overview_metrics(context_id: str) -> flask.Response:
     )
 
 
-@report_bp.route('/overview/<string:context_id>/equity', methods=['GET'])
+@report_bp.route('/metrics/<string:context_id>/performance', methods=['GET'])
 @handle_api_errors
-def get_overview_equity(context_id: str) -> flask.Response:
+def get_performance_metrics(context_id: str) -> flask.Response:
     """
-    Get formatted equity curve data for a specific strategy context.
+    Get formatted performance metrics for a specific strategy context.
 
     Args:
         context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted equity data
+        Response: JSON response containing formatted metrics
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    equity = format_overview_equity(
-        completed_deals_log=context['instance'].completed_deals_log,
-        equity=context['stats']['equity']
-    )
-
-    return flask.Response(
-        response=dumps(equity),
-        status=200,
-        mimetype='application/json'
-    )
-
-
-@report_bp.route('/metrics/<string:context_id>', methods=['GET'])
-@handle_api_errors
-def get_metrics(context_id: str) -> flask.Response:
-    """
-    Get metrics data for a specific strategy context.
-
-    Args:
-        context_id (str): Unique identifier of the strategy context
-
-    Returns:
-        Response: JSON response containing formatted metrics data
-    """
-
-    context = flask.current_app.strategy_contexts[context_id]
-    metrics = format_metrics(context['stats']['metrics'])
+    metrics = format_performance_metrics(context['metrics']['performance'])
     
     return flask.Response(
         response=dumps(metrics),
@@ -92,6 +67,49 @@ def get_metrics(context_id: str) -> flask.Response:
         mimetype='application/json'
     )
 
+@report_bp.route('/metrics/<string:context_id>/trades', methods=['GET'])
+@handle_api_errors
+def get_trade_metrics(context_id: str) -> flask.Response:
+    """
+    Get formatted trade-related metrics for a specific strategy context.
+
+    Args:
+        context_id (str): Unique identifier of the strategy context
+
+    Returns:
+        Response: JSON response containing formatted metrics
+    """
+
+    context = flask.current_app.strategy_contexts[context_id]
+    metrics = format_trade_metrics(context['metrics']['trades'])
+    
+    return flask.Response(
+        response=dumps(metrics),
+        status=200,
+        mimetype='application/json'
+    )
+
+@report_bp.route('/metrics/<string:context_id>/risk', methods=['GET'])
+@handle_api_errors
+def get_risk_metrics(context_id: str) -> flask.Response:
+    """
+    Get formatted risk-related metrics for a specific strategy context.
+
+    Args:
+        context_id (str): Unique identifier of the strategy context
+
+    Returns:
+        Response: JSON response containing formatted metrics
+    """
+
+    context = flask.current_app.strategy_contexts[context_id]
+    metrics = format_risk_metrics(context['metrics']['risk'])
+    
+    return flask.Response(
+        response=dumps(metrics),
+        status=200,
+        mimetype='application/json'
+    )
 
 @report_bp.route('/trades/<string:context_id>', methods=['GET'])
 @handle_api_errors
@@ -103,7 +121,7 @@ def get_trades(context_id: str) -> flask.Response:
         context_id (str): Unique identifier of the strategy context
 
     Returns:
-        Response: JSON response containing formatted trades data
+        Response: JSON response containing formatted trades
     """
 
     context = flask.current_app.strategy_contexts[context_id]

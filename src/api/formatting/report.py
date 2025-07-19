@@ -2,135 +2,141 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-from src.constants.metrics import OVERVIEW_METRICS, METRIC_SUFFIXES
+from src.constants.metrics import METRIC_SUFFIXES
 from src.constants.signal_codes import ENTRY_SIGNAL_CODES, CLOSE_SIGNAL_CODES
 from src.constants.trade_labels import TRADE_TYPE_LABELS
 from src.utils.rounding import adjust_vectorized
 
 
 def format_overview_metrics(
-    metrics: list,
+    metrics: dict,
     completed_deals_log: np.ndarray
 ) -> dict:
     """
-    Formats raw metric values into labeled structures with suffixes.
+    Formats overview metrics by applying appropriate suffixes
+    (e.g., ' USDT', '%') to each value in the 'all' fields
+    of the primary metrics based on the metric title.
+    Also formats the equity curve using timestamps from
+    completed deals and corresponding equity values.
 
     Args:
-        metrics (list): List of metric dicts with 'title'
-                        and numeric series
+        metrics (dict): Dictionary containing:
+            - 'primary': List of metric dictionaries
+                         with 'title' and 'all' values
+            - 'equity': List or array of equity values
+        completed_deals_log (np.ndarray): Array of completed deal records
+                                          used to extract equity timestamps
 
     Returns:
-        list: List of formatted metric objects
+        dict: Dictionary with:
+            - 'primary': List of formatted metric strings with suffixes
+            - 'equity': List of dicts with 'time' and 'value'
+                        for plotting the equity curve
     """
 
-    if not completed_deals_log.size:
-        return []
+    result = {'primary': [], 'equity': []}
 
-    metrics_dict = {m['title']: m['all'] for m in metrics}
-    formatted_metrics = []
+    if completed_deals_log.size == 0:
+        return result
 
-    for title in OVERVIEW_METRICS:
-        target_metric = metrics_dict.get(title, [])
-        suffixes = METRIC_SUFFIXES.get(title, [])
+    formatted_primary_metrics = []
 
-        for i, value in enumerate(target_metric):
-            suffix = suffixes[i] if i < len(suffixes) else ''
-            formatted_metrics.append(f'{value}{suffix}')
+    for metric in metrics['primary']:
+        title = metric['title']
+        values = metric['all']
+        suffixes = METRIC_SUFFIXES.get(title, [''] * len(values))
 
-    return formatted_metrics
-
-@staticmethod
-def format_overview_equity(
-    completed_deals_log: np.ndarray,
-    equity: np.ndarray
-) -> list:
-    """
-    Formats equity curve from completed deals and equity values.
-
-    Args:
-        completed_deals_log (np.ndarray): Completed deals log
-        equity (np.ndarray): Corresponding equity values
-
-    Returns:
-        list: Formatted list of equity time series points
-    """
-
-    if not completed_deals_log.size:
-        return []
+        for value, suffix in zip(values, suffixes):
+            formatted_primary_metrics.append(f'{value}{suffix}')
 
     timestamps = completed_deals_log[:, 4] * 0.001
-    values = adjust_vectorized(equity, 0.01)
-
+    equity_values = adjust_vectorized(metrics['equity'], 0.01)
     formatted_equity = []
     used_timestamps = set()
 
-    for t, v in zip(timestamps, values):
-        adjusted_time = t
+    for t, v in zip(timestamps, equity_values):
+        while t in used_timestamps:
+            t += 1
 
-        while adjusted_time in used_timestamps:
-            adjusted_time += 1
+        used_timestamps.add(t)
+        formatted_equity.append({'time': t, 'value': v})
 
-        used_timestamps.add(adjusted_time)
-        formatted_equity.append({'time': adjusted_time, 'value': v})
+    return {
+        'primary': formatted_primary_metrics,
+        'equity': formatted_equity
+    }
 
-    return formatted_equity
 
-@staticmethod
-def format_metrics(metrics: list) -> list:
+def format_performance_metrics(metrics: list) -> list:
     """
-    Formats raw metric values into labeled structures with suffixes.
+    Formats performance metrics by applying appropriate suffixes
+    (e.g., ' USDT', '%') to each value in the 'all', 'long',
+    and 'short' fields based on the metric title.
 
     Args:
-        metrics (list): List of metric dicts with 'title'
-                        and numeric series
+        metrics (list): List of metric dictionaries, each containing 'title',
+                        'all', 'long', and 'short' numeric series
 
     Returns:
-        list: List of formatted metric objects
+        list: List of formatted metric dictionaries
+              with suffixed string values
     """
 
-    result = []
+    return _format_metrics(metrics)
 
-    for metric in metrics:
-        title = metric['title']
-        suffixes = METRIC_SUFFIXES.get(title, [])
 
-        def apply_suffix(values):
-            formatted_values = []
+def format_trade_metrics(metrics: list) -> list:
+    """
+    Formats trade-related metrics by applying appropriate suffixes
+    (e.g., ' USDT', '%') to each value in the 'all', 'long',
+    and 'short' fields based on the metric title.
 
-            for i, value in enumerate(values):
-                if np.isnan(value):
-                    formatted_values.append('')
-                else:
-                    suffix = suffixes[i] if i < len(suffixes) else ''
-                    formatted_values.append(f'{value}{suffix}')
+    Args:
+        metrics (list): List of metric dictionaries, each containing 'title',
+                        'all', 'long', and 'short' numeric series
 
-            return formatted_values
+    Returns:
+        list: List of formatted metric dictionaries
+              with suffixed string values
+    """
 
-        formatted = {
-            'title': [title],
-            'all': apply_suffix(metric['all']),
-            'long': apply_suffix(metric['long']),
-            'short': apply_suffix(metric['short'])
-        }
-        result.append(formatted)
+    return _format_metrics(metrics)
 
-    return result
 
-@staticmethod
+def format_risk_metrics(metrics: list) -> list:
+    """
+    Formats risk-related metrics by applying appropriate suffixes
+    (e.g., ' USDT', '%') to each value in the 'all', 'long',
+    and 'short' fields based on the metric title.
+
+    Args:
+        metrics (list): List of metric dictionaries, each containing 'title',
+                        'all', 'long', and 'short' numeric series
+
+    Returns:
+        list: List of formatted metric dictionaries
+              with suffixed string values
+    """
+
+    return _format_metrics(metrics)
+
+
 def format_trades(
     completed_deals_log: np.ndarray,
     open_deals_log: np.ndarray
 ) -> list:
     """
-    Formats completed and open deals into structured trade rows
-    for tabular display.
+    Formats completed and open trades into structured rows
+    for tabular display, enriching each trade with signal
+    labels, timestamps, and formatted numerical values.
 
     Args:
-        completed_deals_log (np.ndarray): Log of closed trades
-        open_deals_log (np.ndarray): Log of currently open trades
+        completed_deals_log (np.ndarray): 2D array of closed trade data
+        open_deals_log (np.ndarray): 2D array of currently open trade data
 
     Returns:
-        list: Table of formatted trade rows
+        list: List of formatted trade rows,
+              each represented as a list of strings
     """
 
     completed_deals = completed_deals_log[:, :12]
@@ -212,3 +218,65 @@ def format_trades(
         result.append(formatted)
 
     return result
+
+
+def _format_metrics(metrics: list) -> list:
+    """
+    Internal function that applies suffix formatting to each metric group.
+    It processes the 'all', 'long', and 'short' value lists for each
+    metric title using the predefined suffixes from METRIC_SUFFIXES.
+
+    Args:
+        metrics (list):
+            List of raw metric dictionaries with:
+            - 'title': Name of the metric
+            - 'all': List of values for all trades
+            - 'long': List of values for long trades
+            - 'short': List of values for short trades
+
+    Returns:
+        list: List of formatted metric dictionaries
+              with suffixed string values
+    """
+
+    formatted = []
+
+    for metric in metrics:
+        title = metric['title']
+        formatted_metric = {
+            'title': [title],
+            'all': _apply_suffix(title, metric['all']),
+            'long': _apply_suffix(title, metric['long']),
+            'short': _apply_suffix(title, metric['short']),
+        }
+        formatted.append(formatted_metric)
+
+    return formatted
+
+
+def _apply_suffix(title: str, values: list) -> list:
+    """
+    Internal helper that applies suffixes to a list of values
+    based on the metric title. If a value is NaN, an empty
+    string is returned for that position.
+
+    Args:
+        title (str): Metric title used to look up appropriate suffixes
+        values (list): List of numerical values to be formatted
+
+    Returns:
+        list: List of strings, where each numeric value is formatted
+              with its corresponding suffix.
+    """
+
+    suffixes = METRIC_SUFFIXES.get(title, [])
+    formatted = []
+
+    for i, value in enumerate(values):
+        if np.isnan(value):
+            formatted.append('')
+        else:
+            suffix = suffixes[i] if i < len(suffixes) else ''
+            formatted.append(f'{value}{suffix}')
+
+    return formatted

@@ -68,7 +68,7 @@ class AutomationBuilder():
                     - instance: Strategy instance
                     - client: Exchange API client
                     - market_data: Current market data
-                    - stats: Backtesting statistics
+                    - metrics: Strategy metrics from backtesting
                     - updated: Flag indicating if context was updated
         """
 
@@ -152,7 +152,7 @@ class AutomationBuilder():
                         feeds=instance.params.get('feeds')
                     )
                     instance.calculate(market_data)
-                    stats = BacktestingService.test(instance)
+                    metrics = BacktestingService.test(instance)
 
                     context = {
                         'name': strategy.name,
@@ -160,7 +160,7 @@ class AutomationBuilder():
                         'instance': instance,
                         'client': client,
                         'market_data': market_data,
-                        'stats': stats,
+                        'metrics': metrics,
                         'updated': False,
                     }
                     strategy_contexts[str(id(context))] = context
@@ -183,7 +183,7 @@ class AutomationBuilder():
                     feeds=instance.params.get('feeds')
                 )
                 instance.calculate(market_data)
-                stats = BacktestingService.test(instance)
+                metrics = BacktestingService.test(instance)
 
                 context = {
                     'name': self.strategy.name,
@@ -191,7 +191,7 @@ class AutomationBuilder():
                     'instance': instance,
                     'client': client,
                     'market_data': market_data,
-                    'stats': stats,
+                    'metrics': metrics,
                     'updated': False,
                 }
                 strategy_contexts[str(id(context))] = context
