@@ -5,26 +5,26 @@ import src.core.enums as enums
 #    OPTIMIZATION - optimization
 #    BACKTESTING - backtesting
 #    AUTOMATION - automation
-MODE = enums.Mode.OPTIMIZATION
+MODE = enums.Mode.BACKTESTING
 
 # Settings for different modes
 OPTIMIZATION_CONFIG = {
-    'strategy': enums.Strategy.DAILY_PROFIT_V1,
-    'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.FUTURES,
-    'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'start': '2017-01-01',
-    'end': '2025-01-01'
-}
-BACKTESTING_CONFIG = {
-    'strategy': enums.Strategy.DAILY_PROFIT_V1,
+    'strategy': enums.Strategy.NUGGET_V2,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
-    'start': '2023-01-01',
-    'end': '2025-05-10'
+    'start': '2018-01-01',
+    'end': '2025-07-01'
+}
+BACKTESTING_CONFIG = {
+    'strategy': enums.Strategy.NUGGET_V2,
+    'exchange': enums.Exchange.BINANCE,
+    'market': enums.Market.SPOT,
+    'symbol': 'BTCUSDT',
+    'interval': '1d',
+    'start': '2018-01-01',
+    'end': '2023-04-01'
 }
 AUTOMATION_CONFIG = {
     'strategy': enums.Strategy.SANDBOX_V1,

@@ -19,7 +19,7 @@ class OptimizationService:
         strategy_contexts (dict): Dictionary of strategy contexts from Builder
     """
 
-    ITERATIONS = 500
+    ITERATIONS = 1000
     POPULATION_SIZE = 100
     MAX_POPULATION_SIZE = 500
 
@@ -164,11 +164,7 @@ class OptimizationService:
         strategy_instance = self.strategy(self.client, opt_params=sample)
         strategy_instance.calculate(market_data)
 
-        score = round(
-            strategy_instance.completed_deals_log[8::13].sum() /
-            strategy_instance.params['initial_capital'] * 100,
-            2
-        )
+        score = strategy_instance.completed_deals_log[:, 8].sum()
         return score
 
     def _select(self) -> None:
