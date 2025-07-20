@@ -14,12 +14,13 @@ class SandboxV1(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
     params = {
+        "order_size": 90.0, 
         "min_capital": 100.0,
         "stop_type": 1,
-        "stop": 2.8,
+        "stop": 2.0,
         "trail_stop": 1,
         "trail_percent": 30.0,
-        "take_percent": [4.5, 5.9, 12.8],
+        "take_percent": [2.0, 4.0, 6.0],
         "take_volume": [10.0, 10.0, 50.0],
         "st_atr_period": 6,
         "st_factor": 24.6,

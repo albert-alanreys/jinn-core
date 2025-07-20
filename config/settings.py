@@ -28,7 +28,7 @@ BACKTESTING_CONFIG = {
 }
 AUTOMATION_CONFIG = {
     'strategy': enums.Strategy.SANDBOX_V1,
-    'exchange': enums.Exchange.BYBIT,
-    'symbol': 'BTCUSDT',
+    'exchange': enums.Exchange.BINANCE,
+    'symbol': 'XRPUSDT',
     'interval': 1
 }
