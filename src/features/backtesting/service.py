@@ -184,7 +184,7 @@ class BacktestingService:
         """
 
         def _mean(array: np.ndarray) -> float:
-            return round(array.mean(), 2) if array.size else np.nan
+            return round(array.mean(), 2) if array.shape[0] else np.nan
 
         log_col_0 = deals_log[:, 0]
         log_col_2 = deals_log[:, 2]
@@ -203,7 +203,7 @@ class BacktestingService:
         loss_mask_pct = ~win_mask_pct
 
         # Equity
-        equity = np.empty(log_col_8.size + 1, dtype=np.float64)
+        equity = np.empty(log_col_8.shape[0] + 1, dtype=np.float64)
         equity[0] = initial_capital
         equity[1:] = log_col_8
         equity = equity.cumsum()[1:]
@@ -308,34 +308,34 @@ class BacktestingService:
         # Max Position Size
         all_max_position_size = (
             np.max(log_col_7)
-            if log_col_7.size > 0
+            if log_col_7.shape[0] > 0
             else np.nan
         )
         long_max_position_size = (
             np.max(log_col_7[long_mask])
-            if log_col_7[long_mask].size > 0
+            if log_col_7[long_mask].shape[0] > 0
             else np.nan
         )
         short_max_position_size = (
             np.max(log_col_7[short_mask])
-            if log_col_7[short_mask].size > 0
+            if log_col_7[short_mask].shape[0] > 0
             else np.nan
         )
 
         # Total Closed Trades
-        all_total_closed_trades = deals_log.size
-        long_total_closed_trades = deals_log[long_mask].size
-        short_total_closed_trades = deals_log[short_mask].size
+        all_total_closed_trades = deals_log.shape[0]
+        long_total_closed_trades = deals_log[long_mask].shape[0]
+        short_total_closed_trades = deals_log[short_mask].shape[0]
 
         # Number of Winning Trades
-        all_number_winning_trades = deals_log[win_mask].size
-        long_number_winning_trades = deals_log[win_mask & long_mask].size
-        short_number_winning_trades = deals_log[win_mask & short_mask].size
+        all_number_winning_trades = deals_log[win_mask].shape[0]
+        long_number_winning_trades = deals_log[win_mask & long_mask].shape[0]
+        short_number_winning_trades = deals_log[win_mask & short_mask].shape[0]
 
         # Number of Losing Trades
-        all_number_losing_trades = deals_log[loss_mask].size
-        long_number_losing_trades = deals_log[loss_mask & long_mask].size
-        short_number_losing_trades = deals_log[loss_mask & short_mask].size
+        all_number_losing_trades = deals_log[loss_mask].shape[0]
+        long_number_losing_trades = deals_log[loss_mask & long_mask].shape[0]
+        short_number_losing_trades = deals_log[loss_mask & short_mask].shape[0]
 
         # Winning Trade Percentage
         try:
@@ -515,7 +515,7 @@ class BacktestingService:
             all_max_runup = 0.0
             all_max_runup_pct = 0.0
 
-            for i in range(1, equity.size):
+            for i in range(1, equity.shape[0]):
                 if equity[i] < min_equity:
                     min_equity = equity[i]
 
@@ -542,7 +542,7 @@ class BacktestingService:
             all_max_drawdown = 0.0
             all_max_drawdown_pct = 0.0
 
-            for i in range(1, equity.size):
+            for i in range(1, equity.shape[0]):
                 if equity[i] > max_equity:
                     max_equity = equity[i]
 
@@ -587,7 +587,7 @@ class BacktestingService:
             all_sortino_ratio = round(all_avg_trade_pct / denominator, 3)
 
         # Skewness
-        if log_col_9.size < 3:
+        if log_col_9.shape[0] < 3:
             all_skew = np.nan
         else:
             mean = log_col_9.mean()
@@ -599,13 +599,13 @@ class BacktestingService:
                 all_skew = round(
                     np.sum(
                         ((log_col_9 - mean) / std) ** 3
-                    ) / log_col_9.size,
+                    ) / log_col_9.shape[0],
                     3
                 )
 
         # Number of Liquidations
-        long_liquidations_number = log_col_2[log_col_2 == 700].size
-        short_liquidations_number = log_col_2[log_col_2 == 800].size
+        long_liquidations_number = log_col_2[log_col_2 == 700].shape[0]
+        short_liquidations_number = log_col_2[log_col_2 == 800].shape[0]
         all_liquidations_number = (
             long_liquidations_number + short_liquidations_number
         )

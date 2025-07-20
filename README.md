@@ -82,7 +82,7 @@ Valid parameter values are listed in `help\config_enums.txt`.
 3. Launch the program from the project's root directory using the terminal:
 
 ```bash
-py main.py
+py run.py
 ```
 
 #### Optimizing Multiple Strategies
@@ -129,7 +129,7 @@ Allowed keys and values are documented in `help\json_enums.txt`.
 3. Launch the program from the project's root directory using the terminal:
 
 ```bash
-py main.py
+py run.py
 ```
 
 ### Backtesting
@@ -161,7 +161,7 @@ Refer to `help\config_enums.txt` for valid values.
 3. Launch the program from the project's root directory using the terminal:
 
 ```bash
-py main.py
+py run.py
 ```
 
 4. Open your browser and navigate to http://127.0.0.1:5000 to view results.
@@ -179,7 +179,7 @@ MODE = enums.Mode.BACKTESTING
 3. Launch the program from the project's root directory using the terminal:
 
 ```bash
-py main.py
+py run.py
 ```
 
 4. Open your browser and navigate to http://127.0.0.1:5000 to view results.
@@ -210,7 +210,7 @@ Refer to `help\config_enums.txt` for valid values.
 3. Launch the program from the project's root directory using the terminal:
 
 ```bash
-py main.py
+py run.py
 ```
 
 4. Open your browser and navigate to http://127.0.0.1:5000 to view results.
@@ -231,7 +231,7 @@ MODE = enums.Mode.AUTOMATION
 3. Launch the program from the project's root directory using the terminal:
 
 ```bash
-py main.py
+py run.py
 ```
 
 4. Open your browser and navigate to http://127.0.0.1:5000 to view results.
