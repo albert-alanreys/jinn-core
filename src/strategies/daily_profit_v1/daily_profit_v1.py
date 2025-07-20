@@ -155,6 +155,7 @@ class DailyProfitV1(BaseStrategy):
             close=self.close,
             volume=self.volume,
         )
+
         self.vwap_colors = np.empty(self.vwap.shape[0], dtype=np.float64)
         self.vwap_colors[0] = np.nan
         self.vwap_colors[1:] = np.where(

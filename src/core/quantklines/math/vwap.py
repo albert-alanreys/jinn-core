@@ -56,6 +56,10 @@ def vwap(time: np.ndarray,
 
         cum_volume += vol
         cum_volume_price += price * vol
-        result[i] = cum_volume_price / cum_volume
+
+        if cum_volume > 0.0:
+            result[i] = cum_volume_price / cum_volume
+        else:
+            result[i] = 0.0
 
     return result

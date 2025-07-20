@@ -19,7 +19,7 @@ class OptimizationService:
         strategy_contexts (dict): Dictionary of strategy contexts from Builder
     """
 
-    ITERATIONS = 10000
+    ITERATIONS = 500
     POPULATION_SIZE = 100
     MAX_POPULATION_SIZE = 500
 
