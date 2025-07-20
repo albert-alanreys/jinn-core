@@ -570,13 +570,16 @@ class BacktestingService:
             all_recovery_factor = np.nan
 
         # Sharpe Ratio
-        excess_std = np.std(log_col_9)
-
-        if excess_std == 0 or np.isnan(excess_std):
+        if len(log_col_9) == 0 or np.any(np.isnan(log_col_9)):
             all_sharpe_ratio = np.nan
         else:
-            sharpe_avg_return = _mean(log_col_9)
-            all_sharpe_ratio = round(sharpe_avg_return / excess_std, 3)
+            excess_std = np.std(log_col_9)
+            
+            if excess_std == 0 or np.isnan(excess_std):
+                all_sharpe_ratio = np.nan
+            else:
+                sharpe_avg_return = _mean(log_col_9)
+                all_sharpe_ratio = round(sharpe_avg_return / excess_std, 3)
 
         # Sortino ratio
         denominator = _mean(log_col_9[loss_mask_pct] ** 2) ** 0.5
