@@ -1,0 +1,22 @@
+[project]
+name = "jinn-core"
+version = "0.1.0"
+description = "Jinn is a powerful algorithmic trading framework."
+authors = [
+    {name = "Albert Alan-Reys",email = "albert.alanreys@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "flask (==3.1.1)",
+    "numba (==0.61.2)",
+    "numpy (==2.2.6)",
+    "python-dotenv (==1.1.0)",
+    "requests (==2.32.3)",
+    "flask-cors (==6.0.1)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
