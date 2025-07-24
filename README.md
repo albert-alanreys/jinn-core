@@ -1,4 +1,4 @@
-# Jinn
+# Jinn Core
 
 Official implementation of the Jinn algorithmic trading framework.
 

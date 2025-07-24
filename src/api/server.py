@@ -1,9 +1,11 @@
+import os
+
 from flask import Flask
 from flask_cors import CORS
 
+from src.api.handlers import StrategyUpdateHandler
+from src.api.routes import register_routes
 from src.core.enums import Mode
-from .routes import register_routes
-from .handlers import StrategyUpdateHandler
 
 
 def create_app(
@@ -40,10 +42,8 @@ def create_app(
 
     register_routes(app)
 
-    CORS(
-        app,
-        resources={r'/api/*': {'origins': 'http://localhost:5173'}}
-    )
+    cors_origins = os.getenv('CORS_ORIGINS') or '*'
+    CORS(app, resources={r'/api/*': {'origins': cors_origins}})
 
     app.mode = mode
     app.strategy_contexts = strategy_contexts

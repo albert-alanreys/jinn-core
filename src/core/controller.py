@@ -122,4 +122,4 @@ class Controller():
             strategy_contexts=self.strategy_contexts,
             mode=self.mode
         )
-        app.run()
+        app.run(port=int(os.getenv('SERVER_PORT')))

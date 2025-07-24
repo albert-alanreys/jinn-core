@@ -1,6 +1,6 @@
-from os import getenv
-
 import flask
+
+from src.api.utils.network import get_server_url
 
 
 core_bp = flask.Blueprint('core', __name__)
@@ -15,8 +15,9 @@ def index() -> str:
         Rendered HTML template with initial configuration
     """
 
+    server_url = get_server_url()
     return flask.render_template(
         template_name_or_list='index.html',
-        server_url=getenv('SERVER_URL', 'http://127.0.0.1:5000'),
+        server_url=server_url,
         server_mode=flask.current_app.mode.value
     )
