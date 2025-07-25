@@ -1,6 +1,6 @@
-# Jinn Core
+# Jinn Trading Framework
 
-Official implementation of the Jinn algorithmic trading framework.
+Official implementation of the **Jinn** algorithmic trading framework.
 
 For installation, configuration, and usage guides, see the documentation:
 
@@ -8,8 +8,7 @@ For installation, configuration, and usage guides, see the documentation:
 
 ---
 
-**Version:** 3.2.2  
 **License:** Proprietary  
 **Author:** [Albert Alanreys](https://github.com/albert-alanreys)
 
-© 2025 Jinn Trading Framework
+**© 2025 Jinn Trading Framework**
