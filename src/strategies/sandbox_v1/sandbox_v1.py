@@ -17,8 +17,8 @@ class SandboxV1(BaseStrategy):
         "order_size": 90.0, 
         "min_capital": 100.0,
         "stop_type": 1,
-        "stop": 2.0,
         "trail_stop": 1,
+        "stop": 2.0,
         "trail_percent": 30.0,
         "take_percent": [2.0, 4.0, 6.0],
         "take_volume": [10.0, 10.0, 50.0],
@@ -42,14 +42,20 @@ class SandboxV1(BaseStrategy):
         "adx_long_upper_limit": 44.0,
         "adx_long_lower_limit": 28.0,
         "adx_short_upper_limit": 77.0,
-        "adx_short_lower_limit": 1.0
+        "adx_short_lower_limit": 1.0,
+        "feeds": {
+            "klines": {
+                "HTF": ["symbol", "1d"],
+                "LTF": ["symbol", "15m"],
+            }
+        }
     }
 
     # Parameters to be optimized and their possible values
     opt_params = {
         'stop_type': [1, 2],
-        'stop': [i / 10 for i in range(1, 31)],
         'trail_stop': [1, 2],
+        'stop': [i / 10 for i in range(1, 31)],
         'trail_percent': [float(i) for i in range(0, 55, 1)],
         'take_percent': [
             [
@@ -103,7 +109,7 @@ class SandboxV1(BaseStrategy):
         'adx_short_lower_limit': [float(i) for i in range(1, 69)]
     }
 
-    # Frontend rendering settings for indicators
+    # Frontend rendering settings
     indicator_options = {
         'SL': {
             'pane': 0,
@@ -156,8 +162,10 @@ class SandboxV1(BaseStrategy):
         super().__init__(client, all_params, opt_params)
 
     def calculate(self, market_data) -> None:
+        # Initialize base variables from market data
         super().init_variables(market_data)
 
+        # Initialize strategy-specific arrays
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.array(
             [
@@ -166,11 +174,13 @@ class SandboxV1(BaseStrategy):
                 np.full(self.time.shape[0], np.nan)
             ]
         )
-        self.liquidation_price = np.nan
 
+        # Position tracking variables
+        self.liquidation_price = np.nan
         self.qty_take = np.full(5, np.nan)
         self.stop_moved = False
 
+        # Calculate technical indicators
         self.dst = qk.dst(
             high=self.high,
             low=self.low,
@@ -178,11 +188,11 @@ class SandboxV1(BaseStrategy):
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.change_upper_band = qk.change(
+        self.upper_band_change = qk.change(
             source=self.dst[0],
             length=1
         )
-        self.change_lower_band = qk.change(
+        self.lower_band_change = qk.change(
             source=self.dst[1],
             length=1
         )
@@ -209,6 +219,21 @@ class SandboxV1(BaseStrategy):
         )
         self.adx = self.dmi[2]
 
+        # Align higher timeframe close prices
+        self.htf_close = qk.stretch(
+            higher_tf_source=self.feeds['klines']['HTF']['close'],
+            higher_tf_time=self.feeds['klines']['HTF']['time'],
+            target_tf_time=self.time
+        )
+
+        # Align lower timeframe close prices
+        self.ltf_close = qk.shrink(
+            lower_tf_source=self.feeds['klines']['LTF']['close'],
+            lower_tf_time=self.feeds['klines']['LTF']['time'],
+            target_tf_time=self.time
+        )
+
+        # Alert flags for signals
         self.alert_cancel = False
         self.alert_open_long = False
         self.alert_open_short = False
@@ -222,6 +247,7 @@ class SandboxV1(BaseStrategy):
             self.volume_color_2
         )
 
+        # Main calculation loop (Numba-optimized)
         (
             self.completed_deals_log,
             self.open_deals_log,
@@ -281,8 +307,8 @@ class SandboxV1(BaseStrategy):
             self.stop_moved,
             self.dst[0],
             self.dst[1],
-            self.change_upper_band,
-            self.change_lower_band,
+            self.upper_band_change,
+            self.lower_band_change,
             self.rsi,
             self.bb_rsi[1] if self.params['bb_filter'] else self.bb_rsi,
             self.bb_rsi[2] if self.params['bb_filter'] else self.bb_rsi,
@@ -381,8 +407,8 @@ class SandboxV1(BaseStrategy):
         stop_moved: int,
         dst_upper_band: np.ndarray,
         dst_lower_band: np.ndarray,
-        change_upper_band: np.ndarray,
-        change_lower_band: np.ndarray,
+        upper_band_change: np.ndarray,
+        lower_band_change: np.ndarray,
         rsi: np.ndarray,
         bb_rsi_upper: np.ndarray,
         bb_rsi_lower: np.ndarray,
@@ -397,6 +423,7 @@ class SandboxV1(BaseStrategy):
             stop_price[i] = stop_price[i - 1]
             take_price[:, i] = take_price[:, i - 1]
 
+            # Reset alerts
             alert_cancel = False
             alert_open_long = False
             alert_open_short = False
@@ -419,7 +446,8 @@ class SandboxV1(BaseStrategy):
                     initial_capital
                 )
                 equity += pnl
-                
+
+                # Reset variables
                 open_deals_log[:] = np.nan
                 deal_type = np.nan
                 entry_signal = np.nan
@@ -462,9 +490,11 @@ class SandboxV1(BaseStrategy):
                 stop_moved = False
                 alert_cancel = True
 
-            # Trading logic (longs)
+            # Long position management
             if deal_type == 0:
+                # Stop loss check
                 if low[i] <= stop_price[i]:
+                    # Close position and log deal
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -494,7 +524,7 @@ class SandboxV1(BaseStrategy):
                     alert_cancel = True
 
                 if (stop_type == 1 and
-                        change_lower_band[i] and
+                        lower_band_change[i] and
                         ((dst_lower_band[i] * (100 - stop)
                         / 100) > stop_price[i])):
                     stop_price[i] = adjust(
@@ -521,6 +551,7 @@ class SandboxV1(BaseStrategy):
                         )
                         alert_long_new_stop = True
 
+                # Take profit checks
                 if not np.isnan(take_price[0, i]) and high[i] >= take_price[0, i]:
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
@@ -591,6 +622,7 @@ class SandboxV1(BaseStrategy):
                     stop_moved = False
                     alert_cancel = True
 
+            # Entry signal logic
             entry_long = (
                 (close[i] / dst_lower_band[i] - 1) * 100 > st_lower_band and
                 (close[i] / dst_lower_band[i] - 1) * 100 < st_upper_band and
@@ -607,6 +639,7 @@ class SandboxV1(BaseStrategy):
             )
 
             if entry_long:
+                # Initialize long position
                 deal_type = 0
                 entry_signal = 100
                 entry_price = close[i]
@@ -664,7 +697,7 @@ class SandboxV1(BaseStrategy):
                 )
                 alert_open_long = True
 
-            # Trading logic (shorts)
+            # Short position management
             if deal_type == 1:
                 if high[i] >= stop_price[i]:
                     completed_deals_log, pnl = update_completed_deals_log(
@@ -696,7 +729,7 @@ class SandboxV1(BaseStrategy):
                     alert_cancel = True 
 
                 if (stop_type == 1 and
-                        change_upper_band[i] and
+                        upper_band_change[i] and
                         ((dst_upper_band[i] * (100 + stop)
                         / 100) < stop_price[i])):
                     stop_price[i] = adjust(
@@ -879,12 +912,15 @@ class SandboxV1(BaseStrategy):
         )
 
     def trade(self) -> None:
+        # Load cached order IDs
         if self.order_ids is None:
             self.order_ids = self.cache.load(self.symbol)
 
+        # Cancel all orders if needed
         if self.alert_cancel:
             self.client.cancel_all_orders(self.symbol)
 
+         # Check order status
         self.order_ids['stop_ids'] = self.client.check_stop_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['stop_ids']
@@ -894,6 +930,7 @@ class SandboxV1(BaseStrategy):
             order_ids=self.order_ids['limit_ids']
         )
 
+        # Update stop loss
         if self.alert_long_new_stop:
             self.client.cancel_stop_orders(
                 symbol=self.symbol,
@@ -932,6 +969,7 @@ class SandboxV1(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
+        # Open long position
         if self.alert_open_long:
             self.client.market_open_long(
                 symbol=self.symbol,
@@ -1038,4 +1076,5 @@ class SandboxV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
+        # Save order IDs to cache
         self.cache.save(self.symbol, self.order_ids)

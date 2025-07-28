@@ -35,7 +35,7 @@ def supertrend(
     Returns:
         Tuple[np.ndarray, np.ndarray]:
             - First array: SuperTrend indicator values
-            - Second array: Direction (1 for uptrend, -1 for downtrend)
+            - Second array: Direction (-1 for uptrend, 1 for downtrend)
     """
 
     n = high.shape[0]

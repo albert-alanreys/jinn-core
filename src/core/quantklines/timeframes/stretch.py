@@ -13,7 +13,7 @@ def stretch(
     target_tf_time: np.ndarray
 ) -> np.ndarray:
     """
-    Adapt higher timeframe data to current timeframe by expanding values.
+    Align higher timeframe data to the main timeframe by expanding values.
 
     Maps values from lower resolution (higher timeframe) to main timeframe,
     creating an array where each higher timeframe value is repeated until

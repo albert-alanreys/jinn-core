@@ -187,8 +187,18 @@ class BaseStrategy(ABC):
         self.close = market_data['klines'][:, 4]
         self.volume = market_data['klines'][:, 5]
 
-        # Supplementary feeds
+        # Additional feeds
         self.feeds = market_data['feeds']
+
+        for feed_name, feed_data in self.feeds['klines'].items():
+            self.feeds['klines'][feed_name] = {
+                'time': feed_data[:, 0],
+                'open': feed_data[:, 1],
+                'high': feed_data[:, 2],
+                'low': feed_data[:, 3],
+                'close': feed_data[:, 4],
+                'volume': feed_data[:, 5]
+            }
 
         # Strategy parameters
         self.equity = self.params['initial_capital']

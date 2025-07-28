@@ -13,7 +13,7 @@ def shrink(
     target_tf_time: np.ndarray
 ) -> np.ndarray:
     """
-    Adapt lower timeframe data to current timeframe by aligning values.
+    Align lower timeframe data to the main timeframe by aggregating values.
 
     Maps values from higher resolution (lower timeframe) to main timeframe,
     creating a 2D array where each row represents a main timeframe bar
