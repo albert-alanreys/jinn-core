@@ -190,15 +190,16 @@ class BaseStrategy(ABC):
         # Additional feeds
         self.feeds = market_data['feeds']
 
-        for feed_name, feed_data in self.feeds['klines'].items():
-            self.feeds['klines'][feed_name] = {
-                'time': feed_data[:, 0],
-                'open': feed_data[:, 1],
-                'high': feed_data[:, 2],
-                'low': feed_data[:, 3],
-                'close': feed_data[:, 4],
-                'volume': feed_data[:, 5]
-            }
+        if self.feeds:
+            for feed_name, feed_data in self.feeds['klines'].items():
+                self.feeds['klines'][feed_name] = {
+                    'time': feed_data[:, 0],
+                    'open': feed_data[:, 1],
+                    'high': feed_data[:, 2],
+                    'low': feed_data[:, 3],
+                    'close': feed_data[:, 4],
+                    'volume': feed_data[:, 5]
+                }
 
         # Strategy parameters
         self.equity = self.params['initial_capital']
