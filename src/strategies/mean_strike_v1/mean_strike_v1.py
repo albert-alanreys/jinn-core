@@ -296,7 +296,7 @@ class MeanStrikeV1(BaseStrategy):
                         alert_close_long = True
 
                 if not np.isnan(entry_price_2[i]) and low[i] <= entry_price_2[i]:
-                    entry_signal = 302
+                    entry_signal = 301
                     entry_price = entry_price_2[i]
                     entry_date = time[i]
 
@@ -322,7 +322,7 @@ class MeanStrikeV1(BaseStrategy):
                     entry_price_2[i] = np.nan
 
                 if not np.isnan(entry_price_3[i]) and low[i] <= entry_price_3[i]:
-                    entry_signal = 303
+                    entry_signal = 302
                     entry_price = entry_price_3[i]
                     entry_date = time[i]
 
@@ -348,7 +348,7 @@ class MeanStrikeV1(BaseStrategy):
                     entry_price_3[i] = np.nan
 
                 if not np.isnan(entry_price_4[i]) and low[i] <= entry_price_4[i]:
-                    entry_signal = 304
+                    entry_signal = 303
                     entry_price = entry_price_4[i]
                     entry_date = time[i]
 
@@ -418,7 +418,7 @@ class MeanStrikeV1(BaseStrategy):
 
             if entry_long:
                 deal_type = 0
-                entry_signal = 301
+                entry_signal = 100
                 entry_price = close[i]
                 entry_date = time[i]
 
