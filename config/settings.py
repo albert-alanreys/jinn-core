@@ -9,13 +9,13 @@ MODE = enums.Mode.BACKTESTING
 
 # Settings for different modes
 OPTIMIZATION_CONFIG = {
-    'strategy': enums.Strategy.SANDBOX_V1,
+    'strategy': enums.Strategy.MEAN_STRIKE_V2,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'start': '2018-01-01',
-    'end': '2025-07-01'
+    'interval': '30m',
+    'start': '2020-01-01',
+    'end': '2025-01-01'
 }
 BACKTESTING_CONFIG = {
     'strategy': enums.Strategy.MEAN_STRIKE_V2,
