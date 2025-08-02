@@ -25,7 +25,7 @@ class BaseClient(HttpClient):
         logger: Logger instance for this module
     """
 
-    BASE_ENDPOINT = 'https://api.bybit.com'
+    BASE_ENDPOINT = 'https://api-testnet.bybit.com'
     EXCHANGE = 'BYBIT'
 
     def __init__(self) -> None:

@@ -5,7 +5,7 @@ import src.core.enums as enums
 #    OPTIMIZATION - optimization
 #    BACKTESTING - backtesting
 #    AUTOMATION - automation
-MODE = enums.Mode.BACKTESTING
+MODE = enums.Mode.AUTOMATION
 
 # Settings for different modes
 OPTIMIZATION_CONFIG = {
@@ -27,8 +27,8 @@ BACKTESTING_CONFIG = {
     'end': '2025-06-01'
 }
 AUTOMATION_CONFIG = {
-    'strategy': enums.Strategy.SANDBOX_V1,
-    'exchange': enums.Exchange.BINANCE,
+    'strategy': enums.Strategy.MEAN_STRIKE_V2,
+    'exchange': enums.Exchange.BYBIT,
     'symbol': 'XRPUSDT',
     'interval': 1
 }

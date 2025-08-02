@@ -12,13 +12,15 @@ class MeanStrikeV2(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
     params = {
-        "order_size_type": 0,
-        "order_size": 20.0,
+        "direction": 0,
+        "leverage": 1,
+        "order_size_type": 1,
+        "order_size": 500.0,
         "min_order": 10.0,
         "stop_loss": 1.0,
         "take_profit": 2.0,
         "grid_type": 1,
-        "grid_size": 9,
+        "grid_size": 5,
         "first_grid_pct": 2.0,
         "grid_depth": 5.0,
         "martingale_coef": 0.0,
@@ -93,6 +95,7 @@ class MeanStrikeV2(BaseStrategy):
         self.take_price = np.full(self.time.shape[0], np.nan)
 
         self.liquidation_price = np.nan
+        self.order_values = np.full(self.params['grid_size'] + 1, np.nan)
         self.order_quantities = np.full(self.params['grid_size'] + 1, np.nan)
 
         self.lowest = qk.lowest(
@@ -122,6 +125,7 @@ class MeanStrikeV2(BaseStrategy):
             self.grid_prices,
             self.stop_price,
             self.take_price,
+            self.order_values,
             self.alert_cancel,
             self.alert_open_long,
             self.alert_open_short,
@@ -162,6 +166,7 @@ class MeanStrikeV2(BaseStrategy):
             self.stop_price,
             self.take_price,
             self.liquidation_price,
+            self.order_values,
             self.order_quantities,
             self.lowest,
             self.highest,
@@ -202,7 +207,7 @@ class MeanStrikeV2(BaseStrategy):
         }
 
     @staticmethod
-    @nb.njit(cache=True, nogil=True)
+    # @nb.njit(cache=True, nogil=True)
     def _calculate_loop(
         direction: int,
         initial_capital: float,
@@ -238,6 +243,7 @@ class MeanStrikeV2(BaseStrategy):
         stop_price: np.ndarray,
         take_price: np.ndarray,
         liquidation_price: float,
+        order_values: np.ndarray,
         order_quantities: np.ndarray,
         lowest: np.ndarray,
         highest: np.ndarray,
@@ -603,10 +609,10 @@ class MeanStrikeV2(BaseStrategy):
                     initial_position =  (
                         equity * leverage * (order_size / 100.0)
                     )
-                elif order_size_type == 1:
+                else:
                     initial_position = order_size * leverage
 
-                if martingale_coef == 0:
+                if martingale_coef == 0.0:
                     optimal_martingale_coef = get_optimal_martingale_coef(
                         initial_position, grid_size + 1, min_order
                     )
@@ -620,17 +626,31 @@ class MeanStrikeV2(BaseStrategy):
                 first_order_value = initial_position / sum_k
 
                 for n in range(grid_size + 1):
-                    order_capital = (
+                    order_value = (
                         first_order_value * (optimal_martingale_coef ** n)
                     )
+
+                    if order_size_type == 0:
+                        order_values[n] = (
+                            order_value / equity / leverage * 100
+                        )
+                    else:
+                        order_values[n] = order_value / leverage
 
                     if n == 0:
                         price = entry_price
                     else:
                         price = grid_prices[n - 1, i]
 
-                    quantity = order_capital * (1 - commission / 100) / price
+                    quantity = order_value * (1 - commission / 100) / price
                     order_quantities[n] = adjust(quantity, q_precision)
+
+                if np.any(order_quantities <= 0):
+                    deal_type = np.nan
+                    entry_signal = np.nan
+                    entry_price = np.nan
+                    entry_date = np.nan
+                    continue
 
                 liquidation_price = adjust(
                     entry_price * (1 - (1 / leverage)), p_precision
@@ -963,10 +983,10 @@ class MeanStrikeV2(BaseStrategy):
                     initial_position =  (
                         equity * leverage * (order_size / 100.0)
                     )
-                elif order_size_type == 1:
+                else:
                     initial_position = order_size * leverage
 
-                if martingale_coef == 0:
+                if martingale_coef == 0.0:
                     optimal_martingale_coef = get_optimal_martingale_coef(
                         initial_position, grid_size + 1, min_order
                     )
@@ -980,17 +1000,31 @@ class MeanStrikeV2(BaseStrategy):
                 first_order_value = initial_position / sum_k
 
                 for n in range(grid_size + 1):
-                    order_capital = (
+                    order_value = (
                         first_order_value * (optimal_martingale_coef ** n)
                     )
+
+                    if order_size_type == 0:
+                        order_values[n] = (
+                            order_value / equity / leverage * 100
+                        )
+                    else:
+                        order_values[n] = order_value / leverage
 
                     if n == 0:
                         price = entry_price
                     else:
                         price = grid_prices[n - 1, i]
 
-                    quantity = order_capital * (1 - commission / 100) / price
+                    quantity = order_value * (1 - commission / 100) / price
                     order_quantities[n] = adjust(quantity, q_precision)
+
+                if np.any(order_quantities <= 0):
+                    deal_type = np.nan
+                    entry_signal = np.nan
+                    entry_price = np.nan
+                    entry_date = np.nan
+                    continue
 
                 liquidation_price = adjust(
                     entry_price * (1 + (1 / leverage)), p_precision
@@ -1013,6 +1047,7 @@ class MeanStrikeV2(BaseStrategy):
             grid_prices,
             stop_price,
             take_price,
+            order_values,
             alert_cancel,
             alert_open_long,
             alert_open_short,
@@ -1023,5 +1058,126 @@ class MeanStrikeV2(BaseStrategy):
     def trade(self) -> None:
         if self.order_ids is None:
             self.order_ids = self.cache.load(self.symbol)
+
+        # General
+        if self.alert_cancel:
+            self.client.cancel_all_orders(self.symbol)
+
+        # Longs
+        if self.alert_close_long:
+            self.client.market_close_long(
+                symbol=self.symbol,
+                size='100%',
+                hedge=False
+            )
+            self.client.cancel_all_orders(self.symbol)
+
+        if self.alert_open_long:
+            self.client.cancel_all_orders(self.symbol)
+
+            self.client.market_open_long(
+                symbol=self.symbol,
+                size=(
+                    f'{self.order_values[0]}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
+                ),
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
+                hedge=False
+            )
+
+            for i in range(self.params['grid_size']):
+                order_id = self.client.limit_open_long(
+                    symbol=self.symbol,
+                    size=(
+                        f'{self.order_values[i + 1]}'
+                        f'{'u' if self.params['order_size_type'] else '%'}'
+                    ),
+                    margin=(
+                        'cross' if self.params['margin_type'] else 'isolated'
+                    ),
+                    leverage=self.params['leverage'],
+                    price=self.grid_prices[i, -1],
+                    hedge=False
+                )
+
+                if order_id:
+                    self.order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.market_stop_close_long(
+                symbol=self.symbol,
+                size='100%',
+                price=self.stop_price[-1],
+                hedge=False
+            )
+
+            if order_id:
+                self.order_ids['stop_ids'].append(order_id)
+
+        # Shorts
+        if self.alert_close_short:
+            self.client.market_close_short(
+                symbol=self.symbol,
+                size='100%',
+                hedge=False
+            )
+            self.client.cancel_all_orders(self.symbol)
+
+        if self.alert_open_short:
+            self.client.cancel_all_orders(self.symbol)
+
+            self.client.market_open_short(
+                symbol=self.symbol,
+                size=(
+                    f'{self.order_values[0]}'
+                    f'{'u' if self.params['order_size_type'] else '%'}'
+                ),
+                margin=(
+                    'cross' if self.params['margin_type'] else 'isolated'
+                ),
+                leverage=self.params['leverage'],
+                hedge=False
+            )
+
+            for i in range(self.params['grid_size']):
+                order_id = self.client.limit_open_short(
+                    symbol=self.symbol,
+                    size=(
+                        f'{self.order_values[i + 1]}'
+                        f'{'u' if self.params['order_size_type'] else '%'}'
+                    ),
+                    margin=(
+                        'cross' if self.params['margin_type'] else 'isolated'
+                    ),
+                    leverage=self.params['leverage'],
+                    price=self.grid_prices[i, -1],
+                    hedge=False
+                )
+
+                if order_id:
+                    self.order_ids['limit_ids'].append(order_id)
+
+            order_id = self.client.market_stop_close_short(
+                symbol=self.symbol,
+                size='100%',
+                price=self.stop_price[-1],
+                hedge=False
+            )
+
+            if order_id:
+                self.order_ids['stop_ids'].append(order_id)
+
+        # Order Monitoring
+        self.order_ids['limit_ids'] = self.client.check_limit_orders(
+            symbol=self.symbol,
+            order_ids=self.order_ids['limit_ids']
+        )
+
+        self.order_ids['stop_ids'] = self.client.check_stop_orders(
+            symbol=self.symbol,
+            order_ids=self.order_ids['stop_ids']
+        )
 
         self.cache.save(self.symbol, self.order_ids)
