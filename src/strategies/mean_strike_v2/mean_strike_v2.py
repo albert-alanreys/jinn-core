@@ -207,7 +207,7 @@ class MeanStrikeV2(BaseStrategy):
         }
 
     @staticmethod
-    # @nb.njit(cache=True, nogil=True)
+    @nb.njit(cache=True, nogil=True)
     def _calculate_loop(
         direction: int,
         initial_capital: float,
@@ -1054,7 +1054,7 @@ class MeanStrikeV2(BaseStrategy):
             alert_close_long,
             alert_close_short
         )
-    
+
     def trade(self) -> None:
         if self.order_ids is None:
             self.order_ids = self.cache.load(self.symbol)
