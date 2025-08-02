@@ -2,13 +2,7 @@ from json import dumps
 
 import flask
 
-from src.api.formatting import (
-  format_overview_metrics,
-  format_performance_metrics,
-  format_trade_metrics,
-  format_risk_metrics,
-  format_trades
-)
+import src.api.formatting.report as report_formatter
 from src.api.utils import handle_api_errors
 
 
@@ -33,7 +27,7 @@ def get_overview_metrics(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    metrics = format_overview_metrics(
+    metrics = report_formatter.format_overview_metrics(
         metrics=context['metrics']['overview'],
         completed_deals_log=context['instance'].completed_deals_log
     )
@@ -59,7 +53,9 @@ def get_performance_metrics(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    metrics = format_performance_metrics(context['metrics']['performance'])
+    metrics = report_formatter.format_performance_metrics(
+        context['metrics']['performance']
+    )
     
     return flask.Response(
         response=dumps(metrics),
@@ -81,7 +77,9 @@ def get_trade_metrics(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    metrics = format_trade_metrics(context['metrics']['trades'])
+    metrics = report_formatter.format_trade_metrics(
+        context['metrics']['trades']
+    )
     
     return flask.Response(
         response=dumps(metrics),
@@ -103,7 +101,7 @@ def get_risk_metrics(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    metrics = format_risk_metrics(context['metrics']['risk'])
+    metrics = report_formatter.format_risk_metrics(context['metrics']['risk'])
     
     return flask.Response(
         response=dumps(metrics),
@@ -125,7 +123,7 @@ def get_trades(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    trades = format_trades(
+    trades = report_formatter.format_trades(
         completed_deals_log=context['instance'].completed_deals_log,
         open_deals_log=context['instance'].open_deals_log
     )

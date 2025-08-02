@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 import numpy as np
 
 from src.constants.deal_styles import OPEN_DEAL_STYLES, CLOSE_DEAL_STYLES
@@ -30,6 +28,7 @@ def format_klines(klines: np.ndarray) -> list:
             'close': kline[4],
         } for kline in klines
     ]
+
 
 def format_indicators(market_data: dict, indicators: dict) -> dict:
     """
@@ -100,6 +99,7 @@ def format_indicators(market_data: dict, indicators: dict) -> dict:
 
     return result
 
+
 def format_deals(
     completed_deals_log: np.ndarray,
     open_deals_log: np.ndarray
@@ -125,142 +125,68 @@ def format_deals(
             open_deals_log.reshape((-1, 5)).tolist()
         )
     )
-
-    position_size = Decimal('0.0')
-    deals_count = 0
-
     result = []
 
-    if len(completed_deals) == 0:
-        if len(open_deals) == 0:
-            return []
-        
-        for deal in open_deals:
-            code = deal[1] - (deal[1] % 100)
-            n_deal = int(deal[1] % 100)
-            comment = (
-                f'{ENTRY_SIGNAL_CODES[code]}' +
-                (f' | #{n_deal}' if n_deal > 0 else '')
-            )
+    def create_marker(
+        deal_type: int,
+        signal_code: int,
+        n_deal: int,
+        time: float,
+        size: float,
+        styles_map: dict,
+        is_entry: bool
+    ) -> dict:
+        """Helper to format a deal marker"""
 
-            if deal[0] == 0:
-                styles = OPEN_DEAL_STYLES['buy']
-                text = f'{comment} | +{deal[4]}'
-
-            else:
-                styles = OPEN_DEAL_STYLES['sell']
-                text = f'{comment} | -{deal[4]}'
-
-            formatted_deal = {
-                'time': deal[2] * 0.001,
-                'text': text,
-                **styles
-            }
-            result.append(formatted_deal)
-
-        return result
-
-    for index, deal in enumerate(completed_deals):
-        if deals_count > 0:
-            prev_deal = completed_deals[index - 1]
-
-            if prev_deal[3] != deal[3]:
-                code = prev_deal[1] - (prev_deal[1] % 100)
-                n_deal = int(prev_deal[1] % 100)
-                comment = (
-                    f'{ENTRY_SIGNAL_CODES[code]}' +
-                    (f' | #{n_deal}' if n_deal > 0 else '')
-                )
-
-                if prev_deal[0] == 0:
-                    styles = OPEN_DEAL_STYLES['buy']
-                    text = f'{comment} | +{position_size}'
-                else:
-                    styles = OPEN_DEAL_STYLES['sell']
-                    text = f'{comment} | -{position_size}'
-
-                formatted_deal = {
-                    'time': prev_deal[3] * 0.001,
-                    'text': text,
-                    **styles
-                }
-                result.insert(len(result) - deals_count, formatted_deal)
-
-                position_size = Decimal('0.0')
-                deals_count = 0
-
-        code = deal[2] - (deal[2] % 100)
-        n_deal = int(deal[2] % 100)
+        signal_codes = ENTRY_SIGNAL_CODES if is_entry else CLOSE_SIGNAL_CODES
+        base_code = signal_code - (signal_code % 100)
         comment = (
-            f'{CLOSE_SIGNAL_CODES[code]}' +
-            (f' | #{n_deal}' if n_deal > 0 else '')
+            signal_codes[base_code]
+            + (f' | #{n_deal}' if n_deal > 0 else '')
         )
+        sign = '+' if deal_type == 0 else '-'
+        styles = styles_map['buy'] if deal_type == 0 else styles_map['sell']
 
-        if deal[0] == 0:
-            styles = CLOSE_DEAL_STYLES['sell']
-            text = f'{comment} | -{deal[7]}'
-        else:
-            styles = CLOSE_DEAL_STYLES['buy']
-            text = f'{comment} | +{deal[7]}'
-
-        formatted_deal = {
-            'time': deal[4] * 0.001,
-            'text': text,
+        return {
+            'time': time * 0.001,
+            'text': f'{comment} | {sign}{size}',
             **styles
         }
-        result.append(formatted_deal)
 
-        position_size += Decimal(str(deal[7]))
-        deals_count += 1
+    # Add entry markers for completed deals
+    for deal in completed_deals:
+        result.append(create_marker(
+            deal_type=deal[0],
+            signal_code=deal[1],
+            n_deal=int(deal[1] % 100),
+            time=deal[3],
+            size=deal[7],
+            styles_map=OPEN_DEAL_STYLES,
+            is_entry=True
+        ))
 
-    last_deal = completed_deals[-1]
+    # Add exit markers for completed deals
+    for deal in completed_deals:
+        result.append(create_marker(
+            deal_type=deal[0],
+            signal_code=deal[2],
+            n_deal=int(deal[2] % 100),
+            time=deal[4],
+            size=deal[7],
+            styles_map=CLOSE_DEAL_STYLES,
+            is_entry=False
+        ))
 
+    # Add entry markers for open deals
     for deal in open_deals:
-        if deal[2] == last_deal[3]:
-            position_size += Decimal(str(deal[4]))
-
-    code = last_deal[1] - (last_deal[1] % 100)
-    n_deal = int(last_deal[1] % 100)
-    comment = (
-        f'{ENTRY_SIGNAL_CODES[code]}' +
-        (f' | #{n_deal}' if n_deal > 0 else '')
-    )
-
-    if last_deal[0] == 0:
-        styles = OPEN_DEAL_STYLES['buy']
-        text = f'{comment} | +{position_size}'
-    else:
-        styles = OPEN_DEAL_STYLES['sell']
-        text = f'{comment} | -{position_size}'
-
-    formatted_deal = {
-        'time': last_deal[3] * 0.001,
-        'text': text,
-        **styles
-    }
-    result.insert(len(result) - deals_count, formatted_deal)
-
-    for deal in open_deals:
-        if deal[2] != last_deal[3]:
-            code = deal[1] - (deal[1] % 100)
-            n_deal = int(deal[1] % 100)
-            comment = (
-                f'{ENTRY_SIGNAL_CODES[code]}' +
-                (f' | #{n_deal}' if n_deal > 0 else '')
-            )
-
-            if deal[0] == 0:
-                styles = OPEN_DEAL_STYLES['buy']
-                text = f'{comment} | +{deal[4]}'
-            else:
-                styles = OPEN_DEAL_STYLES['sell']
-                text = f'{comment} | -{deal[4]}'
-
-            formatted_deal = {
-                'time': deal[2] * 0.001,
-                'text': text,
-                **styles
-            }
-            result.append(formatted_deal)
+        result.append(create_marker(
+            deal_type=deal[0],
+            signal_code=deal[1],
+            n_deal=int(deal[1] % 100),
+            time=deal[2],
+            size=deal[4],
+            styles_map=OPEN_DEAL_STYLES,
+            is_entry=True
+        ))
 
     return sorted(result, key=lambda x: x['time'])

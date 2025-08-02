@@ -136,6 +136,17 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='market_open_long',
+                    symbol=symbol,
+                    error=e,
+                    side='buy',
+                    size=size,
+                    qty=qty,
+                    leverage=leverage,
+                    margin=margin,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='market',
                     status='failed',
@@ -146,7 +157,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
         except Exception:
             self.logger.exception('Failed to execute market_open_long')
@@ -214,6 +224,17 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='market_open_short',
+                    symbol=symbol,
+                    error=e,
+                    side='sell',
+                    size=size,
+                    qty=qty,
+                    leverage=leverage,
+                    margin=margin,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='market',
                     status='failed',
@@ -224,7 +245,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
         except Exception:
             self.logger.exception('Failed to execute market_open_short')
@@ -276,6 +296,15 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='market_close_long',
+                    symbol=symbol,
+                    error=e,
+                    side='sell',
+                    size=size,
+                    qty=qty,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='market',
                     status='failed',
@@ -286,7 +315,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
         except Exception:
             self.logger.exception('Failed to execute market_close_long')
@@ -338,6 +366,15 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='market_close_short',
+                    symbol=symbol,
+                    error=e,
+                    side='buy',
+                    size=size,
+                    qty=qty,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='market',
                     status='failed',
@@ -348,7 +385,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
         except Exception:
             self.logger.exception('Failed to execute market_close_short')
@@ -417,6 +453,16 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='market_stop_close_long',
+                    symbol=symbol,
+                    error=e,
+                    side='sell',
+                    size=size,
+                    qty=qty,
+                    price=adjusted_price,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='stop market',
                     status='failed',
@@ -427,7 +473,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
 
             return order['orderId']
@@ -498,6 +543,16 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='market_stop_close_short',
+                    symbol=symbol,
+                    error=e,
+                    side='buy',
+                    size=size,
+                    qty=qty,
+                    price=adjusted_price,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='stop market',
                     status='failed',
@@ -508,7 +563,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
 
             return order['orderId']
@@ -591,6 +645,18 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='limit_open_long',
+                    symbol=symbol,
+                    error=e,
+                    side='buy',
+                    size=size,
+                    qty=qty,
+                    price=adjusted_price,
+                    leverage=leverage,
+                    margin=margin,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='limit',
                     status='failed',
@@ -601,7 +667,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
 
             return order['orderId']
@@ -684,6 +749,18 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='limit_open_short',
+                    symbol=symbol,
+                    error=e,
+                    side='sell',
+                    size=size,
+                    qty=qty,
+                    price=adjusted_price,
+                    leverage=leverage,
+                    margin=margin,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='limit',
                     status='failed',
@@ -694,7 +771,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
 
             return order['orderId']
@@ -767,6 +843,16 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='limit_close_long',
+                    symbol=symbol,
+                    error=e,
+                    side='sell',
+                    size=size,
+                    qty=qty,
+                    price=adjusted_price,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='limit',
                     status='failed',
@@ -777,7 +863,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
 
             return order['orderId']
@@ -850,6 +935,16 @@ class TradeClient(BaseClient):
                 )
                 self.alerts.append(alert)
             except OrderCreationError as e:
+                self._log_order_warning(
+                    operation='limit_close_short',
+                    symbol=symbol,
+                    error=e,
+                    side='buy',
+                    size=size,
+                    qty=qty,
+                    price=adjusted_price,
+                    hedge=hedge
+                )
                 alert = self._create_order_alert(
                     order_type='limit',
                     status='failed',
@@ -860,7 +955,6 @@ class TradeClient(BaseClient):
                     created_time=None
                 )
                 self.alerts.append(alert)
-                self.logger.warning(e)
                 return
 
             return order['orderId']
@@ -1260,3 +1354,52 @@ class TradeClient(BaseClient):
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)
+    
+    def _log_order_warning(
+        self,
+        operation: str,
+        symbol: str,
+        error: Exception,
+        **context
+    ) -> None:
+        """
+        Log enhanced warning message with context information.
+        
+        Args:
+            operation (str): Operation that failed (e.g., 'market_open_long')
+            symbol (str): Trading symbol
+            error (Exception): The exception that occurred
+            **context: Additional context parameters
+        """
+        
+        context_parts = []
+
+        if 'side' in context:
+            context_parts.append(f"side={context['side']}")
+
+        if 'size' in context:
+            context_parts.append(f"size={context['size']}")
+
+        if 'qty' in context:
+            context_parts.append(f"qty={context['qty']}")
+
+        if 'price' in context:
+            context_parts.append(f"price={context['price']}")
+
+        if 'leverage' in context:
+            context_parts.append(f"leverage={context['leverage']}")
+
+        if 'margin' in context:
+            context_parts.append(f"margin={context['margin']}")
+
+        if 'hedge' in context:
+            context_parts.append(f"hedge={context['hedge']}")
+
+        warning_msg = (
+            f'Order failed | '
+            f'Operation: {operation} | '
+            f'Symbol: {symbol} | '
+            f'Error: {error} | '
+            f"Context: {', '.join(context_parts)}"
+        )
+        self.logger.warning(warning_msg)

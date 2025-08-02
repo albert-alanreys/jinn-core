@@ -1,7 +1,7 @@
 from json import dumps
 import flask
 
-from src.api.formatting import format_klines, format_indicators, format_deals
+import src.api.formatting.chart as chart_formatter
 from src.api.utils import handle_api_errors
 
 
@@ -26,7 +26,7 @@ def get_klines(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    klines = format_klines(
+    klines = chart_formatter.format_klines(
         context['market_data']['klines']
     )
 
@@ -51,7 +51,7 @@ def get_indicators(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    indicators = format_indicators(
+    indicators = chart_formatter.format_indicators(
         context['market_data'],
         context['instance'].indicators
     )
@@ -77,7 +77,7 @@ def get_deals(context_id: str) -> flask.Response:
     """
 
     context = flask.current_app.strategy_contexts[context_id]
-    deals = format_deals(
+    deals = chart_formatter.format_deals(
         context['instance'].completed_deals_log,
         context['instance'].open_deals_log
     )
