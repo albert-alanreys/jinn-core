@@ -14,13 +14,13 @@ class MeanStrikeV2(BaseStrategy):
     params = {
         "direction": 0,
         "leverage": 1,
-        "order_size_type": 1,
-        "order_size": 500.0,
-        "min_order": 10.0,
+        "order_size_type": 0,
+        "order_size": 10.0,
+        "first_order_pct": 10.0,
         "stop_loss": 1.0,
         "take_profit": 2.0,
         "grid_type": 1,
-        "grid_size": 5,
+        "grid_size": 4,
         "first_grid_pct": 2.0,
         "grid_depth": 5.0,
         "martingale_coef": 0.0,
@@ -95,7 +95,6 @@ class MeanStrikeV2(BaseStrategy):
         self.take_price = np.full(self.time.shape[0], np.nan)
 
         self.liquidation_price = np.nan
-        self.order_values = np.full(self.params['grid_size'] + 1, np.nan)
         self.order_quantities = np.full(self.params['grid_size'] + 1, np.nan)
 
         self.lowest = qk.lowest(
@@ -113,6 +112,26 @@ class MeanStrikeV2(BaseStrategy):
         )
         self.sma_threshold = self.sma * self.params['mult']
 
+        if self.params['martingale_coef'] == 0.0:
+            self.martingale_coef = self._get_optimal_martingale_coef(
+                self.params['first_order_pct'],
+                self.params['grid_size']
+            )
+        else:
+            self.martingale_coef = self.params['martingale_coef']
+
+        self.order_values = np.full(self.params['grid_size'] + 1, np.nan)
+
+        first_order_value =  (
+            self.params['first_order_pct'] * self.params['order_size'] / 100
+        )
+
+        for n in range(self.order_values.shape[0]):
+            order_value = (
+                first_order_value * (self.martingale_coef ** n)
+            )
+            self.order_values[n] = order_value
+
         self.alert_cancel = False
         self.alert_open_long = False
         self.alert_open_short = False
@@ -125,7 +144,6 @@ class MeanStrikeV2(BaseStrategy):
             self.grid_prices,
             self.stop_price,
             self.take_price,
-            self.order_values,
             self.alert_cancel,
             self.alert_open_long,
             self.alert_open_short,
@@ -138,14 +156,12 @@ class MeanStrikeV2(BaseStrategy):
             self.params['order_size_type'],
             self.params['order_size'],
             self.params['leverage'],
-            self.params['min_order'],
             self.params['stop_loss'],
             self.params['take_profit'],
             self.params['grid_type'],
             self.params['grid_size'],
             self.params['first_grid_pct'],
             self.params['grid_depth'],
-            self.params['martingale_coef'],
             self.params['density_coef'],
             self.params['range_threshold'],
             self.p_precision,
@@ -166,12 +182,12 @@ class MeanStrikeV2(BaseStrategy):
             self.stop_price,
             self.take_price,
             self.liquidation_price,
-            self.order_values,
             self.order_quantities,
             self.lowest,
             self.highest,
             self.price_range,
             self.sma_threshold,
+            self.martingale_coef,
             self.alert_cancel,
             self.alert_open_long,
             self.alert_open_short,
@@ -208,6 +224,51 @@ class MeanStrikeV2(BaseStrategy):
 
     @staticmethod
     @nb.njit(cache=True, nogil=True)
+    def _get_optimal_martingale_coef(
+        first_order_pct: float,
+        grid_size: int,
+    ) -> float:
+        def equation(k, grid_size, target_sum_progression):
+            if abs(k - 1.0) < 1e-10:
+                return (grid_size + 1) - target_sum_progression
+            
+            return (1 - k**(grid_size + 1)) / (1 - k) - target_sum_progression
+        
+        target_first_order_ratio = first_order_pct / 100.0
+        target_sum_progression = 1.0 / target_first_order_ratio
+        
+        if abs(target_sum_progression - (grid_size + 1)) < 1e-6:
+            return 1.0
+        
+        left, right = 0.1, 5.0
+        left_val = equation(left, grid_size, target_sum_progression)
+        right_val = equation(right, grid_size, target_sum_progression)
+
+        if left_val * right_val > 0:
+            return 1.0
+        
+        for _ in range(50):
+            mid = (left + right) / 2.0
+            mid_val = equation(mid, grid_size, target_sum_progression)
+
+            if abs(mid_val) < 1e-8:
+                break
+
+            left_val = equation(left, grid_size, target_sum_progression)
+            if left_val * mid_val < 0:
+                right = mid
+            else:
+                left = mid
+        
+        optimal_k = (left + right) / 2.0
+
+        if optimal_k <= 0 or optimal_k > 10:
+            return 1.0
+        
+        return optimal_k
+
+    @staticmethod
+    @nb.njit(cache=True, nogil=True)
     def _calculate_loop(
         direction: int,
         initial_capital: float,
@@ -215,14 +276,12 @@ class MeanStrikeV2(BaseStrategy):
         order_size_type: int,
         order_size: float,
         leverage: int,
-        min_order: float,
         stop_loss: float,
         take_profit: float,
         grid_type: int,
         grid_size: int,
         first_grid_pct: float,
         grid_depth: float,
-        martingale_coef: float,
         density_coef: float,
         range_threshold: float,
         p_precision: float,
@@ -243,43 +302,18 @@ class MeanStrikeV2(BaseStrategy):
         stop_price: np.ndarray,
         take_price: np.ndarray,
         liquidation_price: float,
-        order_values: np.ndarray,
         order_quantities: np.ndarray,
         lowest: np.ndarray,
         highest: np.ndarray,
         price_range: np.ndarray,
         sma_threshold: np.ndarray,
+        martingale_coef: float,
         alert_cancel: bool,
         alert_open_long: bool,
         alert_open_short: bool,
         alert_close_long: bool,
         alert_close_short: bool
     ) -> tuple:
-        def get_optimal_martingale_coef(
-            capital: float,
-            orders_count: int,
-            min_order: float
-        ) -> float:
-            k = 1.0
-            step = 0.01
-            optimal_k = k
-
-            while k < 2.0:
-                if k == 1.0:
-                    first_order = capital / orders_count
-                else:
-                    numerator = capital * (1 - k)
-                    denominator = 1 - k ** orders_count
-                    first_order = numerator / denominator
-
-                if first_order < min_order:
-                    break
-                    
-                optimal_k = k
-                k += step
-
-            return optimal_k
-
         for i in range(1, time.shape[0]):
             grid_prices[:, i] = grid_prices[:, i - 1]
             stop_price[i] = stop_price[i - 1]
@@ -569,8 +603,7 @@ class MeanStrikeV2(BaseStrategy):
                 low[i] < lowest[i] and
                 close[i] >= high[i] - (
                     price_range[i] * range_threshold / 100
-                ) and (direction == 0 or direction == 1) and
-                equity > (grid_size + 1) * min_order * 2.0
+                ) and (direction == 0 or direction == 1)
             )
 
             if entry_long:
@@ -612,30 +645,16 @@ class MeanStrikeV2(BaseStrategy):
                 else:
                     initial_position = order_size * leverage
 
-                if martingale_coef == 0.0:
-                    optimal_martingale_coef = get_optimal_martingale_coef(
-                        initial_position, grid_size + 1, min_order
-                    )
-                else:
-                    optimal_martingale_coef = martingale_coef
-
                 sum_k = sum([
-                    optimal_martingale_coef ** n
+                    martingale_coef ** n
                     for n in range(grid_size + 1)
                 ])
                 first_order_value = initial_position / sum_k
 
                 for n in range(grid_size + 1):
                     order_value = (
-                        first_order_value * (optimal_martingale_coef ** n)
+                        first_order_value * (martingale_coef ** n)
                     )
-
-                    if order_size_type == 0:
-                        order_values[n] = (
-                            order_value / equity / leverage * 100
-                        )
-                    else:
-                        order_values[n] = order_value / leverage
 
                     if n == 0:
                         price = entry_price
@@ -943,8 +962,7 @@ class MeanStrikeV2(BaseStrategy):
                 high[i] > highest[i] and
                 close[i] <= low[i] + (
                     price_range[i] * range_threshold / 100
-                ) and (direction == 0 or direction == 2) and
-                equity > (grid_size + 1) * min_order * 2.0
+                ) and (direction == 0 or direction == 2)
             )
 
             if entry_short:
@@ -986,30 +1004,16 @@ class MeanStrikeV2(BaseStrategy):
                 else:
                     initial_position = order_size * leverage
 
-                if martingale_coef == 0.0:
-                    optimal_martingale_coef = get_optimal_martingale_coef(
-                        initial_position, grid_size + 1, min_order
-                    )
-                else:
-                    optimal_martingale_coef = martingale_coef
-
                 sum_k = sum([
-                    optimal_martingale_coef ** n
+                    martingale_coef ** n
                     for n in range(grid_size + 1)
                 ])
                 first_order_value = initial_position / sum_k
 
                 for n in range(grid_size + 1):
                     order_value = (
-                        first_order_value * (optimal_martingale_coef ** n)
+                        first_order_value * (martingale_coef ** n)
                     )
-
-                    if order_size_type == 0:
-                        order_values[n] = (
-                            order_value / equity / leverage * 100
-                        )
-                    else:
-                        order_values[n] = order_value / leverage
 
                     if n == 0:
                         price = entry_price
@@ -1047,7 +1051,6 @@ class MeanStrikeV2(BaseStrategy):
             grid_prices,
             stop_price,
             take_price,
-            order_values,
             alert_cancel,
             alert_open_long,
             alert_open_short,

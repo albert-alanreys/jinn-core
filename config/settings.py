@@ -18,7 +18,7 @@ OPTIMIZATION_CONFIG = {
     'end': '2025-01-01'
 }
 BACKTESTING_CONFIG = {
-    'strategy': enums.Strategy.SANDBOX_V1,
+    'strategy': enums.Strategy.MEAN_STRIKE_V2,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
