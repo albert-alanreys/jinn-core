@@ -276,7 +276,6 @@ class TradeClient(BaseClient):
             )
 
             if not qty:
-                self.logger.info(f'No position to close for {symbol}')
                 return
 
             try:
@@ -347,7 +346,6 @@ class TradeClient(BaseClient):
             )
 
             if not qty:
-                self.logger.info(f'No position to close for {symbol}')
                 return
 
             try:
@@ -435,7 +433,6 @@ class TradeClient(BaseClient):
             )
 
             if not qty:
-                self.logger.info(f'No position to close for {symbol}')
                 return
 
             try:
@@ -529,7 +526,6 @@ class TradeClient(BaseClient):
             )
 
             if not qty:
-                self.logger.info(f'No position to close for {symbol}')
                 return
 
             try:
@@ -837,7 +833,6 @@ class TradeClient(BaseClient):
             )
 
             if not qty:
-                self.logger.info(f'No position to close for {symbol}')
                 return
 
             try:
@@ -930,7 +925,6 @@ class TradeClient(BaseClient):
             )
 
             if not qty:
-                self.logger.info(f'No position to close for {symbol}')
                 return
 
             try:

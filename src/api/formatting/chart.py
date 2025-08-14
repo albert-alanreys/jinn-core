@@ -128,7 +128,7 @@ def format_deals(
     result = []
 
     def create_marker(
-        deal_type: int,
+        position_type: int,
         signal_code: int,
         n_deal: int,
         time: float,
@@ -144,8 +144,8 @@ def format_deals(
             signal_codes[base_code]
             + (f' | #{n_deal}' if n_deal > 0 else '')
         )
-        sign = '+' if deal_type == 0 else '-'
-        styles = styles_map['buy'] if deal_type == 0 else styles_map['sell']
+        sign = '+' if position_type == 0 else '-'
+        styles = styles_map['buy'] if position_type == 0 else styles_map['sell']
 
         return {
             'time': time * 0.001,
@@ -156,7 +156,7 @@ def format_deals(
     # Add entry markers for completed deals
     for deal in completed_deals:
         result.append(create_marker(
-            deal_type=deal[0],
+            position_type=deal[0],
             signal_code=deal[1],
             n_deal=int(deal[1] % 100),
             time=deal[3],
@@ -168,7 +168,7 @@ def format_deals(
     # Add exit markers for completed deals
     for deal in completed_deals:
         result.append(create_marker(
-            deal_type=deal[0],
+            position_type=deal[0],
             signal_code=deal[2],
             n_deal=int(deal[2] % 100),
             time=deal[4],
@@ -180,7 +180,7 @@ def format_deals(
     # Add entry markers for open deals
     for deal in open_deals:
         result.append(create_marker(
-            deal_type=deal[0],
+            position_type=deal[0],
             signal_code=deal[1],
             n_deal=int(deal[1] % 100),
             time=deal[2],

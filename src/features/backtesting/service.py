@@ -104,7 +104,7 @@ class BacktestingService:
             all_metrics['Profit Factor'],
             all_metrics['Recovery Factor'],
             all_metrics['Max Equity Run-Up'],
-            all_metrics['Max Position Size'],
+            all_metrics['Max Order Size'],
             all_metrics['Gross Profit'],
             all_metrics['Gross Loss'],
             all_metrics['Commission Paid'],
@@ -305,18 +305,18 @@ class BacktestingService:
         long_commission_paid = round(log_col_12[long_mask].sum(), 2)
         short_commission_paid = round(log_col_12[short_mask].sum(), 2)
 
-        # Max Position Size
-        all_max_position_size = (
+        # Max Order Size
+        all_max__order_size = (
             np.max(log_col_7)
             if log_col_7.shape[0] > 0
             else np.nan
         )
-        long_max_position_size = (
+        long_max__order_size = (
             np.max(log_col_7[long_mask])
             if log_col_7[long_mask].shape[0] > 0
             else np.nan
         )
-        short_max_position_size = (
+        short_max__order_size = (
             np.max(log_col_7[short_mask])
             if log_col_7[short_mask].shape[0] > 0
             else np.nan
@@ -672,11 +672,11 @@ class BacktestingService:
                 'long': [long_commission_paid],
                 'short': [short_commission_paid]
             },
-            'Max Position Size': {
-                'title': 'Max Position Size',
-                'all': [all_max_position_size],
-                'long': [long_max_position_size],
-                'short': [short_max_position_size]
+            'Max Order Size': {
+                'title': 'Max Order Size',
+                'all': [all_max__order_size],
+                'long': [long_max__order_size],
+                'short': [short_max__order_size]
             },
             'Total Closed Trades': {
                 'title': 'Total Closed Trades',

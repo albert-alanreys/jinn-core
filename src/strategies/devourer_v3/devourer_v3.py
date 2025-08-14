@@ -201,8 +201,8 @@ class DevourerV3(BaseStrategy):
             self.params['direction'],
             self.params['initial_capital'],
             self.params['commission'],
-            self.params['order_size_type'],
-            self.params['order_size'],
+            self.params['position_size_type'],
+            self.params['position_size'],
             self.params['leverage'],
             self.params['stop_atr_p2'],
             self.params['stop_atr_p3'],
@@ -220,14 +220,14 @@ class DevourerV3(BaseStrategy):
             self.equity,
             self.completed_deals_log,
             self.open_deals_log,
-            self.deal_type,
-            self.entry_signal,
-            self.entry_date,
-            self.entry_price,
+            self.position_type,
+            self.order_signal,
+            self.order_date,
+            self.order_price,
             self.take_price,
             self.stop_price,
             self.liquidation_price,
-            self.position_size,
+            self.order_size,
             self.deal_p1,
             self.deal_p2,
             self.deal_p3,
@@ -274,8 +274,8 @@ class DevourerV3(BaseStrategy):
         direction: int,
         initial_capital: float,
         commission: float,
-        order_size_type: int,
-        order_size: float,
+        position_size_type: int,
+        position_size: float,
         leverage: int,
         stop_atr_p2: float,
         stop_atr_p3: float,
@@ -293,14 +293,14 @@ class DevourerV3(BaseStrategy):
         equity: float,
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray,
-        deal_type: float,
-        entry_signal: float,
-        entry_date: float,
-        entry_price: float,
+        position_type: float,
+        order_signal: float,
+        order_date: float,
+        order_price: float,
         take_price: np.ndarray,
         stop_price: np.ndarray,
         liquidation_price: float,
-        position_size: float,
+        order_size: float,
         deal_p1: bool,
         deal_p2: bool,
         deal_p3: bool,
@@ -395,27 +395,27 @@ class DevourerV3(BaseStrategy):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     700,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     liquidation_price,
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 liquidation_price = np.nan
                 take_price[i] = np.nan
                 stop_price[i] = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 deal_p1 = False
                 deal_p2 = False
 
@@ -423,27 +423,27 @@ class DevourerV3(BaseStrategy):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     800,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     liquidation_price,
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 liquidation_price = np.nan
                 take_price[i] = np.nan
                 stop_price[i] = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 deal_p3 = False
                 alert_cancel = True
 
@@ -476,25 +476,25 @@ class DevourerV3(BaseStrategy):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     100,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     close[i],
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 liquidation_price = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 deal_p1 = False
                 alert_close_long = True
             elif entry_long_p1:
@@ -504,27 +504,27 @@ class DevourerV3(BaseStrategy):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
-                        deal_type,
-                        entry_signal,
+                        position_type,
+                        order_signal,
                         200,
-                        entry_date,
+                        order_date,
                         time[i],
-                        entry_price,
+                        order_price,
                         close[i],
-                        position_size,
+                        order_size,
                         initial_capital
                     )
                     equity += pnl
 
                     open_deals_log[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     liquidation_price = np.nan
                     take_price[i] = np.nan
                     stop_price[i] = np.nan
-                    position_size = np.nan
+                    order_size = np.nan
                     deal_p3 = False
                     short_allowed_p3 = False
                     alert_close_short = True
@@ -534,38 +534,38 @@ class DevourerV3(BaseStrategy):
                     deal_p2 = False
                     stop_price[i] = np.nan
                 else:
-                    deal_type = 0
-                    entry_signal = 100
-                    entry_price = close[i]
+                    position_type = 0
+                    order_signal = 100
+                    order_price = close[i]
 
-                    if order_size_type == 0:
+                    if position_size_type == 0:
                         initial_position =  (
-                            equity * leverage * (order_size / 100.0)
+                            equity * leverage * (position_size / 100.0)
                         )
-                        position_size = (
+                        order_size = (
                             initial_position * (1 - commission / 100)
-                            / entry_price
+                            / order_price
                         )
-                    elif order_size_type == 1:
+                    elif position_size_type == 1:
                         initial_position = (
-                            order_size * leverage
+                            position_size * leverage
                         )
-                        position_size = (
+                        order_size = (
                             initial_position * (1 - commission / 100)
-                            / entry_price
+                            / order_price
                         )
                         
-                    entry_date = time[i]
+                    order_date = time[i]
                     liquidation_price = adjust(
-                        entry_price * (1 - (1 / leverage)), p_precision
+                        order_price * (1 - (1 / leverage)), p_precision
                     )
-                    position_size = adjust(
-                        position_size, q_precision
+                    order_size = adjust(
+                        order_size, q_precision
                     )
                     open_deals_log[0] = np.array(
                         [
-                            deal_type, entry_signal, entry_date,
-                            entry_price, position_size
+                            position_type, order_signal, order_date,
+                            order_price, order_size
                         ]
                     )
                     alert_open_long = True
@@ -585,26 +585,26 @@ class DevourerV3(BaseStrategy):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     100,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     close[i],
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 stop_price[i] = np.nan
                 liquidation_price = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 deal_p2 = False
                 alert_close_long = True
             elif entry_long_p2:
@@ -617,67 +617,67 @@ class DevourerV3(BaseStrategy):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
-                        deal_type,
-                        entry_signal,
+                        position_type,
+                        order_signal,
                         200,
-                        entry_date,
+                        order_date,
                         time[i],
-                        entry_price,
+                        order_price,
                         close[i],
-                        position_size,
+                        order_size,
                         initial_capital
                     )
                     equity += pnl
 
                     open_deals_log[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     liquidation_price = np.nan
                     take_price[i] = np.nan
                     stop_price[i] = np.nan
-                    position_size = np.nan
+                    order_size = np.nan
                     deal_p3 = False
                     short_allowed_p3 = False
                     alert_close_short = True
                     alert_cancel = True
 
-                deal_type = 0
-                entry_signal = 100
-                entry_price = close[i]
+                position_type = 0
+                order_signal = 100
+                order_price = close[i]
 
-                if order_size_type == 0:
+                if position_size_type == 0:
                     initial_position =  (
-                        equity * leverage * (order_size / 100.0)
+                        equity * leverage * (position_size / 100.0)
                     )
-                    position_size = (
+                    order_size = (
                         initial_position * (1 - commission / 100)
-                        / entry_price
+                        / order_price
                     )
-                elif order_size_type == 1:
+                elif position_size_type == 1:
                     initial_position = (
-                        order_size * leverage
+                        position_size * leverage
                     )
-                    position_size = (
+                    order_size = (
                         initial_position * (1 - commission / 100)
-                        / entry_price
+                        / order_price
                     )
                     
-                entry_date = time[i]
+                order_date = time[i]
                 stop_price[i] = adjust(
                     close[i] - atr_p2[i] * stop_atr_p2, p_precision
                 )
                 liquidation_price = adjust(
-                    entry_price * (1 - (1 / leverage)), p_precision
+                    order_price * (1 - (1 / leverage)), p_precision
                 )
-                position_size = adjust(
-                    position_size, q_precision
+                order_size = adjust(
+                    order_size, q_precision
                 )
                 open_deals_log[0] = np.array(
                     [
-                        deal_type, entry_signal, entry_date,
-                        entry_price, position_size
+                        position_type, order_signal, order_date,
+                        order_price, order_size
                     ]
                 )
                 alert_open_long = True
@@ -687,27 +687,27 @@ class DevourerV3(BaseStrategy):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     400,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     take_price[i],
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 take_price[i] = np.nan
                 stop_price[i] = np.nan
                 liquidation_price = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 deal_p3 = False
                 short_allowed_p3 = False
 
@@ -731,55 +731,55 @@ class DevourerV3(BaseStrategy):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     200,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     close[i],
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 liquidation_price = np.nan
                 take_price[i] = np.nan
                 stop_price[i] = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 deal_p3 = False
                 short_allowed_p3 = False
                 alert_close_short = True
                 alert_cancel = True
             elif entry_short_p3:
                 deal_p3 = True
-                deal_type = 1
-                entry_signal = 200
-                entry_price = close[i]
+                position_type = 1
+                order_signal = 200
+                order_price = close[i]
 
-                if order_size_type == 0:
+                if position_size_type == 0:
                     initial_position = (
-                        equity * leverage * (order_size / 100.0)
+                        equity * leverage * (position_size / 100.0)
                     )
-                    position_size = (
+                    order_size = (
                         initial_position * (1 - commission / 100)
-                        / entry_price
+                        / order_price
                     )
-                elif order_size_type == 1:
+                elif position_size_type == 1:
                     initial_position = (
-                        order_size * leverage
+                        position_size * leverage
                     )
-                    position_size = (
+                    order_size = (
                         initial_position * (1 - commission / 100)
-                        / entry_price
+                        / order_price
                     )
 
-                entry_date = time[i]
+                order_date = time[i]
                 stop_price[i] = adjust(
                     close[i] + atr_p3[i] * stop_atr_p3, p_precision
                 )
@@ -787,15 +787,15 @@ class DevourerV3(BaseStrategy):
                     close[i] - atr_p3[i] * take_atr_p3, p_precision
                 )
                 liquidation_price = adjust(
-                    entry_price * (1 + (1 / leverage)), p_precision
+                    order_price * (1 + (1 / leverage)), p_precision
                 )
-                position_size = adjust(
-                    position_size, q_precision
+                order_size = adjust(
+                    order_size, q_precision
                 )
                 open_deals_log[0] = np.array(
                     [
-                        deal_type, entry_signal, entry_date,
-                        entry_price, position_size
+                        position_type, order_signal, order_date,
+                        order_price, order_size
                     ]
                 )
                 alert_open_short = True
@@ -845,7 +845,7 @@ class DevourerV3(BaseStrategy):
         if self.alert_open_long:
             self.client.market_open_long(
                 symbol=self.symbol,
-                size=f'{self.params['order_size']}%',
+                size=f'{self.params['position_size']}%',
                 margin=(
                     'cross' if self.params['margin_type'] else 'isolated'
                 ),
@@ -867,7 +867,7 @@ class DevourerV3(BaseStrategy):
         if self.alert_open_short:
             self.client.market_open_short(
                 symbol=self.symbol,
-                size=f'{self.params['order_size']}%',
+                size=f'{self.params['position_size']}%',
                 margin=(
                     'cross' if self.params['margin_type'] else 'isolated'
                 ),

@@ -141,11 +141,12 @@ def format_trades(
 
     completed_deals = completed_deals_log[:, :12]
     result = []
+    num = 1
 
-    for num, deal in enumerate(completed_deals, 1):
+    for deal in completed_deals:
         code = deal[1] - (deal[1] % 100)
         n_deal = int(deal[1] % 100)
-        entry_signal = (
+        order_signal = (
             f'{ENTRY_SIGNAL_CODES[code]}' +
             (f' | #{n_deal}' if n_deal > 0 else '')
         )
@@ -161,7 +162,7 @@ def format_trades(
             str(num),
             TRADE_TYPE_LABELS[deal[0]][1],
             TRADE_TYPE_LABELS[deal[0]][0],
-            entry_signal,
+            order_signal,
             exit_signal,
             datetime.fromtimestamp(
                 timestamp=deal[3] * 0.001,
@@ -180,6 +181,7 @@ def format_trades(
             f'{deal[11]}%'
         ]
         result.append(formatted)
+        num += 1
 
     if np.all(np.isnan(open_deals_log)):
         return result
@@ -188,10 +190,10 @@ def format_trades(
     mask = ~np.isnan(open_deals).any(axis=1)
     open_deals = open_deals[mask]
 
-    for num, deal in enumerate(open_deals, num + 1):
+    for deal in open_deals:
         code = deal[1] - (deal[1] % 100)
         n_deal = int(deal[1] % 100)
-        entry_signal = (
+        order_signal = (
             f'{ENTRY_SIGNAL_CODES[code]}' +
             (f' | #{n_deal}' if n_deal > 0 else '')
         )
@@ -200,7 +202,7 @@ def format_trades(
             str(num),
             TRADE_TYPE_LABELS[deal[0]][1],
             TRADE_TYPE_LABELS[deal[0]][0],
-            entry_signal,
+            order_signal,
             '',
             datetime.fromtimestamp(
                 timestamp=deal[2] * 0.001,
@@ -216,6 +218,7 @@ def format_trades(
             ''
         ]
         result.append(formatted)
+        num += 1
 
     return result
 

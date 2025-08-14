@@ -1,8 +1,12 @@
 from functools import wraps
 from json import dumps
+from logging import getLogger
 from typing import Callable, Any
 
 import flask
+
+
+logger = getLogger(__name__)
 
 
 def handle_api_errors(f: Callable) -> Callable:
@@ -35,6 +39,8 @@ def handle_api_errors(f: Callable) -> Callable:
         try:
             return f(*args, **kwargs)
         except KeyError as e:
+            logger.exception('An error occurred')
+
             if (
                 'context_id' in kwargs and
                 kwargs['context_id'] not in
@@ -67,7 +73,7 @@ def handle_api_errors(f: Callable) -> Callable:
                     mimetype='application/json',
                     status=404
                 )
-
+            
             return flask.Response(
                 dumps({
                     'status': 'error',
@@ -78,6 +84,8 @@ def handle_api_errors(f: Callable) -> Callable:
                 status=400
             )
         except TypeError as e:
+            logger.exception('An error occurred')
+
             return flask.Response(
                 dumps({
                     'status': 'error',
@@ -88,6 +96,8 @@ def handle_api_errors(f: Callable) -> Callable:
                 status=400
             )
         except ValueError as e:
+            logger.exception('An error occurred')
+
             return flask.Response(
                 dumps({
                     'status': 'error',
@@ -98,6 +108,8 @@ def handle_api_errors(f: Callable) -> Callable:
                 status=400
             )
         except Exception as e:
+            logger.exception('An error occurred')
+
             return flask.Response(
                 dumps({
                     'status': 'error',

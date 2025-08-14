@@ -22,27 +22,27 @@ class BaseStrategy(ABC):
     must implement the calculate() and trade() methods.
 
     Common Parameters (inherited by all strategies):
-        direction (int):         Trading direction 
-                                 0=all, 1=longs, 2=shorts
-                                 (default: 0)
-        margin_type (int):       Margin mode 
-                                 0=ISOLATED, 1=CROSSED
-                                 (default: 0)
-        leverage (int):          Leverage multiplier 
-                                 (1 = no leverage)
-                                 (default: 1)
-        initial_capital (float): Starting capital 
-                                 in USDT
-                                 (default: 10000.0)
-        commission (float):      Trading fee 
-                                 (0.05 = 0.05%)
-                                 (default: 0.05)
-        order_size_type (int):   Size calculation mode 
-                                 0=PERCENT, 1=USDT
-                                 (default: 0)
-        order_size (float):      Order size 
-                                 (% or USDT based on order_size_type)
-                                 (default: 100.0)
+        direction (int):            Trading direction 
+                                    0=all, 1=longs, 2=shorts
+                                    (default: 0)
+        margin_type (int):          Margin mode 
+                                    0=ISOLATED, 1=CROSSED
+                                    (default: 0)
+        leverage (int):             Leverage multiplier 
+                                    (1 = no leverage)
+                                    (default: 1)
+        initial_capital (float):    Starting capital 
+                                    in USDT
+                                    (default: 10000.0)
+        commission (float):         Trading fee 
+                                    (0.05 = 0.05%)
+                                    (default: 0.05)
+        position_size_type (int):   Position size calculation mode 
+                                    0=PERCENT, 1=USDT
+                                    (default: 0)
+        position_size (float):      Position size 
+                                    (% or USDT based on position_size_type)
+                                    (default: 100.0)
 
     Indicator Configuration (for frontend rendering):
         indicator_options (dict): Display settings for each indicator.
@@ -82,8 +82,8 @@ class BaseStrategy(ABC):
         
         # Capital management
         "initial_capital": 10000.0,  # Starting capital in USDT
-        "order_size_type": 0,        # 0 - PERCENT, 1 - CURRENCY
-        "order_size": 100.0,         # Size in % or absolute value
+        "position_size_type": 0,        # 0 - PERCENT, 1 - CURRENCY
+        "position_size": 100.0,         # Size in % or absolute value
         "commission": 0.05,          # Fee percentage (0.05 = 0.05%)
     }
 
@@ -166,11 +166,11 @@ class BaseStrategy(ABC):
         self.open_deals_log = np.full((max_open_deals, 5), np.nan)
 
         # Position tracking
-        self.position_size = np.nan
-        self.entry_signal = np.nan
-        self.entry_price = np.nan
-        self.entry_date = np.nan
-        self.deal_type = np.nan
+        self.position_type = np.nan
+        self.order_signal = np.nan
+        self.order_price = np.nan
+        self.order_date = np.nan
+        self.order_size = np.nan
 
         # Market identity
         self.symbol = market_data['symbol']

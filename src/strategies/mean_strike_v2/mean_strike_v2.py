@@ -14,8 +14,8 @@ class MeanStrikeV2(BaseStrategy):
     params = {
         "direction": 0,
         "leverage": 1,
-        "order_size_type": 0,
-        "order_size": 10.0,
+        "position_size_type": 0,
+        "position_size": 10.0,
         "first_order_pct": 10.0,
         "stop_loss": 1.0,
         "take_profit": 2.0,
@@ -123,7 +123,7 @@ class MeanStrikeV2(BaseStrategy):
         self.order_values = np.full(self.params['grid_size'] + 1, np.nan)
 
         first_order_value =  (
-            self.params['first_order_pct'] * self.params['order_size'] / 100
+            self.params['first_order_pct'] * self.params['position_size'] / 100
         )
 
         for n in range(self.order_values.shape[0]):
@@ -153,8 +153,8 @@ class MeanStrikeV2(BaseStrategy):
             self.params['direction'],
             self.params['initial_capital'],
             self.params['commission'],
-            self.params['order_size_type'],
-            self.params['order_size'],
+            self.params['position_size_type'],
+            self.params['position_size'],
             self.params['leverage'],
             self.params['stop_loss'],
             self.params['take_profit'],
@@ -174,10 +174,10 @@ class MeanStrikeV2(BaseStrategy):
             self.equity,
             self.completed_deals_log,
             self.open_deals_log,
-            self.entry_signal,
-            self.entry_price,
-            self.entry_date,
-            self.deal_type,
+            self.order_signal,
+            self.order_price,
+            self.order_date,
+            self.position_type,
             self.grid_prices,
             self.stop_price,
             self.take_price,
@@ -273,8 +273,8 @@ class MeanStrikeV2(BaseStrategy):
         direction: int,
         initial_capital: float,
         commission: float,
-        order_size_type: int,
-        order_size: float,
+        position_size_type: int,
+        position_size: float,
         leverage: int,
         stop_loss: float,
         take_profit: float,
@@ -294,10 +294,10 @@ class MeanStrikeV2(BaseStrategy):
         equity: float,
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray,
-        entry_signal: float,
-        entry_price: float,
-        entry_date: float,
-        deal_type: float,
+        order_signal: float,
+        order_price: float,
+        order_date: float,
+        position_type: float,
         grid_prices: np.ndarray,
         stop_price: np.ndarray,
         take_price: np.ndarray,
@@ -330,7 +330,7 @@ class MeanStrikeV2(BaseStrategy):
                 if (
                     not np.isnan(take_price[i]) and
                     high[i] >= take_price[i] and
-                    deal_type == 0
+                    position_type == 0
                 ):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
@@ -354,16 +354,16 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
                     alert_close_long = True
 
-                if deal_type == 0:
+                if position_type == 0:
                     for order_idx in range(1, grid_size + 1):
                         grid_price = grid_prices[order_idx - 1, i]
 
@@ -371,11 +371,11 @@ class MeanStrikeV2(BaseStrategy):
                             not np.isnan(grid_price) and
                             low[i] <= grid_price
                         ):
-                            entry_signal = 300 + order_idx
-                            entry_date = time[i]
+                            order_signal = 300 + order_idx
+                            order_date = time[i]
 
                             open_deals_log[order_idx] = np.array([
-                                deal_type, entry_signal, entry_date,
+                                position_type, order_signal, order_date,
                                 grid_price, order_quantities[order_idx]
                             ])
 
@@ -398,7 +398,7 @@ class MeanStrikeV2(BaseStrategy):
                 if (
                     not np.isnan(stop_price[i]) and
                     low[i] <= stop_price[i] and
-                    deal_type == 0
+                    position_type == 0
                 ):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
@@ -422,15 +422,15 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
 
-                if (low[i] <= liquidation_price and deal_type == 0):
+                if (low[i] <= liquidation_price and position_type == 0):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
                             (
@@ -453,16 +453,16 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
                     alert_cancel = True
             else:
-                if deal_type == 0:
+                if position_type == 0:
                     for order_idx in range(1, grid_size + 1):
                         grid_price = grid_prices[order_idx - 1, i]
 
@@ -470,11 +470,11 @@ class MeanStrikeV2(BaseStrategy):
                             not np.isnan(grid_price) and
                             low[i] <= grid_price
                         ):
-                            entry_signal = 300 + order_idx
-                            entry_date = time[i]
+                            order_signal = 300 + order_idx
+                            order_date = time[i]
 
                             open_deals_log[order_idx] = np.array([
-                                deal_type, entry_signal, entry_date,
+                                position_type, order_signal, order_date,
                                 grid_price, order_quantities[order_idx]
                             ])
 
@@ -497,7 +497,7 @@ class MeanStrikeV2(BaseStrategy):
                 if (
                     not np.isnan(stop_price[i]) and
                     low[i] <= stop_price[i] and
-                    deal_type == 0
+                    position_type == 0
                 ):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
@@ -521,15 +521,15 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
 
-                if (low[i] <= liquidation_price and deal_type == 0):
+                if (low[i] <= liquidation_price and position_type == 0):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
                             (
@@ -552,10 +552,10 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
@@ -564,7 +564,7 @@ class MeanStrikeV2(BaseStrategy):
                 if (
                     not np.isnan(take_price[i]) and
                     high[i] >= take_price[i] and
-                    deal_type == 0
+                    position_type == 0
                 ):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
@@ -588,10 +588,10 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
@@ -607,10 +607,10 @@ class MeanStrikeV2(BaseStrategy):
             )
 
             if entry_long:
-                deal_type = 0
-                entry_signal = 100
-                entry_price = close[i]
-                entry_date = time[i]
+                position_type = 0
+                order_signal = 100
+                order_price = close[i]
+                order_date = time[i]
 
                 # grid calculation
                 first_grid_price = close[i] * (100 - first_grid_pct) / 100
@@ -638,12 +638,12 @@ class MeanStrikeV2(BaseStrategy):
                         grid_prices[n, i] = adjust(price, p_precision)
 
                 # calculation of quantities
-                if order_size_type == 0:
+                if position_size_type == 0:
                     initial_position =  (
-                        equity * leverage * (order_size / 100.0)
+                        equity * leverage * (position_size / 100.0)
                     )
                 else:
-                    initial_position = order_size * leverage
+                    initial_position = position_size * leverage
 
                 sum_k = sum([
                     martingale_coef ** n
@@ -657,7 +657,7 @@ class MeanStrikeV2(BaseStrategy):
                     )
 
                     if n == 0:
-                        price = entry_price
+                        price = order_price
                     else:
                         price = grid_prices[n - 1, i]
 
@@ -665,14 +665,14 @@ class MeanStrikeV2(BaseStrategy):
                     order_quantities[n] = adjust(quantity, q_precision)
 
                 if np.any(order_quantities <= 0):
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_price = np.nan
-                    entry_date = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_price = np.nan
+                    order_date = np.nan
                     continue
 
                 liquidation_price = adjust(
-                    entry_price * (1 - (1 / leverage)), p_precision
+                    order_price * (1 - (1 / leverage)), p_precision
                 )
                 stop_price[i] = adjust(
                     grid_prices[-1, i] * (100 - stop_loss) / 100, p_precision
@@ -681,8 +681,8 @@ class MeanStrikeV2(BaseStrategy):
                     close[i] * (100 + take_profit) / 100, p_precision
                 )
                 open_deals_log[0] = np.array([
-                    deal_type, entry_signal, entry_date,
-                    entry_price, order_quantities[0]
+                    position_type, order_signal, order_date,
+                    order_price, order_quantities[0]
                 ])
                 alert_open_long = True
 
@@ -691,7 +691,7 @@ class MeanStrikeV2(BaseStrategy):
                 if (
                     not np.isnan(take_price[i]) and
                     low[i] <= take_price[i] and
-                    deal_type == 1
+                    position_type == 1
                 ):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
@@ -715,16 +715,16 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
                     alert_close_short = True
 
-                if deal_type == 1:
+                if position_type == 1:
                     for order_idx in range(1, grid_size + 1):
                         grid_price = grid_prices[order_idx - 1, i]
 
@@ -732,11 +732,11 @@ class MeanStrikeV2(BaseStrategy):
                             not np.isnan(grid_price) and
                             high[i] >= grid_price
                         ):
-                            entry_signal = 400 + order_idx
-                            entry_date = time[i]
+                            order_signal = 400 + order_idx
+                            order_date = time[i]
 
                             open_deals_log[order_idx] = np.array([
-                                deal_type, entry_signal, entry_date,
+                                position_type, order_signal, order_date,
                                 grid_price, order_quantities[order_idx]
                             ])
 
@@ -759,7 +759,7 @@ class MeanStrikeV2(BaseStrategy):
                 if (
                     not np.isnan(stop_price[i]) and
                     high[i] >= stop_price[i] and
-                    deal_type == 1
+                    position_type == 1
                 ):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
@@ -783,14 +783,14 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
-                if (high[i] >= liquidation_price and deal_type == 1):
+                if (high[i] >= liquidation_price and position_type == 1):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
                             (
@@ -813,16 +813,16 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
                     alert_cancel = True
             else:
-                if deal_type == 1:
+                if position_type == 1:
                     for order_idx in range(1, grid_size + 1):
                         grid_price = grid_prices[order_idx - 1, i]
 
@@ -830,11 +830,11 @@ class MeanStrikeV2(BaseStrategy):
                             not np.isnan(grid_price) and
                             high[i] >= grid_price
                         ):
-                            entry_signal = 400 + order_idx
-                            entry_date = time[i]
+                            order_signal = 400 + order_idx
+                            order_date = time[i]
 
                             open_deals_log[order_idx] = np.array([
-                                deal_type, entry_signal, entry_date,
+                                position_type, order_signal, order_date,
                                 grid_price, order_quantities[order_idx]
                             ])
 
@@ -856,7 +856,7 @@ class MeanStrikeV2(BaseStrategy):
                 if (
                     not np.isnan(stop_price[i]) and
                     high[i] >= stop_price[i] and
-                    deal_type == 1
+                    position_type == 1
                 ):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
@@ -880,15 +880,15 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
 
-                if (high[i] >= liquidation_price and deal_type == 1):
+                if (high[i] >= liquidation_price and position_type == 1):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
                             (
@@ -911,10 +911,10 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
@@ -923,7 +923,7 @@ class MeanStrikeV2(BaseStrategy):
                 if (
                     not np.isnan(take_price[i]) and
                     low[i] <= take_price[i] and
-                    deal_type == 1
+                    position_type == 1
                 ):
                     for deal in open_deals_log:
                         if not np.isnan(deal[0]):
@@ -947,10 +947,10 @@ class MeanStrikeV2(BaseStrategy):
 
                     open_deals_log[:] = np.nan
                     order_quantities[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     grid_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     take_price[i] = np.nan
@@ -966,10 +966,10 @@ class MeanStrikeV2(BaseStrategy):
             )
 
             if entry_short:
-                deal_type = 1
-                entry_signal = 200
-                entry_price = close[i]
-                entry_date = time[i]
+                position_type = 1
+                order_signal = 200
+                order_price = close[i]
+                order_date = time[i]
 
                 # grid calculation
                 first_grid_price = close[i] * (100 + first_grid_pct) / 100
@@ -997,12 +997,12 @@ class MeanStrikeV2(BaseStrategy):
                         grid_prices[n, i] = adjust(price, p_precision)
 
                 # calculation of quantities
-                if order_size_type == 0:
+                if position_size_type == 0:
                     initial_position =  (
-                        equity * leverage * (order_size / 100.0)
+                        equity * leverage * (position_size / 100.0)
                     )
                 else:
-                    initial_position = order_size * leverage
+                    initial_position = position_size * leverage
 
                 sum_k = sum([
                     martingale_coef ** n
@@ -1016,7 +1016,7 @@ class MeanStrikeV2(BaseStrategy):
                     )
 
                     if n == 0:
-                        price = entry_price
+                        price = order_price
                     else:
                         price = grid_prices[n - 1, i]
 
@@ -1024,14 +1024,14 @@ class MeanStrikeV2(BaseStrategy):
                     order_quantities[n] = adjust(quantity, q_precision)
 
                 if np.any(order_quantities <= 0):
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_price = np.nan
-                    entry_date = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_price = np.nan
+                    order_date = np.nan
                     continue
 
                 liquidation_price = adjust(
-                    entry_price * (1 + (1 / leverage)), p_precision
+                    order_price * (1 + (1 / leverage)), p_precision
                 )
                 stop_price[i] = adjust(
                     grid_prices[-1, i] * (100 + stop_loss) / 100, p_precision
@@ -1040,8 +1040,8 @@ class MeanStrikeV2(BaseStrategy):
                     close[i] * (100 - take_profit) / 100, p_precision
                 )
                 open_deals_log[0] = np.array([
-                    deal_type, entry_signal, entry_date,
-                    entry_price, order_quantities[0]
+                    position_type, order_signal, order_date,
+                    order_price, order_quantities[0]
                 ])
                 alert_open_short = True
 
@@ -1082,7 +1082,7 @@ class MeanStrikeV2(BaseStrategy):
                 symbol=self.symbol,
                 size=(
                     f'{self.order_values[0]}'
-                    f'{'u' if self.params['order_size_type'] else '%'}'
+                    f'{'u' if self.params['position_size_type'] else '%'}'
                 ),
                 margin=(
                     'cross' if self.params['margin_type'] else 'isolated'
@@ -1096,7 +1096,7 @@ class MeanStrikeV2(BaseStrategy):
                     symbol=self.symbol,
                     size=(
                         f'{self.order_values[i + 1]}'
-                        f'{'u' if self.params['order_size_type'] else '%'}'
+                        f'{'u' if self.params['position_size_type'] else '%'}'
                     ),
                     margin=(
                         'cross' if self.params['margin_type'] else 'isolated'
@@ -1135,7 +1135,7 @@ class MeanStrikeV2(BaseStrategy):
                 symbol=self.symbol,
                 size=(
                     f'{self.order_values[0]}'
-                    f'{'u' if self.params['order_size_type'] else '%'}'
+                    f'{'u' if self.params['position_size_type'] else '%'}'
                 ),
                 margin=(
                     'cross' if self.params['margin_type'] else 'isolated'
@@ -1149,7 +1149,7 @@ class MeanStrikeV2(BaseStrategy):
                     symbol=self.symbol,
                     size=(
                         f'{self.order_values[i + 1]}'
-                        f'{'u' if self.params['order_size_type'] else '%'}'
+                        f'{'u' if self.params['position_size_type'] else '%'}'
                     ),
                     margin=(
                         'cross' if self.params['margin_type'] else 'isolated'

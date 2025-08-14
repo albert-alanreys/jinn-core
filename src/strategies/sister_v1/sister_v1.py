@@ -178,8 +178,8 @@ class SisterV1(BaseStrategy):
             self.params['direction'],
             self.params['initial_capital'],
             self.params['commission'],
-            self.params['order_size_type'],
-            self.params['order_size'],
+            self.params['position_size_type'],
+            self.params['position_size'],
             self.params['leverage'],
             self.params['stop'],
             self.params['take_type'],
@@ -194,14 +194,14 @@ class SisterV1(BaseStrategy):
             self.equity,
             self.completed_deals_log,
             self.open_deals_log,
-            self.deal_type,
-            self.entry_signal,
-            self.entry_date,
-            self.entry_price,
+            self.position_type,
+            self.order_signal,
+            self.order_date,
+            self.order_price,
             self.take_price,
             self.stop_price,
             self.liquidation_price,
-            self.position_size,
+            self.order_size,
             self.sma_long_entry,
             self.sma_short_entry,
             self.sma_long_exit,
@@ -260,8 +260,8 @@ class SisterV1(BaseStrategy):
         direction: int,
         initial_capital: float,
         commission: float,
-        order_size_type: int,
-        order_size: float,
+        position_size_type: int,
+        position_size: float,
         leverage: int,
         stop: float,
         take_type: int,
@@ -276,14 +276,14 @@ class SisterV1(BaseStrategy):
         equity: float,
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray,
-        deal_type: float,
-        entry_signal: float,
-        entry_date: float,
-        entry_price: float,
+        position_type: float,
+        order_signal: float,
+        order_date: float,
+        order_price: float,
         take_price: np.ndarray,
         stop_price: np.ndarray,
         liquidation_price: float,
-        position_size: float,
+        order_size: float,
         sma_long_entry: np.ndarray,
         sma_short_entry: np.ndarray,
         sma_long_exit: np.ndarray,
@@ -313,64 +313,64 @@ class SisterV1(BaseStrategy):
             alert_short_new_take = False
 
             # Check of liquidation
-            if (deal_type == 0 and low[i] <= liquidation_price):
+            if (position_type == 0 and low[i] <= liquidation_price):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     700,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     liquidation_price,
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
                 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 take_price[i] = np.nan
                 stop_price[i] = np.nan
                 liquidation_price = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 alert_cancel = True
 
-            if (deal_type == 1 and high[i] >= liquidation_price):
+            if (position_type == 1 and high[i] >= liquidation_price):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     800,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     liquidation_price,
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 take_price[i] = np.nan
                 stop_price[i] = np.nan
                 liquidation_price = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 alert_cancel = True
 
             # Trading logic (longs)
             is_new_take_price = (
                 take_type == 1 and
-                deal_type == 0 and
+                position_type == 0 and
                 not np.isnan(take_price[i - 1])
             )
 
@@ -378,67 +378,67 @@ class SisterV1(BaseStrategy):
                 take_price[i] = min(sma_long_exit[i], take_price[i - 1])
                 alert_long_new_take = True
 
-            if deal_type == 0:
+            if position_type == 0:
                 if low[i] <= stop_price[i]:
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
-                        deal_type,
-                        entry_signal,
+                        position_type,
+                        order_signal,
                         500,
-                        entry_date,
+                        order_date,
                         time[i],
-                        entry_price,
+                        order_price,
                         stop_price[i],
-                        position_size,
+                        order_size,
                         initial_capital
                     )
                     equity += pnl
 
                     open_deals_log[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     take_price[i] = np.nan
                     stop_price[i] = np.nan
                     liquidation_price = np.nan
-                    position_size = np.nan
+                    order_size = np.nan
                     alert_cancel = True
 
                 if high[i] >= take_price[i]:
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
-                        deal_type,
-                        entry_signal,
+                        position_type,
+                        order_signal,
                         300,
-                        entry_date,
+                        order_date,
                         time[i],
-                        entry_price,
+                        order_price,
                         take_price[i],
-                        position_size,
+                        order_size,
                         initial_capital
                     )
                     equity += pnl
 
                     open_deals_log[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     take_price[i] = np.nan
                     stop_price[i] = np.nan
                     liquidation_price = np.nan
-                    position_size = np.nan
+                    order_size = np.nan
                     alert_cancel = True
 
             exit_long = (
-                deal_type == 0 and
+                position_type == 0 and
                 cond_exit_long[i]
             )
             entry_long = (
-                np.isnan(deal_type) and
+                np.isnan(position_type) and
                 high[i - 1] >= sma_long_entry[i - 1] and
                 low[i - 1] <= sma_long_entry[i - 1] and
                 close[i] > close[i - 1] and
@@ -453,67 +453,67 @@ class SisterV1(BaseStrategy):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     100,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     close[i],
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 take_price[i] = np.nan
                 stop_price[i] = np.nan
                 liquidation_price = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 alert_close_long = True
                 alert_cancel = True
 
             if entry_long:
-                deal_type = 0
-                entry_signal = 100
-                entry_date = time[i]
-                entry_price = close[i]
+                position_type = 0
+                order_signal = 100
+                order_date = time[i]
+                order_price = close[i]
 
-                if order_size_type == 0:
+                if position_size_type == 0:
                     initial_position =  (
-                        equity * leverage * (order_size / 100.0)
+                        equity * leverage * (position_size / 100.0)
                     )
-                    position_size = adjust(
+                    order_size = adjust(
                         initial_position * (1 - commission / 100)
-                        / entry_price, q_precision
+                        / order_price, q_precision
                     )
                 else:
                     initial_position = (
-                        order_size * leverage
+                        position_size * leverage
                     )
-                    position_size = adjust(
+                    order_size = adjust(
                         initial_position * (1 - commission / 100)
-                        / entry_price, q_precision
+                        / order_price, q_precision
                     )
 
                 take_price[i] = adjust(
-                    entry_price * (100 + take) / 100, p_precision
+                    order_price * (100 + take) / 100, p_precision
                 )
                 stop_price[i] = adjust(
-                    entry_price * (100 - stop) / 100, p_precision
+                    order_price * (100 - stop) / 100, p_precision
                 )
                 liquidation_price = adjust(
-                    entry_price * (1 - (1 / leverage)), p_precision
+                    order_price * (1 - (1 / leverage)), p_precision
                 )
 
                 open_deals_log[0] = np.array(
                     [
-                        deal_type, entry_signal, entry_date,
-                        entry_price, position_size
+                        position_type, order_signal, order_date,
+                        order_price, order_size
                     ]
                 )
                 alert_open_long = True
@@ -521,7 +521,7 @@ class SisterV1(BaseStrategy):
             # Trading logic (shorts)
             is_new_take_price = (
                 take_type == 1 and
-                deal_type == 1 and
+                position_type == 1 and
                 not np.isnan(take_price[i - 1])
             )
 
@@ -529,67 +529,67 @@ class SisterV1(BaseStrategy):
                 take_price[i] = max(sma_short_exit[i], take_price[i - 1])
                 alert_short_new_take = True
 
-            if deal_type == 1:
+            if position_type == 1:
                 if high[i] >= stop_price[i]:
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
-                        deal_type,
-                        entry_signal,
+                        position_type,
+                        order_signal,
                         600,
-                        entry_date,
+                        order_date,
                         time[i],
-                        entry_price,
+                        order_price,
                         stop_price[i],
-                        position_size,
+                        order_size,
                         initial_capital
                     )
                     equity += pnl
 
                     open_deals_log[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     take_price[i] = np.nan
                     stop_price[i] = np.nan
                     liquidation_price = np.nan
-                    position_size = np.nan
+                    order_size = np.nan
                     alert_cancel = True 
 
                 if low[i] <= take_price[i]:
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
-                        deal_type,
-                        entry_signal,
+                        position_type,
+                        order_signal,
                         400,
-                        entry_date,
+                        order_date,
                         time[i],
-                        entry_price,
+                        order_price,
                         take_price[i],
-                        position_size,
+                        order_size,
                         initial_capital
                     )
                     equity += pnl
 
                     open_deals_log[:] = np.nan
-                    deal_type = np.nan
-                    entry_signal = np.nan
-                    entry_date = np.nan
-                    entry_price = np.nan
+                    position_type = np.nan
+                    order_signal = np.nan
+                    order_date = np.nan
+                    order_price = np.nan
                     take_price[i] = np.nan
                     stop_price[i] = np.nan
                     liquidation_price = np.nan
-                    position_size = np.nan
+                    order_size = np.nan
                     alert_cancel = True 
 
             exit_short = (
-                deal_type == 1 and
+                position_type == 1 and
                 cond_exit_short[i]
             )
             entry_short = (
-                np.isnan(deal_type) and
+                np.isnan(position_type) and
                 high[i - 1] >= sma_short_entry[i - 1] and
                 low[i - 1] <= sma_short_entry[i - 1] and
                 close[i] < close[i - 1] and
@@ -604,66 +604,66 @@ class SisterV1(BaseStrategy):
                 completed_deals_log, pnl = update_completed_deals_log(
                     completed_deals_log,
                     commission,
-                    deal_type,
-                    entry_signal,
+                    position_type,
+                    order_signal,
                     200,
-                    entry_date,
+                    order_date,
                     time[i],
-                    entry_price,
+                    order_price,
                     close[i],
-                    position_size,
+                    order_size,
                     initial_capital
                 )
                 equity += pnl
 
                 open_deals_log[:] = np.nan
-                deal_type = np.nan
-                entry_signal = np.nan
-                entry_date = np.nan
-                entry_price = np.nan
+                position_type = np.nan
+                order_signal = np.nan
+                order_date = np.nan
+                order_price = np.nan
                 take_price[i] = np.nan
                 stop_price[i] = np.nan
                 liquidation_price = np.nan
-                position_size = np.nan
+                order_size = np.nan
                 alert_close_short = True
                 alert_cancel = True
 
             if entry_short:
-                deal_type = 1
-                entry_signal = 200
-                entry_date = time[i]
-                entry_price = close[i]
+                position_type = 1
+                order_signal = 200
+                order_date = time[i]
+                order_price = close[i]
 
-                if order_size_type == 0:
+                if position_size_type == 0:
                     initial_position = (
-                        equity * leverage * (order_size / 100.0)
+                        equity * leverage * (position_size / 100.0)
                     )
-                    position_size = adjust(
+                    order_size = adjust(
                         initial_position * (1 - commission / 100)
-                        / entry_price, q_precision
+                        / order_price, q_precision
                     )
                 else:
                     initial_position = (
-                        order_size * leverage
+                        position_size * leverage
                     )
-                    position_size = adjust(
+                    order_size = adjust(
                         initial_position * (1 - commission / 100)
-                        / entry_price, q_precision
+                        / order_price, q_precision
                     )
 
                 take_price[i] = adjust(
-                    entry_price * (100 - take) / 100, p_precision
+                    order_price * (100 - take) / 100, p_precision
                 )
                 stop_price[i] = adjust(
-                    entry_price * (100 + stop) / 100, p_precision
+                    order_price * (100 + stop) / 100, p_precision
                 )
                 liquidation_price = adjust(
-                    entry_price * (1 + (1 / leverage)), p_precision
+                    order_price * (1 + (1 / leverage)), p_precision
                 )
                 open_deals_log[0] = np.array(
                     [
-                        deal_type, entry_signal, entry_date,
-                        entry_price, position_size
+                        position_type, order_signal, order_date,
+                        order_price, order_size
                     ]
                 )
                 alert_open_short = True
@@ -701,7 +701,7 @@ class SisterV1(BaseStrategy):
         if self.alert_long_new_take:
             self.client.cancel_limit_orders(
                 symbol=self.symbol,
-                side='Sell'
+                side='sell'
             )
             self.order_ids['limit_ids'] = self.client.check_limit_orders(
                 symbol=self.symbol,
@@ -720,7 +720,7 @@ class SisterV1(BaseStrategy):
         if self.alert_short_new_take:
             self.client.cancel_limit_orders(
                 symbol=self.symbol,
-                side='Buy'
+                side='buy'
             )
             self.order_ids['limit_ids'] = self.client.check_limit_orders(
                 symbol=self.symbol,
@@ -754,8 +754,8 @@ class SisterV1(BaseStrategy):
             self.client.market_open_long(
                 symbol=self.symbol,
                 size=(
-                    f'{self.params['order_size']}'
-                    f'{'u' if self.params['order_size_type'] else '%'}'
+                    f'{self.params['position_size']}'
+                    f'{'u' if self.params['position_size_type'] else '%'}'
                 ),
                 margin=(
                     'cross' if self.params['margin_type'] else 'isolated'
@@ -787,8 +787,8 @@ class SisterV1(BaseStrategy):
             self.client.market_open_short(
                 symbol=self.symbol,
                 size=(
-                    f'{self.params['order_size']}'
-                    f'{'u' if self.params['order_size_type'] else '%'}'
+                    f'{self.params['position_size']}'
+                    f'{'u' if self.params['position_size_type'] else '%'}'
                 ),
                 margin=(
                     'cross' if self.params['margin_type'] else 'isolated'
