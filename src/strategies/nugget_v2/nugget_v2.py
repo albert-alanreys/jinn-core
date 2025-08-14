@@ -973,10 +973,7 @@ class NuggetV2(BaseStrategy):
             alert_short_new_stop
         )
 
-    def trade(self) -> None:
-        if self.order_ids is None:
-            self.order_ids = self.cache.load(self.symbol)
-
+    def _trade(self) -> None:
         if self.alert_cancel:
             self.client.cancel_all_orders(self.symbol)
 
@@ -1172,5 +1169,3 @@ class NuggetV2(BaseStrategy):
 
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
-
-        self.cache.save(self.symbol, self.order_ids)

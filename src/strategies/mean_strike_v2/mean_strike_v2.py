@@ -1058,10 +1058,7 @@ class MeanStrikeV2(BaseStrategy):
             alert_close_short
         )
 
-    def trade(self) -> None:
-        if self.order_ids is None:
-            self.order_ids = self.cache.load(self.symbol)
-
+    def _trade(self) -> None:
         # General
         if self.alert_cancel:
             self.client.cancel_all_orders(self.symbol)
@@ -1182,5 +1179,3 @@ class MeanStrikeV2(BaseStrategy):
             symbol=self.symbol,
             order_ids=self.order_ids['stop_ids']
         )
-
-        self.cache.save(self.symbol, self.order_ids)

@@ -12,6 +12,7 @@ class DevourerV3(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
     params = {
+        "position_size": 5.0,
         "stop_atr_p2": 0.5,
         "stop_atr_p3": 1.0,
         "take_atr_p3": 3.0,
@@ -812,10 +813,7 @@ class DevourerV3(BaseStrategy):
             alert_close_short
         )
 
-    def trade(self) -> None:
-        if self.order_ids is None:
-            self.order_ids = self.cache.load(self.symbol)
-
+    def _trade(self) -> None:
         if self.alert_cancel:
             self.client.cancel_all_orders(self.symbol)
 
@@ -894,5 +892,3 @@ class DevourerV3(BaseStrategy):
 
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
-
-        self.cache.save(self.symbol, self.order_ids)

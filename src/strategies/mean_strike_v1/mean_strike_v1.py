@@ -494,10 +494,7 @@ class MeanStrikeV1(BaseStrategy):
             alert_close_long
         )
     
-    def trade(self) -> None:
-        if self.order_ids is None:
-            self.order_ids = self.cache.load(self.symbol)
-
+    def _trade(self) -> None:
         if self.alert_close_long:
             self.client.market_close_long(
                 symbol=self.symbol,
@@ -585,5 +582,3 @@ class MeanStrikeV1(BaseStrategy):
 
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
-
-        self.cache.save(self.symbol, self.order_ids)

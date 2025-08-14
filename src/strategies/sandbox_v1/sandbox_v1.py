@@ -911,11 +911,7 @@ class SandboxV1(BaseStrategy):
             alert_short_new_stop
         )
 
-    def trade(self) -> None:
-        # Load cached order IDs
-        if self.order_ids is None:
-            self.order_ids = self.cache.load(self.symbol)
-
+    def _trade(self) -> None:
         # Cancel all orders if needed
         if self.alert_cancel:
             self.client.cancel_all_orders(self.symbol)
@@ -1075,6 +1071,3 @@ class SandboxV1(BaseStrategy):
 
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
-
-        # Save order IDs to cache
-        self.cache.save(self.symbol, self.order_ids)

@@ -194,10 +194,30 @@ class BaseStrategy(ABC):
         # Strategy parameters
         self.equity = self.params['initial_capital']
 
+    def trade(self) -> None:
+        """
+        Execute automated trading with order cache handling.  
+        This method should NOT be overridden by child classes.
+
+        Automatically manages:
+        - Loading order IDs from cache on first run
+        - Saving order IDs to cache after execution
+        - Error-safe cache persistence (guaranteed save in finally block)
+        """
+
+        if self.order_ids is None:
+            self.order_ids = self.cache.load(self.symbol)
+        
+        try:
+            self._trade()
+        finally:
+            self.cache.save(self.symbol, self.order_ids)
+
     @abstractmethod
     def calculate(self, market_data: dict) -> None:
         """
-        Calculate strategy indicators and signals.
+        Calculate strategy indicators and signals.  
+        Must be implemented by concrete strategy classes.
 
         Args:
             market_data: Dictionary containing market data with structure:
@@ -206,20 +226,13 @@ class BaseStrategy(ABC):
                 - extra_klines: dict
                 - p_precision: float
                 - q_precision: float
-
-        Note:
-            Must be implemented by concrete strategy classes.
-            Should update strategy state and generate signals.
         """
         pass
 
     @abstractmethod
-    def trade(self) -> None:
+    def _trade(self) -> None:
         """
-        Execute trading logic based on calculated signals.
-
-        Note:
-            Must be implemented by concrete strategy classes.
-            Should interact with exchange client to place/cancel orders.
+        Execute trading logic based on calculated signals.  
+        Must be implemented by concrete strategy classes.
         """
         pass
