@@ -25,7 +25,6 @@ class OptimizationService:
 
     def __init__(self, strategy_contexts: dict) -> None:
         self.strategy_contexts = strategy_contexts
-
         self.telegram_client = TelegramClient()
         self.logger = getLogger(__name__)
 
@@ -82,7 +81,7 @@ class OptimizationService:
                                      containing type, client, and market data
 
         Returns:
-            list: Best parameters found during optimization (3 parameter sets)
+            list: Best parameters found during optimization
         """
 
         self._init_optimization(strategy_context)
@@ -108,7 +107,7 @@ class OptimizationService:
         Initialize optimization variables for a single strategy.
 
         Sets up strategy instance, client, training/test data,
-        population dictionary, and best parameters list.
+        population dictionary, best parameters list, and parameter keys.
 
         Args:
             strategy_context (dict): Context dictionary for the strategy
@@ -121,47 +120,75 @@ class OptimizationService:
 
         self.population = {}
         self.best_params = []
+        
+        self.param_keys = list(self.strategy.opt_params.keys())
 
     def _create(self) -> None:
         """
         Create initial population of random parameter combinations.
 
-        Generates POPULATION_SIZE random samples from strategy's optimization
-        parameter space, evaluates their fitness on training data, and
-        stores them in population dictionary.
+        Generates POPULATION_SIZE random parameter dictionaries
+        from strategy's optimization parameter space, evaluates
+        their fitness on training data, and stores them
+        in population dictionary.
         """
 
         samples = [
-            [               
-                random.choice(values)
-                for values in self.strategy.opt_params.values()
-            ]
+            {
+                param_name: random.choice(param_values)
+                for param_name, param_values in (
+                    self.strategy.opt_params.items()
+                )
+            }
             for _ in range(self.POPULATION_SIZE)
         ]
 
         for sample in samples:
             fitness = self._evaluate(sample, self.train_data)
-            self.population[fitness] = sample
+            sample_key = self._dict_to_key(sample)
+            self.population[fitness] = sample_key
 
-        self.sample_len = len(self.strategy.opt_params)
+    def _dict_to_key(self, param_dict: dict) -> tuple:
+        """
+        Convert parameter dictionary to hashable tuple for population storage.
 
-    def _evaluate(self, sample: list, market_data: dict) -> float:
+        Args:
+            param_dict (dict): Parameter dictionary
+
+        Returns:
+            tuple: Hashable representation of parameter values
+        """
+        return tuple(param_dict[key] for key in self.param_keys)
+
+    def _key_to_dict(self, param_key: tuple) -> dict:
+        """
+        Convert parameter tuple back to dictionary.
+
+        Args:
+            param_key (tuple): Hashable parameter representation
+
+        Returns:
+            dict: Parameter dictionary
+        """
+        return dict(zip(self.param_keys, param_key))
+
+    def _evaluate(self, sample_dict: dict, market_data: dict) -> float:
         """
         Evaluate strategy performance with given parameters.
 
-        Instantiates strategy with provided parameters, runs calculation
-        on market data, and computes fitness score based on completed
-        deals performance relative to initial capital.
+        Instantiates strategy with provided parameter dictionary,
+        runs calculation on market data, and computes fitness score
+        based on completed deals performance.
 
         Args:
-            sample (list): Parameter set to evaluate
+            sample_dict (dict): Parameter dictionary to evaluate
             market_data (dict): Dataset to evaluate against
 
         Returns:
-            float: Fitness score (performance metric as percentage)
+            float: Fitness score (performance metric)
         """
 
-        strategy_instance = self.strategy(self.client, opt_params=sample)
+        strategy_instance = self.strategy(self.client, params=sample_dict)
         strategy_instance.calculate(market_data)
 
         score = strategy_instance.completed_deals_log[:, 8].sum()
@@ -173,71 +200,82 @@ class OptimizationService:
 
         Uses tournament selection: 50% chance to select best individual
         plus random individual, 50% chance to select two random individuals.
-        Selected parents are stored in self.parents.
+        Selected parents are stored in self.parents as dictionaries.
         """
 
         if random.randint(0, 1) == 0:
             best_score = max(self.population)
-            parent_1 = self.population[best_score]
+            parent_1_key = self.population[best_score]
+            parent_1 = self._key_to_dict(parent_1_key)
 
             population_copy = self.population.copy()
             population_copy.pop(best_score)
 
-            parent_2 = random.choice(list(population_copy.values()))
+            parent_2_key = random.choice(list(population_copy.values()))
+            parent_2 = self._key_to_dict(parent_2_key)
+            
             self.parents = [parent_1, parent_2]
         else:
-            self.parents = random.sample(list(self.population.values()), 2)
+            parent_keys = random.sample(list(self.population.values()), 2)
+            self.parents = [self._key_to_dict(key) for key in parent_keys]
 
     def _recombine(self) -> None:
         """
         Create offspring through crossover of selected parents.
 
         Implements two crossover strategies:
-        - Single-point crossover: splits at random position
+        - Single-point crossover: splits parameter list at random position
         - Two-point crossover: exchanges middle segment between parents
         
-        Resulting child is stored in self.child.
+        Resulting child is stored in self.child as dictionary.
         """
 
+        param_count = len(self.param_keys)
         r_number = random.randint(0, 1)
 
         if r_number == 0:
-            delimiter = random.randint(1, self.sample_len - 1)
-            self.child = (
-                self.parents[0][:delimiter] + self.parents[1][delimiter:]
-            )
+            # Single-point crossover
+            delimiter = random.randint(1, param_count - 1)
+            
+            self.child = {}
+            for i, param_name in enumerate(self.param_keys):
+                if i < delimiter:
+                    self.child[param_name] = self.parents[0][param_name]
+                else:
+                    self.child[param_name] = self.parents[1][param_name]
         else:
-            delimiter_1 = random.randint(1, self.sample_len // 2 - 1)
+            # Two-point crossover
+            delimiter_1 = random.randint(1, param_count // 2 - 1)
             delimiter_2 = random.randint(
-                self.sample_len // 2 + 1, self.sample_len - 1
+                param_count // 2 + 1, param_count - 1
             )
 
-            self.child = (
-                self.parents[0][:delimiter_1] +
-                self.parents[1][delimiter_1:delimiter_2] +
-                self.parents[0][delimiter_2:]
-            )
+            self.child = {}
+            for i, param_name in enumerate(self.param_keys):
+                if i < delimiter_1 or i >= delimiter_2:
+                    self.child[param_name] = self.parents[0][param_name]
+                else:
+                    self.child[param_name] = self.parents[1][param_name]
 
     def _mutate(self) -> None:
         """
         Apply mutation to the offspring.
 
-        With 90% probability mutates single random gene,
-        with 10% probability mutates all genes.
+        With 90% probability mutates single random parameter,
+        with 10% probability mutates all parameters.
         Mutation selects random values from corresponding parameter ranges.
         """
 
         if random.random() <= 0.9:
-            gene_num = random.randint(0, self.sample_len - 1)
-            gene_value = random.choice(
-                list(self.strategy.opt_params.values())[gene_num]
-            )
-            self.child[gene_num] = gene_value
+            # Mutate single parameter
+            param_name = random.choice(self.param_keys)
+            param_values = self.strategy.opt_params[param_name]
+            self.child[param_name] = random.choice(param_values)
         else:
-            for i in range(len(self.child)):
-                self.child[i] = random.choice(
-                    list(self.strategy.opt_params.values())[i]
-                )
+            # Mutate all parameters
+            for param_name in self.param_keys:
+                param_values = self.strategy.opt_params[param_name]
+                self.child[param_name] = random.choice(param_values)
 
     def _expand(self) -> None:
         """
@@ -248,7 +286,8 @@ class OptimizationService:
         """
 
         fitness = self._evaluate(self.child, self.train_data)
-        self.population[fitness] = self.child
+        child_key = self._dict_to_key(self.child)
+        self.population[fitness] = child_key
 
     def _kill(self) -> None:
         """
@@ -280,7 +319,7 @@ class OptimizationService:
         for i in range(int(len(self.population) * 0.5)):
             self.population.pop(sorted_population[i][0])
 
-    def _get_best_sample(self) -> list:
+    def _get_best_sample(self) -> dict:
         """
         Select best parameter set based on combined train/test performance.
 
@@ -288,20 +327,21 @@ class OptimizationService:
         the one with highest combined fitness (50% train + 50% test).
 
         Returns:
-            list: Best parameter sample considering
+            dict: Best parameter dictionary considering
                   both training and test results
         """
 
         best_score = float('-inf')
         best_sample = None
 
-        for train_fitness, sample in self.population.items():
-            test_fitness = self._evaluate(sample, self.test_data)
+        for train_fitness, sample_key in self.population.items():
+            sample_dict = self._key_to_dict(sample_key)
+            test_fitness = self._evaluate(sample_dict, self.test_data)
             combined_fitness = 0.5 * train_fitness + 0.5 * test_fitness
 
             if combined_fitness > best_score:
                 best_score = combined_fitness
-                best_sample = sample
+                best_sample = sample_dict
 
         return best_sample
 
@@ -314,18 +354,18 @@ class OptimizationService:
         and stored in strategy-specific optimization directories.
         """
 
-        for strategy in self.strategy_contexts.values():
+        for context in self.strategy_contexts.values():
             filename = (
-                f'{strategy['client'].EXCHANGE}_'
-                f'{strategy['market_data']['train']['market'].value}_'
-                f'{strategy['market_data']['train']['symbol']}_'
-                f'{strategy['market_data']['train']['interval']}.json'
+                f'{context['client'].EXCHANGE}_'
+                f'{context['market_data']['train']['market'].value}_'
+                f'{context['market_data']['train']['symbol']}_'
+                f'{context['market_data']['train']['interval']}.json'
             )
             file_path = os.path.abspath(
                 os.path.join(
                     'src',
                     'strategies',
-                    strategy['name'].lower(),
+                    context['name'].lower(),
                     'optimization',
                     filename
                 )
@@ -334,14 +374,12 @@ class OptimizationService:
             new_items = [
                 {
                     'period': {
-                        'start': strategy['market_data']['train']['start'],
-                        'end': strategy['market_data']['test']['end']
+                        'start': context['market_data']['train']['start'],
+                        'end': context['market_data']['test']['end']
                     },
-                    'params': dict(
-                        zip(strategy['type'].opt_params.keys(), params)
-                    )
+                    'params': params
                 }
-                for params in strategy['best_params']
+                for params in context['best_params']
             ]
             existing_items = []
 

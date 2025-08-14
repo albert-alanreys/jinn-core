@@ -82,8 +82,8 @@ class MeanStrikeV1(BaseStrategy):
         }
     }
 
-    def __init__(self, client, all_params = None, opt_params = None) -> None:
-        super().__init__(client, all_params, opt_params)
+    def __init__(self, client, params: dict | None = None) -> None:
+        super().__init__(client, params)
 
     def calculate(self, market_data) -> None:
         super().init_variables(market_data, 4)

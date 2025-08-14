@@ -125,10 +125,7 @@ class BacktestingBuilder:
 
                 for params in params_dicts:
                     try:
-                        instance = strategy.value(
-                            client=client,
-                            opt_params=params['params'].values()
-                        )
+                        instance = strategy.value(client, params['params'])
                         market_data = self.history_provider.fetch_data(
                             client=client,
                             market=market,

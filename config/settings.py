@@ -9,12 +9,12 @@ MODE = enums.Mode.BACKTESTING
 
 # Settings for different modes
 OPTIMIZATION_CONFIG = {
-    'strategy': enums.Strategy.SANDBOX_V1,
+    'strategy': enums.Strategy.NUGGET_V2,
     'exchange': enums.Exchange.BINANCE,
     'market': enums.Market.SPOT,
     'symbol': 'BTCUSDT',
-    'interval': '30m',
-    'start': '2020-01-01',
+    'interval': '1h',
+    'start': '2024-01-01',
     'end': '2025-01-01'
 }
 BACKTESTING_CONFIG = {
@@ -27,7 +27,7 @@ BACKTESTING_CONFIG = {
     'end': '2025-06-01'
 }
 AUTOMATION_CONFIG = {
-    'strategy': enums.Strategy.SANDBOX_V1,
+    'strategy': enums.Strategy.NUGGET_V2,
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'XRPUSDT',
     'interval': 1

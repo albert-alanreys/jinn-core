@@ -96,16 +96,14 @@ class BaseStrategy(ABC):
     def __init__(
         self,
         client: 'BinanceClient | BybitClient',
-        all_params: dict | None = None,
-        opt_params: dict | list | None = None
+        params: dict | None = None
     ) -> None:
         """
         Initialize the trading strategy with a client and parameters.
 
         Args:
-            client: Exchange API client instance (Binance or Bybit)
-            all_params: Dictionary of parameters to override defaults
-            opt_params: Parameters for optimization, either as a dict or list
+            client: Exchange API client instance
+            params: Dictionary of parameters
         """
 
         self.params = {
@@ -113,16 +111,8 @@ class BaseStrategy(ABC):
             **deepcopy(self.params)
         }
 
-        if all_params is not None:
-            self.params.update(all_params)
-
-        if opt_params is not None:
-            if isinstance(opt_params, dict):
-                self.params.update(opt_params)
-            else:
-                opt_param_keys = getattr(self, 'opt_params', [])
-                for key, value in zip(opt_param_keys, opt_params):
-                    self.params[key] = value
+        if params is not None:
+            self.params.update(params)
 
         self.client = client
         self.cache = OrderCache(

@@ -158,8 +158,8 @@ class SandboxV1(BaseStrategy):
     volume_color_1 = colors.PEACOCK_GREEN
     volume_color_2 = colors.CHERRY_RED
 
-    def __init__(self, client, all_params = None, opt_params = None) -> None:
-        super().__init__(client, all_params, opt_params)
+    def __init__(self, client, params: dict | None = None) -> None:
+        super().__init__(client, params)
 
     def calculate(self, market_data) -> None:
         # Initialize base variables from market data

@@ -102,8 +102,8 @@ class DailyProfitV1(BaseStrategy):
     vwap_color_1 = colors.DODGER_BLUE
     vwap_color_2 = colors.CORAL
 
-    def __init__(self, client, all_params = None, opt_params = None) -> None:
-        super().__init__(client, all_params, opt_params)
+    def __init__(self, client, params: dict | None = None) -> None:
+        super().__init__(client, params)
 
     def calculate(self, market_data) -> None:
         super().init_variables(market_data)

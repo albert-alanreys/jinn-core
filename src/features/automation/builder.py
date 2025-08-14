@@ -111,7 +111,7 @@ class AutomationBuilder():
 
                         try:
                             params = {
-                                'all_params': json.loads(content)
+                                'params': json.loads(content)
                             }
                         except json.JSONDecodeError:
                             self.logger.error(
@@ -129,7 +129,7 @@ class AutomationBuilder():
                     with open(file_path, 'r') as file:
                         try:
                             params = {
-                                'opt_params': json.load(file)[0]['params']
+                                'params': json.load(file)[0]['params']
                             }
                         except json.JSONDecodeError:
                             self.logger.error(

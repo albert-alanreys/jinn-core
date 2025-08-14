@@ -111,10 +111,7 @@ def update_context(context_id: str) -> flask.Response:
         raise TypeError()
 
     params[param] = new_value
-    instance = context['type'](
-        client=context['client'],
-        all_params=params
-    )
+    instance = context['type'](context['client'], params)
     instance.calculate(context['market_data'])
 
     context['instance'] = instance
