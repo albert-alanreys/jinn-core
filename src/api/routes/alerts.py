@@ -1,15 +1,16 @@
 from json import dumps
-import flask
 
-from src.api.utils import handle_api_errors
+from flask import Blueprint, Response, current_app
+
+from src.api.errors.alerts import handle_alert_api_errors
 
 
-alerts_bp = flask.Blueprint('alerts_api', __name__, url_prefix='/api/alerts')
+alerts_bp = Blueprint('alerts_api', __name__, url_prefix='/api/alerts')
 
 
 @alerts_bp.route('', methods=['GET'])
-@handle_api_errors
-def get_all_alerts(limit: int = None) -> flask.Response:
+@handle_alert_api_errors
+def get_all_alerts(limit: int = None) -> Response:
     """
     Get all active strategy alerts.
 
@@ -22,12 +23,12 @@ def get_all_alerts(limit: int = None) -> flask.Response:
                   of active alerts (id -> alert)
     """
 
-    alerts = flask.current_app.strategy_alerts
+    alerts = current_app.strategy_alerts
     
     if limit is not None and limit > 0:
         alerts = dict(list(alerts.items())[-limit:])
     
-    return flask.Response(
+    return Response(
         response=dumps(alerts),
         status=200,
         mimetype='application/json'
@@ -35,8 +36,8 @@ def get_all_alerts(limit: int = None) -> flask.Response:
 
 
 @alerts_bp.route('/since/<string:last_alert_id>', methods=['GET'])
-@handle_api_errors
-def get_alerts_since(last_alert_id: str) -> flask.Response:
+@handle_alert_api_errors
+def get_alerts_since(last_alert_id: str) -> Response:
     """
     Get all alerts that were created after the specified alert ID.
 
@@ -48,7 +49,7 @@ def get_alerts_since(last_alert_id: str) -> flask.Response:
         Response: JSON response containing dictionary
                   of new alerts {id: alert}
     """
-    alerts = flask.current_app.strategy_alerts
+    alerts = current_app.strategy_alerts
     alerts_list = list(alerts.items())
     
     try:
@@ -61,7 +62,7 @@ def get_alerts_since(last_alert_id: str) -> flask.Response:
     except StopIteration:
         new_alerts = alerts.copy()
     
-    return flask.Response(
+    return Response(
         response=dumps(new_alerts),
         status=200,
         mimetype='application/json'
@@ -69,8 +70,8 @@ def get_alerts_since(last_alert_id: str) -> flask.Response:
 
 
 @alerts_bp.route('/<string:alert_id>', methods=['DELETE'])
-@handle_api_errors
-def delete_alert(alert_id: str) -> flask.Response:
+@handle_alert_api_errors
+def delete_alert(alert_id: str) -> Response:
     """
     Remove alert from active alerts collection.
 
@@ -81,9 +82,8 @@ def delete_alert(alert_id: str) -> flask.Response:
         Response: JSON response with operation status
     """
 
-    flask.current_app.strategy_alerts.pop(alert_id)
-
-    return flask.Response(
+    current_app.strategy_alerts.pop(alert_id)
+    return Response(
         response=dumps({'status': 'success'}),
         status=200,
         mimetype='application/json'

@@ -3,39 +3,41 @@ from json import dumps
 from logging import getLogger
 from typing import Callable, Any
 
-import flask
+from flask import Response, current_app
 
 
 logger = getLogger(__name__)
 
 
-def handle_api_errors(f: Callable) -> Callable:
+def handle_context_api_errors(f: Callable) -> Callable:
     """
-    Decorator for handling errors in Flask API endpoints.
+    Decorator for handling errors in Flask API endpoints
+    that work with strategy contexts.
+
     Returns JSON responses in a frontend-friendly format.
 
     Handles:
     - KeyError: Context not found (404) or invalid data structure (400)
-    - TypeError: Data type mismatch (400)
-    - ValueError: Invalid request (400)
-    - Exception: All other errors (500)
+    - TypeError: Data type mismatch in request parameters (400)
+    - ValueError: Invalid request parameters (400)
+    - Exception: All other unhandled errors (500)
 
     Example error response:
     {
         "status": "error",
-        "type": "error_type",
-        "message": "Human-readable error description"
+        "type": "context_not_found",
+        "message": "Context <context_id> not found"
     }
 
     Args:
         f (Callable): Flask route function to wrap
 
     Returns:
-        Callable: Wrapped function with error handling
+        Callable: Wrapped function with context-specific error handling
     """
 
     @wraps(f)
-    def wrapper(*args: Any, **kwargs: Any) -> flask.Response:
+    def wrapper(*args: Any, **kwargs: Any) -> Response:
         try:
             return f(*args, **kwargs)
         except KeyError as e:
@@ -43,38 +45,19 @@ def handle_api_errors(f: Callable) -> Callable:
 
             if (
                 'context_id' in kwargs and
-                kwargs['context_id'] not in
-                flask.current_app.strategy_contexts
+                kwargs['context_id'] not in current_app.strategy_contexts
             ):
-                return flask.Response(
+                return Response(
                     dumps({
                         'status': 'error',
                         'type': 'context_not_found',
-                        'message': (
-                            f'Strategy context {kwargs["context_id"]} '
-                            'not found'
-                        )
+                        'message': f'Context {kwargs["context_id"]} not found'
                     }),
                     mimetype='application/json',
                     status=404
                 )
-            
-            if (
-                'alert_id' in kwargs and
-                kwargs['alert_id'] not in
-                flask.current_app.strategy_alerts
-            ):
-                return flask.Response(
-                    dumps({
-                        'status': 'error',
-                        'type': 'alert_not_found',
-                        'message': f'Alert {kwargs["alert_id"]} not found'
-                    }),
-                    mimetype='application/json',
-                    status=404
-                )
-            
-            return flask.Response(
+
+            return Response(
                 dumps({
                     'status': 'error',
                     'type': 'invalid_data_structure',
@@ -85,8 +68,7 @@ def handle_api_errors(f: Callable) -> Callable:
             )
         except TypeError as e:
             logger.exception('An error occurred')
-
-            return flask.Response(
+            return Response(
                 dumps({
                     'status': 'error',
                     'type': 'invalid_type',
@@ -97,8 +79,7 @@ def handle_api_errors(f: Callable) -> Callable:
             )
         except ValueError as e:
             logger.exception('An error occurred')
-
-            return flask.Response(
+            return Response(
                 dumps({
                     'status': 'error',
                     'type': 'invalid_request',
@@ -109,8 +90,7 @@ def handle_api_errors(f: Callable) -> Callable:
             )
         except Exception as e:
             logger.exception('An error occurred')
-
-            return flask.Response(
+            return Response(
                 dumps({
                     'status': 'error',
                     'type': 'server_error',
@@ -119,5 +99,4 @@ def handle_api_errors(f: Callable) -> Callable:
                 mimetype='application/json',
                 status=500
             )
-
     return wrapper

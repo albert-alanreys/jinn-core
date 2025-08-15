@@ -1,22 +1,19 @@
 from ast import literal_eval
 from json import dumps
-import flask
 
-import src.api.formatting.contexts as contexts_formatter
-from src.api.utils import handle_api_errors
+from flask import Blueprint, Response, current_app, request
+
+from src.api.errors.contexts import handle_context_api_errors
+from src.api.formatting.contexts import format_contexts
 from src.features.backtesting import BacktestingService
 
 
-contexts_bp = flask.Blueprint(
-    name='contexts_api',
-    import_name=__name__,
-    url_prefix='/api/contexts'
-)
+contexts_bp = Blueprint('contexts_api', __name__, url_prefix='/api/contexts')
 
 
 @contexts_bp.route('', methods=['GET'])
-@handle_api_errors
-def get_all_contexts() -> flask.Response:
+@handle_context_api_errors
+def get_all_contexts() -> Response:
     """
     Get summary information for all strategy contexts.
 
@@ -25,11 +22,8 @@ def get_all_contexts() -> flask.Response:
                   for all active strategy contexts
     """
 
-    contexts = contexts_formatter.format_contexts(
-        flask.current_app.strategy_contexts
-    )
-
-    return flask.Response(
+    contexts = format_contexts(current_app.strategy_contexts)
+    return Response(
         response=dumps(contexts),
         status=200,
         mimetype='application/json'
@@ -37,8 +31,8 @@ def get_all_contexts() -> flask.Response:
 
 
 @contexts_bp.route('/<string:context_id>', methods=['GET'])
-@handle_api_errors
-def get_context(context_id: str) -> flask.Response:
+@handle_context_api_errors
+def get_context(context_id: str) -> Response:
     """
     Get summary information for specific strategy context.
 
@@ -49,11 +43,10 @@ def get_context(context_id: str) -> flask.Response:
         Response: JSON response containing base context data
     """
 
-    context = contexts_formatter.format_contexts(
-        {context_id: flask.current_app.strategy_contexts[context_id]}  
+    context = format_contexts(
+        {context_id: current_app.strategy_contexts[context_id]}  
     )
-
-    return flask.Response(
+    return Response(
         response=dumps(context),
         status=200,
         mimetype='application/json'
@@ -61,8 +54,8 @@ def get_context(context_id: str) -> flask.Response:
 
 
 @contexts_bp.route('/<string:context_id>', methods=['PATCH'])
-@handle_api_errors
-def update_context(context_id: str) -> flask.Response:
+@handle_context_api_errors
+def update_context(context_id: str) -> Response:
     """
     Update parameter in strategy context and restart strategy.
 
@@ -91,11 +84,11 @@ def update_context(context_id: str) -> flask.Response:
 
         return raw
 
-    data = flask.request.get_json()
+    data = request.get_json()
     param = data.get('param')
     raw_value = data.get('value')
 
-    context = flask.current_app.strategy_contexts[context_id]
+    context = current_app.strategy_contexts[context_id]
     instance = context['instance']
     params = instance.params
 
@@ -117,7 +110,7 @@ def update_context(context_id: str) -> flask.Response:
     context['instance'] = instance
     context['metrics'] = BacktestingService.test(instance)
 
-    return flask.Response(
+    return Response(
         response=dumps({'status': 'success'}),
         status=200,
         mimetype='application/json'
@@ -125,8 +118,8 @@ def update_context(context_id: str) -> flask.Response:
 
 
 @contexts_bp.route('/<string:context_id>', methods=['DELETE'])
-@handle_api_errors
-def delete_context(context_id: str) -> flask.Response:
+@handle_context_api_errors
+def delete_context(context_id: str) -> Response:
     """
     Remove strategy context from active contexts.
 
@@ -137,9 +130,8 @@ def delete_context(context_id: str) -> flask.Response:
         Response: JSON response with operation status
     """
 
-    flask.current_app.strategy_contexts.pop(context_id)
-
-    return flask.Response(
+    current_app.strategy_contexts.pop(context_id)
+    return Response(
         response=dumps({'status': 'success'}),
         status=200,
         mimetype='application/json'
@@ -147,8 +139,8 @@ def delete_context(context_id: str) -> flask.Response:
 
 
 @contexts_bp.route('/updates', methods=['GET'])
-@handle_api_errors
-def get_updated_contexts() -> flask.Response:
+@handle_context_api_errors
+def get_updated_contexts() -> Response:
     """
     Get IDs of contexts that were recently updated and
     clear the updates buffer.
@@ -157,10 +149,10 @@ def get_updated_contexts() -> flask.Response:
         Response: JSON response containing list of updated context IDs
     """
 
-    updated_contexts = flask.current_app.updated_contexts.copy()
-    flask.current_app.updated_contexts.clear()
+    updated_contexts = current_app.updated_contexts.copy()
+    current_app.updated_contexts.clear()
 
-    return flask.Response(
+    return Response(
         response=dumps(updated_contexts),
         status=200,
         mimetype='application/json'
