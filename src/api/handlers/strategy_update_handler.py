@@ -85,7 +85,7 @@ class StrategyUpdateHandler:
         """
         Processes a list of alerts for a given strategy context:
         - Sends each alert via Telegram
-        - Stores alert metadata in the Flask app instance
+        - Stores alerts data in the Flask app instance
         - Increments internal alert ID counter
 
         Args:
@@ -108,7 +108,6 @@ class StrategyUpdateHandler:
             self.telegram_client.send_order_alert(alert)
 
             self.app.strategy_alerts[alert_id] = alert_obj
-            self.app.new_alerts[alert_id] = alert_obj
             self.alert_id += 1
 
     def _register_context_update(self, context_id: str) -> None:

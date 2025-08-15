@@ -49,7 +49,6 @@ def create_app(
     app.strategy_contexts = strategy_contexts
     app.updated_contexts = []
     app.strategy_alerts = {}
-    app.new_alerts = {}
 
     if mode is Mode.AUTOMATION:
         handler = StrategyUpdateHandler(strategy_contexts, app)
