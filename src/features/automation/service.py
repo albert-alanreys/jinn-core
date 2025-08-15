@@ -1,9 +1,10 @@
 from logging import getLogger
 from threading import Thread
-from time import sleep
+from time import time, sleep
 
 from src.features.backtesting import BacktestingService
 from src.infrastructure.providers import RealtimeProvider
+from src.infrastructure.clients.messaging.telegram import TelegramClient
 
 
 class AutomationService():
@@ -16,34 +17,36 @@ class AutomationService():
     Manages continuous execution of trading strategies by monitoring
     market data updates and triggering strategy calculations and trades.
     Runs in a separate daemon thread to avoid blocking the main application.
-
-    Args:
-        strategy_contexts (dict): Dictionary of strategy contexts to automate,
-                                  prepared by AutomationBuilder
     """
 
-    def __init__(self, strategy_contexts: dict) -> None:
+    def __init__(
+        self,
+        strategy_contexts: dict,
+        strategy_alerts: dict
+    ) -> None:
         """
         Initialize AutomationService with strategy contexts.
 
         Sets up strategy contexts, realtime data provider, and logger.
 
         Args:
-            strategy_contexts (dict): Prepared strategy contexts with
-                                      instances, clients, and market data
+            strategy_contexts (dict): Dictionary of strategy contexts
+            strategy_alerts (dict): Dictionary of strategy alerts
         """
 
         self.strategy_contexts = strategy_contexts
+        self.strategy_alerts = strategy_alerts
 
         self.realtime_provider = RealtimeProvider()
+        self.telegram_client = TelegramClient()
         self.logger = getLogger(__name__)
 
     def run(self) -> None:
         """
         Start the automation process.
 
-        Logs summary of strategies being automated and launches
-        the automation thread.
+        Logs summary of strategies being automated
+        and launches the automation thread.
         """
 
         summary = [
@@ -63,9 +66,9 @@ class AutomationService():
         """
         Continuous automation loop (runs in background thread).
 
-        Periodically checks for market data updates and executes
-        strategies when new data is available. Runs indefinitely
-        with 1-second intervals between checks.
+        Periodically iterates through all strategy contexts, checks for
+        market data updates, executes strategies when new data
+        is available, and processes alerts for each context.
         """
 
         while True:
@@ -73,7 +76,8 @@ class AutomationService():
                 try:
                     if self.realtime_provider.update_data(context):
                         self._execute_strategy(cid)
-                        context['updated'] = True
+                        self._process_alerts(cid)
+                        context['last_update'] = time()
                 except Exception:
                     self.logger.exception('An error occurred')
 
@@ -84,7 +88,7 @@ class AutomationService():
         Execute a single strategy's calculations and trades.
 
         Args:
-            context_id (str): ID of the strategy context to execute
+            context_id (str): ID of the strategy context
 
         Updates strategy statistics after execution using BacktestingService.
         """
@@ -96,3 +100,30 @@ class AutomationService():
         instance.trade()
 
         context['metrics'] = BacktestingService.test(instance)
+
+    def _process_alerts(self, context_id: str) -> None:
+        """
+        Processes a list of alerts for a strategy context.
+        Sends each alert via Telegram.
+
+        Args:
+            context_id (str): ID of the strategy context
+        """
+
+        context = self.strategy_contexts[context_id]
+        alerts = context['client'].alerts
+
+        for alert in alerts:
+            strategy_name = '-'.join(
+                word.capitalize() for word in context['name'].split('_')
+            )
+            alert_content = {
+                'contextId': context_id,
+                'strategy': strategy_name,
+                **alert
+            }
+
+            self.strategy_alerts[str(id(alert_content))] = alert_content
+            self.telegram_client.send_order_alert(alert)
+
+        alerts.clear()

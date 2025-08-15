@@ -15,16 +15,6 @@ class OptimizationBuilder:
 
     Handles the creation of strategy contexts by loading configuration files,
     fetching market data, and preparing data splits for training and testing.
-
-    Args:
-        config (dict): Configuration dictionary containing:
-            - strategy: Trading strategy to optimize
-            - exchange: Exchange name (e.g., BINANCE, BYBIT)
-            - market: Market type (e.g., FUTURES, SPOT)
-            - symbol: Trading symbol (e.g., BTCUSDT)
-            - interval: Time interval for data (e.g., '1h')
-            - start: Start date for data (format: 'YYYY-MM-DD')
-            - end: End date for data (format: 'YYYY-MM-DD')
     """
 
     def __init__(self, config: dict) -> None:
@@ -36,9 +26,14 @@ class OptimizationBuilder:
         Bybit client, and logger.
 
         Args:
-            config (dict): Configuration dictionary containing strategy,
-                           exchange, market, symbol, interval,
-                           start, and end parameters
+            config (dict): Configuration dictionary containing:
+                - strategy: Trading strategy to optimize
+                - exchange: Exchange name (e.g., BINANCE, BYBIT)
+                - market: Market type (e.g., FUTURES, SPOT)
+                - symbol: Trading symbol (e.g., BTCUSDT)
+                - interval: Time interval for data (e.g., '1h')
+                - start: Start date for data (format: 'YYYY-MM-DD')
+                - end: End date for data (format: 'YYYY-MM-DD')
         """
 
         self.strategy = config['strategy']

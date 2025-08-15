@@ -3,7 +3,6 @@ import os
 from flask import Flask
 from flask_cors import CORS
 
-from src.api.handlers import StrategyUpdateHandler
 from src.api.routes import register_routes
 from src.core.enums import Mode
 
@@ -13,21 +12,19 @@ def create_app(
     static_folder: str,
     template_folder: str,
     strategy_contexts: dict,
+    strategy_alerts: dict,
     mode: Mode
 ) -> Flask:
     """
     Creates and configures a Flask application instance with necessary
     routes, CORS settings, and strategy context integration.
 
-    Depending on the mode, it may also launch a background handler
-    to monitor and process strategy updates.
-
     Args:
         import_name (str): Name of the application package
         static_folder (str): Path to the folder with static files
         template_folder (str): Path to the folder with HTML templates
-        strategy_contexts (dict): Dictionary mapping strategy IDs
-                                  to their contexts
+        strategy_contexts (dict): Dictionary of strategy contexts
+        strategy_alerts (dict): Dictionary of strategy alerts
         mode (Mode): Operating mode of the application
 
     Returns:
@@ -47,11 +44,6 @@ def create_app(
 
     app.mode = mode
     app.strategy_contexts = strategy_contexts
-    app.updated_contexts = []
-    app.strategy_alerts = {}
-
-    if mode is Mode.AUTOMATION:
-        handler = StrategyUpdateHandler(strategy_contexts, app)
-        handler.start()
+    app.strategy_alerts = strategy_alerts
 
     return app

@@ -15,7 +15,7 @@ def get_overview_metrics(context_id: str) -> Response:
     """
     Get formatted overview metrics data for a specific strategy context.
 
-    Args:
+    Path Parameters:
         context_id (str): Unique identifier of the strategy context
 
     Returns:
@@ -41,7 +41,7 @@ def get_performance_metrics(context_id: str) -> Response:
     """
     Get formatted performance metrics for a specific strategy context.
 
-    Args:
+    Path Parameters:
         context_id (str): Unique identifier of the strategy context
 
     Returns:
@@ -66,7 +66,7 @@ def get_trade_metrics(context_id: str) -> Response:
     """
     Get formatted trade-related metrics for a specific strategy context.
 
-    Args:
+    Path Parameters:
         context_id (str): Unique identifier of the strategy context
 
     Returns:
@@ -91,7 +91,7 @@ def get_risk_metrics(context_id: str) -> Response:
     """
     Get formatted risk-related metrics for a specific strategy context.
 
-    Args:
+    Path Parameters:
         context_id (str): Unique identifier of the strategy context
 
     Returns:
@@ -114,7 +114,7 @@ def get_trades(context_id: str) -> Response:
     """
     Get trades data for a specific strategy context.
 
-    Args:
+    Path Parameters:
         context_id (str): Unique identifier of the strategy context
 
     Returns:

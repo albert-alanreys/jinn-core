@@ -13,7 +13,7 @@ def format_klines(klines: np.ndarray) -> list:
 
     Args:
         klines (np.ndarray): 2D array of klines
-                              [timestamp, open, high, low, close]
+                             [timestamp, open, high, low, close]
 
     Returns:
         list: Formatted klines

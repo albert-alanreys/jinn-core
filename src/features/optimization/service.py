@@ -9,14 +9,10 @@ from src.infrastructure.clients.messaging.telegram import TelegramClient
 
 class OptimizationService:
     """
-    Core service responsible for optimizing
-    trading strategy parameters.
+    Core service responsible for optimizing trading strategy parameters.
 
     Performs parameter optimization across multiple strategies in parallel,
     using a combination of selection, recombination and mutation operations.
-
-    Args:
-        strategy_contexts (dict): Dictionary of strategy contexts from Builder
     """
 
     ITERATIONS = 5000
@@ -24,6 +20,13 @@ class OptimizationService:
     MAX_POPULATION_SIZE = 500
 
     def __init__(self, strategy_contexts: dict) -> None:
+        """
+        Initialize OptimizationService with strategy contexts.
+
+        Args:
+            strategy_contexts (dict): Dictionary of strategy contexts
+        """
+
         self.strategy_contexts = strategy_contexts
         self.telegram_client = TelegramClient()
         self.logger = getLogger(__name__)

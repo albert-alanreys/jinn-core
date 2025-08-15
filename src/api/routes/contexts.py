@@ -34,20 +34,38 @@ def get_all_contexts() -> Response:
 @handle_context_api_errors
 def get_context(context_id: str) -> Response:
     """
-    Get summary information for specific strategy context.
+    Get summary information for a specific strategy context.
 
-    Args:
+    Path Parameters:
         context_id (str): Unique identifier of the strategy context
 
+    Query Parameters:
+        context_id (str): Unique identifier of the strategy context.
+        updated_after (float, optional): Unix timestamp. If provided,
+            the endpoint returns an empty response if the context
+            has not been updated since this time.
+
     Returns:
-        Response: JSON response containing base context data
+        Response: JSON response containing base context data.
+                  Returns an empty JSON object if no updates
+                  have occurred since `updated_after`.
     """
 
-    context = format_contexts(
-        {context_id: current_app.strategy_contexts[context_id]}  
-    )
+    context = current_app.strategy_contexts[context_id]
+    last_update = context.get('last_update', 0)
+    
+    updated_after = request.args.get('updated_after', type=float)
+    
+    if updated_after is not None and last_update <= updated_after:
+        return Response(
+            response=dumps({}),
+            status=200,
+            mimetype='application/json'
+        )
+    
+    formatted = format_contexts({context_id: context})
     return Response(
-        response=dumps(context),
+        response=dumps(formatted),
         status=200,
         mimetype='application/json'
     )
@@ -59,7 +77,7 @@ def update_context(context_id: str) -> Response:
     """
     Update parameter in strategy context and restart strategy.
 
-    Args:
+    Path Parameters:
         context_id (str): Unique identifier of the strategy context
 
     Request Body:
@@ -123,7 +141,7 @@ def delete_context(context_id: str) -> Response:
     """
     Remove strategy context from active contexts.
 
-    Args:
+    Path Parameters:
         context_id (str): Unique identifier of the strategy context
 
     Returns:
@@ -133,27 +151,6 @@ def delete_context(context_id: str) -> Response:
     current_app.strategy_contexts.pop(context_id)
     return Response(
         response=dumps({'status': 'success'}),
-        status=200,
-        mimetype='application/json'
-    )
-
-
-@contexts_bp.route('/updates', methods=['GET'])
-@handle_context_api_errors
-def get_updated_contexts() -> Response:
-    """
-    Get IDs of contexts that were recently updated and
-    clear the updates buffer.
-
-    Returns:
-        Response: JSON response containing list of updated context IDs
-    """
-
-    updated_contexts = current_app.updated_contexts.copy()
-    current_app.updated_contexts.clear()
-
-    return Response(
-        response=dumps(updated_contexts),
         status=200,
         mimetype='application/json'
     )

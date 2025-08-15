@@ -17,12 +17,6 @@ class Controller():
     Handles initialization and coordination of different application modes
     (optimization, backtesting, automation) and manages the lifecycle
     of strategy contexts and features.
-
-    Args:
-        mode (Mode): Application mode (OPTIMIZATION, BACKTESTING, AUTOMATION)
-        optimization_config (dict): Configuration for optimization mode
-        backtesting_config (dict): Configuration for backtesting mode
-        automation_config (dict): Configuration for automation mode
     """
 
     def __init__(
@@ -39,10 +33,10 @@ class Controller():
         logger, and initializes the appropriate service based on the mode.
 
         Args:
-            mode (Mode): Application operating mode
-            optimization_config (dict): Configuration for optimization
-            backtesting_config (dict): Configuration for backtesting
-            automation_config (dict): Configuration for automation
+            mode (Mode): Application mode (OPTIMIZATION, BACKTESTING, AUTOMATION)
+            optimization_config (dict): Configuration for optimization mode
+            backtesting_config (dict): Configuration for backtesting mode
+            automation_config (dict): Configuration for automation mode
         """
 
         self.mode = mode
@@ -81,6 +75,7 @@ class Controller():
                 raise ValueError(f'Unsupported mode: {self.mode}')
 
         self.strategy_contexts = builder.build()
+        self.strategy_alerts = {}
 
     def start_mode(self) -> None:
         """
@@ -98,7 +93,9 @@ class Controller():
 
         match self.mode:
             case Mode.AUTOMATION:
-                automizer = AutomationService(self.strategy_contexts)
+                automizer = AutomationService(
+                    self.strategy_contexts, self.strategy_alerts
+                )
                 automizer.run()
             case Mode.OPTIMIZATION:
                 optimizer = OptimizationService(self.strategy_contexts)
@@ -120,6 +117,7 @@ class Controller():
             static_folder=self.static_path,
             template_folder=self.templates_path,
             strategy_contexts=self.strategy_contexts,
+            strategy_alerts=self.strategy_alerts,
             mode=self.mode
         )
         app.run(port=int(os.getenv('SERVER_PORT')))

@@ -18,16 +18,6 @@ class BacktestingBuilder:
     Handles the creation of strategy contexts by loading configuration files,
     fetching historical market data, and preparing strategy instances
     for backtesting.
-
-    Args:
-        config (dict): Configuration dictionary containing:
-            - exchange: Exchange name (e.g., BINANCE, BYBIT)
-            - market: Market type (e.g., FUTURES, SPOT)
-            - symbol: Trading symbol (e.g., BTCUSDT)
-            - interval: Time interval for data (e.g., '1h')
-            - start: Start date for data (format: 'YYYY-MM-DD')
-            - end: End date for data (format: 'YYYY-MM-DD')
-            - strategy: Trading strategy to backtest
     """
 
     def __init__(self, config: dict) -> None:
@@ -39,9 +29,14 @@ class BacktestingBuilder:
         Bybit client, and logger.
 
         Args:
-            config (dict): Configuration dictionary containing exchange,
-                           market, symbol, interval, start, end,
-                           and strategy parameters
+            config (dict): Configuration dictionary containing:
+                - exchange: Exchange name (e.g., BINANCE, BYBIT)
+                - market: Market type (e.g., FUTURES, SPOT)
+                - symbol: Trading symbol (e.g., BTCUSDT)
+                - interval: Time interval for data (e.g., '1h')
+                - start: Start date for data (format: 'YYYY-MM-DD')
+                - end: End date for data (format: 'YYYY-MM-DD')
+                - strategy: Trading strategy to backtest
         """
 
         self.exchange = config['exchange']

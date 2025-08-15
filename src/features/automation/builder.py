@@ -3,6 +3,7 @@ import os
 import re
 from glob import glob
 from logging import getLogger
+from time import time
 
 from src.core.enums import Exchange, Strategy
 from src.features.backtesting import BacktestingService
@@ -18,13 +19,6 @@ class AutomationBuilder():
     Handles the creation of strategy contexts by loading configuration files,
     fetching real-time market data, and preparing strategy instances
     for automated trading.
-
-    Args:
-        config (dict): Configuration dictionary containing:
-            - exchange: Exchange name (e.g., BINANCE, BYBIT)
-            - symbol: Trading symbol (e.g., BTCUSDT)
-            - interval: Time interval for data (e.g., '1h')
-            - strategy: Trading strategy to automate
     """
 
     def __init__(self, config: dict) -> None:
@@ -36,8 +30,11 @@ class AutomationBuilder():
         Bybit client, and logger.
 
         Args:
-            config (dict): Configuration dictionary containing exchange,
-                           symbol, interval, and strategy parameters
+            config (dict): Configuration dictionary containing:
+                - exchange: Exchange name (e.g., BINANCE, BYBIT)
+                - symbol: Trading symbol (e.g., BTCUSDT)
+                - interval: Time interval for data (e.g., '1h')
+                - strategy: Trading strategy to automate
         """
 
         self.exchange = config['exchange']
@@ -161,7 +158,7 @@ class AutomationBuilder():
                         'client': client,
                         'market_data': market_data,
                         'metrics': metrics,
-                        'updated': False,
+                        'last_update': time()
                     }
                     strategy_contexts[str(id(context))] = context
                 except Exception:
@@ -192,7 +189,7 @@ class AutomationBuilder():
                     'client': client,
                     'market_data': market_data,
                     'metrics': metrics,
-                    'updated': False,
+                    'last_update': time()
                 }
                 strategy_contexts[str(id(context))] = context
             except Exception:

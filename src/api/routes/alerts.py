@@ -1,6 +1,6 @@
 from json import dumps
 
-from flask import Blueprint, Response, current_app
+from flask import Blueprint, Response, current_app, request
 
 from src.api.errors.alerts import handle_alert_api_errors
 
@@ -10,22 +10,23 @@ alerts_bp = Blueprint('alerts_api', __name__, url_prefix='/api/alerts')
 
 @alerts_bp.route('', methods=['GET'])
 @handle_alert_api_errors
-def get_all_alerts(limit: int = None) -> Response:
+def get_all_alerts() -> Response:
     """
     Get all active strategy alerts.
 
     Query Parameters:
-        limit (int, optional): Maximum number of recent alerts to return.
-                               If not provided, returns all alerts
+        limit (int, optional): Maximum number of most recent alerts to return.
+            Defaults to 100 if not specified in the request.
 
     Returns:
-        Response: JSON response containing dictionary
-                  of active alerts (id -> alert)
+        Response: JSON response containing a dictionary of active alerts
+                  (alert_id -> alert_data).
     """
 
+    limit = request.args.get('limit', default=100, type=int)
     alerts = current_app.strategy_alerts
     
-    if limit is not None and limit > 0:
+    if limit > 0:
         alerts = dict(list(alerts.items())[-limit:])
     
     return Response(
@@ -41,7 +42,7 @@ def get_alerts_since(last_alert_id: str) -> Response:
     """
     Get all alerts that were created after the specified alert ID.
 
-    Args:
+    Path Parameters:
         last_alert_id (str): The ID of the last alert the client has received.
                              Returns all alerts if the ID is not found.
 
@@ -75,7 +76,7 @@ def delete_alert(alert_id: str) -> Response:
     """
     Remove alert from active alerts collection.
 
-    Args:
+    Path Parameters:
         alert_id (str): Unique identifier of the alert
 
     Returns:
