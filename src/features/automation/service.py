@@ -1,6 +1,6 @@
 from logging import getLogger
 from threading import Thread
-from time import time, sleep
+from time import sleep
 
 from src.features.backtesting import BacktestingService
 from src.infrastructure.providers import RealtimeProvider
@@ -77,7 +77,6 @@ class AutomationService():
                     if self.realtime_provider.update_data(context):
                         self._execute_strategy(cid)
                         self._process_alerts(cid)
-                        context['last_update'] = time()
                 except Exception:
                     self.logger.exception('An error occurred')
 

@@ -18,7 +18,7 @@ def get_all_contexts() -> Response:
     Get summary information for all strategy contexts.
 
     Returns:
-        Response: JSON response containing summarized data 
+        Response: JSON response containing base context data 
                   for all active strategy contexts
     """
 
@@ -40,10 +40,9 @@ def get_context(context_id: str) -> Response:
         context_id (str): Unique identifier of the strategy context
 
     Query Parameters:
-        context_id (str): Unique identifier of the strategy context.
-        updated_after (float, optional): Unix timestamp. If provided,
-            the endpoint returns an empty response if the context
-            has not been updated since this time.
+        updated_after (float, optional): Unix timestamp in milliseconds.
+            If provided, the endpoint returns an empty response
+            if the context has no newer candles since this time.
 
     Returns:
         Response: JSON response containing base context data.
@@ -52,17 +51,25 @@ def get_context(context_id: str) -> Response:
     """
 
     context = current_app.strategy_contexts[context_id]
-    last_update = context.get('last_update', 0)
-    
-    updated_after = request.args.get('updated_after', type=float)
-    
-    if updated_after is not None and last_update <= updated_after:
+    klines = context['market_data'].get('klines')
+
+    if klines is None or len(klines) == 0:
         return Response(
             response=dumps({}),
             status=200,
             mimetype='application/json'
         )
-    
+
+    updated_after = request.args.get('updated_after', type=int)
+    last_kline_time = int(klines[-1, 0])
+
+    if updated_after is not None and last_kline_time <= updated_after:
+        return Response(
+            response=dumps({}),
+            status=200,
+            mimetype='application/json'
+        )
+
     formatted = format_contexts({context_id: context})
     return Response(
         response=dumps(formatted),

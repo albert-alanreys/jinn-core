@@ -10,6 +10,52 @@ alerts_bp = Blueprint('alerts_api', __name__, url_prefix='/api/alerts')
 
 @alerts_bp.route('', methods=['GET'])
 @handle_alert_api_errors
+def get_alerts() -> Response:
+    """
+    Get active strategy alerts with optional filtering.
+
+    Query Parameters:
+        limit (int, optional): Maximum number of most recent alerts to return.
+            If not specified, returns all alerts.
+        since_id (str, optional): Alert identifier for filtering.
+            Only alerts created after this ID will be returned.
+            If ID is not found, returns all alerts.
+
+    Returns:
+        Response: JSON response containing a dictionary of alerts
+                  (alert_id -> alert_data).
+    """
+
+    limit = request.args.get('limit', type=int)
+    since_id = request.args.get('since_id')
+    
+    alerts = current_app.strategy_alerts
+    
+    if since_id is not None:
+        alerts_list = list(alerts.items())
+
+        try:
+            index = next(
+                i for i, (id_, _) 
+                in enumerate(alerts_list) 
+                if id_ == since_id
+            )
+            alerts = dict(alerts_list[index + 1:])
+        except StopIteration:
+            alerts = alerts.copy()
+    
+    if limit is not None and limit > 0:
+        alerts = dict(list(alerts.items())[-limit:])
+    
+    return Response(
+        response=dumps(alerts),
+        status=200,
+        mimetype='application/json'
+    )
+
+
+@alerts_bp.route('', methods=['GET'])
+@handle_alert_api_errors
 def get_all_alerts() -> Response:
     """
     Get all active strategy alerts.
@@ -31,40 +77,6 @@ def get_all_alerts() -> Response:
     
     return Response(
         response=dumps(alerts),
-        status=200,
-        mimetype='application/json'
-    )
-
-
-@alerts_bp.route('/since/<string:last_alert_id>', methods=['GET'])
-@handle_alert_api_errors
-def get_alerts_since(last_alert_id: str) -> Response:
-    """
-    Get all alerts that were created after the specified alert ID.
-
-    Path Parameters:
-        last_alert_id (str): The ID of the last alert the client has received.
-                             Returns all alerts if the ID is not found.
-
-    Returns:
-        Response: JSON response containing dictionary
-                  of new alerts {id: alert}
-    """
-    alerts = current_app.strategy_alerts
-    alerts_list = list(alerts.items())
-    
-    try:
-        index = next(
-            i for i, (id_, _) 
-            in enumerate(alerts_list) 
-            if id_ == last_alert_id
-        )
-        new_alerts = dict(alerts_list[index + 1:])
-    except StopIteration:
-        new_alerts = alerts.copy()
-    
-    return Response(
-        response=dumps(new_alerts),
         status=200,
         mimetype='application/json'
     )

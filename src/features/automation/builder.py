@@ -3,7 +3,6 @@ import os
 import re
 from glob import glob
 from logging import getLogger
-from time import time
 
 from src.core.enums import Exchange, Strategy
 from src.features.backtesting import BacktestingService
@@ -157,8 +156,7 @@ class AutomationBuilder():
                         'instance': instance,
                         'client': client,
                         'market_data': market_data,
-                        'metrics': metrics,
-                        'last_update': time()
+                        'metrics': metrics
                     }
                     strategy_contexts[str(id(context))] = context
                 except Exception:
@@ -188,8 +186,7 @@ class AutomationBuilder():
                     'instance': instance,
                     'client': client,
                     'market_data': market_data,
-                    'metrics': metrics,
-                    'last_update': time()
+                    'metrics': metrics
                 }
                 strategy_contexts[str(id(context))] = context
             except Exception:

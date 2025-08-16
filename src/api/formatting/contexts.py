@@ -36,8 +36,7 @@ def format_contexts(strategy_contexts: dict) -> dict:
                 for k, v in instance.params.items() 
                 if k != 'feeds'
             },
-            'indicatorOptions': instance.indicator_options,
-            'lastUpdate': context.get('last_update', 0)
+            'indicatorOptions': instance.indicator_options
         }
 
     return result
