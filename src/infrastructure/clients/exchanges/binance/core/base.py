@@ -15,8 +15,7 @@ class BaseClient(HttpClient):
     authentication, request signing, and endpoint configuration.
 
     Attributes:
-        FUTURES_ENDPOINT (str): Binance futures API endpoint
-        SPOT_ENDPOINT (str): Binance spot API endpoint  
+        BASE_ENDPOINT (str): Binance API base endpoint
         EXCHANGE (str): Exchange identifier
 
     Instance Attributes:
@@ -25,8 +24,7 @@ class BaseClient(HttpClient):
         logger: Logger instance for this module
     """
 
-    FUTURES_ENDPOINT = 'https://fapi.binance.com'
-    SPOT_ENDPOINT = 'https://api.binance.com'
+    BASE_ENDPOINT = 'https://fapi.binance.com'
     EXCHANGE = 'BINANCE'
 
     def __init__(self) -> None:

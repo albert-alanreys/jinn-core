@@ -3,7 +3,6 @@ from functools import lru_cache
 from logging import getLogger
 from time import time
 
-from src.core.enums import Market
 from .base import BaseClient
 
 
@@ -13,7 +12,6 @@ class MarketClient(BaseClient):
     
     Handles market data retrieval including klines, tickers,
     symbol information, and precision data.
-    Supports both futures and spot markets.
     
     Attributes:
         INTERVALS (dict): Mapping of interval formats to standard intervals
@@ -57,7 +55,6 @@ class MarketClient(BaseClient):
 
     def get_historical_klines(
         self,
-        market: Market,
         symbol: str,
         interval: str,
         start: int,
@@ -70,7 +67,6 @@ class MarketClient(BaseClient):
         and processing them concurrently for improved performance.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol (e.g., 'BTCUSDT')
             interval (str): Kline interval (e.g., '1m', '1h', '1d')
             start (int): Start time in milliseconds
@@ -91,10 +87,9 @@ class MarketClient(BaseClient):
             ]
             klines = []
 
-            with ThreadPoolExecutor(max_workers=20) as executor:
+            with ThreadPoolExecutor(max_workers=30) as executor:
                 klines_grouped_by_range = executor.map(
                     lambda time_range: self._get_klines(
-                        market=market,
                         symbol=symbol,
                         interval=interval,
                         start=time_range[0],
@@ -113,7 +108,6 @@ class MarketClient(BaseClient):
             self.logger.error(
                 f'Failed to request data | '
                 f'Binance | '
-                f'{market.value} | '
                 f'{symbol} | '
                 f'{interval} | '
                 f'{type(e).__name__} - {e}'
@@ -146,7 +140,6 @@ class MarketClient(BaseClient):
 
             if limit <= 1000:
                 return self._get_klines(
-                    market=Market.FUTURES,
                     symbol=symbol,
                     interval=interval,
                     limit=limit
@@ -164,10 +157,9 @@ class MarketClient(BaseClient):
             ]
             klines = []
 
-            with ThreadPoolExecutor(max_workers=20) as executor:
+            with ThreadPoolExecutor(max_workers=30) as executor:
                 klines_grouped_by_range = executor.map(
                     lambda time_range: self._get_klines(
-                        market=Market.FUTURES,
                         symbol=symbol,
                         interval=interval,
                         start=time_range[0],
@@ -186,7 +178,6 @@ class MarketClient(BaseClient):
             self.logger.error(
                 f'Failed to request data | '
                 f'Binance | '
-                f'{Market.FUTURES.value} | '
                 f'{symbol} | '
                 f'{interval} | '
                 f'{type(e).__name__} - {e}'
@@ -217,7 +208,7 @@ class MarketClient(BaseClient):
         raise ValueError(f'Invalid interval: {interval}')
 
     @lru_cache
-    def get_price_precision(self, market: Market, symbol: str) -> float:
+    def get_price_precision(self, symbol: str) -> float:
         """
         Get price precision (tick size) for specified symbol.
         
@@ -225,7 +216,6 @@ class MarketClient(BaseClient):
         from exchange info. Result is cached for performance.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol
             
         Returns:
@@ -233,7 +223,7 @@ class MarketClient(BaseClient):
         """
 
         try:
-            symbol_info = self._get_symbol_info(market, symbol)
+            symbol_info = self._get_symbol_info(symbol)
             return float(symbol_info['filters'][0]['tickSize'])
         except Exception as e:
             self.logger.error(
@@ -242,7 +232,7 @@ class MarketClient(BaseClient):
             )
 
     @lru_cache
-    def get_qty_precision(self, market: Market, symbol: str) -> float:
+    def get_qty_precision(self, symbol: str) -> float:
         """
         Get quantity precision (step size) for specified symbol.
         
@@ -250,7 +240,6 @@ class MarketClient(BaseClient):
         from exchange info. Result is cached for performance.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol
             
         Returns:
@@ -258,7 +247,7 @@ class MarketClient(BaseClient):
         """
 
         try:
-            symbol_info = self._get_symbol_info(market, symbol)
+            symbol_info = self._get_symbol_info(symbol)
             return float(symbol_info['filters'][1]['stepSize'])
         except Exception as e:
             self.logger.error(
@@ -277,13 +266,12 @@ class MarketClient(BaseClient):
             dict: Ticker information with prices and rates
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/premiumIndex'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/premiumIndex'
         params = {'symbol': symbol}
         return self.get(url, params)
 
     def _get_klines(
         self,
-        market: Market,
         symbol: str,
         interval: str,
         start: int = None,
@@ -297,7 +285,6 @@ class MarketClient(BaseClient):
         Used internally by public kline methods.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol
             interval (str): Kline interval
             start (int, optional): Start time in milliseconds
@@ -308,12 +295,7 @@ class MarketClient(BaseClient):
             list: Raw kline data from API
         """
 
-        match market:
-            case Market.FUTURES:
-                url = f'{self.FUTURES_ENDPOINT}/fapi/v1/klines'
-            case Market.SPOT:
-                url = f'{self.SPOT_ENDPOINT}/api/v3/klines'
-
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/klines'
         params = {'symbol': symbol, 'interval': interval, 'limit': limit}
 
         if start:
@@ -324,7 +306,7 @@ class MarketClient(BaseClient):
 
         return self.get(url, params, logging=False)
 
-    def _get_symbol_info(self, market: Market, symbol: str) -> dict:
+    def _get_symbol_info(self, symbol: str) -> dict:
         """
         Get symbol information from exchange info.
         
@@ -332,20 +314,15 @@ class MarketClient(BaseClient):
         and trading rules from exchange info endpoint.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol
             
         Returns:
             dict: Symbol information with filters and rules
         """
 
-        match market:
-            case Market.FUTURES:
-                url = f'{self.FUTURES_ENDPOINT}/fapi/v1/exchangeInfo'
-            case Market.SPOT:
-                url = f'{self.SPOT_ENDPOINT}/api/v3/exchangeInfo'
-
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/exchangeInfo'
         symbols_info = self.get(url)['symbols']
+
         return next(
             filter(lambda x: x['symbol'] == symbol, symbols_info)
         )

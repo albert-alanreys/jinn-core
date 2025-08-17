@@ -39,19 +39,6 @@ class Exchange(Enum):
     BYBIT = 'BYBIT'
 
 
-class Market(Enum):
-    """
-    Trading market types.
-    
-    Defines the available market types for trading:
-    - FUTURES: Futures/derivatives trading
-    - SPOT: Spot trading (immediate settlement)
-    """
-
-    FUTURES = 'FUTURES'
-    SPOT = 'SPOT'
-
-
 class Strategy(Enum):
     """
     Available strategies. Maps strategy names

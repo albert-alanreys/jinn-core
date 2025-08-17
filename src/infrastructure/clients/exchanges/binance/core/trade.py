@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING
 
-from src.core.enums import Market
 from src.utils.rounding import adjust
 from .base import BaseClient
 
@@ -411,10 +410,7 @@ class TradeClient(BaseClient):
         """
 
         try:
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_close(
@@ -500,10 +496,7 @@ class TradeClient(BaseClient):
         """
 
         try:
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_close(
@@ -606,10 +599,7 @@ class TradeClient(BaseClient):
 
             self.position.set_leverage(symbol, leverage)
 
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_open(
@@ -710,10 +700,7 @@ class TradeClient(BaseClient):
 
             self.position.set_leverage(symbol, leverage)
 
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_open(
@@ -797,10 +784,7 @@ class TradeClient(BaseClient):
         """
 
         try:
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_close(
@@ -888,10 +872,7 @@ class TradeClient(BaseClient):
         """
 
         try:
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_close(
@@ -1176,7 +1157,7 @@ class TradeClient(BaseClient):
             dict: API response
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/allOpenOrders'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/allOpenOrders'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.delete(url, params=params, headers=headers)
@@ -1193,7 +1174,7 @@ class TradeClient(BaseClient):
             dict: API response
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/order'
         params = {'symbol': symbol, 'orderId': order_id}
         params, headers = self.build_signed_request(params)
         return self.delete(url, params=params, headers=headers)
@@ -1234,7 +1215,7 @@ class TradeClient(BaseClient):
             OrderCreationError: If order creation fails
         """
         
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/order'
         params = {
             'symbol': symbol,
             'side': side,
@@ -1328,7 +1309,7 @@ class TradeClient(BaseClient):
             dict: Order information from API
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/order'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/order'
         params = {'symbol': symbol, 'orderId': order_id}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)
@@ -1344,7 +1325,7 @@ class TradeClient(BaseClient):
             list: List of open orders
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/openOrders'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/openOrders'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)

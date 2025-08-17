@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING
 
-from src.core.enums import Market
 from src.utils.rounding import adjust
 from .base import BaseClient
 
@@ -419,10 +418,7 @@ class TradeClient(BaseClient):
         """
 
         try:
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_close(
@@ -512,10 +508,7 @@ class TradeClient(BaseClient):
         """
 
         try:
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_close(
@@ -622,10 +615,7 @@ class TradeClient(BaseClient):
 
             self.position.set_leverage(symbol, str(leverage), str(leverage))
 
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_open(
@@ -729,10 +719,7 @@ class TradeClient(BaseClient):
 
             self.position.set_leverage(symbol, str(leverage), str(leverage))
 
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_open(
@@ -819,10 +806,7 @@ class TradeClient(BaseClient):
         """
 
         try:
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_close(
@@ -911,10 +895,7 @@ class TradeClient(BaseClient):
         """
 
         try:
-            p_precision = self.market.get_price_precision(
-                market=Market.FUTURES,
-                symbol=symbol
-            )
+            p_precision = self.market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
             qty = self.position.get_quantity_to_close(

@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from src.core.enums import Market
 from src.utils.klines import has_last_historical_kline
 from src.utils.klines import has_realtime_kline
 
@@ -54,7 +53,6 @@ class RealtimeProvider():
 
         Returns:
             dict: Complete market data dictionary including:
-                - market: Market type
                 - symbol: Trading symbol
                 - interval: Validated interval
                 - precision: Price and quantity precision
@@ -62,8 +60,8 @@ class RealtimeProvider():
                 - additional feeds (if configured)
         """
 
-        p_precision = client.get_price_precision(Market.FUTURES, symbol)
-        q_precision = client.get_qty_precision(Market.FUTURES, symbol)   
+        p_precision = client.get_price_precision(symbol)
+        q_precision = client.get_qty_precision(symbol)   
 
         valid_interval = client.get_valid_interval(interval)
         klines = np.array(
@@ -85,7 +83,6 @@ class RealtimeProvider():
         ) if feeds else {'feeds': {}}
 
         result = {
-            'market': Market.FUTURES,
             'symbol': symbol,
             'interval': valid_interval,
             'p_precision': p_precision,

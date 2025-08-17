@@ -10,17 +10,15 @@ MODE = enums.Mode.BACKTESTING
 # Settings for different modes
 OPTIMIZATION_CONFIG = {
     'strategy': enums.Strategy.NUGGET_V2,
-    'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
+    'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
-    'start': '2024-01-01',
+    'start': '2017-01-01',
     'end': '2025-01-01'
 }
 BACKTESTING_CONFIG = {
     'strategy': enums.Strategy.NUGGET_V2,
-    'exchange': enums.Exchange.BYBIT,
-    'market': enums.Market.FUTURES,
+    'exchange': enums.Exchange.BINANCE,
     'symbol': 'BTCUSDT',
     'interval': '30m',
     'start': '2017-01-01',

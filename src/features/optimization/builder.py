@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from logging import getLogger
 
-from src.core.enums import Exchange, Market, Strategy
+from src.core.enums import Exchange, Strategy
 from src.infrastructure.clients.exchanges.binance import BinanceClient
 from src.infrastructure.clients.exchanges.bybit import BybitClient
 from src.infrastructure.providers import HistoryProvider
@@ -29,7 +29,6 @@ class OptimizationBuilder:
             config (dict): Configuration dictionary containing:
                 - strategy: Trading strategy to optimize
                 - exchange: Exchange name (e.g., BINANCE, BYBIT)
-                - market: Market type (e.g., FUTURES, SPOT)
                 - symbol: Trading symbol (e.g., BTCUSDT)
                 - interval: Time interval for data (e.g., '1h')
                 - start: Start date for data (format: 'YYYY-MM-DD')
@@ -38,7 +37,6 @@ class OptimizationBuilder:
 
         self.strategy = config['strategy']
         self.exchange = config['exchange']
-        self.market = config['market']
         self.symbol = config['symbol']
         self.interval = config['interval']
         self.start = config['start']
@@ -92,7 +90,6 @@ class OptimizationBuilder:
 
             for config in configs:
                 exchange = config['exchange'].upper()
-                market = config['market'].upper()
                 symbol = config['symbol'].upper()
                 interval = config['interval']
                 start = config['start']
@@ -104,16 +101,9 @@ class OptimizationBuilder:
                     case Exchange.BYBIT.name:
                         client = self.bybit_client
 
-                match market:
-                    case Market.FUTURES.name:
-                        market = Market.FUTURES
-                    case Market.SPOT.name:
-                        market = Market.SPOT
-
                 try:
                     market_data = self._get_market_data(
                         client=client,
-                        market=market,
                         symbol=symbol,
                         interval=interval,
                         start=start,
@@ -140,7 +130,6 @@ class OptimizationBuilder:
             try:
                 market_data = self._get_market_data(
                     client=client,
-                    market=self.market,
                     symbol=self.symbol,
                     interval=self.interval,
                     start=self.start,
@@ -162,7 +151,6 @@ class OptimizationBuilder:
     def _get_market_data(
         self,
         client: BinanceClient | BybitClient,
-        market: Market,
         symbol: str,
         interval: str,
         start: str,
@@ -178,7 +166,6 @@ class OptimizationBuilder:
 
         Args:
             client (BinanceClient | BybitClient): Exchange API client instance
-            market (Market): Market type (FUTURES/SPOT)
             symbol (str): Trading symbol
             interval (str): Time interval for data
             start (str): Start date (format: 'YYYY-MM-DD')
@@ -203,7 +190,6 @@ class OptimizationBuilder:
 
         train_data = self.history_provider.fetch_data(
             client=client,
-            market=market,
             symbol=symbol,
             interval=interval,
             start=start,
@@ -212,7 +198,6 @@ class OptimizationBuilder:
         )
         test_data = self.history_provider.fetch_data(
             client=client,
-            market=market,
             symbol=symbol,
             interval=interval,
             start=test_start_date.strftime('%Y-%m-%d'),

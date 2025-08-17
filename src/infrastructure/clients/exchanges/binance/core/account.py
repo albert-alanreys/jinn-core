@@ -20,6 +20,6 @@ class AccountClient(BaseClient):
             dict: Account balance information with assets array
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v3/account'
+        url = f'{self.BASE_ENDPOINT}/fapi/v3/account'
         params, headers = self.build_signed_request({})
         return self.get(url, params, headers)

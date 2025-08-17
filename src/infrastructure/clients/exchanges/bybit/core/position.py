@@ -1,7 +1,6 @@
 from logging import getLogger
 from typing import TYPE_CHECKING
 
-from src.core.enums import Market
 from src.utils.rounding import adjust
 from .base import BaseClient
 
@@ -163,10 +162,7 @@ class PositionClient(BaseClient):
             size_val = float(size.rstrip('u'))
             qty = leverage * size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(
-            market=Market.FUTURES,
-            symbol=symbol
-        )
+        q_precision = self.market.get_qty_precision(symbol)
         return adjust(qty, q_precision)
 
     def get_quantity_to_close(
@@ -209,10 +205,7 @@ class PositionClient(BaseClient):
 
             qty = size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(
-            market=Market.FUTURES,
-            symbol=symbol
-        )
+        q_precision = self.market.get_qty_precision(symbol)
         return adjust(qty, q_precision)
 
     def _get_position_size(self, side: str, symbol: str) -> float:

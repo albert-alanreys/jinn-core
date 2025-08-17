@@ -108,9 +108,8 @@ var Lu=Object.defineProperty;var yr=r=>{throw TypeError(r)};var Bu=(r,t,e)=>t in
 	<div class="content">\r
 		<span class="strategy-name" data-field="name"></span>\r
 		<div class="meta-info">\r
-			<span data-field="symbol"></span> • <span data-field="exchange"></span> •\r
-			<span data-field="market"></span> •\r
-			<span data-field="interval"></span>\r
+			<span data-field="symbol"></span> • <span data-field="interval"></span> •\r
+			<span data-field="exchange"></span>\r
 		</div>\r
 	</div>\r
 	<button title="Delete Strategy">\r
@@ -231,9 +230,8 @@ var Lu=Object.defineProperty;var yr=r=>{throw TypeError(r)};var Bu=(r,t,e)=>t in
 </div>\r
 `,Tm="_meta_150gk_29",km="_candlestick_150gk_37",Nm="_red_150gk_47",Om="_green_150gk_55",Ci={"chart-info-panel":"_chart-info-panel_150gk_1",meta:Tm,candlestick:km,red:Nm,green:Om},Am=`<div class="chart-info-panel" data-ref="chartInfoPanel">\r
 	<div class="meta" data-ref="meta">\r
-		<span data-field="symbol"></span> • <span data-field="exchange"></span> •\r
-		<span data-field="market"></span> •\r
-		<span data-field="interval"></span>\r
+		<span data-field="symbol"></span> • <span data-field="interval"></span> •\r
+		<span data-field="exchange"></span>\r
 	</div>\r
 	<div class="candlestick" data-ref="candlestick">\r
 		<div>O <span data-field="open"></span></div>\r

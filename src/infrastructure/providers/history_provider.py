@@ -9,7 +9,6 @@ from src.utils.klines import has_realtime_kline
 from src.infrastructure.db import DBManager
 
 if TYPE_CHECKING:
-    from src.core.enums import Market
     from src.infrastructure.clients.exchanges.binance import BinanceClient
     from src.infrastructure.clients.exchanges.bybit import BybitClient
 
@@ -36,7 +35,6 @@ class HistoryProvider():
     def fetch_data(
         self,
         client: 'BinanceClient | BybitClient',
-        market: 'Market',
         symbol: str,
         interval: str | int,
         start: str,
@@ -49,7 +47,6 @@ class HistoryProvider():
         
         Args:
             client: Exchange API client (Binance/Bybit)
-            market: Market type (spot/futures)
             symbol: Trading symbol (e.g. 'BTCUSDT')
             interval: Kline interval (str or int)
             start: Start date in 'YYYY-MM-DD' format
@@ -64,16 +61,11 @@ class HistoryProvider():
                 - Additional feeds if requested
         """
         
-        p_precision, q_precision = self._fetch_precisions(
-            client=client,
-            market=market,
-            symbol=symbol
-        )
+        p_precision, q_precision = self._fetch_precisions(client, symbol)
 
         valid_interval = client.get_valid_interval(interval)
         klines = self._fetch_klines(
             client=client,
-            market=market,
             symbol=symbol,
             interval=valid_interval,
             start=start,
@@ -82,7 +74,6 @@ class HistoryProvider():
 
         additional_data = self._fetch_additional_data(
             client=client,
-            market=market,
             symbol=symbol,
             start=start,
             end=end,
@@ -90,7 +81,6 @@ class HistoryProvider():
         ) if feeds else {'feeds': {}}
 
         result = {
-            'market': market,
             'symbol': symbol,
             'interval': valid_interval,
             'start': start,
@@ -106,7 +96,6 @@ class HistoryProvider():
     def _fetch_precisions(
         self,
         client: 'BinanceClient | BybitClient',
-        market: 'Market',
         symbol: str,
     ) -> tuple[float, float]:
         """
@@ -115,7 +104,6 @@ class HistoryProvider():
         
         Args:
             client: Exchange API client
-            market: Market type
             symbol: Trading symbol
             
         Returns:
@@ -123,21 +111,19 @@ class HistoryProvider():
         """
 
         database_name = f'{client.EXCHANGE.lower()}.db'
-        symbol_key = f'{market.value}_{symbol}'
-
         precision_data = self.db_manager.fetch_one(
             database_name=database_name,
             table_name='symbol_precisions',
             key_column='symbol',
-            key_value=symbol_key
+            key_value=symbol
         )
 
         if precision_data:
             p_precision = precision_data[1]
             q_precision = precision_data[2]
         else:
-            p_precision = client.get_price_precision(market, symbol)
-            q_precision = client.get_qty_precision(market, symbol)
+            p_precision = client.get_price_precision(symbol)
+            q_precision = client.get_qty_precision(symbol)
 
             if p_precision is not None and q_precision is not None:
                 self.db_manager.save(
@@ -148,7 +134,7 @@ class HistoryProvider():
                         'price_precision': 'REAL',
                         'qty_precision': 'REAL'
                     },
-                    rows=[[symbol_key, p_precision, q_precision]],
+                    rows=[[symbol, p_precision, q_precision]],
                     drop=False
                 )
 
@@ -157,7 +143,6 @@ class HistoryProvider():
     def _fetch_klines(
         self,
         client: 'BinanceClient | BybitClient',
-        market: 'Market',
         symbol: str,
         interval: str,
         start: str,
@@ -174,7 +159,6 @@ class HistoryProvider():
 
         Args:
             client: Exchange API client
-            market: Market type
             symbol: Trading symbol
             interval: Kline interval
             start: Start date in 'YYYY-MM-DD' format
@@ -190,7 +174,7 @@ class HistoryProvider():
         request_required = False
 
         database_name = f'{client.EXCHANGE.lower()}.db'
-        table_name = f'{market.value}_{symbol}_{interval}'
+        table_name = f'{symbol}_{interval}'
 
         start_ms = int(
             datetime.strptime(start, '%Y-%m-%d')
@@ -234,7 +218,6 @@ class HistoryProvider():
         if request_required:
             klines = self._fetch_klines_from_exchange(
                 client=client,
-                market=market,
                 symbol=symbol,
                 interval=interval,
                 start=start_to_request_ms,
@@ -289,7 +272,6 @@ class HistoryProvider():
             raise ValueError(
                 f'No klines available | '
                 f'{client.EXCHANGE} | '
-                f'{market.value} | '
                 f'{symbol} | '
                 f'{interval} | '
                 f'{start_str} → {end_str}'
@@ -300,7 +282,6 @@ class HistoryProvider():
     def _fetch_klines_from_exchange(
         self,
         client: 'BinanceClient | BybitClient',
-        market: 'Market',
         symbol: str,
         interval: str,
         start: int,
@@ -311,7 +292,6 @@ class HistoryProvider():
         
         Args:
             client: Exchange API client
-            market: Market type
             symbol: Trading symbol
             interval: Kline interval
             start: Start timestamp in milliseconds
@@ -327,13 +307,11 @@ class HistoryProvider():
         self.logger.info(
             f'Requesting klines | '
             f'{client.EXCHANGE} | '
-            f'{market.value} | '
             f'{symbol} | '
             f'{interval}'
         )
 
         klines = client.get_historical_klines(
-            market=market,
             symbol=symbol,
             interval=interval,
             start=start,
@@ -361,7 +339,6 @@ class HistoryProvider():
     def _fetch_additional_data(
         self,
         client: 'BinanceClient | BybitClient',
-        market: 'Market',
         symbol: str,
         start: str,
         end: str,
@@ -375,7 +352,6 @@ class HistoryProvider():
             
         Args:
             client: Exchange API client
-            market: Market type
             symbol: Base trading symbol
             start: Start date in 'YYYY-MM-DD' format
             end: End date in 'YYYY-MM-DD' format
@@ -398,7 +374,6 @@ class HistoryProvider():
 
                 klines_data[feed_name] = self._fetch_klines(
                     client=client,
-                    market=market,
                     symbol=feed_symbol,
                     interval=feed_interval,
                     start=start,

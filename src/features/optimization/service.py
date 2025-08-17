@@ -15,7 +15,7 @@ class OptimizationService:
     using a combination of selection, recombination and mutation operations.
     """
 
-    ITERATIONS = 5000
+    ITERATIONS = 100
     POPULATION_SIZE = 100
     MAX_POPULATION_SIZE = 500
 
@@ -46,7 +46,6 @@ class OptimizationService:
             ' | '.join([
                 item['name'],
                 item['client'].EXCHANGE,
-                item['market_data']['train']['market'].value,
                 item['market_data']['train']['symbol'],
                 str(item['market_data']['train']['interval']),
                 f"{item['market_data']['train']['start']} → "
@@ -81,7 +80,7 @@ class OptimizationService:
 
         Args:
             strategy_context (dict): Context dictionary for the strategy
-                                     containing type, client, and market data
+                containing type, client, and market data
 
         Returns:
             list: Best parameters found during optimization
@@ -353,14 +352,13 @@ class OptimizationService:
         Save optimized parameters to strategy JSON files.
 
         Preserves existing optimization results while adding new ones.
-        Files are organized by exchange/market/symbol/interval structure
+        Files are organized by exchange/symbol/interval structure
         and stored in strategy-specific optimization directories.
         """
 
         for context in self.strategy_contexts.values():
             filename = (
                 f'{context['client'].EXCHANGE}_'
-                f'{context['market_data']['train']['market'].value}_'
                 f'{context['market_data']['train']['symbol']}_'
                 f'{context['market_data']['train']['interval']}.json'
             )
