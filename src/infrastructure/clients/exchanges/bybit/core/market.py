@@ -91,8 +91,8 @@ class MarketClient(BaseClient):
             ]
             klines = []
 
-            with ThreadPoolExecutor(max_workers=7) as executor:
-                results = executor.map(
+            with ThreadPoolExecutor(max_workers=50) as executor:
+                klines_grouped_by_range = executor.map(
                     lambda time_range: self._get_klines(
                         market=market,
                         symbol=symbol,
@@ -102,9 +102,11 @@ class MarketClient(BaseClient):
                     ),
                     time_ranges
                 )
-
-                for result in results:
-                    klines.extend(result)
+                klines = [
+                    kline
+                    for kline_group in klines_grouped_by_range
+                    for kline in kline_group
+                ]
 
             return klines
         except Exception as e:
@@ -162,8 +164,8 @@ class MarketClient(BaseClient):
             ]
             klines = []
 
-            with ThreadPoolExecutor(max_workers=7) as executor:
-                results = executor.map(
+            with ThreadPoolExecutor(max_workers=50) as executor:
+                klines_grouped_by_range = executor.map(
                     lambda time_range: self._get_klines(
                         market=Market.FUTURES,
                         symbol=symbol,
@@ -173,9 +175,11 @@ class MarketClient(BaseClient):
                     ),
                     time_ranges
                 )
-
-                for result in results:
-                    klines.extend(result)
+                klines = [
+                    kline
+                    for kline_group in klines_grouped_by_range
+                    for kline in kline_group
+                ]
 
             return klines[-limit:]
         except Exception as e:

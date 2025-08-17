@@ -19,12 +19,12 @@ OPTIMIZATION_CONFIG = {
 }
 BACKTESTING_CONFIG = {
     'strategy': enums.Strategy.NUGGET_V2,
-    'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
+    'exchange': enums.Exchange.BYBIT,
+    'market': enums.Market.FUTURES,
     'symbol': 'BTCUSDT',
-    'interval': '1h',
-    'start': '2023-01-01',
-    'end': '2025-06-01'
+    'interval': '30m',
+    'start': '2017-01-01',
+    'end': '2025-01-01'
 }
 AUTOMATION_CONFIG = {
     'strategy': enums.Strategy.DEVOURER_V3,
