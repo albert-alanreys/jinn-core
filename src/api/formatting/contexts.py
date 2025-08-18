@@ -25,7 +25,7 @@ def format_contexts(strategy_contexts: dict) -> dict:
                 word.capitalize()
                 for word in context['name'].split('_')
             ),
-            'exchange': context['client'].EXCHANGE,
+            'exchange': context['client'].exchange_name,
             'symbol': market_data['symbol'],
             'interval': market_data['interval'],
             'minMove': min_move,

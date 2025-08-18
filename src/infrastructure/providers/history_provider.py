@@ -10,8 +10,7 @@ from src.utils.klines import has_realtime_kline
 from src.infrastructure.db import DBManager
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.exchanges.binance import BinanceClient
-    from src.infrastructure.clients.exchanges.bybit import BybitClient
+    from src.infrastructure.clients.exchanges import BaseExchangeClient
 
 
 class HistoryProvider():
@@ -35,7 +34,7 @@ class HistoryProvider():
 
     def get_market_data(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BaseExchangeClient',
         symbol: str,
         interval: str | int,
         start: str,
@@ -50,8 +49,8 @@ class HistoryProvider():
         
         Args:
             client: Exchange API client
-            symbol: Trading symbol
-            interval: Kline interval
+            symbol (str): Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
             start: Start date in 'YYYY-MM-DD' format
             end: End date in 'YYYY-MM-DD' format
             feeds: Optional feeds config
@@ -65,7 +64,7 @@ class HistoryProvider():
         """
         
         p_precision, q_precision = self._get_precisions(client, symbol)
-        valid_interval = client.get_valid_interval(interval)
+        valid_interval = client.market.get_valid_interval(interval)
 
         klines = self._get_klines(
             client=client,
@@ -102,7 +101,7 @@ class HistoryProvider():
 
     def _get_precisions(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BaseExchangeClient',
         symbol: str,
     ) -> tuple[float, float]:
         """
@@ -110,13 +109,13 @@ class HistoryProvider():
         
         Args:
             client: Exchange API client
-            symbol: Trading symbol
+            symbol (str): Trading symbol (e.g., BTCUSDT)
             
         Returns:
             tuple: (price_precision, quantity_precision)
         """
 
-        db_name = f'{client.EXCHANGE.lower()}.db'
+        db_name = f'{client.exchange_name.lower()}.db'
         precision_data = self.db_manager.fetch_one(
             database_name=db_name,
             table_name='symbol_precisions',
@@ -127,8 +126,8 @@ class HistoryProvider():
         if precision_data:
             return precision_data[1], precision_data[2]
 
-        p_precision = client.get_price_precision(symbol)
-        q_precision = client.get_qty_precision(symbol)
+        p_precision = client.market.get_price_precision(symbol)
+        q_precision = client.market.get_qty_precision(symbol)
 
         if p_precision is not None and q_precision is not None:
             self.db_manager.save(
@@ -147,7 +146,7 @@ class HistoryProvider():
 
     def _get_klines(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BaseExchangeClient',
         symbol: str,
         interval: str | int,
         start: str,
@@ -164,8 +163,8 @@ class HistoryProvider():
 
         Args:
             client: Exchange API client
-            symbol: Trading symbol
-            interval: Kline interval
+            symbol (str): Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
             start: Start date in 'YYYY-MM-DD' format
             end: End date in 'YYYY-MM-DD' format
 
@@ -176,7 +175,7 @@ class HistoryProvider():
             ValueError: If no klines available for requested period
         """
 
-        db_name = f'{client.EXCHANGE.lower()}.db'
+        db_name = f'{client.exchange_name.lower()}.db'
         table_name = f'{symbol}_{interval}'
 
         start_ms = self._to_ms(start)
@@ -255,18 +254,15 @@ class HistoryProvider():
 
         if klines.size == 0:
             raise ValueError(
-                f'No klines available | '
-                f'{client.EXCHANGE} | '
-                f'{symbol} | '
-                f'{interval} | '
-                f'{start} → {end}'
+                f'No klines available | {client.exchange_name} | '
+                f'{symbol} | {interval} | {start} → {end}'
             )
         
         return klines
 
     def _get_klines_from_exchange(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BaseExchangeClient',
         symbol: str,
         interval: str | int,
         start: int,
@@ -277,8 +273,8 @@ class HistoryProvider():
         
         Args:
             client: Exchange API client
-            symbol: Trading symbol
-            interval: Kline interval
+            symbol (str): Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
             start: Start timestamp in milliseconds
             end: End timestamp in milliseconds
             
@@ -290,11 +286,11 @@ class HistoryProvider():
         """
         
         self.logger.info(
-            f'Requesting klines | {client.EXCHANGE} | '
+            f'Requesting klines | {client.exchange_name} | '
             f'{symbol} | {interval}'
         )
 
-        klines = client.get_historical_klines(
+        klines = client.market.get_historical_klines(
             symbol=symbol,
             interval=interval,
             start=start,
@@ -314,7 +310,7 @@ class HistoryProvider():
 
     def _get_feeds_data(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BaseExchangeClient',
         symbol: str,
         feeds: dict,
         main_interval: str | int,
@@ -349,10 +345,12 @@ class HistoryProvider():
         for feed_name, feed_config in feeds['klines'].items():
             feed_key, feed_interval_key = feed_config[:2]
             feed_symbol = symbol if feed_key == 'symbol' else feed_key
-            feed_interval = client.get_valid_interval(feed_interval_key)
+            feed_interval = (
+                client.market.get_valid_interval(feed_interval_key)
+            )
 
-            main_ms = client.INTERVAL_MS[main_interval]
-            feed_ms = client.INTERVAL_MS[feed_interval]
+            main_ms = client.market.get_interval_duration(main_interval)
+            feed_ms = client.market.get_interval_duration(feed_interval)
 
             klines = self._get_klines(
                 client=client,

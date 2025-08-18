@@ -8,25 +8,15 @@ from time import time
 from src.infrastructure.clients.http_client import HttpClient
 
 
-class BaseClient(HttpClient):
+class BaseBybitClient(HttpClient):
     """
     Base client for ByBit API operations.
     
     Provides common functionality for all ByBit API clients including
     authentication, request signing, and endpoint configuration.
-    
-    Attributes:
-        BASE_ENDPOINT (str): ByBit API base endpoint
-        EXCHANGE (str): Exchange identifier
-
-    Instance Attributes:
-        api_key (str): ByBit API key from environment
-        api_secret (str): ByBit API secret from environment
-        logger: Logger instance for this module
     """
 
     BASE_ENDPOINT = 'https://api.bybit.com'
-    EXCHANGE = 'BYBIT'
 
     def __init__(self) -> None:
         """

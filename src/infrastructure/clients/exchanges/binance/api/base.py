@@ -7,25 +7,15 @@ from time import time
 from src.infrastructure.clients.http_client import HttpClient
 
 
-class BaseClient(HttpClient):
+class BaseBinanceClient(HttpClient):
     """
     Base client for Binance API operations.
 
     Provides common functionality for all Binance API clients including
     authentication, request signing, and endpoint configuration.
-
-    Attributes:
-        BASE_ENDPOINT (str): Binance API base endpoint
-        EXCHANGE (str): Exchange identifier
-
-    Instance Attributes:
-        api_key (str): Binance API key from environment
-        api_secret (str): Binance API secret from environment
-        logger: Logger instance for this module
     """
 
     BASE_ENDPOINT = 'https://fapi.binance.com'
-    EXCHANGE = 'BINANCE'
 
     def __init__(self) -> None:
         """
@@ -72,8 +62,8 @@ class BaseClient(HttpClient):
         """
         Add HMAC SHA256 signature to request parameters.
         
-        Creates query string from parameters and signs it with API secret
-        using HMAC SHA256 algorithm.
+        Creates query string from parameters and signs it
+        with API secret using HMAC SHA256 algorithm.
 
         Args:
             params (dict): Parameters to sign

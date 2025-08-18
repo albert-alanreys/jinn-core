@@ -25,7 +25,7 @@ OPTIMIZATION_SETTINGS = {
 }
 BACKTESTING_SETTINGS = {
     'strategy': enums.Strategy.NUGGET_V2,
-    'exchange': enums.Exchange.BYBIT,
+    'exchange': enums.Exchange.BINANCE,
     'symbol': 'BTCUSDT',
     'interval': '1h',
     'start': '2022-01-01',

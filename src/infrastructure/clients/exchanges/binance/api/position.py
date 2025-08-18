@@ -2,25 +2,20 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from src.utils.rounding import adjust
-from .base import BaseClient
+from .base import BaseBinanceClient
 
 if TYPE_CHECKING:
     from .account import AccountClient
     from .market import MarketClient
 
 
-class PositionClient(BaseClient):
+class PositionClient(BaseBinanceClient):
     """
     Client for Binance position management operations.
     
     Handles position-related settings including leverage, margin mode,
     position mode configuration for futures trading,
     and position size calculations.
-
-    Instance Attributes:
-        account (AccountClient): Account client
-        market (MarketClient): Market client
-        logger: Logger instance for this module
     """
 
     def __init__(
@@ -44,59 +39,18 @@ class PositionClient(BaseClient):
         self.logger = getLogger(__name__)
 
     def switch_position_mode(self, mode: bool) -> dict:
-        """
-        Switch position mode between one-way and hedge mode.
-        
-        Configures whether to use hedge mode (separate long/short positions)
-        or one-way mode (net position).
-        
-        Args:
-            mode (bool): True for hedge mode, False for one-way mode
-            
-        Returns:
-            dict: API response confirming position mode change
-        """
-
         url = f'{self.BASE_ENDPOINT}/fapi/v1/positionSide/dual'
         params = {'dualSidePosition': mode}
         params, headers = self.build_signed_request(params)
         return self.post(url, params=params, headers=headers, logging=False)
 
     def switch_margin_mode(self, symbol: str, mode: str) -> dict:
-        """
-        Switch margin mode for specified symbol.
-        
-        Changes between cross margin and isolated margin modes for
-        futures trading.
-        
-        Args:
-            symbol (str): Trading symbol
-            mode (str): Margin mode ('CROSSED' or 'ISOLATED')
-            
-        Returns:
-            dict: API response confirming margin mode change
-        """
-
         url = f'{self.BASE_ENDPOINT}/fapi/v1/marginType'
         params = {'symbol': symbol, 'marginType': mode}
         params, headers = self.build_signed_request(params)
         return self.post(url, params=params, headers=headers, logging=False)
 
     def set_leverage(self, symbol: str, leverage: int) -> dict:
-        """
-        Set leverage for specified symbol.
-        
-        Configures the leverage multiplier for futures trading on the
-        specified symbol.
-        
-        Args:
-            symbol (str): Trading symbol (e.g., 'BTCUSDT')
-            leverage (int): Leverage multiplier
-        
-        Returns:
-            dict: API response confirming leverage setting
-        """
-
         url = f'{self.BASE_ENDPOINT}/fapi/v1/leverage'
         params = {'symbol': symbol, 'leverage': leverage}
         params, headers = self.build_signed_request(params)
@@ -109,22 +63,6 @@ class PositionClient(BaseClient):
         leverage: int,
         price: float | None = None
     ) -> float:
-        """
-        Calculate quantity needed to open position.
-        
-        Determines the quantity to open based on account balance,
-        requested size, and leverage settings.
-        
-        Args:
-            symbol (str): Trading symbol
-            size (str): Position size ('10%', '100u', etc.)
-            leverage (int): Leverage multiplier
-            price (float | None): Price for quantity calculation
-            
-        Returns:
-            float: Quantity to open (adjusted for precision)
-        """
-
         effective_price = price
 
         if price is None:
@@ -159,23 +97,6 @@ class PositionClient(BaseClient):
         hedge: bool,
         price: float | None = None
     ) -> float:
-        """
-        Calculate quantity needed to close position.
-        
-        Determines the quantity to close based on current position size
-        and requested close amount (percentage or absolute value).
-        
-        Args:
-            side (str): Position side ('LONG' or 'SHORT')
-            symbol (str): Trading symbol
-            size (str): Close amount ('100%', '50u', etc.)
-            hedge (bool): Use hedge mode for position
-            price (float | None): Price for USDT-based size calculation
-            
-        Returns:
-            float: Quantity to close (adjusted for precision)
-        """
-
         position_size = self._get_position_size(side, symbol, hedge)
 
         if size.endswith('%'):

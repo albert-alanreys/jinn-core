@@ -47,7 +47,7 @@ class OptimizationService:
         summary = [
             ' | '.join([
                 item['name'],
-                item['client'].EXCHANGE,
+                item['client'].exchange_name,
                 item['market_data']['symbol'],
                 str(item['market_data']['interval']),
                 f"{item['market_data']['start']} → "
@@ -404,7 +404,7 @@ class OptimizationService:
 
         for context in self.strategy_contexts.values():
             filename = (
-                f'{context['client'].EXCHANGE}_'
+                f'{context['client'].exchange_name}_'
                 f'{context['market_data']['symbol']}_'
                 f'{context['market_data']['interval']}.json'
             )

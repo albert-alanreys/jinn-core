@@ -1,25 +1,24 @@
-from typing import Any
+from typing import TYPE_CHECKING
 
-from .core import AccountClient
-from .core import MarketClient
-from .core import PositionClient
-from .core import TradeClient
+from ..base import BaseExchangeClient
+from .api import AccountClient, MarketClient, PositionClient, TradeClient
+
+if TYPE_CHECKING:
+    from ..interfaces import (
+        AccountClientInterface, 
+        MarketClientInterface,
+        PositionClientInterface, 
+        TradeClientInterface
+    )
 
 
-class BinanceClient():
+class BinanceClient(BaseExchangeClient):
     """
     Main Binance client providing unified access to all trading operations.
     
     Orchestrates account, market, position, and trade clients to provide
     a comprehensive trading interface. Implements method delegation to
     allow direct access to all subclient methods.
-    
-    Instance Attributes:
-        alerts (list): Shared list for storing trading alerts
-        account (AccountClient): Account operations client
-        market (MarketClient): Market data client
-        position (PositionClient): Position management client
-        trade (TradeClient): Trading operations client
     """
 
     def __init__(self) -> None:
@@ -30,43 +29,49 @@ class BinanceClient():
         dependencies between them for seamless operation.
         """
 
-        self.alerts = []
-
-        self.account = AccountClient()
-        self.market = MarketClient()
-        self.position = PositionClient(
-            account=self.account,
-            market=self.market
+        self._account_client = AccountClient()
+        self._market_client = MarketClient()
+        self._position_client = PositionClient(
+            account=self._account_client,
+            market=self._market_client
         )
-        self.trade = TradeClient(
-            account=self.account,
-            market=self.market,
-            position=self.position,
-            alerts=self.alerts
+        self._trade_client = TradeClient(
+            account=self._account_client,
+            market=self._market_client,
+            position=self._position_client
         )
 
-    def __getattr__(self, name: str) -> Any:
+    @property
+    def exchange_name(self) -> str:
         """
-        Delegate attribute access to appropriate subclient.
-        
-        Allows direct access to methods from account, market, position,
-        and trade clients without explicit subclient reference.
-        
-        Args:
-            name (str): Attribute/method name to access
+        Get the name of the exchange.
         
         Returns:
-            Any: Method or attribute from appropriate subclient
-        
-        Raises:
-            AttributeError: If attribute not found in any subclient
+            str: Exchange identifier
         """
 
-        for subclient_name in ('account', 'market', 'position', 'trade'):
-            try:
-                subclient = object.__getattribute__(self, subclient_name)
-                return getattr(subclient, name)
-            except AttributeError:
-                continue
+        return 'BINANCE'
 
-        raise AttributeError(f'BinanceClient has no attribute "{name}"')
+    @property
+    def account(self) -> 'AccountClientInterface':
+        """Access to account operations"""
+
+        return self._account_client
+
+    @property
+    def market(self) -> 'MarketClientInterface':
+        """Access to market operations"""  
+
+        return self._market_client
+
+    @property
+    def position(self) -> 'PositionClientInterface':
+        """Access to position operations"""
+
+        return self._position_client
+
+    @property
+    def trade(self) -> 'TradeClientInterface':
+        """Access to trade operations"""
+
+        return self._trade_client

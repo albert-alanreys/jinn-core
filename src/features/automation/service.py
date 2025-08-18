@@ -52,7 +52,7 @@ class AutomationService():
         summary = [
             ' | '.join([
                 item['name'],
-                item['client'].EXCHANGE,
+                item['client'].exchange_name,
                 item['market_data']['symbol'],
                 str(item['market_data']['interval'])
             ])

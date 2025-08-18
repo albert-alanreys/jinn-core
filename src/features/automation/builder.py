@@ -7,8 +7,8 @@ from logging import getLogger
 from src.core.enums import Exchange, Strategy
 from src.features.backtesting import BacktestingService
 from src.infrastructure.providers import RealtimeProvider
-from src.infrastructure.clients.exchanges.binance import BinanceClient
-from src.infrastructure.clients.exchanges.bybit import BybitClient
+from src.infrastructure.clients.exchanges import BinanceClient
+from src.infrastructure.clients.exchanges import BybitClient
 
 
 class AutomationBuilder():
@@ -30,9 +30,9 @@ class AutomationBuilder():
 
         Args:
             settings (dict): Configuration dictionary containing:
-                - exchange: Exchange name (e.g., BINANCE, BYBIT)
-                - symbol: Trading symbol (e.g., BTCUSDT)
-                - interval: Time interval for data (e.g., '1h')
+                - exchange: Exchange name
+                - symbol (str): Trading symbol
+                - interval: Kline interval
                 - strategy: Trading strategy to automate
         """
 

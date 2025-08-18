@@ -9,8 +9,7 @@ import numpy as np
 from .order_cache import OrderCache
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.exchanges.binance import BinanceClient
-    from src.infrastructure.clients.exchanges.bybit import BybitClient
+    from src.infrastructure.clients.exchanges import BaseExchangeClient
 
 
 class BaseStrategy(ABC):
@@ -95,7 +94,7 @@ class BaseStrategy(ABC):
 
     def __init__(
         self,
-        client: 'BinanceClient | BybitClient',
+        client: 'BaseExchangeClient',
         params: dict | None = None
     ) -> None:
         """
@@ -119,7 +118,7 @@ class BaseStrategy(ABC):
             base_dir=os.path.join(
                 os.path.dirname(getfile(self.__class__)), '__cache__'
             ),
-            exchange=self.client.EXCHANGE
+            exchange=self.client.exchange_name
         )
         self.order_ids = None
 
@@ -140,7 +139,7 @@ class BaseStrategy(ABC):
 
         Args:
             market_data: Dictionary containing:
-                - symbol: str - Trading pair symbol
+                - symbol: str - Trading symbol
                 - p_precision: float - Price precision step
                 - q_precision: float - Quantity precision step
                 - klines: np.ndarray - OHLCV data with columns:
