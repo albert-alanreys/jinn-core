@@ -15,17 +15,19 @@ class OptimizationService:
     using a combination of selection, recombination and mutation operations.
     """
 
-    ITERATIONS = 5000
-    POPULATION_SIZE = 100
-    MAX_POPULATION_SIZE = 500
-
-    def __init__(self, strategy_contexts: dict) -> None:
+    def __init__(self, settings: dict, strategy_contexts: dict) -> None:
         """
         Initialize OptimizationService with strategy contexts.
 
         Args:
+            settings (dict): Dictionary of optimization settings
             strategy_contexts (dict): Dictionary of strategy contexts
         """
+
+        self.iterations = settings['iterations']
+        self.population_size = settings['population_size']
+        self.max_population_size = settings['max_population_size']
+        self.max_processes = settings['max_processes']
 
         self.strategy_contexts = strategy_contexts
         self.telegram_client = TelegramClient()
@@ -46,18 +48,17 @@ class OptimizationService:
             ' | '.join([
                 item['name'],
                 item['client'].EXCHANGE,
-                item['market_data']['train']['market'].value,
-                item['market_data']['train']['symbol'],
-                str(item['market_data']['train']['interval']),
-                f"{item['market_data']['train']['start']} → "
-                f"{item['market_data']['test']['end']}"
+                item['market_data']['symbol'],
+                str(item['market_data']['interval']),
+                f"{item['market_data']['start']} → "
+                f"{item['market_data']['end']}"
             ])
             for item in self.strategy_contexts.values()
         ]
         self.logger.info(f"Optimization started for:\n{'\n'.join(summary)}")
         self.telegram_client.send_message('🔥 Optimization started')
 
-        with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
+        with multiprocessing.Pool(self.max_processes) as pool:
             best_params = pool.map(
                 func=self._optimize,
                 iterable=self.strategy_contexts.values()
@@ -81,7 +82,7 @@ class OptimizationService:
 
         Args:
             strategy_context (dict): Context dictionary for the strategy
-                                     containing type, client, and market data
+                containing type, client, and market data
 
         Returns:
             list: Best parameters found during optimization
@@ -92,7 +93,7 @@ class OptimizationService:
         for _ in range(3):
             self._create()
 
-            for _ in range(self.ITERATIONS):
+            for _ in range(self.iterations):
                 self._select()
                 self._recombine()
                 self._mutate()
@@ -118,19 +119,63 @@ class OptimizationService:
 
         self.strategy = strategy_context['type']
         self.client = strategy_context['client']
-        self.train_data = strategy_context['market_data']['train']
-        self.test_data = strategy_context['market_data']['test']
+
+        self.train_data = self._split_market_data(
+            market_data=strategy_context['market_data'],
+            train=True
+        )
+        self.test_data = self._split_market_data(
+            market_data=strategy_context['market_data'],
+            train=False
+        )
 
         self.population = {}
         self.best_params = []
         
         self.param_keys = list(self.strategy.opt_params.keys())
 
+    def _split_market_data(self, market_data: dict, train: bool = True) -> dict:
+        """
+        Split market data into train (70%) or test (30%) parts.
+        
+        Args:
+            market_data: Original market data dictionary
+            train: If True, returns training part (70%), else test part (30%)
+        
+        Returns:
+            Dictionary with same structure but split arrays
+        """
+        
+        split_idx = int(len(market_data['klines']) * 0.7)
+        
+        if train:
+            slice_range = slice(None, split_idx)
+        else:
+            slice_range = slice(split_idx, None)
+        
+        split_data = {
+            'symbol': market_data['symbol'],
+            'interval': market_data['interval'],
+            'start': market_data['start'],
+            'end': market_data['end'],
+            'p_precision': market_data['p_precision'],
+            'q_precision': market_data['q_precision'],
+            'klines': market_data['klines'][slice_range],
+            'feeds': {'klines': {}}
+        }
+        
+        if market_data.get('feeds'):
+            for feed_name, feed_data in market_data['feeds']['klines'].items():
+                split_data['feeds']['klines'][feed_name] = feed_data[slice_range]
+        
+        return split_data
+
+
     def _create(self) -> None:
         """
         Create initial population of random parameter combinations.
 
-        Generates POPULATION_SIZE random parameter dictionaries
+        Generates population_size random parameter dictionaries
         from strategy's optimization parameter space, evaluates
         their fitness on training data, and stores them
         in population dictionary.
@@ -143,7 +188,7 @@ class OptimizationService:
                     self.strategy.opt_params.items()
                 )
             }
-            for _ in range(self.POPULATION_SIZE)
+            for _ in range(self.population_size)
         ]
 
         for sample in samples:
@@ -297,10 +342,10 @@ class OptimizationService:
         Remove worst individuals to maintain population size.
 
         Removes individuals with lowest fitness scores until
-        population size is within MAX_POPULATION_SIZE limit.
+        population size is within max_population_size limit.
         """
 
-        while len(self.population) > self.MAX_POPULATION_SIZE:
+        while len(self.population) > self.max_population_size:
             self.population.pop(min(self.population))
 
     def _destroy(self) -> None:
@@ -353,16 +398,15 @@ class OptimizationService:
         Save optimized parameters to strategy JSON files.
 
         Preserves existing optimization results while adding new ones.
-        Files are organized by exchange/market/symbol/interval structure
+        Files are organized by exchange/symbol/interval structure
         and stored in strategy-specific optimization directories.
         """
 
         for context in self.strategy_contexts.values():
             filename = (
                 f'{context['client'].EXCHANGE}_'
-                f'{context['market_data']['train']['market'].value}_'
-                f'{context['market_data']['train']['symbol']}_'
-                f'{context['market_data']['train']['interval']}.json'
+                f'{context['market_data']['symbol']}_'
+                f'{context['market_data']['interval']}.json'
             )
             file_path = os.path.abspath(
                 os.path.join(
@@ -377,8 +421,8 @@ class OptimizationService:
             new_items = [
                 {
                     'period': {
-                        'start': context['market_data']['train']['start'],
-                        'end': context['market_data']['test']['end']
+                        'start': context['market_data']['start'],
+                        'end': context['market_data']['end']
                     },
                     'params': params
                 }

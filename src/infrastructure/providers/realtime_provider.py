@@ -1,10 +1,9 @@
-from logging import getLogger
 from time import sleep, time
 from typing import TYPE_CHECKING
 
 import numpy as np
 
-from src.core.enums import Market
+from src.core.quantklines import shrink, stretch
 from src.utils.klines import has_last_historical_kline
 from src.utils.klines import has_realtime_kline
 
@@ -27,16 +26,7 @@ class RealtimeProvider():
 
     KLINES_LIMIT = 3000
 
-    def __init__(self) -> None:
-        """
-        Initialize RealtimeProvider.
-
-        Sets up logger instance for data operations.
-        """
-
-        self.logger = getLogger(__name__)
-
-    def fetch_data(
+    def get_market_data(
         self,
         client: 'BinanceClient | BybitClient',
         symbol: str,
@@ -54,7 +44,6 @@ class RealtimeProvider():
 
         Returns:
             dict: Complete market data dictionary including:
-                - market: Market type
                 - symbol: Trading symbol
                 - interval: Validated interval
                 - precision: Price and quantity precision
@@ -62,10 +51,10 @@ class RealtimeProvider():
                 - additional feeds (if configured)
         """
 
-        p_precision = client.get_price_precision(Market.FUTURES, symbol)
-        q_precision = client.get_qty_precision(Market.FUTURES, symbol)   
-
+        p_precision = client.get_price_precision(symbol)
+        q_precision = client.get_qty_precision(symbol)   
         valid_interval = client.get_valid_interval(interval)
+
         klines = np.array(
             client.get_last_klines(
                 symbol=symbol,
@@ -77,24 +66,111 @@ class RealtimeProvider():
         if has_realtime_kline(klines):
             klines = klines[:-1]
 
-        additional_data = self._fetch_additional_data(
-            client=client,
-            symbol=symbol,
-            main_klines=klines,
-            feeds=feeds
-        ) if feeds else {'feeds': {}}
+        feeds_data = (
+            self._get_feeds_data(
+                client=client,
+                main_interval=valid_interval,
+                main_klines=klines,
+                symbol=symbol,
+                feeds=feeds,
+            )
+            if feeds
+            else {'feeds': {}}
+        )
 
         result = {
-            'market': Market.FUTURES,
             'symbol': symbol,
             'interval': valid_interval,
             'p_precision': p_precision,
             'q_precision': q_precision,
             'klines': klines,
-            **additional_data
+            **feeds_data
         }
 
         return result
+
+    def _get_feeds_data(
+        self,
+        client: 'BinanceClient | BybitClient',
+        symbol: str,
+        feeds: dict,
+        main_interval: str | int,
+        main_klines: np.ndarray
+    ) -> dict:
+        """
+        Fetch additional data feeds based on configuration.
+        
+        Currently supports secondary klines feeds with different
+        symbols or intervals, resampled to match the main kline array.
+
+        Args:
+            client: Exchange API client
+            symbol: Base trading symbol
+            feeds: Configuration dictionary specifying additional feeds
+            main_interval: Interval of the main kline array
+            main_klines: Main array of klines used as reference for resampling
+
+        Returns:
+            dict: Requested feeds data, structured as:
+                {
+                    'feeds': {
+                        'klines': {feed_name: np.ndarray, ...},
+                        'raw_klines': {feed_name: np.ndarray, ...}
+                    }
+                }
+        """
+
+        if 'klines' not in feeds:
+            return {}
+        
+        klines_by_feed = {}
+        raw_klines_by_feed = {}
+
+        for feed_name, feed_config in feeds['klines'].items():
+            feed_key, feed_interval_key = feed_config[:2]
+            feed_symbol = symbol if feed_key == 'symbol' else feed_key
+            feed_interval = client.get_valid_interval(feed_interval_key)
+
+            main_ms = client.INTERVAL_MS[main_interval]
+            feed_ms = client.INTERVAL_MS[feed_interval]
+
+            current_ms = int(time() * 1000)
+            main_start_ms = main_klines[0][0]
+            limit = int((current_ms - main_start_ms) / feed_ms)
+
+            raw_klines = client.get_last_klines(
+                symbol=feed_symbol,
+                interval=feed_interval,
+                limit=limit
+            )
+            klines = np.array(raw_klines)[:, :6].astype(float)
+
+            if has_realtime_kline(klines):
+                klines = klines[:-1]
+
+            raw_klines_by_feed[feed_name] = klines.copy()
+
+            if main_ms <= feed_ms:
+                klines = stretch(
+                    higher_tf_data=klines,
+                    higher_tf_time=klines[:, 0],
+                    target_tf_time=main_klines[:, 0]
+                )
+            else:
+                klines = shrink(
+                    lower_tf_data=klines,
+                    lower_tf_time=klines[:, 0],
+                    target_tf_time=main_klines[:, 0]
+                )
+
+            klines_by_feed[feed_name] = klines
+
+        return {
+            'feeds': {
+                'klines': klines_by_feed,
+                'raw_klines': raw_klines_by_feed
+            }
+        }
 
     def update_data(self, strategy_context: dict) -> bool:
         """
@@ -104,109 +180,161 @@ class RealtimeProvider():
             strategy_context: Strategy context to update
 
         Returns:
-            bool: True if data was updated, False otherwise
+            bool: True if main klines was updated, False otherwise
         """
 
-        market_data = strategy_context['market_data']
-        feeds = market_data.get('feeds', {})
-        updated = False
+        client = strategy_context['client']
+        original = strategy_context['market_data']
 
-        if not has_last_historical_kline(market_data['klines']):
-            market_data['klines'] = self._append_last_kline(
-                klines=market_data['klines'],
-                client=strategy_context['client'],
-                symbol=market_data['symbol'],
-                interval=market_data['interval']
+        new_market_data = {
+            'klines': original['klines'].copy(),
+            'feeds': {'klines': {}, 'raw_klines': {}}
+            if 'feeds' in original else None
+        }
+
+        main_klines_updated = False
+
+        if not has_last_historical_kline(original['klines']):
+            new_market_data['klines'] = self._append_last_kline(
+                client=client,
+                symbol=original['symbol'],
+                interval=original['interval'],
+                klines=original['klines']
+
             )
-            updated = True
+            main_klines_updated = True
 
-        if 'klines' in feeds:
-            for feed_name, klines in feeds['klines'].items():
-                if not has_last_historical_kline(klines):
-                    params = strategy_context['instance'].params
-                    feed_config = params['feeds']['klines'][feed_name]
-                    feed_symbol = (
-                        market_data['symbol'] 
-                        if feed_config[0] == 'symbol' 
-                        else feed_config[0]
-                    )
-                    feed_interval = feed_config[1]
+        if new_market_data['feeds'] is not None:
+            self._update_feeds(
+                strategy_context=strategy_context,
+                client=client,
+                original=original,
+                new_market_data=new_market_data,
+                main_klines_updated=main_klines_updated
+            )
 
-                    feeds['klines'][feed_name] = self._append_last_kline(
-                        klines=klines,
-                        client=strategy_context['client'],
-                        symbol=feed_symbol,
-                        interval=feed_interval
-                    )
+        if main_klines_updated:
+            strategy_context['market_data'].update(new_market_data)
 
-        return updated
+        return main_klines_updated
 
-    def _fetch_additional_data(
+    def _update_feeds(
         self,
+        strategy_context: dict,
         client: 'BinanceClient | BybitClient',
-        symbol: str,
-        main_klines: np.ndarray,
-        feeds: dict
-    ) -> dict:
+        original: dict,
+        new_market_data: dict,
+        main_klines_updated: bool,
+    ) -> None:
         """
-        Fetch additional feed data required by strategies.
+        Update feed klines and align them with main klines if needed.
 
         Args:
+            strategy_context: Strategy execution context
             client: Exchange API client
-            symbol: Main trading symbol
-            main_klines: Primary kline data
-            feeds: Feed configuration dictionary
+            original: Original market data before update
+            new_market_data: Target dict for updated market data
+            main_klines_updated: Whether the main klines were updated
 
         Returns:
-            dict: Dictionary containing all additional feed data
+            None
         """
 
-        result = {}
-        
-        if 'klines' in feeds:
-            klines_data = {}
+        main_ms = client.INTERVAL_MS[original['interval']]
 
-            for feed_name, feed_config in feeds['klines'].items():
-                feed_symbol = (
-                    symbol if feed_config[0] == 'symbol' else feed_config[0]
+        for feed_name, feed_data in original['feeds']['raw_klines'].items():
+            new_market_data['feeds']['raw_klines'][feed_name] = (
+                feed_data.copy()
+            )
+
+            has_last_kline = has_last_historical_kline(feed_data)
+            need_feed_params = (not has_last_kline or main_klines_updated)
+
+            if need_feed_params:
+                feed_config = (
+                    strategy_context['instance']
+                    .params['feeds']['klines'][feed_name]
                 )
-                feed_interval = client.get_valid_interval(feed_config[1])
-                interval_ms = client.INTERVAL_MS[feed_interval]
-                limit = int((time() * 1000 - main_klines[0][0]) / interval_ms)
+                feed_key, feed_interval_key = feed_config[:2]
+                feed_symbol = (
+                    original['symbol'] if feed_key == 'symbol' else feed_key
+                )
+                feed_interval = client.get_valid_interval(feed_interval_key)
+                feed_ms = client.INTERVAL_MS[feed_interval]
 
-                feed_klines = np.array(
-                    client.get_last_klines(
+            if not has_last_kline:
+                new_market_data['feeds']['raw_klines'][feed_name] = (
+                    self._append_last_kline(
+                        client=client,
                         symbol=feed_symbol,
                         interval=feed_interval,
-                        limit=limit
+                        klines=feed_data
                     )
-                )[:, :6].astype(float)
+                )
 
-                if has_realtime_kline(feed_klines):
-                    feed_klines = feed_klines[:-1]
+            if main_klines_updated:
+                self._resample_feed(
+                    main_ms=main_ms,
+                    feed_ms=feed_ms,
+                    feed_name=feed_name,
+                    new_market_data=new_market_data
+                )
 
-                klines_data[feed_name] = feed_klines
+    def _resample_feed(
+        self,
+        main_ms: int,
+        feed_ms: int,
+        feed_name: str,
+        new_market_data: dict
+    ) -> None:
+        """
+        Resample feed data to match the main klines timeframe.
 
-            if klines_data:
-                result['feeds'] = {'klines': klines_data}
+        Depending on whether the feed interval is higher or lower than
+        the main interval, the data is either stretched or shrunk.
 
-        return result
+        Args:
+            main_ms: Milliseconds duration of the main klines interval
+            feed_ms: Milliseconds duration of the feed klines interval
+            feed_name: Feed identifier
+            new_market_data: Container for updated feed data
+
+        Returns:
+            None
+        """
+
+        feed_data = new_market_data['feeds']['raw_klines'][feed_name]
+        feed_time = feed_data[:, 0]
+
+        if main_ms <= feed_ms:
+            new_market_data['feeds']['klines'][feed_name] = stretch(
+                higher_tf_data=feed_data,
+                higher_tf_time=feed_time,
+                target_tf_time=new_market_data['klines'][:, 0],
+            )
+        else:
+            new_market_data['feeds']['klines'][feed_name] = shrink(
+                lower_tf_data=feed_data,
+                lower_tf_time=feed_time,
+                target_tf_time=new_market_data['klines'][:, 0],
+            )
 
     def _append_last_kline(
         self,
-        klines: np.ndarray,
         client: 'BinanceClient | BybitClient',
         symbol: str,
         interval: str | int,
+        klines: np.ndarray
     ) -> np.ndarray:
         """
         Append the latest kline to existing kline data.
 
         Args:
-            klines: Existing kline array
             client: Exchange API client
             symbol: Trading symbol
             interval: Kline interval
+            klines: Existing kline array
+
 
         Returns:
             np.ndarray: Updated kline array with new data
@@ -227,12 +355,9 @@ class RealtimeProvider():
             new_kline = np.array(last_klines)[:, :6].astype(float)[:-1]
 
             if new_kline[0][0] <= klines[-1][0]:
-                sleep(3.0)
+                sleep(1.0)
                 continue
 
             return np.vstack([klines, new_kline])
 
-        self.logger.warning(
-            f'Failed to append new kline for {symbol} | {interval}'
-        )
         return klines

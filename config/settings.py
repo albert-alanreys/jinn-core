@@ -8,27 +8,32 @@ import src.core.enums as enums
 MODE = enums.Mode.BACKTESTING
 
 # Settings for different modes
-OPTIMIZATION_CONFIG = {
+OPTIMIZATION_SETTINGS = {
+    # General optimization parameters
+    'iterations': 1000,
+    'population_size': 200,
+    'max_population_size': 300,
+    'max_processes': 16,
+
+    # Strategy parameters
     'strategy': enums.Strategy.NUGGET_V2,
-    'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
+    'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
-    'start': '2024-01-01',
+    'start': '2022-01-01',
     'end': '2025-01-01'
 }
-BACKTESTING_CONFIG = {
+BACKTESTING_SETTINGS = {
     'strategy': enums.Strategy.NUGGET_V2,
-    'exchange': enums.Exchange.BINANCE,
-    'market': enums.Market.SPOT,
+    'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',
     'interval': '1h',
-    'start': '2023-01-01',
-    'end': '2025-06-01'
+    'start': '2022-01-01',
+    'end': '2025-01-01'
 }
-AUTOMATION_CONFIG = {
-    'strategy': enums.Strategy.DEVOURER_V3,
-    'exchange': enums.Exchange.BYBIT,
+AUTOMATION_SETTINGS = {
+    'strategy': enums.Strategy.NUGGET_V2,
+    'exchange': enums.Exchange.BINANCE,
     'symbol': 'ETHUSDT',
     'interval': 1
 }

@@ -3,42 +3,41 @@ import numba as nb
 
 
 @nb.njit(
-    nb.float64[:, :](nb.float64[:], nb.float64[:], nb.float64[:]),
+    nb.float64[:, :, :](nb.float64[:, :], nb.float64[:], nb.float64[:]),
     cache=True,
     nogil=True
 )
 def shrink(
-    lower_tf_source: np.ndarray,
+    lower_tf_data: np.ndarray,
     lower_tf_time: np.ndarray,
     target_tf_time: np.ndarray
 ) -> np.ndarray:
     """
-    Align lower timeframe data to the main timeframe by aggregating values.
+    Align lower timeframe data to the main timeframe by grouping values.
 
-    Maps values from higher resolution (lower timeframe) to main timeframe,
-    creating a 2D array where each row represents a main timeframe bar
-    with corresponding lower timeframe values.
+    Each row of `lower_tf_data` corresponds to a lower timeframe bar.
+    This function groups them into blocks according to target timeframe.
 
     Args:
-        lower_tf_source (np.ndarray): Data values from lower timeframe
-        lower_tf_time (np.ndarray): Timestamps of lower (source) timeframe
-        target_tf_time (np.ndarray): Timestamps of main (target) timeframe
+        lower_tf_data (np.ndarray): Data values from lower timeframe
+        lower_tf_time (np.ndarray): Timestamps of lower timeframe
+        target_tf_time (np.ndarray): Timestamps of target timeframe
 
     Returns:
-        np.ndarray: 2D array with lower TF values aligned to main TF
+        np.ndarray: 3D array with lower TF values aligned to main TF
     """
 
-    n_lower = lower_tf_time.shape[0]
+    n_lower, n_features = lower_tf_data.shape
     n_target = target_tf_time.shape[0]
     
-    if n_target < 2:
-        return np.full((n_target, n_lower), np.nan)
+    if n_target < 2 or n_lower < 1:
+        return np.full((n_target, 0, n_features), np.nan)
 
     lower_duration = lower_tf_time[1] - lower_tf_time[0]
     target_duration = target_tf_time[1] - target_tf_time[0]
     subbars = int(target_duration / lower_duration + 0.5)
 
-    result = np.full((n_target, subbars), np.nan)
+    result = np.full((n_target, n_features, subbars), np.nan)
 
     target_idx = 0
     lower_idx = 0
@@ -53,7 +52,7 @@ def shrink(
         time_close = target_tf_time[target_idx] + target_duration
 
         if lower_tf_time[lower_idx] < time_close:
-            result[target_idx, k] = lower_tf_source[lower_idx]
+            result[target_idx, :, k] = lower_tf_data[lower_idx, :]
             lower_idx += 1
             k += 1
         else:

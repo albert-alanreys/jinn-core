@@ -1,7 +1,6 @@
 from logging import getLogger
 from typing import TYPE_CHECKING
 
-from src.core.enums import Market
 from src.utils.rounding import adjust
 from .base import BaseClient
 
@@ -58,7 +57,7 @@ class PositionClient(BaseClient):
             dict: API response confirming position mode change
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/positionSide/dual'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/positionSide/dual'
         params = {'dualSidePosition': mode}
         params, headers = self.build_signed_request(params)
         return self.post(url, params=params, headers=headers, logging=False)
@@ -78,7 +77,7 @@ class PositionClient(BaseClient):
             dict: API response confirming margin mode change
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/marginType'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/marginType'
         params = {'symbol': symbol, 'marginType': mode}
         params, headers = self.build_signed_request(params)
         return self.post(url, params=params, headers=headers, logging=False)
@@ -98,7 +97,7 @@ class PositionClient(BaseClient):
             dict: API response confirming leverage setting
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v1/leverage'
+        url = f'{self.BASE_ENDPOINT}/fapi/v1/leverage'
         params = {'symbol': symbol, 'leverage': leverage}
         params, headers = self.build_signed_request(params)
         return self.post(url, params=params, headers=headers, logging=False)
@@ -149,10 +148,7 @@ class PositionClient(BaseClient):
             size_val = float(size.rstrip('u'))
             qty = leverage * size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(
-            market=Market.FUTURES,
-            symbol=symbol
-        )
+        q_precision = self.market.get_qty_precision(symbol)
         return adjust(qty, q_precision)
 
     def get_quantity_to_close(
@@ -195,10 +191,7 @@ class PositionClient(BaseClient):
 
             qty = size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(
-            market=Market.FUTURES,
-            symbol=symbol
-        )
+        q_precision = self.market.get_qty_precision(symbol)
         return adjust(qty, q_precision)
 
     def _get_position_size(
@@ -248,7 +241,7 @@ class PositionClient(BaseClient):
             list: Position information from API
         """
 
-        url = f'{self.FUTURES_ENDPOINT}/fapi/v3/positionRisk'
+        url = f'{self.BASE_ENDPOINT}/fapi/v3/positionRisk'
         params = {'symbol': symbol}
         params, headers = self.build_signed_request(params)
         return self.get(url, params, headers)

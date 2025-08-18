@@ -10,7 +10,7 @@ from src.core.strategy.deal_logger import update_completed_deals_log
 from src.utils.rounding import adjust
 
 
-class SandboxV1(BaseStrategy):
+class ExampleV1(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
     params = {
@@ -45,8 +45,8 @@ class SandboxV1(BaseStrategy):
         "adx_short_lower_limit": 1.0,
         "feeds": {
             "klines": {
-                "HTF": ["symbol", "1d"],
-                "LTF": ["symbol", "15m"],
+                "TF #1": ["symbol", "5m"],
+                "TF #2": ["symbol", "15m"],
             }
         }
     }
@@ -111,6 +111,11 @@ class SandboxV1(BaseStrategy):
 
     # Frontend rendering settings
     indicator_options = {
+        'TF #1': {
+            'pane': 0,
+            'type': 'line',
+            'color': colors.CRIMSON
+        },
         'SL': {
             'pane': 0,
             'type': 'line',
@@ -219,19 +224,9 @@ class SandboxV1(BaseStrategy):
         )
         self.adx = self.dmi[2]
 
-        # Align higher timeframe close prices
-        self.htf_close = qk.stretch(
-            higher_tf_source=self.feeds['klines']['HTF']['close'],
-            higher_tf_time=self.feeds['klines']['HTF']['time'],
-            target_tf_time=self.time
-        )
-
-        # Align lower timeframe close prices
-        self.ltf_close = qk.shrink(
-            lower_tf_source=self.feeds['klines']['LTF']['close'],
-            lower_tf_time=self.feeds['klines']['LTF']['time'],
-            target_tf_time=self.time
-        )
+        # Additional data
+        self.tf1_close = self.feeds['klines']['TF #1']['close']
+        self.tf2_close = self.feeds['klines']['TF #2']['close']
 
         # Alert flags for signals
         self.alert_cancel = False
@@ -321,6 +316,10 @@ class SandboxV1(BaseStrategy):
         )
 
         self.indicators = {
+            'TF #1': {
+                'options': self.indicator_options['TF #1'],
+                'values': self.tf1_close
+            },
             'SL': {
                 'options': self.indicator_options['SL'],
                 'values': self.stop_price
@@ -357,7 +356,7 @@ class SandboxV1(BaseStrategy):
         }
 
     @staticmethod
-    @nb.njit(cache=True, nogil=True)
+    # @nb.njit(cache=True, nogil=True)
     def _calculate_loop(
         direction: int,
         initial_capital: float,

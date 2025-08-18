@@ -20,8 +20,8 @@ def main() -> None:
 
     controller = Controller(
         mode=settings.MODE,
-        optimization_config=settings.OPTIMIZATION_CONFIG,
-        backtesting_config=settings.BACKTESTING_CONFIG,
-        automation_config=settings.AUTOMATION_CONFIG
+        optimization_settings=settings.OPTIMIZATION_SETTINGS,
+        backtesting_settings=settings.BACKTESTING_SETTINGS,
+        automation_settings=settings.AUTOMATION_SETTINGS
     )
     controller.start_mode()

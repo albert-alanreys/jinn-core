@@ -20,7 +20,7 @@ class AutomationBuilder():
     for automated trading.
     """
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, settings: dict) -> None:
         """
         Initialize AutomationBuilder with configuration parameters.
 
@@ -29,17 +29,17 @@ class AutomationBuilder():
         Bybit client, and logger.
 
         Args:
-            config (dict): Configuration dictionary containing:
+            settings (dict): Configuration dictionary containing:
                 - exchange: Exchange name (e.g., BINANCE, BYBIT)
                 - symbol: Trading symbol (e.g., BTCUSDT)
                 - interval: Time interval for data (e.g., '1h')
                 - strategy: Trading strategy to automate
         """
 
-        self.exchange = config['exchange']
-        self.symbol = config['symbol']
-        self.interval = config['interval']
-        self.strategy = config['strategy']
+        self.exchange = settings['exchange']
+        self.symbol = settings['symbol']
+        self.interval = settings['interval']
+        self.strategy = settings['strategy']
 
         self.realtime_provider = RealtimeProvider()
         self.binance_client = BinanceClient()
@@ -53,7 +53,7 @@ class AutomationBuilder():
 
         Loads automation configurations from JSON files,
         fetches real-time market data, creates strategy instances,
-        and runs backtests. Falls back to instance config if no
+        and runs backtests. Falls back to instance settings if no
         strategy files are found.
 
         Returns:
@@ -83,55 +83,41 @@ class AutomationBuilder():
 
             for file_path in file_paths:
                 basename = os.path.basename(file_path)
+                pattern = r'(\w+)_(\w+)_(\w+)\.json'
+                groups = re.match(pattern, basename).groups()
+                exchange, symbol, interval = (
+                    groups[0].upper(),
+                    groups[1].upper(),
+                    groups[2]
+                )
 
-                pattern1 = r'^([^_]+)_([^_]+)_([^_]+)\.json$'
-                pattern2 = r'^([^_]+)_([^_]+)_([^_]+)_([^_]+)\.json$'
-
-                match1 = re.fullmatch(pattern1, basename)
-                match2 = re.fullmatch(pattern2, basename)
-
-                if match1:
-                    exchange, symbol, interval = (
-                        match1.group(1).upper(),
-                        match1.group(2).upper(),
-                        match1.group(3)
+                with open(file_path, 'r') as file:
+                    content = file.read()
+                    content = (
+                        content
+                        .replace('True', 'true')
+                        .replace('False', 'false')
                     )
 
-                    with open(file_path, 'r') as file:
-                        content = file.read()
-                        content = (
-                            content
-                            .replace('True', 'true')
-                            .replace('False', 'false')
-                        )
-
-                        try:
-                            params = {
-                                'params': json.loads(content)
-                            }
-                        except json.JSONDecodeError:
+                try:
+                    json_data = json.loads(content)
+                    
+                    if isinstance(json_data, list):
+                        if json_data and 'params' in json_data[0]:
+                            params = {'params': json_data[0]['params']}
+                        else:
                             self.logger.error(
-                                f'Failed to load JSON from {file_path}'
+                                f'Invalid array format in {file_path}'
                             )
                             continue
-                elif match2:
-                    exchange, _, symbol, interval = (
-                        match2.group(1).upper(),
-                        match2.group(2),
-                        match2.group(3).upper(),
-                        match2.group(4)
+                    else:
+                        params = {'params': json_data}
+                        
+                except json.JSONDecodeError:
+                    self.logger.error(
+                        f'Failed to load JSON from {file_path}'
                     )
-
-                    with open(file_path, 'r') as file:
-                        try:
-                            params = {
-                                'params': json.load(file)[0]['params']
-                            }
-                        except json.JSONDecodeError:
-                            self.logger.error(
-                                f'Failed to load JSON from {file_path}'
-                            )
-                            continue
+                    continue
 
                 match exchange:
                     case Exchange.BINANCE.name:
@@ -140,8 +126,10 @@ class AutomationBuilder():
                         client = self.bybit_client
 
                 try:
+                    print(params)
+
                     instance = strategy.value(client, **params)
-                    market_data = self.realtime_provider.fetch_data(
+                    market_data = self.realtime_provider.get_market_data(
                         client=client,
                         symbol=symbol,
                         interval=interval,
@@ -171,7 +159,7 @@ class AutomationBuilder():
 
             try:
                 instance = self.strategy.value(client)
-                market_data = self.realtime_provider.fetch_data(
+                market_data = self.realtime_provider.get_market_data(
                     client=client,
                     symbol=self.symbol,
                     interval=self.interval,

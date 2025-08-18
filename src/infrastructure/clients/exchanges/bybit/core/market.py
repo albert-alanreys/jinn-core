@@ -3,7 +3,6 @@ from functools import lru_cache
 from logging import getLogger
 from time import time
 
-from src.core.enums import Market
 from .base import BaseClient
 
 
@@ -13,7 +12,6 @@ class MarketClient(BaseClient):
     
     Handles market data retrieval including klines, tickers,
     symbol information, and precision data.
-    Supports both futures and spot markets.
     
     Attributes:
         INTERVALS (dict): Mapping of interval formats to standard intervals
@@ -57,7 +55,6 @@ class MarketClient(BaseClient):
 
     def get_historical_klines(
         self,
-        market: Market,
         symbol: str,
         interval: str | int,
         start: int,
@@ -70,7 +67,6 @@ class MarketClient(BaseClient):
         and processing them concurrently for improved performance.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol (e.g., 'BTCUSDT')
             interval (str): Kline interval (e.g., '1', '60', 'D')
             start (int): Start time in milliseconds
@@ -91,10 +87,9 @@ class MarketClient(BaseClient):
             ]
             klines = []
 
-            with ThreadPoolExecutor(max_workers=7) as executor:
-                results = executor.map(
+            with ThreadPoolExecutor(max_workers=50) as executor:
+                klines_grouped_by_range = executor.map(
                     lambda time_range: self._get_klines(
-                        market=market,
                         symbol=symbol,
                         interval=interval,
                         start=time_range[0],
@@ -102,16 +97,17 @@ class MarketClient(BaseClient):
                     ),
                     time_ranges
                 )
-
-                for result in results:
-                    klines.extend(result)
+                klines = [
+                    kline
+                    for kline_group in klines_grouped_by_range
+                    for kline in kline_group
+                ]
 
             return klines
         except Exception as e:
             self.logger.error(
                 f'Failed to request data | '
                 f'Bybit | '
-                f'{market.value} | '
                 f'{symbol} | '
                 f'{interval} | '
                 f'{type(e).__name__} - {e}'
@@ -144,7 +140,6 @@ class MarketClient(BaseClient):
 
             if limit <= 1000:
                 return self._get_klines(
-                    market=Market.FUTURES,
                     symbol=symbol,
                     interval=interval,
                     limit=limit
@@ -162,10 +157,9 @@ class MarketClient(BaseClient):
             ]
             klines = []
 
-            with ThreadPoolExecutor(max_workers=7) as executor:
-                results = executor.map(
+            with ThreadPoolExecutor(max_workers=50) as executor:
+                klines_grouped_by_range = executor.map(
                     lambda time_range: self._get_klines(
-                        market=Market.FUTURES,
                         symbol=symbol,
                         interval=interval,
                         start=time_range[0],
@@ -173,16 +167,17 @@ class MarketClient(BaseClient):
                     ),
                     time_ranges
                 )
-
-                for result in results:
-                    klines.extend(result)
+                klines = [
+                    kline
+                    for kline_group in klines_grouped_by_range
+                    for kline in kline_group
+                ]
 
             return klines[-limit:]
         except Exception as e:
             self.logger.error(
                 f'Failed to request data | '
                 f'Bybit | '
-                f'{Market.FUTURES.value} | '
                 f'{symbol} | '
                 f'{interval} | '
                 f'{type(e).__name__} - {e}'
@@ -213,7 +208,7 @@ class MarketClient(BaseClient):
         raise ValueError(f'Invalid interval: {interval}')
 
     @lru_cache
-    def get_price_precision(self, market: Market, symbol: str) -> float:
+    def get_price_precision(self, symbol: str) -> float:
         """
         Get price precision (tick size) for specified symbol.
         
@@ -221,7 +216,6 @@ class MarketClient(BaseClient):
         from exchange info. Result is cached for performance.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol
             
         Returns:
@@ -229,7 +223,7 @@ class MarketClient(BaseClient):
         """
 
         try:
-            symbol_info = self._get_symbol_info(market, symbol)
+            symbol_info = self._get_symbol_info(symbol)
             return float(symbol_info['priceFilter']['tickSize'])
         except Exception as e:
             self.logger.error(
@@ -238,7 +232,7 @@ class MarketClient(BaseClient):
             )
 
     @lru_cache
-    def get_qty_precision(self, market: Market, symbol: str) -> float:
+    def get_qty_precision(self, symbol: str) -> float:
         """
         Get quantity precision (step size) for specified symbol.
         
@@ -246,7 +240,6 @@ class MarketClient(BaseClient):
         from exchange info. Result is cached for performance.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol
             
         Returns:
@@ -254,14 +247,9 @@ class MarketClient(BaseClient):
         """
 
         try:
-            symbol_info = self._get_symbol_info(market, symbol)
+            symbol_info = self._get_symbol_info(symbol)
             lot_size_filter = symbol_info['lotSizeFilter']
-
-            match market:
-                case Market.FUTURES:
-                    return float(lot_size_filter['qtyStep'])
-                case Market.SPOT:
-                    return float(lot_size_filter['basePrecision'])
+            return float(lot_size_filter['qtyStep'])
         except Exception as e:
             self.logger.error(
                 f'Failed to get qty precision for {symbol} | '
@@ -285,7 +273,6 @@ class MarketClient(BaseClient):
 
     def _get_klines(
         self,
-        market: Market,
         symbol: str,
         interval: str,
         start: int = None,
@@ -299,7 +286,6 @@ class MarketClient(BaseClient):
         Used internally by public kline methods.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol
             interval (str): Kline interval
             start (int, optional): Start time in milliseconds
@@ -311,15 +297,8 @@ class MarketClient(BaseClient):
         """
 
         url = f'{self.BASE_ENDPOINT}/v5/market/kline'
-        
-        match market:
-            case Market.FUTURES:
-                category = 'linear'
-            case Market.SPOT:
-                category = 'spot'
-
         params = {
-            'category': category,
+            'category': 'linear',
             'symbol': symbol,
             'interval': interval,
             'limit': limit,
@@ -334,7 +313,7 @@ class MarketClient(BaseClient):
         response = self.get(url, params, logging=False)
         return response['result']['list'][::-1]
 
-    def _get_symbol_info(self, market: Market, symbol: str) -> dict:
+    def _get_symbol_info(self, symbol: str) -> dict:
         """
         Get symbol information from exchange info.
         
@@ -342,7 +321,6 @@ class MarketClient(BaseClient):
         and trading rules from exchange info endpoint.
         
         Args:
-            market (Market): Market type (FUTURES or SPOT)
             symbol (str): Trading symbol
         
         Returns:
@@ -350,13 +328,7 @@ class MarketClient(BaseClient):
         """
 
         url = f'{self.BASE_ENDPOINT}/v5/market/instruments-info'
-
-        match market:
-            case Market.FUTURES:
-                category = 'linear'
-            case Market.SPOT:
-                category = 'spot'
-
-        params = {'category': category, 'symbol': symbol}
+        params = {'category': 'linear', 'symbol': symbol}
         response = self.get(url, params)
+
         return response['result']['list'][0]

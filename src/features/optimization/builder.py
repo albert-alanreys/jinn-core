@@ -1,9 +1,8 @@
 import json
 import os
-from datetime import datetime, timedelta
 from logging import getLogger
 
-from src.core.enums import Exchange, Market, Strategy
+from src.core.enums import Exchange, Strategy
 from src.infrastructure.clients.exchanges.binance import BinanceClient
 from src.infrastructure.clients.exchanges.bybit import BybitClient
 from src.infrastructure.providers import HistoryProvider
@@ -17,7 +16,7 @@ class OptimizationBuilder:
     fetching market data, and preparing data splits for training and testing.
     """
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, settings: dict) -> None:
         """
         Initialize OptimizationBuilder with configuration parameters.
 
@@ -26,23 +25,21 @@ class OptimizationBuilder:
         Bybit client, and logger.
 
         Args:
-            config (dict): Configuration dictionary containing:
+            settings (dict): Configuration dictionary containing:
                 - strategy: Trading strategy to optimize
                 - exchange: Exchange name (e.g., BINANCE, BYBIT)
-                - market: Market type (e.g., FUTURES, SPOT)
                 - symbol: Trading symbol (e.g., BTCUSDT)
                 - interval: Time interval for data (e.g., '1h')
                 - start: Start date for data (format: 'YYYY-MM-DD')
                 - end: End date for data (format: 'YYYY-MM-DD')
         """
 
-        self.strategy = config['strategy']
-        self.exchange = config['exchange']
-        self.market = config['market']
-        self.symbol = config['symbol']
-        self.interval = config['interval']
-        self.start = config['start']
-        self.end = config['end']
+        self.strategy = settings['strategy']
+        self.exchange = settings['exchange']
+        self.symbol = settings['symbol']
+        self.interval = settings['interval']
+        self.start = settings['start']
+        self.end = settings['end']
 
         self.history_provider = HistoryProvider()
         self.binance_client = BinanceClient()
@@ -56,7 +53,7 @@ class OptimizationBuilder:
 
         Loads optimization configurations from JSON files,
         fetches market data, and creates contexts for each strategy.
-        Falls back to instance config if no strategy files are found.
+        Falls back to instance settings if no strategy files are found.
 
         Returns:
             dict: Dictionary of strategy contexts keyed by context ID,
@@ -92,7 +89,6 @@ class OptimizationBuilder:
 
             for config in configs:
                 exchange = config['exchange'].upper()
-                market = config['market'].upper()
                 symbol = config['symbol'].upper()
                 interval = config['interval']
                 start = config['start']
@@ -104,16 +100,9 @@ class OptimizationBuilder:
                     case Exchange.BYBIT.name:
                         client = self.bybit_client
 
-                match market:
-                    case Market.FUTURES.name:
-                        market = Market.FUTURES
-                    case Market.SPOT.name:
-                        market = Market.SPOT
-
                 try:
-                    market_data = self._get_market_data(
+                    market_data = self.history_provider.get_market_data(
                         client=client,
-                        market=market,
                         symbol=symbol,
                         interval=interval,
                         start=start,
@@ -138,9 +127,8 @@ class OptimizationBuilder:
                     client = self.bybit_client
 
             try:
-                market_data = self._get_market_data(
+                market_data = self.history_provider.get_market_data(
                     client=client,
-                    market=self.market,
                     symbol=self.symbol,
                     interval=self.interval,
                     start=self.start,
@@ -158,69 +146,3 @@ class OptimizationBuilder:
                 self.logger.exception('An error occurred')
 
         return strategy_contexts
-    
-    def _get_market_data(
-        self,
-        client: BinanceClient | BybitClient,
-        market: Market,
-        symbol: str,
-        interval: str,
-        start: str,
-        end: str,
-        feeds: list | None
-    ) -> dict:
-        """
-        Fetch and split market data into training and test sets.
-
-        Splits the total date range into 70% training and 30% test periods,
-        then fetches historical data for both periods
-        using the history provider.
-
-        Args:
-            client (BinanceClient | BybitClient): Exchange API client instance
-            market (Market): Market type (FUTURES/SPOT)
-            symbol (str): Trading symbol
-            interval (str): Time interval for data
-            start (str): Start date (format: 'YYYY-MM-DD')
-            end (str): End date (format: 'YYYY-MM-DD')
-            feeds (list | None): Optional list of data feeds
-                                 required by strategy
-
-        Returns:
-            dict: Dictionary containing:
-                - train: Training dataset (70% of period)
-                - test: Test dataset (remaining 30%)
-        """
-
-        start_date = datetime.strptime(start, '%Y-%m-%d')
-        end_date = datetime.strptime(end, '%Y-%m-%d')
-
-        total_days = (end_date - start_date).days
-        train_days = int(total_days * 0.7)
-
-        train_end_date = start_date + timedelta(train_days)
-        test_start_date = train_end_date + timedelta(1)
-
-        train_data = self.history_provider.fetch_data(
-            client=client,
-            market=market,
-            symbol=symbol,
-            interval=interval,
-            start=start,
-            end=train_end_date.strftime('%Y-%m-%d'),
-            feeds=feeds
-        )
-        test_data = self.history_provider.fetch_data(
-            client=client,
-            market=market,
-            symbol=symbol,
-            interval=interval,
-            start=test_start_date.strftime('%Y-%m-%d'),
-            end=end,
-            feeds=feeds
-        )
-
-        return {
-            'train': train_data,
-            'test': test_data
-        }

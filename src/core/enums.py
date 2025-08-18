@@ -7,7 +7,7 @@ from src.strategies import MeanStrikeV2
 from src.strategies import NuggetV2
 from src.strategies import NuggetV4
 from src.strategies import NuggetV5
-from src.strategies import SandboxV1
+from src.strategies import ExampleV1
 from src.strategies import SisterV1
 
 
@@ -39,19 +39,6 @@ class Exchange(Enum):
     BYBIT = 'BYBIT'
 
 
-class Market(Enum):
-    """
-    Trading market types.
-    
-    Defines the available market types for trading:
-    - FUTURES: Futures/derivatives trading
-    - SPOT: Spot trading (immediate settlement)
-    """
-
-    FUTURES = 'FUTURES'
-    SPOT = 'SPOT'
-
-
 class Strategy(Enum):
     """
     Available strategies. Maps strategy names
@@ -60,10 +47,10 @@ class Strategy(Enum):
 
     DAILY_PROFIT_V1 = DailyProfitV1
     DEVOURER_V3 = DevourerV3
+    EXAMPLE_V1 = ExampleV1
     MEAN_STRIKE_V1 = MeanStrikeV1
     MEAN_STRIKE_V2 = MeanStrikeV2
     NUGGET_V2 = NuggetV2
     NUGGET_V4 = NuggetV4
     NUGGET_V5 = NuggetV5
-    SANDBOX_V1 = SandboxV1
     SISTER_V1 = SisterV1

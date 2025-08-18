@@ -27,7 +27,6 @@ def format_contexts(strategy_contexts: dict) -> dict:
             ),
             'exchange': context['client'].EXCHANGE,
             'symbol': market_data['symbol'],
-            'market': market_data['market'].value,
             'interval': market_data['interval'],
             'minMove': min_move,
             'precision': precision,

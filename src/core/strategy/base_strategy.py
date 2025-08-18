@@ -178,10 +178,12 @@ class BaseStrategy(ABC):
         self.volume = market_data['klines'][:, 5]
 
         # Additional feeds
-        self.feeds = market_data['feeds']
+        self.feeds = {'klines': {}}
 
-        if self.feeds:
-            for feed_name, feed_data in self.feeds['klines'].items():
+        if market_data['feeds']:
+            for feed_name, feed_data in (
+                market_data['feeds']['klines'].items()
+            ):
                 self.feeds['klines'][feed_name] = {
                     'time': feed_data[:, 0],
                     'open': feed_data[:, 1],
