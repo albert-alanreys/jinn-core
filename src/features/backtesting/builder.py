@@ -20,7 +20,7 @@ class BacktestingBuilder:
     for backtesting.
     """
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, settings: dict) -> None:
         """
         Initialize BacktestingBuilder with configuration parameters.
 
@@ -29,7 +29,7 @@ class BacktestingBuilder:
         Bybit client, and logger.
 
         Args:
-            config (dict): Configuration dictionary containing:
+            settings (dict): Configuration dictionary containing:
                 - exchange: Exchange name (e.g., BINANCE, BYBIT)
                 - symbol: Trading symbol (e.g., BTCUSDT)
                 - interval: Time interval for data (e.g., '1h')
@@ -38,12 +38,12 @@ class BacktestingBuilder:
                 - strategy: Trading strategy to backtest
         """
 
-        self.exchange = config['exchange']
-        self.symbol = config['symbol']
-        self.interval = config['interval']
-        self.start = config['start']
-        self.end = config['end']
-        self.strategy = config['strategy']
+        self.exchange = settings['exchange']
+        self.symbol = settings['symbol']
+        self.interval = settings['interval']
+        self.start = settings['start']
+        self.end = settings['end']
+        self.strategy = settings['strategy']
 
         self.history_provider = HistoryProvider()
         self.binance_client = BinanceClient()
@@ -57,7 +57,7 @@ class BacktestingBuilder:
 
         Loads backtesting configurations from JSON files,
         fetches historical market data, creates strategy instances,
-        and runs backtests. Falls back to instance config if no
+        and runs backtests. Falls back to instance settings if no
         strategy files are found.
 
         Returns:

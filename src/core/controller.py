@@ -22,9 +22,9 @@ class Controller():
     def __init__(
         self,
         mode: Mode,
-        optimization_config: dict,
-        backtesting_config: dict,
-        automation_config: dict
+        optimization_settings: dict,
+        backtesting_settings: dict,
+        automation_settings: dict
     ) -> None:
         """
         Initialize Controller with mode and configuration settings.
@@ -33,17 +33,17 @@ class Controller():
         logger, and initializes the appropriate service based on the mode.
 
         Args:
-            mode (Mode): Application mode (OPTIMIZATION, BACKTESTING, AUTOMATION)
-            optimization_config (dict): Configuration for optimization mode
-            backtesting_config (dict): Configuration for backtesting mode
-            automation_config (dict): Configuration for automation mode
+            mode (Mode): Application mode
+            optimization_settings (dict): Configuration for optimization mode
+            backtesting_settings (dict): Configuration for backtesting mode
+            automation_settings (dict): Configuration for automation mode
         """
 
         self.mode = mode
 
-        self.optimization_config = optimization_config
-        self.backtesting_config = backtesting_config
-        self.automation_config = automation_config
+        self.optimization_settings = optimization_settings
+        self.backtesting_settings = backtesting_settings
+        self.automation_settings = automation_settings
 
         self.static_path = os.path.abspath(
             os.path.join('src', 'frontend', 'static')
@@ -66,11 +66,11 @@ class Controller():
 
         match self.mode:
             case Mode.OPTIMIZATION:
-                builder = OptimizationBuilder(self.optimization_config)
+                builder = OptimizationBuilder(self.optimization_settings)
             case Mode.BACKTESTING:
-                builder = BacktestingBuilder(self.backtesting_config)
+                builder = BacktestingBuilder(self.backtesting_settings)
             case Mode.AUTOMATION:
-                builder = AutomationBuilder(self.automation_config)
+                builder = AutomationBuilder(self.automation_settings)
             case _:
                 raise ValueError(f'Unsupported mode: {self.mode}')
 
@@ -98,7 +98,10 @@ class Controller():
                 )
                 automizer.run()
             case Mode.OPTIMIZATION:
-                optimizer = OptimizationService(self.strategy_contexts)
+                optimizer = OptimizationService(
+                    settings=self.optimization_settings,
+                    strategy_contexts=self.strategy_contexts
+                )
                 optimizer.run()
 
         if self.mode in (Mode.AUTOMATION, Mode.BACKTESTING):

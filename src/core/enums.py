@@ -7,7 +7,7 @@ from src.strategies import MeanStrikeV2
 from src.strategies import NuggetV2
 from src.strategies import NuggetV4
 from src.strategies import NuggetV5
-from src.strategies import ExampleStrategy
+from src.strategies import ExampleV1
 from src.strategies import SisterV1
 
 
@@ -47,7 +47,7 @@ class Strategy(Enum):
 
     DAILY_PROFIT_V1 = DailyProfitV1
     DEVOURER_V3 = DevourerV3
-    EXAMPLE_STRATEGY = ExampleStrategy
+    EXAMPLE_V1 = ExampleV1
     MEAN_STRIKE_V1 = MeanStrikeV1
     MEAN_STRIKE_V2 = MeanStrikeV2
     NUGGET_V2 = NuggetV2

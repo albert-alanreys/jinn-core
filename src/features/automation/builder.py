@@ -20,7 +20,7 @@ class AutomationBuilder():
     for automated trading.
     """
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, settings: dict) -> None:
         """
         Initialize AutomationBuilder with configuration parameters.
 
@@ -29,17 +29,17 @@ class AutomationBuilder():
         Bybit client, and logger.
 
         Args:
-            config (dict): Configuration dictionary containing:
+            settings (dict): Configuration dictionary containing:
                 - exchange: Exchange name (e.g., BINANCE, BYBIT)
                 - symbol: Trading symbol (e.g., BTCUSDT)
                 - interval: Time interval for data (e.g., '1h')
                 - strategy: Trading strategy to automate
         """
 
-        self.exchange = config['exchange']
-        self.symbol = config['symbol']
-        self.interval = config['interval']
-        self.strategy = config['strategy']
+        self.exchange = settings['exchange']
+        self.symbol = settings['symbol']
+        self.interval = settings['interval']
+        self.strategy = settings['strategy']
 
         self.realtime_provider = RealtimeProvider()
         self.binance_client = BinanceClient()
@@ -53,7 +53,7 @@ class AutomationBuilder():
 
         Loads automation configurations from JSON files,
         fetches real-time market data, creates strategy instances,
-        and runs backtests. Falls back to instance config if no
+        and runs backtests. Falls back to instance settings if no
         strategy files are found.
 
         Returns:

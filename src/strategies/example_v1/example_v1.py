@@ -10,7 +10,7 @@ from src.core.strategy.deal_logger import update_completed_deals_log
 from src.utils.rounding import adjust
 
 
-class ExampleStrategy(BaseStrategy):
+class ExampleV1(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
     params = {
@@ -111,6 +111,11 @@ class ExampleStrategy(BaseStrategy):
 
     # Frontend rendering settings
     indicator_options = {
+        'TF #1': {
+            'pane': 0,
+            'type': 'line',
+            'color': colors.CRIMSON
+        },
         'SL': {
             'pane': 0,
             'type': 'line',
@@ -311,6 +316,10 @@ class ExampleStrategy(BaseStrategy):
         )
 
         self.indicators = {
+            'TF #1': {
+                'options': self.indicator_options['TF #1'],
+                'values': self.tf1_close
+            },
             'SL': {
                 'options': self.indicator_options['SL'],
                 'values': self.stop_price
@@ -347,7 +356,7 @@ class ExampleStrategy(BaseStrategy):
         }
 
     @staticmethod
-    @nb.njit(cache=True, nogil=True)
+    # @nb.njit(cache=True, nogil=True)
     def _calculate_loop(
         direction: int,
         initial_capital: float,
