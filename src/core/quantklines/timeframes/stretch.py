@@ -24,7 +24,7 @@ def stretch(
         target_tf_time (np.ndarray): Timestamps of target timeframe
 
     Returns:
-        np.ndarray: Array with higher TF values expanded to main TF
+        np.ndarray: 2D Array with higher TF values expanded to main TF
     """
 
     n_higher, n_features = higher_tf_data.shape

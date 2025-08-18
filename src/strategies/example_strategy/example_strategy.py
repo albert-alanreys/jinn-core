@@ -10,7 +10,7 @@ from src.core.strategy.deal_logger import update_completed_deals_log
 from src.utils.rounding import adjust
 
 
-class SandboxV1(BaseStrategy):
+class ExampleStrategy(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
     params = {
@@ -45,8 +45,8 @@ class SandboxV1(BaseStrategy):
         "adx_short_lower_limit": 1.0,
         "feeds": {
             "klines": {
-                "HTF": ["symbol", "1d"],
-                "LTF": ["symbol", "15m"],
+                "TF #1": ["symbol", "5m"],
+                "TF #2": ["symbol", "15m"],
             }
         }
     }
@@ -219,19 +219,9 @@ class SandboxV1(BaseStrategy):
         )
         self.adx = self.dmi[2]
 
-        # Align higher timeframe close prices
-        self.htf_close = qk.stretch(
-            higher_tf_source=self.feeds['klines']['HTF']['close'],
-            higher_tf_time=self.feeds['klines']['HTF']['time'],
-            target_tf_time=self.time
-        )
-
-        # Align lower timeframe close prices
-        self.ltf_close = qk.shrink(
-            lower_tf_source=self.feeds['klines']['LTF']['close'],
-            lower_tf_time=self.feeds['klines']['LTF']['time'],
-            target_tf_time=self.time
-        )
+        # Additional data
+        self.tf1_close = self.feeds['klines']['TF #1']['close']
+        self.tf2_close = self.feeds['klines']['TF #2']['close']
 
         # Alert flags for signals
         self.alert_cancel = False

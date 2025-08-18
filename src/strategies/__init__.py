@@ -5,5 +5,5 @@ from .mean_strike_v2 import MeanStrikeV2
 from .nugget_v2 import NuggetV2
 from .nugget_v4 import NuggetV4
 from .nugget_v5 import NuggetV5
-from .sandbox_v1 import SandboxV1
+from .example_strategy import ExampleStrategy
 from .sister_v1 import SisterV1

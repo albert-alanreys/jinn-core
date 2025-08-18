@@ -129,7 +129,7 @@ class AutomationBuilder():
                     print(params)
 
                     instance = strategy.value(client, **params)
-                    market_data = self.realtime_provider.fetch_data(
+                    market_data = self.realtime_provider.get_market_data(
                         client=client,
                         symbol=symbol,
                         interval=interval,
@@ -159,7 +159,7 @@ class AutomationBuilder():
 
             try:
                 instance = self.strategy.value(client)
-                market_data = self.realtime_provider.fetch_data(
+                market_data = self.realtime_provider.get_market_data(
                     client=client,
                     symbol=self.symbol,
                     interval=self.interval,

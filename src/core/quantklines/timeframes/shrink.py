@@ -37,7 +37,7 @@ def shrink(
     target_duration = target_tf_time[1] - target_tf_time[0]
     subbars = int(target_duration / lower_duration + 0.5)
 
-    result = np.full((n_target, subbars, n_features), np.nan)
+    result = np.full((n_target, n_features, subbars), np.nan)
 
     target_idx = 0
     lower_idx = 0
@@ -52,7 +52,7 @@ def shrink(
         time_close = target_tf_time[target_idx] + target_duration
 
         if lower_tf_time[lower_idx] < time_close:
-            result[target_idx, k, :] = lower_tf_data[lower_idx, :]
+            result[target_idx, :, k] = lower_tf_data[lower_idx, :]
             lower_idx += 1
             k += 1
         else:

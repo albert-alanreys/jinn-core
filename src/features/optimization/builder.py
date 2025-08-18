@@ -188,7 +188,7 @@ class OptimizationBuilder:
         train_end_date = start_date + timedelta(train_days)
         test_start_date = train_end_date + timedelta(1)
 
-        train_data = self.history_provider.fetch_data(
+        train_data = self.history_provider.get_market_data(
             client=client,
             symbol=symbol,
             interval=interval,
@@ -196,7 +196,7 @@ class OptimizationBuilder:
             end=train_end_date.strftime('%Y-%m-%d'),
             feeds=feeds
         )
-        test_data = self.history_provider.fetch_data(
+        test_data = self.history_provider.get_market_data(
             client=client,
             symbol=symbol,
             interval=interval,
