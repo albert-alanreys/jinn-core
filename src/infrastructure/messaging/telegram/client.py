@@ -1,17 +1,12 @@
 from logging import getLogger
 from os import getenv
 
-from src.infrastructure.http_client import HttpClient
+from src.infrastructure.transport import HttpClient
 
 
 class TelegramClient(HttpClient):
     """
     Client for sending messages and alerts via Telegram API.
-    
-    Instance Attributes:
-        token (str): Telegram bot token from environment
-        chat (str): Telegram chat ID from environment
-        logger: Logger instance for this module
     """
 
     def __init__(self) -> None:
@@ -42,7 +37,7 @@ class TelegramClient(HttpClient):
         and sends it via Telegram API.
         
         Args:
-            alert (dict): Dictionary containing order details including:
+            alert: Dictionary containing order details including:
                 - exchange (str): Exchange name
                 - type (str): Order type
                 - status (str): Order status
@@ -76,7 +71,7 @@ class TelegramClient(HttpClient):
         Send raw message to Telegram chat.
         
         Args:
-            msg (str): Message text to send (supports HTML formatting)
+            msg: Message text to send (supports HTML formatting)
         """
 
         params = {

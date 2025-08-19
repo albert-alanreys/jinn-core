@@ -130,7 +130,7 @@ class MarketClient(BaseBinanceClient):
     def get_tickers(self, symbol: str) -> dict:
         url = f'{self.BASE_ENDPOINT}/fapi/v1/premiumIndex'
         params = {'symbol': symbol}
-        return self.get(url, params)
+        return self.get(url, params, logging=False)
     
     @lru_cache
     def get_valid_interval(self, interval: str | int) -> str:
@@ -228,8 +228,5 @@ class MarketClient(BaseBinanceClient):
         """
 
         url = f'{self.BASE_ENDPOINT}/fapi/v1/exchangeInfo'
-        symbols_info = self.get(url)['symbols']
-
-        return next(
-            filter(lambda x: x['symbol'] == symbol, symbols_info)
-        )
+        symbols_info = self.get(url, logging=False)['symbols']
+        return next(filter(lambda x: x['symbol'] == symbol, symbols_info))

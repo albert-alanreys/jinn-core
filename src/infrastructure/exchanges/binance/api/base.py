@@ -4,7 +4,7 @@ from logging import getLogger
 from os import getenv
 from time import time
 
-from src.infrastructure.http_client import HttpClient
+from src.infrastructure.transport import HttpClient
 
 
 class BaseBinanceClient(HttpClient):
@@ -31,6 +31,8 @@ class BaseBinanceClient(HttpClient):
         - api_secret (str): Stores the Binance API secret
         - logger: Logger instance for this module
         """
+
+        super().__init__()
 
         self.api_key = getenv('BINANCE_API_KEY')
         self.api_secret = getenv('BINANCE_API_SECRET')

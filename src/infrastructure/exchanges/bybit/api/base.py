@@ -5,7 +5,7 @@ from logging import getLogger
 from os import getenv
 from time import time
 
-from src.infrastructure.http_client import HttpClient
+from src.infrastructure.transport import HttpClient
 
 
 class BaseBybitClient(HttpClient):
@@ -32,6 +32,8 @@ class BaseBybitClient(HttpClient):
         - api_secret (str): Stores the ByBit API secret
         - logger: Logger instance for this module
         """
+
+        super().__init__()
 
         self.api_key = getenv('BYBIT_API_KEY')
         self.api_secret = getenv('BYBIT_API_SECRET')

@@ -5,7 +5,7 @@ import src.core.enums as enums
 #    OPTIMIZATION - optimization
 #    BACKTESTING - backtesting
 #    AUTOMATION - automation
-MODE = enums.Mode.AUTOMATION
+MODE = enums.Mode.BACKTESTING
 
 # Settings for different modes
 OPTIMIZATION_SETTINGS = {

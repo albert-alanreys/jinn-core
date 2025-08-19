@@ -237,5 +237,4 @@ class MarketClient(BaseBybitClient):
         url = f'{self.BASE_ENDPOINT}/v5/market/instruments-info'
         params = {'category': 'linear', 'symbol': symbol}
         response = self.get(url, params)
-
         return response['result']['list'][0]
