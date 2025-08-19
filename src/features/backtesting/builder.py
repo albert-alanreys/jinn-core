@@ -5,9 +5,9 @@ from glob import glob
 from logging import getLogger
 
 from src.core.enums import Exchange, Strategy
-from src.infrastructure.clients.exchanges import BinanceClient
-from src.infrastructure.clients.exchanges import BybitClient
-from src.infrastructure.providers import HistoryProvider
+from src.infrastructure.exchanges import BinanceClient
+from src.infrastructure.exchanges import BybitClient
+from src.core.providers import HistoryProvider
 from .service import BacktestingService
 
 
@@ -66,7 +66,7 @@ class BacktestingBuilder:
                     - name: Strategy name
                     - type: Strategy type
                     - instance: Strategy instance
-                    - client: Exchange API client
+                    - client (BaseExchangeClient): Exchange API client
                     - market_data: Historical market data
                     - metrics: Strategy metrics from backtesting
         """

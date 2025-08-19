@@ -1,7 +1,7 @@
 import os
 from logging import getLogger
 
-from src.api import create_app
+from src.web import create_app
 from src.core.enums import Mode
 from src.features.automation import AutomationBuilder
 from src.features.automation import AutomationService
@@ -46,10 +46,10 @@ class Controller():
         self.automation_settings = automation_settings
 
         self.static_path = os.path.abspath(
-            os.path.join('src', 'frontend', 'static')
+            os.path.join('src', 'web', 'frontend', 'static')
         )
         self.templates_path = os.path.abspath(
-            os.path.join('src', 'frontend', 'templates')
+            os.path.join('src', 'web', 'frontend', 'templates')
         )
 
         self.logger = getLogger(__name__)

@@ -3,9 +3,9 @@ import os
 from logging import getLogger
 
 from src.core.enums import Exchange, Strategy
-from src.infrastructure.clients.exchanges import BinanceClient
-from src.infrastructure.clients.exchanges import BybitClient
-from src.infrastructure.providers import HistoryProvider
+from src.core.providers import HistoryProvider
+from src.infrastructure.exchanges import BinanceClient
+from src.infrastructure.exchanges import BybitClient
 
 
 class OptimizationBuilder:
@@ -60,7 +60,7 @@ class OptimizationBuilder:
                   each containing:
                     - name: Strategy name
                     - type: Strategy type
-                    - client: Exchange API client
+                    - client (BaseExchangeClient): Exchange API client
                     - market_data: Training and test data
         """
 

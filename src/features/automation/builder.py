@@ -5,10 +5,10 @@ from glob import glob
 from logging import getLogger
 
 from src.core.enums import Exchange, Strategy
+from src.core.providers import RealtimeProvider
 from src.features.backtesting import BacktestingService
-from src.infrastructure.providers import RealtimeProvider
-from src.infrastructure.clients.exchanges import BinanceClient
-from src.infrastructure.clients.exchanges import BybitClient
+from src.infrastructure.exchanges import BinanceClient
+from src.infrastructure.exchanges import BybitClient
 
 
 class AutomationBuilder():
@@ -62,7 +62,7 @@ class AutomationBuilder():
                     - name: Strategy name
                     - type: Strategy type
                     - instance: Strategy instance
-                    - client: Exchange API client
+                    - client (BaseExchangeClient): Exchange API client
                     - market_data: Current market data
                     - metrics: Strategy metrics from backtesting
                     - updated: Flag indicating if context was updated

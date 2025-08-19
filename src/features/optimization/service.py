@@ -4,7 +4,7 @@ import os
 import random
 from logging import getLogger
 
-from src.infrastructure.clients.messaging.telegram import TelegramClient
+from src.infrastructure.messaging.telegram import TelegramClient
 
 
 class OptimizationService:

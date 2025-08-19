@@ -9,7 +9,7 @@ import numpy as np
 from .order_cache import OrderCache
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.exchanges import BaseExchangeClient
+    from src.infrastructure.exchanges import BaseExchangeClient
 
 
 class BaseStrategy(ABC):
@@ -101,7 +101,7 @@ class BaseStrategy(ABC):
         Initialize the trading strategy with a client and parameters.
 
         Args:
-            client: Exchange API client instance
+            client (BaseExchangeClient): Exchange API client instance
             params: Dictionary of parameters
         """
 

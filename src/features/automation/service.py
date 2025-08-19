@@ -2,9 +2,9 @@ from logging import getLogger
 from threading import Thread
 from time import sleep
 
+from src.core.providers import RealtimeProvider
 from src.features.backtesting import BacktestingService
-from src.infrastructure.providers import RealtimeProvider
-from src.infrastructure.clients.messaging.telegram import TelegramClient
+from src.infrastructure.messaging.telegram import TelegramClient
 
 
 class AutomationService():
@@ -110,7 +110,7 @@ class AutomationService():
         """
 
         context = self.strategy_contexts[context_id]
-        alerts = context['client'].alerts
+        alerts = context['client'].trade.alerts
 
         for alert in alerts:
             strategy_name = '-'.join(
