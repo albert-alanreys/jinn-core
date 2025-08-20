@@ -26,11 +26,11 @@ def supertrend(
     with band switches.
 
     Args:
-        high (np.ndarray): High price series
-        low (np.ndarray): Low price series
-        close (np.ndarray): Close price series
-        factor (float): Multiplier for ATR band width
-        atr_length (int): Period length for ATR calculation
+        settings: High price series
+        low: Low price series
+        close: Close price series
+        factor: Multiplier for ATR band width
+        atr_length: Period length for ATR calculation
 
     Returns:
         Tuple[np.ndarray, np.ndarray]:

@@ -25,7 +25,7 @@ class OrderCreationError(Exception):
         Initialize the order creation error with diagnostic message.
 
         Args:
-            msg (str): Detailed error explanation
+            msg: Detailed error explanation
         """
 
         super().__init__(msg)
@@ -35,8 +35,8 @@ class TradeClient(BaseBinanceClient):
     """
     Client for Binance trading operations.
     
-    Handles order placement, cancellation, and monitoring for futures trading.
-    Supports market, limit, and stop orders with various position modes.
+    Handles order placement, cancellation, and monitoring.
+    Supports market, limit, and stop orders.
     """
 
     def __init__(
@@ -49,9 +49,9 @@ class TradeClient(BaseBinanceClient):
         Initialize trade client with required dependencies.
         
         Args:
-            account (AccountClient): Account client instance
-            market (MarketClient): Market client instance
-            position (PositionClient): Position client instance
+            account: Account client instance
+            market: Market client instance
+            position: Position client instance
         """
 
         super().__init__()
@@ -919,7 +919,7 @@ class TradeClient(BaseBinanceClient):
         Internal method to cancel all orders via API.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
             dict: API response
@@ -935,8 +935,8 @@ class TradeClient(BaseBinanceClient):
         Internal method to cancel specific order via API.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            order_id (str): Order ID to cancel
+            symbol: Trading symbol (e.g., BTCUSDT)
+            order_id: Order ID to cancel
             
         Returns:
             dict: API response
@@ -966,15 +966,15 @@ class TradeClient(BaseBinanceClient):
         with specified parameters.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            side (str): Order side ('BUY' or 'SELL')
-            position_side (str): Position side ('LONG', 'SHORT', 'BOTH')
-            order_type (str): Order type ('MARKET', 'LIMIT' etc.)
-            qty (float): Order quantity
-            time_in_force (str, optional): Time in force ('GTC', 'IOC', 'FOK')
-            reduce_only (str, optional): Reduce only flag
-            price (float, optional): Order price for limit orders
-            stop_price (float, optional): Stop price for stop orders
+            symbol: Trading symbol (e.g., BTCUSDT)
+            side: Order side ('BUY' or 'SELL')
+            position_side: Position side ('LONG', 'SHORT', 'BOTH')
+            order_type: Order type ('MARKET', 'LIMIT' etc.)
+            qty: Order quantity
+            time_in_force: Time in force ('GTC', 'IOC', 'FOK')
+            reduce_only: Reduce only flag
+            price: Order price for limit orders
+            stop_price: Stop price for stop orders
         
         Returns:
             dict: API response with order details
@@ -1029,14 +1029,13 @@ class TradeClient(BaseBinanceClient):
         for logging and notification purposes.
         
         Args:
-            order_type (str): Type of order ('market', 'limit', 'stop market')
-            status (str): Order status ('filled', 'pending',
-                          'cancelled', 'failed')
-            side (str): Order side ('buy' or 'sell')
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            qty (str): Order quantity
-            price (str | None): Order price
-            created_time (int | None): Order timestamp in milliseconds
+            order_type: Type of order ('market', 'limit', 'stop market')
+            status: Order status ('filled', 'pending', 'cancelled', 'failed')
+            side: Order side ('buy' or 'sell')
+            symbol: Trading symbol (e.g., BTCUSDT)
+            qty: Order quantity
+            price: Order price
+            created_time: Order timestamp in milliseconds
             
         Returns:
             dict: Formatted alert object
@@ -1070,8 +1069,8 @@ class TradeClient(BaseBinanceClient):
         Internal method to retrieve order information via API.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            order_id (str): Order ID to retrieve
+            symbol: Trading symbol (e.g., BTCUSDT)
+            order_id: Order ID to retrieve
             
         Returns:
             dict: Order information from API
@@ -1087,7 +1086,7 @@ class TradeClient(BaseBinanceClient):
         Internal method to retrieve all open orders via API.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
             list: List of open orders
@@ -1109,9 +1108,9 @@ class TradeClient(BaseBinanceClient):
         Log enhanced warning message with context information.
         
         Args:
-            operation (str): Operation that failed (e.g., 'market_open_long')
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            error (Exception): The exception that occurred
+            operation: Operation that failed (e.g., 'market_open_long')
+            symbol: Trading symbol (e.g., BTCUSDT)
+            error: The exception that occurred
             **context: Additional context parameters
         """
         

@@ -28,8 +28,8 @@ class BaseBybitClient(HttpClient):
         - BYBIT_API_SECRET: API secret for request signing
         
         Initializes:
-        - api_key (str): Stores the ByBit API key
-        - api_secret (str): Stores the ByBit API secret
+        - api_key: Stores the ByBit API key
+        - api_secret: Stores the ByBit API secret
         - logger: Logger instance for this module
         """
 
@@ -48,8 +48,8 @@ class BaseBybitClient(HttpClient):
         signature, and API key based on request parameters and method.
         
         Args:
-            params (dict): Request parameters
-            method (str): HTTP method ('GET' or 'POST')
+            params: Request parameters
+            method: HTTP method ('GET' or 'POST')
             
         Returns:
             dict: Complete headers dictionary with authentication

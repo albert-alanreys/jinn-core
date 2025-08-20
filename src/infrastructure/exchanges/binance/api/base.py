@@ -27,8 +27,8 @@ class BaseBinanceClient(HttpClient):
         - BINANCE_API_SECRET: API secret for request signing
         
         Initializes:
-        - api_key (str): Stores the Binance API key
-        - api_secret (str): Stores the Binance API secret
+        - api_key: Stores the Binance API key
+        - api_secret: Stores the Binance API secret
         - logger: Logger instance for this module
         """
 
@@ -48,7 +48,7 @@ class BaseBinanceClient(HttpClient):
         Creates authentication headers with API key.
 
         Args:
-            params (dict): Request parameters to be signed
+            params: Request parameters to be signed
 
         Returns:
             tuple: (signed_params, headers) ready for API request
@@ -68,7 +68,7 @@ class BaseBinanceClient(HttpClient):
         with API secret using HMAC SHA256 algorithm.
 
         Args:
-            params (dict): Parameters to sign
+            params: Parameters to sign
 
         Returns:
             dict: Parameters with signature added

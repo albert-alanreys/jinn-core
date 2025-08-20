@@ -30,7 +30,7 @@ def handle_context_api_errors(f: Callable) -> Callable:
     }
 
     Args:
-        f (Callable): Flask route function to wrap
+        f: Flask route function to wrap
 
     Returns:
         Callable: Wrapped function with context-specific error handling

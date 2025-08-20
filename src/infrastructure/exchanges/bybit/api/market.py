@@ -154,8 +154,8 @@ class MarketClient(BaseBybitClient):
         Internal method to fetch data concurrently using ThreadPoolExecutor.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            interval (str | int): Kline interval (e.g., '1m', 60)
+            symbol: Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
             time_ranges: List of (start, end) tuples in milliseconds
             
         Returns:
@@ -193,11 +193,11 @@ class MarketClient(BaseBybitClient):
         Used internally by public kline methods.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            interval (str | int): Kline interval (e.g., '1m', 60)
-            start (int, optional): Start time in milliseconds
-            end (int, optional): End time in milliseconds
-            limit (int): Maximum number of klines (default: 1000)
+            symbol: Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
+            start: Start time in milliseconds
+            end: End time in milliseconds
+            limit: Maximum number of klines (default: 1000)
         
         Returns:
             list: Raw kline data from API
@@ -228,7 +228,7 @@ class MarketClient(BaseBybitClient):
         and trading rules from exchange info endpoint.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            symbol: Trading symbol (e.g., BTCUSDT)
         
         Returns:
             dict: Symbol information with filters and rules

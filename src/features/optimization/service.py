@@ -20,8 +20,8 @@ class OptimizationService:
         Initialize OptimizationService with strategy contexts.
 
         Args:
-            settings (dict): Dictionary of optimization settings
-            strategy_contexts (dict): Dictionary of strategy contexts
+            settings: Dictionary of optimization settings
+            strategy_contexts: Dictionary of strategy contexts
         """
 
         self.iterations = settings['iterations']
@@ -81,7 +81,7 @@ class OptimizationService:
         population management over multiple iterations.
 
         Args:
-            strategy_context (dict): Context dictionary for the strategy
+            strategy_context: Context dictionary for the strategy
                 containing type, client, and market data
 
         Returns:
@@ -114,7 +114,7 @@ class OptimizationService:
         population dictionary, best parameters list, and parameter keys.
 
         Args:
-            strategy_context (dict): Context dictionary for the strategy
+            strategy_context: Context dictionary for the strategy
         """
 
         self.strategy = strategy_context['type']
@@ -230,7 +230,7 @@ class OptimizationService:
 
         Args:
             sample_dict (dict): Parameter dictionary to evaluate
-            market_data (dict): Dataset to evaluate against
+            market_data: Dataset to evaluate against
 
         Returns:
             float: Fitness score (performance metric)

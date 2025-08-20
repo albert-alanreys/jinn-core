@@ -12,8 +12,8 @@ def crossover(source1: np.ndarray, source2: np.ndarray) -> np.ndarray:
     - `source1` becomes strictly above `source2` on the current step
 
     Args:
-        source1 (np.ndarray): First input data series
-        source2 (np.ndarray): Second input data series
+        source1: First input data series
+        source2: Second input data series
 
     Returns:  
         np.ndarray[bool]: Boolean array with `True`

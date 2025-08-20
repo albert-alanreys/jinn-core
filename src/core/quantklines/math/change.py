@@ -9,9 +9,8 @@ def change(source: np.ndarray, length: np.int16) -> np.ndarray:
     and past values in a data series.
 
     Args:
-        source (np.ndarray): Input data series
-        length (np.int16): Number of periods to look back 
-                           or calculating the difference
+        source: Input data series
+        length: Number of periods to look back or calculating the difference
 
     Returns:
         np.ndarray: Array with the computed differences,

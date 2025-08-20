@@ -8,8 +8,8 @@ def wma(source: np.ndarray, length: np.int16) -> np.ndarray:
     Calculate WMA (Weighted Moving Average) with linear weights.
 
     Args:
-        source (np.ndarray): Input series (leading NaNs are skipped)
-        length (int): WMA period length
+        source: Input series (leading NaNs are skipped)
+        length: WMA period length
 
     Returns:
         np.ndarray: WMA values array

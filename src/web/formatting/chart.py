@@ -16,8 +16,7 @@ def format_klines(klines: np.ndarray) -> list:
     with OHLC data and timestamp.
 
     Args:
-        klines (np.ndarray): 2D array of klines
-                             [timestamp, open, high, low, close]
+        klines: 2D array of klines [timestamp, open, high, low, close]
 
     Returns:
         list: Formatted klines
@@ -39,10 +38,8 @@ def format_indicators(market_data: dict, indicators: dict) -> dict:
     Formats indicator values and assigns corresponding colors.
 
     Args:
-        market_data (dict): Market data containing klines
-                            and price precision
-        indicators (dict): Dictionary of indicators with values
-                           and optional colors
+        market_data: Market data containing klines and price precision
+        indicators: Dictionary of indicators with values and optional colors
 
     Returns:
         dict: Formatted indicator series
@@ -112,8 +109,8 @@ def format_deals(
     Formats completed and open deals into a list of dictionaries.
 
     Args:
-        completed_deals_log (np.ndarray): Log of completed deals
-        open_deals_log (np.ndarray): Log of currently open deals
+        completed_deals_log: Log of completed deals
+        open_deals_log: Log of currently open deals
 
     Returns:
         list: Formatted deals

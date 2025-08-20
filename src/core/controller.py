@@ -33,10 +33,10 @@ class Controller():
         logger, and initializes the appropriate service based on the mode.
 
         Args:
-            mode (Mode): Application mode
-            optimization_settings (dict): Configuration for optimization mode
-            backtesting_settings (dict): Configuration for backtesting mode
-            automation_settings (dict): Configuration for automation mode
+            mode: Application mode
+            optimization_settings: Configuration for optimization mode
+            backtesting_settings: Configuration for backtesting mode
+            automation_settings: Configuration for automation mode
         """
 
         self.mode = mode

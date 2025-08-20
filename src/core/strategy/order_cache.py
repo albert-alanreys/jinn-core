@@ -33,7 +33,7 @@ class OrderCache:
         Load cached order IDs for a specific trading symbol.
 
         Args:
-            symbol (str): Trading symbol
+            symbol: Trading symbol
 
         Returns:
             Dictionary containing:
@@ -65,7 +65,7 @@ class OrderCache:
         Save current order IDs to cache for a specific trading symbol.
 
         Args:
-            symbol (str): Trading symbol
+            symbol: Trading symbol
             order_ids (dict): Dictionary containing:
                 - stop_ids: List of stop order IDs to cache
                 - limit_ids: List of limit IDs to cache
@@ -91,7 +91,7 @@ class OrderCache:
         Generate cache file path for a trading symbol.
 
         Args:
-            symbol (str): Trading symbol
+            symbol: Trading symbol
 
         Returns:
             Full path to the cache file in format:

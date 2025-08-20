@@ -20,9 +20,9 @@ def donchian(
     Calculate Donchian Channel indicators (upper, lower, middle bands).
 
     Args:
-        high (np.ndarray): Array of high prices
-        low (np.ndarray): Array of low prices
-        length (int): Lookback period for calculations
+        settings: Array of high prices
+        low: Array of low prices
+        length: Lookback period for calculations
 
     Returns:
         Tuple[np.ndarray, np.ndarray, np.ndarray]: Three arrays containing:

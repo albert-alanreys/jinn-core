@@ -29,7 +29,7 @@ class BacktestingService:
         Args:
             strategy_instance (BaseStrategy): Strategy instance containing:
                 - params['initial_capital']: Starting capital amount
-                - completed_deals_log (np.ndarray): Array of completed trades
+                - completed_deals_log: Array of completed trades
 
         Returns:
             dict: Dictionary with four groups of backtesting metrics:
@@ -65,8 +65,8 @@ class BacktestingService:
         Extracts overview metrics.
 
         Args:
-            all_metrics (dict): Complete set of calculated metrics
-                                from _get_all_metrics
+            all_metrics: Complete set of calculated metrics
+                         from _get_all_metrics
 
         Returns:
             dict: Overview metrics with two sections:
@@ -92,8 +92,8 @@ class BacktestingService:
         Extracts performance metrics.
 
         Args:
-            all_metrics (dict): Complete set of calculated metrics
-                                from _get_all_metrics
+            all_metrics: Complete set of calculated metrics
+                         from _get_all_metrics
 
         Returns:
             list: List of performance metrics
@@ -116,8 +116,8 @@ class BacktestingService:
         Extracts trade-related metrics.
 
         Args:
-            all_metrics (dict): Complete set of calculated metrics
-                                from _get_all_metrics
+            all_metrics: Complete set of calculated metrics
+                         from _get_all_metrics
 
         Returns:
             list: List of trade-related metrics
@@ -142,8 +142,8 @@ class BacktestingService:
         Extracts risk-related metrics.
 
         Args:
-            all_metrics (dict): Complete set of calculated metrics
-                                from _get_all_metrics
+            all_metrics: Complete set of calculated metrics
+                         from _get_all_metrics
 
         Returns:
             list: List of risk-related metrics

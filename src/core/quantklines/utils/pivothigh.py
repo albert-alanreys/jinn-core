@@ -21,10 +21,9 @@ def pivothigh(
     windows. The pivot high is marked at the right edge of the right window.
 
     Args:
-        source (np.ndarray): Input price series
-                             (leading and trailing NaNs are skipped)
-        leftbars (int): Number of bars to look back (left window size)
-        rightbars (int): Number of bars to look forward (right window size)
+        source: Input price series (leading and trailing NaNs are skipped)
+        leftbars: Number of bars to look back (left window size)
+        rightbars: Number of bars to look forward (right window size)
 
     Returns:
         np.ndarray: Array with pivot high values marked

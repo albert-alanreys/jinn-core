@@ -10,7 +10,7 @@ def has_first_historical_kline(klines: list | ndarray, start: int) -> bool:
 
     Args:
         klines (list | ndarray): Klines, each with timestamp at index 0
-        start (int): Start timestamp in milliseconds
+        start: Start timestamp in milliseconds
 
     Returns:
         bool: True if there could be at least one kline interval between

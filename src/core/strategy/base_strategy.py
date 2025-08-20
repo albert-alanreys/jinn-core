@@ -27,7 +27,7 @@ class BaseStrategy(ABC):
         margin_type (int):          Margin mode 
                                     0=ISOLATED, 1=CROSSED
                                     (default: 0)
-        leverage (int):             Leverage multiplier 
+        leverage:             Leverage multiplier 
                                     (1 = no leverage)
                                     (default: 1)
         initial_capital (float):    Starting capital 
@@ -64,7 +64,7 @@ class BaseStrategy(ABC):
                 - 'lineVisible': bool — optional flag to control 
                                         line visibility
 
-        indicators (dict): Actual indicator values to render.
+        indicators: Actual indicator values to render.
             Key: Indicator name (str)
             Value: dict with:
                 - 'options': reference to indicator_options[name]
@@ -101,7 +101,7 @@ class BaseStrategy(ABC):
         Initialize the trading strategy with a client and parameters.
 
         Args:
-            client (BaseExchangeClient): Exchange API client instance
+            client: Exchange API client instance
             params: Dictionary of parameters
         """
 

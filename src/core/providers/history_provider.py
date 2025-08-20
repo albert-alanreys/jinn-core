@@ -45,12 +45,12 @@ class HistoryProvider():
           - optional additional feeds
         
         Args:
-            client (BaseExchangeClient): Exchange API client
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            interval (str | int): Kline interval (e.g., '1m', 60)
-            start (str): Start date in 'YYYY-MM-DD' format
-            end (str): End date in 'YYYY-MM-DD' format
-            feeds (dict): Optional feeds config
+            client: Exchange API client
+            symbol: Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
+            start: Start date in 'YYYY-MM-DD' format
+            end: End date in 'YYYY-MM-DD' format
+            feeds: Optional feeds config
             
         Returns:
             dict with:
@@ -105,8 +105,8 @@ class HistoryProvider():
         Get price and quantity precisions for a symbol.
         
         Args:
-            client (BaseExchangeClient): Exchange API client
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            client: Exchange API client
+            symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
             tuple: (price_precision, quantity_precision)
@@ -159,11 +159,11 @@ class HistoryProvider():
         - Date range filtering
 
         Args:
-            client (BaseExchangeClient): Exchange API client
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            interval (str | int): Kline interval (e.g., '1m', 60)
-            start (str): Start date in 'YYYY-MM-DD' format
-            end (str): End date in 'YYYY-MM-DD' format
+            client: Exchange API client
+            symbol: Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
+            start: Start date in 'YYYY-MM-DD' format
+            end: End date in 'YYYY-MM-DD' format
 
         Returns:
             np.ndarray: Array of klines data
@@ -269,11 +269,11 @@ class HistoryProvider():
         Direct exchange API call for klines data with timestamp conversion.
         
         Args:
-            client (BaseExchangeClient): Exchange API client
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            interval (str | int): Kline interval (e.g., '1m', 60)
-            start (int): Start timestamp in milliseconds
-            end (int): End timestamp in milliseconds
+            client: Exchange API client
+            symbol: Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
+            start: Start timestamp in milliseconds
+            end: End timestamp in milliseconds
             
         Returns:
             list: Raw klines data from exchange
@@ -322,13 +322,13 @@ class HistoryProvider():
         symbols or intervals, resampled to match the main kline array.
             
         Args:
-            client (BaseExchangeClient): Exchange API client
-            symbol (str): Base trading symbol
-            feeds (dict): Configuration dictionary specifying additional feeds
-            main_interval (str | int): Interval of the main kline array
-            main_klines (np.ndarray): Main array of klines
-            start (str): Start date ('YYYY-MM-DD')
-            end (str): End date ('YYYY-MM-DD')
+            client: Exchange API client
+            symbol: Base trading symbol
+            feeds: Configuration dictionary specifying additional feeds
+            main_interval: Interval of the main kline array
+            main_klines: Main array of klines
+            start: Start date ('YYYY-MM-DD')
+            end: End date ('YYYY-MM-DD')
             
         Returns:
             dict: Requested feeds data, structured as:
@@ -381,10 +381,10 @@ class HistoryProvider():
         to UTC timestamp in milliseconds.
         
         Args:
-            date_str (str): Date string in 'YYYY-MM-DD' format.
+            date_str: Date string in 'YYYY-MM-DD' format
         
         Returns:
-            int: Corresponding UTC timestamp in milliseconds.
+            int: Corresponding UTC timestamp in milliseconds
         """
 
         return int(
@@ -400,10 +400,10 @@ class HistoryProvider():
         in 'YYYY-MM-DD' format.
         
         Args:
-            ms (int): Timestamp in milliseconds (UTC).
+            ms (int): Timestamp in milliseconds (UTC)
         
         Returns:
-            str: Date string in 'YYYY-MM-DD' format.
+            str: Date string in 'YYYY-MM-DD' format
         """
 
         return datetime.fromtimestamp(ms / 1000).strftime('%Y-%m-%d')

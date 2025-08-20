@@ -29,9 +29,9 @@ class BacktestingBuilder:
         Bybit client, and logger.
 
         Args:
-            settings (dict): Configuration dictionary containing:
+            settings: Configuration dictionary containing:
                 - exchange: Exchange name
-                - symbol (str): Trading symbol
+                - symbol: Trading symbol
                 - interval: Kline interval
                 - start: Start date for data (format: 'YYYY-MM-DD')
                 - end: End date for data (format: 'YYYY-MM-DD')
@@ -66,7 +66,7 @@ class BacktestingBuilder:
                     - name: Strategy name
                     - type: Strategy type
                     - instance: Strategy instance
-                    - client (BaseExchangeClient): Exchange API client
+                    - client: Exchange API client
                     - market_data: Historical market data
                     - metrics: Strategy metrics from backtesting
         """

@@ -10,8 +10,8 @@ def rsi(source: np.ndarray, length: np.int16) -> np.ndarray:
     Calculate RSI (Relative Strength Index).
 
     Args:
-        source (np.ndarray): Input series (leading NaNs are skipped)
-        length (int): RSI period length
+        source: Input series (leading NaNs are skipped)
+        length: RSI period length
 
     Returns:
         np.ndarray: RSI values array

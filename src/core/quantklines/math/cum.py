@@ -8,7 +8,7 @@ def cum(source: np.ndarray) -> np.ndarray:
     Calculate the cumulative sum of elements in the input array.
 
     Args:
-        source (np.ndarray): Input data series
+        source: Input data series
 
     Returns:
         np.ndarray: Array containing the cumulative sum of the input elements

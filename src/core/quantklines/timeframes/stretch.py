@@ -19,9 +19,9 @@ def stretch(
     This function stretches them to match `target_tf_time` resolution.
 
     Args:
-        higher_tf_data (np.ndarray): Data values from higher timeframe
-        higher_tf_time (np.ndarray): Timestamps of higher timeframe
-        target_tf_time (np.ndarray): Timestamps of target timeframe
+        higher_tf_data: Data values from higher timeframe
+        higher_tf_time: Timestamps of higher timeframe
+        target_tf_time: Timestamps of target timeframe
 
     Returns:
         np.ndarray: 2D Array with higher TF values expanded to main TF

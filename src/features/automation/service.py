@@ -30,8 +30,8 @@ class AutomationService():
         Sets up strategy contexts, realtime data provider, and logger.
 
         Args:
-            strategy_contexts (dict): Dictionary of strategy contexts
-            strategy_alerts (dict): Dictionary of strategy alerts
+            strategy_contexts: Dictionary of strategy contexts
+            strategy_alerts: Dictionary of strategy alerts
         """
 
         self.strategy_contexts = strategy_contexts
@@ -87,7 +87,7 @@ class AutomationService():
         Execute a single strategy's calculations and trades.
 
         Args:
-            context_id (str): ID of the strategy context
+            context_id: ID of the strategy context
 
         Updates strategy statistics after execution using BacktestingService.
         """
@@ -106,7 +106,7 @@ class AutomationService():
         Sends each alert via Telegram.
 
         Args:
-            context_id (str): ID of the strategy context
+            context_id: ID of the strategy context
         """
 
         context = self.strategy_contexts[context_id]

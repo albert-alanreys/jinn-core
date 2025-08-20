@@ -25,10 +25,10 @@ class OptimizationBuilder:
         Bybit client, and logger.
 
         Args:
-            settings (dict): Configuration dictionary containing:
+            settings: Configuration dictionary containing:
                 - strategy: Trading strategy to optimize
                 - exchange: Exchange name
-                - symbol (str): Trading symbol
+                - symbol: Trading symbol
                 - interval: Kline interval
                 - start: Start date for data (format: 'YYYY-MM-DD')
                 - end: End date for data (format: 'YYYY-MM-DD')
@@ -60,7 +60,7 @@ class OptimizationBuilder:
                   each containing:
                     - name: Strategy name
                     - type: Strategy type
-                    - client (BaseExchangeClient): Exchange API client
+                    - client: Exchange API client
                     - market_data: Training and test data
         """
 

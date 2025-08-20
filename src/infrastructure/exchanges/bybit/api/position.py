@@ -13,8 +13,8 @@ class PositionClient(BaseBybitClient):
     """
     Client for Bybit position management operations.
     
-    Handles position-related settings including leverage, margin mode,
-    position mode configuration for futures trading,
+    Handles position-related settings including leverage,
+    margin mode, position mode configuration,
     and position size calculations.
     """
 
@@ -27,8 +27,8 @@ class PositionClient(BaseBybitClient):
         Initialize position client with required dependencies.
         
         Args:
-            account (AccountClient): Account client instance
-            market (MarketClient): Market client instance
+            account: Account client instance
+            market: Market client instance
         """
 
         super().__init__()
@@ -138,12 +138,11 @@ class PositionClient(BaseBybitClient):
         for the specified side and symbol.
         
         Args:
-            side (str): Position side ('buy' or 'sell')
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            side: Position side ('buy' or 'sell')
+            symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
             float: Current position size
-                   (positive for long, negative for short)
         """
 
         try:
@@ -160,7 +159,7 @@ class PositionClient(BaseBybitClient):
         Internal method to retrieve position information via API.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
             list: Position information from API

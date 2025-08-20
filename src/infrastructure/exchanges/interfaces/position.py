@@ -13,7 +13,7 @@ class PositionClientInterface(ABC):
         or one-way mode (net position).
         
         Args:
-            mode (bool): True for hedge mode, False for one-way mode
+            mode: True for hedge mode, False for one-way mode
             
         Returns:
             dict: API response confirming position mode change
@@ -25,12 +25,11 @@ class PositionClientInterface(ABC):
         """
         Switch margin mode for specified symbol.
         
-        Changes between cross margin and isolated margin modes for
-        futures trading.
+        Changes between cross margin and isolated margin modes.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            mode (str): Margin mode ('CROSSED' or 'ISOLATED')
+            symbol: Trading symbol (e.g., BTCUSDT)
+            mode: Margin mode ('CROSSED' or 'ISOLATED')
             
         Returns:
             dict: API response confirming margin mode change
@@ -42,12 +41,9 @@ class PositionClientInterface(ABC):
         """
         Set leverage for specified symbol.
         
-        Configures the leverage multiplier for futures trading
-        on the specified symbol.
-        
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            leverage (int): Leverage multiplier
+            symbol: Trading symbol (e.g., BTCUSDT)
+            leverage: Leverage multiplier
         
         Returns:
             dict: API response confirming leverage setting
@@ -69,10 +65,10 @@ class PositionClientInterface(ABC):
         requested size, and leverage settings.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Position size ('10%', '100u', etc.)
-            leverage (int): Leverage multiplier
-            price (float | None): Price for quantity calculation
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Position size ('10%', '100u', etc.)
+            leverage: Leverage multiplier
+            price: Price for quantity calculation
             
         Returns:
             float: Quantity to open (adjusted for precision)
@@ -94,11 +90,11 @@ class PositionClientInterface(ABC):
         and requested close amount (percentage or absolute value).
         
         Args:
-            side (str): Position side ('LONG' or 'SHORT')
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Close amount ('100%', '50u', etc.)
-            hedge (bool): Use hedge mode for position
-            price (float | None): Price for USDT-based size calculation
+            side: Position side ('LONG' or 'SHORT')
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Close amount ('100%', '50u', etc.)
+            hedge: Use hedge mode for position
+            price: Price for USDT-based size calculation
             
         Returns:
             float: Quantity to close (adjusted for precision)

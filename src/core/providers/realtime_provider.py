@@ -31,18 +31,18 @@ class RealtimeProvider():
         Fetch initial real-time market data for a symbol.
 
         Args:
-            client (BaseExchangeClient): Exchange API client instance
-            symbol (str): Trading symbol to fetch data for
+            client: Exchange API client instance
+            symbol: Trading symbol to fetch data for
             interval: Time interval for klines
             feeds: Additional data feeds configuration
 
         Returns:
             dict: Complete market data dictionary including:
-                - symbol (str): Trading symbol
-                - interval (str | int): Validated interval
+                - symbol: Trading symbol
+                - interval: Validated interval
                 - precision (float): Price and quantity precision
-                - klines (np.ndarray): Historical kline data
-                - feeds (dict): additional feeds (if configured)
+                - klines: Historical kline data
+                - feeds: additional feeds (if configured)
         """
 
         p_precision = client.market.get_price_precision(symbol)
@@ -98,11 +98,11 @@ class RealtimeProvider():
         symbols or intervals, resampled to match the main kline array.
 
         Args:
-            client (BaseExchangeClient): Exchange API client
-            symbol (str): Base trading symbol
-            feeds (dict): Configuration dictionary specifying additional feeds
-            main_interval (str | int): Interval of the main kline array
-            main_klines (np.ndarray): Main array of klines
+            client: Exchange API client
+            symbol: Base trading symbol
+            feeds: Configuration dictionary specifying additional feeds
+            main_interval: Interval of the main kline array
+            main_klines: Main array of klines
 
         Returns:
             dict: Requested feeds data, structured as:
@@ -173,7 +173,7 @@ class RealtimeProvider():
         Update market data for a strategy context.
 
         Args:
-            strategy_context (dict): Strategy context to update
+            strategy_context: Strategy context to update
 
         Returns:
             bool: True if main klines was updated, False otherwise
@@ -226,11 +226,11 @@ class RealtimeProvider():
         Update feed klines and align them with main klines if needed.
 
         Args:
-            strategy_context (dict): Strategy execution context
-            client (BaseExchangeClient): Exchange API client
-            original_market_data (dict): Original market data before update
-            new_market_data (dict): Target dict for updated market data
-            main_klines_updated (bool): Whether the main klines were updated
+            strategy_context: Strategy execution context
+            client: Exchange API client
+            original_market_data: Original market data before update
+            new_market_data: Target dict for updated market data
+            main_klines_updated: Whether the main klines were updated
 
         Returns:
             None
@@ -298,10 +298,10 @@ class RealtimeProvider():
         the main interval, the data is either stretched or shrunk.
 
         Args:
-            main_ms (int): Milliseconds duration of the main klines interval
-            feed_ms (int): Milliseconds duration of the feed klines interval
-            feed_name (str): Feed identifier
-            new_market_data (dict): Container for updated feed data
+            main_ms: Milliseconds duration of the main klines interval
+            feed_ms: Milliseconds duration of the feed klines interval
+            feed_name: Feed identifier
+            new_market_data: Container for updated feed data
 
         Returns:
             None
@@ -334,10 +334,10 @@ class RealtimeProvider():
         Append the latest kline to existing kline data.
 
         Args:
-            client (BaseExchangeClient): Exchange API client
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            interval (str | int): Kline interval (e.g., '1m', 60)
-            klines (np.ndarray): Existing kline array
+            client: Exchange API client
+            symbol: Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
+            klines: Existing kline array
 
 
         Returns:

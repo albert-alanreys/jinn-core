@@ -37,7 +37,7 @@ def get_context(context_id: str) -> Response:
     Get summary information for a specific strategy context.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Query Parameters:
         updated_after (float, optional): Unix timestamp in milliseconds.
@@ -85,7 +85,7 @@ def update_context(context_id: str) -> Response:
     Update parameter in strategy context and restart strategy.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Request Body:
         {
@@ -149,7 +149,7 @@ def delete_context(context_id: str) -> Response:
     Remove strategy context from active contexts.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response with operation status

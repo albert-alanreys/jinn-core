@@ -13,11 +13,10 @@ def get_server_url(default_host: str = 'http://127.0.0.1') -> str:
     and the SERVER_PORT value from the environment.
 
     Args:
-        default_host (str): Base host to use when BASE_URL is not set.
-                            Defaults to 'http://127.0.0.1'.
+        default_host: Base host to use when BASE_URL is not set
 
     Returns:
-        str: Fully qualified server URL.
+        str: Fully qualified server URL
     """
 
     base_url = os.getenv('BASE_URL')

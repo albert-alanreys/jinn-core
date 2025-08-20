@@ -19,9 +19,9 @@ class TelegramClient(HttpClient):
         - TELEGRAM_CHAT_ID: Target chat/channel ID for sending messages
         
         Initializes:
-        - token (str): Stores the Telegram bot token
-        - chat (str): Stores the target chat ID
-        - logger (Logger): Configured logger instance
+        - token: Stores the Telegram bot token
+        - chat: Stores the target chat ID
+        - logger: Configured logger instance
         """
 
         self.token = getenv('TELEGRAM_BOT_TOKEN')
@@ -38,14 +38,14 @@ class TelegramClient(HttpClient):
         
         Args:
             alert: Dictionary containing order details including:
-                - exchange (str): Exchange name
-                - type (str): Order type
-                - status (str): Order status
-                - side (str): Buy/sell side
-                - symbol (str): Trading symbol
-                - qty (str): Order quantity
-                - price (str): Order price
-                - time (str): Time of the order
+                - exchange: Exchange name
+                - type: Order type
+                - status: Order status
+                - side: Buy/sell side
+                - symbol: Trading symbol
+                - qty: Order quantity
+                - price: Order price
+                - time: Time of the order
         """
 
         try:

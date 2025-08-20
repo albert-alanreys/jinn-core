@@ -23,12 +23,12 @@ def format_overview_metrics(
     completed deals and corresponding equity values.
 
     Args:
-        metrics (dict): Dictionary containing:
+        metrics: Dictionary containing:
             - 'primary': List of metric dictionaries
                          with 'title' and 'all' values
             - 'equity': List or array of equity values
-        completed_deals_log (np.ndarray): Array of completed deal records
-                                          used to extract equity timestamps
+        completed_deals_log: Array of completed deal records
+            used to extract equity timestamps
 
     Returns:
         dict: Dictionary with:
@@ -77,8 +77,8 @@ def format_performance_metrics(metrics: list) -> list:
     and 'short' fields based on the metric title.
 
     Args:
-        metrics (list): List of metric dictionaries, each containing 'title',
-                        'all', 'long', and 'short' numeric series
+        metrics: List of metric dictionaries, each containing 'title',
+                 'all', 'long', and 'short' numeric series
 
     Returns:
         list: List of formatted metric dictionaries
@@ -95,8 +95,8 @@ def format_trade_metrics(metrics: list) -> list:
     and 'short' fields based on the metric title.
 
     Args:
-        metrics (list): List of metric dictionaries, each containing 'title',
-                        'all', 'long', and 'short' numeric series
+        metrics: List of metric dictionaries, each containing 'title',
+                 'all', 'long', and 'short' numeric series
 
     Returns:
         list: List of formatted metric dictionaries
@@ -113,8 +113,8 @@ def format_risk_metrics(metrics: list) -> list:
     and 'short' fields based on the metric title.
 
     Args:
-        metrics (list): List of metric dictionaries, each containing 'title',
-                        'all', 'long', and 'short' numeric series
+        metrics: List of metric dictionaries, each containing 'title',
+                 'all', 'long', and 'short' numeric series
 
     Returns:
         list: List of formatted metric dictionaries
@@ -134,8 +134,8 @@ def format_trades(
     labels, timestamps, and formatted numerical values.
 
     Args:
-        completed_deals_log (np.ndarray): 2D array of closed trade data
-        open_deals_log (np.ndarray): 2D array of currently open trade data
+        completed_deals_log: 2D array of closed trade data
+        open_deals_log: 2D array of currently open trade data
 
     Returns:
         list: List of formatted trade rows,
@@ -233,7 +233,7 @@ def _format_metrics(metrics: list) -> list:
     metric title using the predefined suffixes from METRIC_SUFFIXES.
 
     Args:
-        metrics (list):
+        metrics:
             List of raw metric dictionaries with:
             - 'title': Name of the metric
             - 'all': List of values for all trades
@@ -267,8 +267,8 @@ def _apply_suffix(title: str, values: list) -> list:
     string is returned for that position.
 
     Args:
-        title (str): Metric title used to look up appropriate suffixes
-        values (list): List of numerical values to be formatted
+        title: Metric title used to look up appropriate suffixes
+        values: List of numerical values to be formatted
 
     Returns:
         list: List of strings, where each numeric value is formatted

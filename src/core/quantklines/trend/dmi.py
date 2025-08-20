@@ -28,11 +28,11 @@ def dmi(
     - ADX (Average Directional Movement Index)
 
     Args:
-        high (np.ndarray): Array of high prices
-        low (np.ndarray): Array of low prices
-        close (np.ndarray): Array of closing prices
-        di_length (int): Period for DI calculations
-        adx_length (int): Smoothing period for ADX calculation
+        settings: Array of high prices
+        low: Array of low prices
+        close: Array of closing prices
+        di_length: Period for DI calculations
+        adx_length: Smoothing period for ADX calculation
 
     Returns:
         Tuple[np.ndarray, np.ndarray, np.ndarray]: Three arrays containing:

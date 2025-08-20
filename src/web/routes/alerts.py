@@ -89,7 +89,7 @@ def delete_alert(alert_id: str) -> Response:
     Remove alert from active alerts collection.
 
     Path Parameters:
-        alert_id (str): Unique identifier of the alert
+        alert_id: Unique identifier of the alert
 
     Returns:
         Response: JSON response with operation status

@@ -29,9 +29,9 @@ class AutomationBuilder():
         Bybit client, and logger.
 
         Args:
-            settings (dict): Configuration dictionary containing:
+            settings: Configuration dictionary containing:
                 - exchange: Exchange name
-                - symbol (str): Trading symbol
+                - symbol: Trading symbol
                 - interval: Kline interval
                 - strategy: Trading strategy to automate
         """
@@ -62,7 +62,7 @@ class AutomationBuilder():
                     - name: Strategy name
                     - type: Strategy type
                     - instance: Strategy instance
-                    - client (BaseExchangeClient): Exchange API client
+                    - client: Exchange API client
                     - market_data: Current market data
                     - metrics: Strategy metrics from backtesting
                     - updated: Flag indicating if context was updated

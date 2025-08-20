@@ -20,11 +20,11 @@ class TradeClientInterface(ABC):
         size, margin mode, and leverage settings.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Position size ('10%', '100u', etc.)
-            margin (str): Margin mode ('cross' or 'isolated')
-            leverage (int): Leverage multiplier
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Position size ('10%', '100u', etc.)
+            margin: Margin mode ('cross' or 'isolated')
+            leverage: Leverage multiplier
+            hedge: Use hedge mode for position
         """
         pass
 
@@ -44,11 +44,11 @@ class TradeClientInterface(ABC):
         size, margin mode, and leverage settings.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Position size ('10%', '100u', etc.)
-            margin (str): Margin mode ('cross' or 'isolated')
-            leverage (int): Leverage multiplier
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Position size ('10%', '100u', etc.)
+            margin: Margin mode ('cross' or 'isolated')
+            leverage: Leverage multiplier
+            hedge: Use hedge mode for position
         """
         pass
 
@@ -61,9 +61,9 @@ class TradeClientInterface(ABC):
         Supports partial closing with size specification.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Amount to close ('100%', '50u', etc.)
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Amount to close ('100%', '50u', etc.)
+            hedge: Use hedge mode for position
         """
         pass
 
@@ -76,9 +76,9 @@ class TradeClientInterface(ABC):
         Supports partial closing with size specification.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Amount to close ('100%', '50u', etc.)
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Amount to close ('100%', '50u', etc.)
+            hedge: Use hedge mode for position
         """
         pass
 
@@ -97,10 +97,10 @@ class TradeClientInterface(ABC):
         to specified level, closing the long position.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Amount to close ('100%', '50u', etc.)
-            price (float): Stop price trigger level
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Amount to close ('100%', '50u', etc.)
+            price: Stop price trigger level
+            hedge: Use hedge mode for position
             
         Returns:
             int: Order ID of created stop order
@@ -122,10 +122,10 @@ class TradeClientInterface(ABC):
         to specified level, closing the short position.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Amount to close ('100%', '50u', etc.)
-            price (float): Stop price trigger level
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Amount to close ('100%', '50u', etc.)
+            price: Stop price trigger level
+            hedge: Use hedge mode for position
             
         Returns:
             int: Order ID of created stop order
@@ -149,12 +149,12 @@ class TradeClientInterface(ABC):
         with configured margin mode and leverage.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Position size ('10%', '100u', etc.)
-            margin (str): Margin mode ('cross' or 'isolated')
-            leverage (int): Leverage multiplier
-            price (float): Limit order price
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Position size ('10%', '100u', etc.)
+            margin: Margin mode ('cross' or 'isolated')
+            leverage: Leverage multiplier
+            price: Limit order price
+            hedge: Use hedge mode for position
             
         Returns:
             int: Order ID of created limit order
@@ -178,12 +178,12 @@ class TradeClientInterface(ABC):
         with configured margin mode and leverage.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Position size ('10%', '100u', etc.)
-            margin (str): Margin mode ('cross' or 'isolated')
-            leverage (int): Leverage multiplier
-            price (float): Limit order price
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Position size ('10%', '100u', etc.)
+            margin: Margin mode ('cross' or 'isolated')
+            leverage: Leverage multiplier
+            price: Limit order price
+            hedge: Use hedge mode for position
             
         Returns:
             int: Order ID of created limit order
@@ -205,10 +205,10 @@ class TradeClientInterface(ABC):
         reaches specified level.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Amount to close ('100%', '50u', etc.)
-            price (float): Take profit price level
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Amount to close ('100%', '50u', etc.)
+            price: Take profit price level
+            hedge: Use hedge mode for position
             
         Returns:
             int: Order ID of created take profit order
@@ -230,10 +230,10 @@ class TradeClientInterface(ABC):
         reaches specified level.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            size (str): Amount to close ('100%', '50u', etc.)
-            price (float): Take profit price level
-            hedge (bool): Use hedge mode for position
+            symbol: Trading symbol (e.g., BTCUSDT)
+            size: Amount to close ('100%', '50u', etc.)
+            price: Take profit price level
+            hedge: Use hedge mode for position
         
         Returns:
             int: Order ID of created take profit order
@@ -249,7 +249,7 @@ class TradeClientInterface(ABC):
         across all position sides.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            symbol: Trading symbol (e.g., BTCUSDT)
         """
         pass
 
@@ -262,8 +262,8 @@ class TradeClientInterface(ABC):
         (buy or sell) for the symbol.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            side (str): Order side ('buy' or 'sell')
+            symbol: Trading symbol (e.g., BTCUSDT)
+            side: Order side ('buy' or 'sell')
         """
         pass
 
@@ -276,8 +276,8 @@ class TradeClientInterface(ABC):
         for the symbol.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            side (str): Order side ('buy' or 'sell')
+            symbol: Trading symbol (e.g., BTCUSDT)
+            side: Order side ('buy' or 'sell')
         """
         pass
 
@@ -290,8 +290,8 @@ class TradeClientInterface(ABC):
         for the symbol.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            side (str): Order side ('buy' or 'sell')
+            symbol: Trading symbol (e.g., BTCUSDT)
+            side: Order side ('buy' or 'sell')
         """
         pass
 
@@ -304,8 +304,8 @@ class TradeClientInterface(ABC):
         creates appropriate alerts. Returns list of still active orders.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            order_ids (list): List of order IDs to check
+            symbol: Trading symbol (e.g., BTCUSDT)
+            order_ids: List of order IDs to check
             
         Returns:
             list: List of order IDs that are still active
@@ -321,8 +321,8 @@ class TradeClientInterface(ABC):
         creates appropriate alerts. Returns list of still active orders.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            order_ids (list): List of order IDs to check
+            symbol: Trading symbol (e.g., BTCUSDT)
+            order_ids: List of order IDs to check
             
         Returns:
             list: List of order IDs that are still active

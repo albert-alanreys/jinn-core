@@ -13,8 +13,8 @@ class PositionClient(BaseBinanceClient):
     """
     Client for Binance position management operations.
     
-    Handles position-related settings including leverage, margin mode,
-    position mode configuration for futures trading,
+    Handles position-related settings including leverage,
+    margin mode, position mode configuration,
     and position size calculations.
     """
 
@@ -27,8 +27,8 @@ class PositionClient(BaseBinanceClient):
         Initialize position client with required dependencies.
         
         Args:
-            account (AccountClient): Account client instance
-            market (MarketClient): Market client instance
+            account: Account client instance
+            market: Market client instance
         """
 
         super().__init__()
@@ -128,13 +128,12 @@ class PositionClient(BaseBinanceClient):
         side and symbol, considering hedge mode settings.
         
         Args:
-            side (str): Position side ('LONG' or 'SHORT')
-            symbol (str): Trading symbol
-            hedge (bool): Use hedge mode for position
-            
+            side: Position side ('LONG' or 'SHORT')
+            symbol: Trading symbol
+            hedge: Use hedge mode for position
+        
         Returns:
             float: Current position size
-                   (positive for long, negative for short)
         """
 
         try:
@@ -156,7 +155,7 @@ class PositionClient(BaseBinanceClient):
         Internal method to retrieve position information via API.
         
         Args:
-            symbol (str): Trading symbol
+            symbol: Trading symbol
             
         Returns:
             list: Position information from API

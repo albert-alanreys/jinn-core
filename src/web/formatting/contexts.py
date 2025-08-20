@@ -3,7 +3,7 @@ def format_contexts(strategy_contexts: dict) -> dict:
     Formats raw strategy contexts into a concise dictionary suitable.
 
     Args:
-        strategy_contexts (dict): Dictionary of strategy contexts
+        strategy_contexts: Dictionary of strategy contexts
 
     Returns:
         dict: Formatted context data

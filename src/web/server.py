@@ -20,12 +20,12 @@ def create_app(
     routes, CORS settings, and strategy context integration.
 
     Args:
-        import_name (str): Name of the application package
-        static_folder (str): Path to the folder with static files
-        template_folder (str): Path to the folder with HTML templates
-        strategy_contexts (dict): Dictionary of strategy contexts
-        strategy_alerts (dict): Dictionary of strategy alerts
-        mode (Mode): Operating mode of the application
+        import_name: Name of the application package
+        static_folder: Path to the folder with static files
+        template_folder: Path to the folder with HTML templates
+        strategy_contexts: Dictionary of strategy contexts
+        strategy_alerts: Dictionary of strategy alerts
+        mode: Operating mode of the application
 
     Returns:
         Flask: Configured Flask application instance

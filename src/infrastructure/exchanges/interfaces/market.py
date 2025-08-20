@@ -19,10 +19,10 @@ class MarketClientInterface(ABC):
         and processing them concurrently for improved performance.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            interval (str | int): Kline interval (e.g., '1m', 60)
-            start (int): Start time in milliseconds
-            end (int): End time in milliseconds
+            symbol: Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
+            start: Start time in milliseconds
+            end: End time in milliseconds
             
         Returns:
             list: Historical kline data with OHLCV information
@@ -43,9 +43,9 @@ class MarketClientInterface(ABC):
         For limits > 1000, uses time range chunking with concurrent requests.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
-            interval (str | int): Kline interval (e.g., '1m', 60)
-            limit (int): Number of klines to retrieve (default: 1000)
+            symbol: Trading symbol (e.g., BTCUSDT)
+            interval: Kline interval (e.g., '1m', 60)
+            limit: Number of klines to retrieve (default: 1000)
             
         Returns:
             list: Recent kline data with OHLCV information
@@ -61,7 +61,7 @@ class MarketClientInterface(ABC):
         from exchange info. Result is cached for performance.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
             float: Price precision value (tick size)
@@ -77,7 +77,7 @@ class MarketClientInterface(ABC):
         from exchange info. Result is cached for performance.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
             float: Quantity precision value (step size)
@@ -87,10 +87,10 @@ class MarketClientInterface(ABC):
     @abstractmethod
     def get_tickers(self, symbol: str) -> dict:
         """
-        Get ticker information including mark price for futures symbol.
+        Get ticker information for specified symbol.
         
         Args:
-            symbol (str): Trading symbol (e.g., BTCUSDT)
+            symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
             dict: Ticker information with prices and rates
@@ -106,7 +106,7 @@ class MarketClientInterface(ABC):
         including strings and integers.
         
         Args:
-            interval (str | int): Interval in various formats
+            interval: Interval in various formats
             
         Returns:
             str: Standardized interval string
@@ -122,7 +122,7 @@ class MarketClientInterface(ABC):
         Get interval duration in milliseconds for valid interval.
         
         Args:
-            interval (str | int): Kline interval (e.g., '1m', 60)
+            interval: Kline interval (e.g., '1m', 60)
         
         Returns:
             int: Duration in milliseconds for valid interval

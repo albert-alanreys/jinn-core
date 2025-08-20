@@ -22,7 +22,7 @@ def get_overview_metrics(context_id: str) -> Response:
     Get formatted overview metrics data for a specific strategy context.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response containing formatted metrics
@@ -48,7 +48,7 @@ def get_performance_metrics(context_id: str) -> Response:
     Get formatted performance metrics for a specific strategy context.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response containing formatted metrics
@@ -73,7 +73,7 @@ def get_trade_metrics(context_id: str) -> Response:
     Get formatted trade-related metrics for a specific strategy context.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response containing formatted metrics
@@ -98,7 +98,7 @@ def get_risk_metrics(context_id: str) -> Response:
     Get formatted risk-related metrics for a specific strategy context.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response containing formatted metrics
@@ -121,7 +121,7 @@ def get_trades(context_id: str) -> Response:
     Get trades data for a specific strategy context.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response containing formatted trades

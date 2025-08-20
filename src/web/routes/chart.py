@@ -20,7 +20,7 @@ def get_klines(context_id: str) -> Response:
     Get formatted klines (candlestick) data for chart visualization.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response containing formatted klines data
@@ -45,7 +45,7 @@ def get_indicators(context_id: str) -> Response:
     Get calculated technical indicators for chart visualization.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response containing formatted indicators data
@@ -71,7 +71,7 @@ def get_deals(context_id: str) -> Response:
     Get deals (entry/exit points) for chart visualization.
 
     Path Parameters:
-        context_id (str): Unique identifier of the strategy context
+        context_id: Unique identifier of the strategy context
 
     Returns:
         Response: JSON response containing formatted deals data
