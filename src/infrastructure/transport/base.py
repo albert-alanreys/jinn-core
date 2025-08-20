@@ -1,8 +1,5 @@
 from abc import ABC, abstractmethod
-from logging import getLogger
 from typing import Any
-
-from .config import DEFAULT_CONFIG
 
 
 class BaseHttpClient(ABC):
@@ -10,12 +7,6 @@ class BaseHttpClient(ABC):
     Abstract base class for HTTP clients.  
     Defines the interface for common HTTP methods.
     """
-    
-    def __init__(self):
-        """Initialize the client."""
-
-        self.config = DEFAULT_CONFIG
-        self.logger = getLogger(self.__class__.__name__)
     
     @abstractmethod
     def get(

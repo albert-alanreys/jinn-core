@@ -32,8 +32,6 @@ class BaseBinanceClient(HttpClient):
         - logger: Logger instance for this module
         """
 
-        super().__init__()
-
         self.api_key = getenv('BINANCE_API_KEY')
         self.api_secret = getenv('BINANCE_API_SECRET')
 

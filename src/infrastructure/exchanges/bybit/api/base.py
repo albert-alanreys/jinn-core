@@ -33,8 +33,6 @@ class BaseBybitClient(HttpClient):
         - logger: Logger instance for this module
         """
 
-        super().__init__()
-
         self.api_key = getenv('BYBIT_API_KEY')
         self.api_secret = getenv('BYBIT_API_SECRET')
 

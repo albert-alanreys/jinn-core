@@ -3,7 +3,7 @@ from typing import Any
 import requests
 
 from .base import BaseHttpClient
-from .decorators import http_method
+from .retry import retry_on_failure
 
 
 class HttpClient(BaseHttpClient):
@@ -14,10 +14,7 @@ class HttpClient(BaseHttpClient):
     using decorators for error handling and retry attempts.
     """
 
-    def __init__(self):
-        super().__init__()
-
-    @http_method
+    @retry_on_failure
     def get(
         self,
         url: str,
@@ -34,7 +31,7 @@ class HttpClient(BaseHttpClient):
         response.raise_for_status()
         return response.json()
 
-    @http_method
+    @retry_on_failure
     def post(
         self,
         url: str,
@@ -53,7 +50,7 @@ class HttpClient(BaseHttpClient):
         response.raise_for_status()
         return response.json()
 
-    @http_method
+    @retry_on_failure
     def delete(
         self,
         url: str,
@@ -72,7 +69,7 @@ class HttpClient(BaseHttpClient):
         response.raise_for_status()
         return response.json()
 
-    @http_method
+    @retry_on_failure
     def put(
         self,
         url: str,
@@ -91,7 +88,7 @@ class HttpClient(BaseHttpClient):
         response.raise_for_status()
         return response.json()
 
-    @http_method
+    @retry_on_failure
     def patch(
         self,
         url: str,
