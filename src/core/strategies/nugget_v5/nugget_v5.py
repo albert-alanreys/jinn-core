@@ -133,12 +133,8 @@ class NuggetV5(BaseStrategy):
         }
     }
 
-    def __init__(
-        self,
-        client: 'BaseExchangeClient',
-        params: dict | None = None
-    ) -> None:
-        super().__init__(client, params)
+    def __init__(self, params: dict | None = None) -> None:
+        super().__init__(params)
 
     def calculate(self, market_data) -> None:
         super().init_variables(market_data)
@@ -888,29 +884,29 @@ class NuggetV5(BaseStrategy):
             alert_short_new_stop
         )
 
-    def _trade(self) -> None:
+    def _trade(self, client: 'BaseExchangeClient') -> None:
         if self.alert_cancel:
-            self.client.trade.cancel_all_orders(self.symbol)
+            client.trade.cancel_all_orders(self.symbol)
 
-        self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
+        self.order_ids['stop_ids'] = client.trade.check_stop_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['stop_ids']
         )
-        self.order_ids['limit_ids'] = self.client.trade.check_limit_orders(
+        self.order_ids['limit_ids'] = client.trade.check_limit_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
         if self.alert_long_new_stop:
-            self.client.trade.cancel_stop_orders(
+            client.trade.cancel_stop_orders(
                 symbol=self.symbol,
                 side='sell'
             )
-            self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
+            self.order_ids['stop_ids'] = client.trade.check_stop_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
             )
-            order_id = self.client.trade.market_stop_close_long(
+            order_id = client.trade.market_stop_close_long(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
@@ -921,15 +917,15 @@ class NuggetV5(BaseStrategy):
                 self.order_ids['stop_ids'].append(order_id)
         
         if self.alert_short_new_stop:
-            self.client.trade.cancel_stop_orders(
+            client.trade.cancel_stop_orders(
                 symbol=self.symbol,
                 side='buy'
             )
-            self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
+            self.order_ids['stop_ids'] = client.trade.check_stop_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
             )
-            order_id = self.client.trade.market_stop_close_short(
+            order_id = client.trade.market_stop_close_short(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
@@ -940,7 +936,7 @@ class NuggetV5(BaseStrategy):
                 self.order_ids['stop_ids'].append(order_id)
 
         if self.alert_open_long:
-            self.client.trade.market_open_long(
+            client.trade.market_open_long(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size']}'
@@ -952,7 +948,7 @@ class NuggetV5(BaseStrategy):
                 leverage=self.params['leverage'],
                 hedge=False
             )
-            order_id = self.client.trade.market_stop_close_long(
+            order_id = client.trade.market_stop_close_long(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
@@ -962,7 +958,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_long(
+            order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume'][0]}%',
                 price=self.take_price[0, -1],
@@ -972,7 +968,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_long(
+            order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume'][1]}%',
                 price=self.take_price[1, -1],
@@ -982,7 +978,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_long(
+            order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume'][2]}%',
                 price=self.take_price[2, -1],
@@ -992,7 +988,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_long(
+            order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume'][3]}%',
                 price=self.take_price[3, -1],
@@ -1002,7 +998,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_long(
+            order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_price[4, -1],
@@ -1013,7 +1009,7 @@ class NuggetV5(BaseStrategy):
                 self.order_ids['limit_ids'].append(order_id)
         
         if self.alert_open_short:
-            self.client.trade.market_open_short(
+            client.trade.market_open_short(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size']}'
@@ -1025,7 +1021,7 @@ class NuggetV5(BaseStrategy):
                 leverage=self.params['leverage'],
                 hedge=False
             )
-            order_id = self.client.trade.market_stop_close_short(
+            order_id = client.trade.market_stop_close_short(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
@@ -1035,7 +1031,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_short(
+            order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume'][0]}%',
                 price=self.take_price[0, -1],
@@ -1045,7 +1041,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_short(
+            order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume'][1]}%',
                 price=self.take_price[1, -1],
@@ -1055,7 +1051,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_short(
+            order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume'][2]}%',
                 price=self.take_price[2, -1],
@@ -1065,7 +1061,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_short(
+            order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.params['take_volume'][3]}%',
                 price=self.take_price[3, -1],
@@ -1075,7 +1071,7 @@ class NuggetV5(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = self.client.trade.limit_close_short(
+            order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_price[4, -1],

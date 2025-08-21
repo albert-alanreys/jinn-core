@@ -5,12 +5,12 @@ import src.core.enums as enums
 #    OPTIMIZATION - optimization
 #    BACKTESTING - backtesting
 #    AUTOMATION - automation
-MODE = enums.Mode.BACKTESTING
+MODE = enums.Mode.OPTIMIZATION
 
 # Settings for different modes
 OPTIMIZATION_SETTINGS = {
     # General optimization parameters
-    'iterations': 1000,
+    'iterations': 200,
     'population_size': 200,
     'max_population_size': 300,
     'max_processes': 16,

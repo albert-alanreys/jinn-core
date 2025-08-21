@@ -111,7 +111,7 @@ class BacktestingBuilder:
 
                 for params in params_dicts:
                     try:
-                        instance = strategy.value(client, params['params'])
+                        instance = strategy.value(params['params'])
                         market_data = self.history_provider.get_market_data(
                             client=client,
                             symbol=symbol,
@@ -143,7 +143,7 @@ class BacktestingBuilder:
                     client = self.bybit_client
 
             try:
-                instance = self.strategy.value(client)
+                instance = self.strategy.value()
                 market_data = self.history_provider.get_market_data(
                     client=client,
                     symbol=self.symbol,

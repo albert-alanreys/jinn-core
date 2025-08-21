@@ -126,9 +126,7 @@ class AutomationBuilder():
                         client = self.bybit_client
 
                 try:
-                    print(params)
-
-                    instance = strategy.value(client, **params)
+                    instance = strategy.value(**params)
                     market_data = self.realtime_provider.get_market_data(
                         client=client,
                         symbol=symbol,
@@ -158,7 +156,7 @@ class AutomationBuilder():
                     client = self.bybit_client
 
             try:
-                instance = self.strategy.value(client)
+                instance = self.strategy.value()
                 market_data = self.realtime_provider.get_market_data(
                     client=client,
                     symbol=self.symbol,

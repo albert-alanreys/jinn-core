@@ -236,7 +236,7 @@ class OptimizationService:
             float: Fitness score (performance metric)
         """
 
-        strategy_instance = self.strategy(self.client, params=sample_dict)
+        strategy_instance = self.strategy(sample_dict)
         strategy_instance.calculate(market_data)
 
         score = strategy_instance.completed_deals_log[:, 8].sum()
@@ -411,6 +411,7 @@ class OptimizationService:
             file_path = os.path.abspath(
                 os.path.join(
                     'src',
+                    'core',
                     'strategies',
                     context['name'].lower(),
                     'optimization',

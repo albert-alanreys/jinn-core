@@ -92,16 +92,11 @@ class BaseStrategy(ABC):
     # Indicator values for visualization
     indicators = {}
 
-    def __init__(
-        self,
-        client: 'BaseExchangeClient',
-        params: dict | None = None
-    ) -> None:
+    def __init__(self, params: dict | None = None) -> None:
         """
         Initialize the trading strategy with a client and parameters.
 
         Args:
-            client: Exchange API client instance
             params: Dictionary of parameters
         """
 
@@ -112,15 +107,6 @@ class BaseStrategy(ABC):
 
         if params is not None:
             self.params.update(params)
-
-        self.client = client
-        self.cache = OrderCache(
-            base_dir=os.path.join(
-                os.path.dirname(getfile(self.__class__)), '__cache__'
-            ),
-            exchange=self.client.exchange_name
-        )
-        self.order_ids = None
 
     def init_variables(
         self,
@@ -195,7 +181,7 @@ class BaseStrategy(ABC):
         # Strategy parameters
         self.equity = self.params['initial_capital']
 
-    def trade(self) -> None:
+    def trade(self, client: 'BaseExchangeClient') -> None:
         """
         Execute automated trading with order cache handling.  
         This method should NOT be overridden by child classes.
@@ -203,14 +189,25 @@ class BaseStrategy(ABC):
         Automatically manages:
         - Loading order IDs from cache on first run
         - Saving order IDs to cache after execution
-        - Error-safe cache persistence (guaranteed save in finally block)
+
+        Args:
+            client: Exchange API client instance
         """
+
+        if not hasattr(self, 'cache'):
+            self.cache = OrderCache(
+                base_dir=os.path.join(
+                    os.path.dirname(getfile(self.__class__)), '__cache__'
+                ),
+                exchange=client.exchange_name
+            )
+            self.order_ids = None
 
         if self.order_ids is None:
             self.order_ids = self.cache.load(self.symbol)
         
         try:
-            self._trade()
+            self._trade(client)
         finally:
             self.cache.save(self.symbol, self.order_ids)
 
@@ -231,7 +228,7 @@ class BaseStrategy(ABC):
         pass
 
     @abstractmethod
-    def _trade(self) -> None:
+    def _trade(self, client: 'BaseExchangeClient') -> None:
         """
         Execute trading logic based on calculated signals.  
         Must be implemented by concrete strategy classes.

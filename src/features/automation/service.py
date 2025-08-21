@@ -96,7 +96,7 @@ class AutomationService():
 
         instance = context['instance']
         instance.calculate(context['market_data'])
-        instance.trade()
+        instance.trade(context['client'])
 
         context['metrics'] = BacktestingService.test(instance)
 
