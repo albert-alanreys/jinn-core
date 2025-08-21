@@ -70,6 +70,7 @@ class OptimizationBuilder:
             file_path = os.path.abspath(
                 os.path.join(
                     'src',
+                    'core',
                     'strategies',
                     strategy.name.lower(),
                     'optimization',

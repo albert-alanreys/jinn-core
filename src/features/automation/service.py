@@ -4,7 +4,7 @@ from time import sleep
 
 from src.core.providers import RealtimeProvider
 from src.features.backtesting import BacktestingService
-from src.infrastructure.messaging.telegram import TelegramClient
+from src.infrastructure.messaging import TelegramClient
 
 
 class AutomationService():

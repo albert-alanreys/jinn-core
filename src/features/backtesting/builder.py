@@ -77,6 +77,7 @@ class BacktestingBuilder:
             folder_path = os.path.abspath(
                 os.path.join(
                     'src',
+                    'core',
                     'strategies',
                     strategy.name.lower(),
                     'backtesting'

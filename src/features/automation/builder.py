@@ -74,6 +74,7 @@ class AutomationBuilder():
             folder_path = os.path.abspath(
                 os.path.join(
                     'src',
+                    'core',
                     'strategies',
                     strategy.name.lower(),
                     'automation'

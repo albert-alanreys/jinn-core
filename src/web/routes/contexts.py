@@ -42,7 +42,7 @@ def get_context(context_id: str) -> Response:
     Query Parameters:
         updated_after (float, optional): Unix timestamp in milliseconds.
             If provided, the endpoint returns an empty response
-            if the context has no newer candles since this time.
+            if the context has no newer klines since this time.
 
     Returns:
         Response: JSON response containing base context data.

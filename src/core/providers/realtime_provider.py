@@ -173,7 +173,7 @@ class RealtimeProvider():
         Update market data for a strategy context.
 
         Args:
-            strategy_context: Strategy context to update
+            strategy_context: Strategy context dictionary
 
         Returns:
             bool: True if main klines was updated, False otherwise
@@ -226,7 +226,7 @@ class RealtimeProvider():
         Update feed klines and align them with main klines if needed.
 
         Args:
-            strategy_context: Strategy execution context
+            strategy_context: Strategy context dictionary
             client: Exchange API client
             original_market_data: Original market data before update
             new_market_data: Target dict for updated market data
