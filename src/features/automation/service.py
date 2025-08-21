@@ -2,9 +2,9 @@ from logging import getLogger
 from threading import Thread
 from time import sleep
 
+from src.core.providers import RealtimeProvider
 from src.features.backtesting import BacktestingService
-from src.infrastructure.providers import RealtimeProvider
-from src.infrastructure.clients.messaging.telegram import TelegramClient
+from src.infrastructure.messaging import TelegramClient
 
 
 class AutomationService():
@@ -30,8 +30,8 @@ class AutomationService():
         Sets up strategy contexts, realtime data provider, and logger.
 
         Args:
-            strategy_contexts (dict): Dictionary of strategy contexts
-            strategy_alerts (dict): Dictionary of strategy alerts
+            strategy_contexts: Dictionary of strategy contexts
+            strategy_alerts: Dictionary of strategy alerts
         """
 
         self.strategy_contexts = strategy_contexts
@@ -52,7 +52,7 @@ class AutomationService():
         summary = [
             ' | '.join([
                 item['name'],
-                item['client'].EXCHANGE,
+                item['client'].exchange_name,
                 item['market_data']['symbol'],
                 str(item['market_data']['interval'])
             ])
@@ -87,7 +87,7 @@ class AutomationService():
         Execute a single strategy's calculations and trades.
 
         Args:
-            context_id (str): ID of the strategy context
+            context_id: ID of the strategy context
 
         Updates strategy statistics after execution using BacktestingService.
         """
@@ -96,7 +96,7 @@ class AutomationService():
 
         instance = context['instance']
         instance.calculate(context['market_data'])
-        instance.trade()
+        instance.trade(context['client'])
 
         context['metrics'] = BacktestingService.test(instance)
 
@@ -106,11 +106,11 @@ class AutomationService():
         Sends each alert via Telegram.
 
         Args:
-            context_id (str): ID of the strategy context
+            context_id: ID of the strategy context
         """
 
         context = self.strategy_contexts[context_id]
-        alerts = context['client'].alerts
+        alerts = context['client'].trade.alerts
 
         for alert in alerts:
             strategy_name = '-'.join(

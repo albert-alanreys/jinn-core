@@ -25,10 +25,10 @@ def atr(
     specified period. Uses Wilder's smoothing method (RMA) for calculation.
 
     Args:
-        high (np.ndarray): High price series
-        low (np.ndarray): Low price series
-        close (np.ndarray): Close price series
-        length (int): Period length for smoothing
+        settings: High price series
+        low: Low price series
+        close: Close price series
+        length: Period length for smoothing
 
     Returns:
         np.ndarray: ATR values array

@@ -25,8 +25,8 @@ class DBManager():
         If the table does not exist, an empty list is returned.
 
         Args:
-            database_name (str): Name of the database file
-            table_name (str): Name of the table to fetch data from
+            database_name: Name of the database file
+            table_name: Name of the table to fetch data from
 
         Returns:
             list: A list of rows from the table, or an empty list on failure
@@ -66,10 +66,10 @@ class DBManager():
         If the table or row does not exist, an empty list is returned.
 
         Args:
-            database_name (str): Name of the database file
-            table_name (str): Name of the table to query
-            key_column (str): Column name used as a key
-            key_value (str): Value to match in the key column
+            database_name: Name of the database file
+            table_name: Name of the table to query
+            key_column: Column name used as a key
+            key_value: Value to match in the key column
 
         Returns:
             list: The matched row as a list, or an empty list on failure
@@ -118,11 +118,11 @@ class DBManager():
         column definitions. Optionally drops the table before inserting.
 
         Args:
-            database_name (str): Name of the database file
-            table_name (str): Name of the table to save data into
-            columns (dict): Dictionary mapping column names to SQLite types
-            rows (list): List of rows (tuples) to be inserted
-            drop (bool): If True, the table will be dropped before insertion
+            database_name: Name of the database file
+            table_name: Name of the table to save data into
+            columns: Dictionary mapping column names to SQLite types
+            rows: List of rows (tuples) to be inserted
+            drop: If True, the table will be dropped before insertion
         """
 
         try:
@@ -167,7 +167,7 @@ class DBManager():
         Commits the transaction if successful, otherwise rolls back.
 
         Args:
-            database_name (str): Name of the database file
+            database_name: Name of the database file
 
         Yields:
             sqlite3.Cursor: Cursor object for executing SQL commands

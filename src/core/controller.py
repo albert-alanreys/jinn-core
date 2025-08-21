@@ -1,7 +1,7 @@
 import os
 from logging import getLogger
 
-from src.api import create_app
+from src.web import create_app
 from src.core.enums import Mode
 from src.features.automation import AutomationBuilder
 from src.features.automation import AutomationService
@@ -33,10 +33,10 @@ class Controller():
         logger, and initializes the appropriate service based on the mode.
 
         Args:
-            mode (Mode): Application mode
-            optimization_settings (dict): Configuration for optimization mode
-            backtesting_settings (dict): Configuration for backtesting mode
-            automation_settings (dict): Configuration for automation mode
+            mode: Application mode
+            optimization_settings: Configuration for optimization mode
+            backtesting_settings: Configuration for backtesting mode
+            automation_settings: Configuration for automation mode
         """
 
         self.mode = mode
@@ -46,10 +46,10 @@ class Controller():
         self.automation_settings = automation_settings
 
         self.static_path = os.path.abspath(
-            os.path.join('src', 'frontend', 'static')
+            os.path.join('src', 'web', 'frontend', 'static')
         )
         self.templates_path = os.path.abspath(
-            os.path.join('src', 'frontend', 'templates')
+            os.path.join('src', 'web', 'frontend', 'templates')
         )
 
         self.logger = getLogger(__name__)
@@ -98,10 +98,7 @@ class Controller():
                 )
                 automizer.run()
             case Mode.OPTIMIZATION:
-                optimizer = OptimizationService(
-                    settings=self.optimization_settings,
-                    strategy_contexts=self.strategy_contexts
-                )
+                optimizer = OptimizationService(self.strategy_contexts)
                 optimizer.run()
 
         if self.mode in (Mode.AUTOMATION, Mode.BACKTESTING):

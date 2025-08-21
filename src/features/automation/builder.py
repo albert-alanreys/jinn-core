@@ -5,10 +5,10 @@ from glob import glob
 from logging import getLogger
 
 from src.core.enums import Exchange, Strategy
+from src.core.providers import RealtimeProvider
 from src.features.backtesting import BacktestingService
-from src.infrastructure.providers import RealtimeProvider
-from src.infrastructure.clients.exchanges.binance import BinanceClient
-from src.infrastructure.clients.exchanges.bybit import BybitClient
+from src.infrastructure.exchanges import BinanceClient
+from src.infrastructure.exchanges import BybitClient
 
 
 class AutomationBuilder():
@@ -29,10 +29,10 @@ class AutomationBuilder():
         Bybit client, and logger.
 
         Args:
-            settings (dict): Configuration dictionary containing:
-                - exchange: Exchange name (e.g., BINANCE, BYBIT)
-                - symbol: Trading symbol (e.g., BTCUSDT)
-                - interval: Time interval for data (e.g., '1h')
+            settings: Configuration dictionary containing:
+                - exchange: Exchange name
+                - symbol: Trading symbol
+                - interval: Kline interval
                 - strategy: Trading strategy to automate
         """
 
@@ -74,6 +74,7 @@ class AutomationBuilder():
             folder_path = os.path.abspath(
                 os.path.join(
                     'src',
+                    'core',
                     'strategies',
                     strategy.name.lower(),
                     'automation'
@@ -126,9 +127,7 @@ class AutomationBuilder():
                         client = self.bybit_client
 
                 try:
-                    print(params)
-
-                    instance = strategy.value(client, **params)
+                    instance = strategy.value(**params)
                     market_data = self.realtime_provider.get_market_data(
                         client=client,
                         symbol=symbol,
@@ -158,7 +157,7 @@ class AutomationBuilder():
                     client = self.bybit_client
 
             try:
-                instance = self.strategy.value(client)
+                instance = self.strategy.value()
                 market_data = self.realtime_provider.get_market_data(
                     client=client,
                     symbol=self.symbol,

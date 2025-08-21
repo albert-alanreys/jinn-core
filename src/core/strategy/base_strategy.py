@@ -9,8 +9,7 @@ import numpy as np
 from .order_cache import OrderCache
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.exchanges.binance import BinanceClient
-    from src.infrastructure.clients.exchanges.bybit import BybitClient
+    from src.infrastructure.exchanges import BaseExchangeClient
 
 
 class BaseStrategy(ABC):
@@ -28,7 +27,7 @@ class BaseStrategy(ABC):
         margin_type (int):          Margin mode 
                                     0=ISOLATED, 1=CROSSED
                                     (default: 0)
-        leverage (int):             Leverage multiplier 
+        leverage:             Leverage multiplier 
                                     (1 = no leverage)
                                     (default: 1)
         initial_capital (float):    Starting capital 
@@ -65,7 +64,7 @@ class BaseStrategy(ABC):
                 - 'lineVisible': bool — optional flag to control 
                                         line visibility
 
-        indicators (dict): Actual indicator values to render.
+        indicators: Actual indicator values to render.
             Key: Indicator name (str)
             Value: dict with:
                 - 'options': reference to indicator_options[name]
@@ -93,16 +92,11 @@ class BaseStrategy(ABC):
     # Indicator values for visualization
     indicators = {}
 
-    def __init__(
-        self,
-        client: 'BinanceClient | BybitClient',
-        params: dict | None = None
-    ) -> None:
+    def __init__(self, params: dict | None = None) -> None:
         """
         Initialize the trading strategy with a client and parameters.
 
         Args:
-            client: Exchange API client instance
             params: Dictionary of parameters
         """
 
@@ -113,15 +107,6 @@ class BaseStrategy(ABC):
 
         if params is not None:
             self.params.update(params)
-
-        self.client = client
-        self.cache = OrderCache(
-            base_dir=os.path.join(
-                os.path.dirname(getfile(self.__class__)), '__cache__'
-            ),
-            exchange=self.client.EXCHANGE
-        )
-        self.order_ids = None
 
     def init_variables(
         self,
@@ -140,7 +125,7 @@ class BaseStrategy(ABC):
 
         Args:
             market_data: Dictionary containing:
-                - symbol: str - Trading pair symbol
+                - symbol: str - Trading symbol
                 - p_precision: float - Price precision step
                 - q_precision: float - Quantity precision step
                 - klines: np.ndarray - OHLCV data with columns:
@@ -196,7 +181,7 @@ class BaseStrategy(ABC):
         # Strategy parameters
         self.equity = self.params['initial_capital']
 
-    def trade(self) -> None:
+    def trade(self, client: 'BaseExchangeClient') -> None:
         """
         Execute automated trading with order cache handling.  
         This method should NOT be overridden by child classes.
@@ -204,14 +189,25 @@ class BaseStrategy(ABC):
         Automatically manages:
         - Loading order IDs from cache on first run
         - Saving order IDs to cache after execution
-        - Error-safe cache persistence (guaranteed save in finally block)
+
+        Args:
+            client: Exchange API client instance
         """
+
+        if not hasattr(self, 'cache'):
+            self.cache = OrderCache(
+                base_dir=os.path.join(
+                    os.path.dirname(getfile(self.__class__)), '__cache__'
+                ),
+                exchange=client.exchange_name
+            )
+            self.order_ids = None
 
         if self.order_ids is None:
             self.order_ids = self.cache.load(self.symbol)
         
         try:
-            self._trade()
+            self._trade(client)
         finally:
             self.cache.save(self.symbol, self.order_ids)
 
@@ -232,7 +228,7 @@ class BaseStrategy(ABC):
         pass
 
     @abstractmethod
-    def _trade(self) -> None:
+    def _trade(self, client: 'BaseExchangeClient') -> None:
         """
         Execute trading logic based on calculated signals.  
         Must be implemented by concrete strategy classes.

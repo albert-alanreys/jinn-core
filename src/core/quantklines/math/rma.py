@@ -11,8 +11,8 @@ def rma(source: np.ndarray, length: np.int16) -> np.ndarray:
     First value is simple moving average (SMA) of first 'length' periods.
 
     Args:
-        source (np.ndarray): Input series (leading NaNs are skipped)
-        length (int): RMA period length
+        source: Input series (leading NaNs are skipped)
+        length: RMA period length
 
     Returns:
         np.ndarray: RMA values array

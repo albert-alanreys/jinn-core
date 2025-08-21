@@ -19,9 +19,9 @@ def shrink(
     This function groups them into blocks according to target timeframe.
 
     Args:
-        lower_tf_data (np.ndarray): Data values from lower timeframe
-        lower_tf_time (np.ndarray): Timestamps of lower timeframe
-        target_tf_time (np.ndarray): Timestamps of target timeframe
+        lower_tf_data: Data values from lower timeframe
+        lower_tf_time: Timestamps of lower timeframe
+        target_tf_time: Timestamps of target timeframe
 
     Returns:
         np.ndarray: 3D array with lower TF values aligned to main TF

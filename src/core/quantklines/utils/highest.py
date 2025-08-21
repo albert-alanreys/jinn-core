@@ -11,8 +11,8 @@ def highest(source: np.ndarray, length: np.int16) -> np.ndarray:
     looking back over the specified number of periods.
 
     Args:
-        source (np.ndarray): Input series (leading NaNs are skipped)
-        length (int): Lookback window length
+        source: Input series (leading NaNs are skipped)
+        length: Lookback window length
 
     Returns:
         np.ndarray: Array of highest values

@@ -3,9 +3,9 @@ import os
 from logging import getLogger
 
 from src.core.enums import Exchange, Strategy
-from src.infrastructure.clients.exchanges.binance import BinanceClient
-from src.infrastructure.clients.exchanges.bybit import BybitClient
-from src.infrastructure.providers import HistoryProvider
+from src.core.providers import HistoryProvider
+from src.infrastructure.exchanges import BinanceClient
+from src.infrastructure.exchanges import BybitClient
 
 
 class OptimizationBuilder:
@@ -25,11 +25,11 @@ class OptimizationBuilder:
         Bybit client, and logger.
 
         Args:
-            settings (dict): Configuration dictionary containing:
+            settings: Configuration dictionary containing:
                 - strategy: Trading strategy to optimize
-                - exchange: Exchange name (e.g., BINANCE, BYBIT)
-                - symbol: Trading symbol (e.g., BTCUSDT)
-                - interval: Time interval for data (e.g., '1h')
+                - exchange: Exchange name
+                - symbol: Trading symbol
+                - interval: Kline interval
                 - start: Start date for data (format: 'YYYY-MM-DD')
                 - end: End date for data (format: 'YYYY-MM-DD')
         """
@@ -70,6 +70,7 @@ class OptimizationBuilder:
             file_path = os.path.abspath(
                 os.path.join(
                     'src',
+                    'core',
                     'strategies',
                     strategy.name.lower(),
                     'optimization',

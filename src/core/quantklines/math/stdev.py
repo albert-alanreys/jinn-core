@@ -8,8 +8,8 @@ def stdev(source: np.ndarray, length: np.int16) -> np.ndarray:
     Calculate rolling standard deviation over a specified window length.
 
     Args:
-        source (np.ndarray): Input series (leading NaNs are skipped)
-        length (int): Window size for standard deviation calculation
+        source: Input series (leading NaNs are skipped)
+        length: Window size for standard deviation calculation
 
     Returns:
         np.ndarray: Array of standard deviation values
