@@ -1,6 +1,7 @@
 from .daily_profit_v1 import DailyProfitV1
 from .devourer_v3 import DevourerV3
 from .example_v1 import ExampleV1
+from .example_v2 import ExampleV2
 from .mean_strike_v1 import MeanStrikeV1
 from .mean_strike_v2 import MeanStrikeV2
 from .nugget_v2 import NuggetV2

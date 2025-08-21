@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
 
 
-class ExampleV1(BaseStrategy):
+class ExampleV2(BaseStrategy):
     # Strategy parameters
     # Names must be in double quotes
     params = {
@@ -46,7 +46,12 @@ class ExampleV1(BaseStrategy):
         "adx_long_upper_limit": 44.0,
         "adx_long_lower_limit": 28.0,
         "adx_short_upper_limit": 77.0,
-        "adx_short_lower_limit": 1.0
+        "adx_short_lower_limit": 1.0,
+        "feeds": {
+            "klines": {
+                "HTF": ["symbol", "1d"],
+            }
+        }
     }
 
     # Parameters to be optimized and their possible values
@@ -109,6 +114,11 @@ class ExampleV1(BaseStrategy):
 
     # Frontend rendering settings
     indicator_options = {
+        'HTF': {
+            'pane': 0,
+            'type': 'line',
+            'color': colors.CRIMSON
+        },
         'SL': {
             'pane': 0,
             'type': 'line',
@@ -129,25 +139,32 @@ class ExampleV1(BaseStrategy):
             'type': 'line',
             'color': colors.GREEN
         },
-        '+DI': {
+        'Volume': {
             'pane': 1,
+            'type': 'histogram'
+        },
+        '+DI': {
+            'pane': 2,
             'type': 'line',
             'color': colors.GREEN,
             'lineWidth': 1
         },
         '-DI': {
-            'pane': 1,
+            'pane': 2,
             'type': 'line',
             'color': colors.CRIMSON,
             'lineWidth': 1
         },
         'ADX': {
-            'pane': 1,
+            'pane': 2,
             'type': 'line',
             'color': colors.DEEP_SKY_BLUE,
             'lineWidth': 1
         },
     }
+
+    volume_color_1 = colors.PEACOCK_GREEN
+    volume_color_2 = colors.CHERRY_RED
 
     def __init__(
         self,
@@ -214,12 +231,25 @@ class ExampleV1(BaseStrategy):
         )
         self.adx = self.dmi[2]
 
+        # Additional data
+        self.htf_close = np.full(self.time.shape[0], np.nan)
+
+        if len(self.feeds['klines']['HTF']['close'].shape) == 1:
+            self.htf_close = self.feeds['klines']['HTF']['close']
+
         # Alert flags for signals
         self.alert_cancel = False
         self.alert_open_long = False
         self.alert_open_short = False
         self.alert_long_new_stop = False
         self.alert_short_new_stop = False
+
+        # Graphics
+        self.volume_colors = np.where(
+            self.close >= self.open,
+            self.volume_color_1,
+            self.volume_color_2
+        )
 
         # Main calculation loop (Numba-optimized)
         (
@@ -295,6 +325,10 @@ class ExampleV1(BaseStrategy):
         )
 
         self.indicators = {
+            'HTF': {
+                'options': self.indicator_options['HTF'],
+                'values': self.htf_close
+            },
             'SL': {
                 'options': self.indicator_options['SL'],
                 'values': self.stop_price
@@ -310,6 +344,11 @@ class ExampleV1(BaseStrategy):
             'TP #3': {
                 'options': self.indicator_options['TP #3'],
                 'values': self.take_price[2]
+            },
+            'Volume': {
+                'options': self.indicator_options['Volume'],
+                'values': self.volume,
+                'colors': self.volume_colors
             },
             '+DI': {
                 'options': self.indicator_options['+DI'],
