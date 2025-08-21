@@ -1,6 +1,6 @@
 [project]
 name = "jinn-core"
-version = "3.4.0"
+version = "3.5.0"
 description = "Jinn is a powerful algorithmic trading framework."
 authors = [
     {name = "Albert Alan-Reys",email = "albert.alanreys@gmail.com"}
