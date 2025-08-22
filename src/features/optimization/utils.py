@@ -3,44 +3,80 @@ from typing import Any
 import numpy as np
 
 
-def create_walkforward_windows(
+def create_train_test_windows(
     market_data: dict[str, Any],
     config: Any
-) -> list[dict[str, int]]:
+) -> dict[str, int]:
     """
-    Create Walk-Forward Analysis windows.
+    Create indices for train and test datasets.
 
-    Builds sequential train/validation windows from candle data
-    using sliding window approach.
+    Splits the data into train/test sets using the ratio specified in config.
+    Train set comes first, followed immediately by test set.
 
     Args:
         market_data: Dataset containing klines and metadata
-        config: OptimizationConfig with window sizes and step
+        config: Configuration with window sizes as ratios (0.0-1.0)
 
     Returns:
-        list[dict[str, int]]: List of window index boundaries
+        dict[str, int]:
+            Dictionary with index boundaries for train and test sets
     """
 
-    windows = []
     total_klines = len(market_data['klines'])
-    start_idx = 0
+    
+    train_size = int(total_klines * config.train_window_klines)
+    test_size = int(total_klines * config.validation_window_klines)
+    
+    if train_size + test_size > total_klines:
+        test_size = total_klines - train_size
+    
+    return {
+        'train_start': 0,
+        'train_end': train_size,
+        'test_start': train_size,
+        'test_end': train_size + test_size
+    }
 
-    while True:
-        train_end_idx = start_idx + config.train_window_klines
-        val_end_idx = train_end_idx + config.validation_window_klines
 
-        if val_end_idx > total_klines:
-            break
+def create_window_data(
+    market_data: dict[str, Any],
+    window: dict[str, int],
+    data_type: str
+) -> dict[str, Any]:
+    """
+    Extract market data for a given window.
 
-        windows.append({
-            'train_start': start_idx,
-            'train_end': train_end_idx,
-            'validation_start': train_end_idx,
-            'validation_end': val_end_idx
-        })
-        start_idx += config.step_klines
+    Returns either training or testing subset defined by window indices.
 
-    return windows
+    Args:
+        market_data: Full dataset with klines and feeds
+        window: Window index boundaries
+        data_type: 'train' or 'test' subset
+
+    Returns:
+        dict[str, Any]: Window-specific dataset
+    """
+
+    if data_type == 'train':
+        start_idx = window['train_start']
+        end_idx = window['train_end']
+    else:
+        start_idx = window['test_start']
+        end_idx = window['test_end']
+
+    slice_range = slice(start_idx, end_idx)
+
+    window_data = {
+        **market_data,
+        'klines': market_data['klines'][slice_range],
+        'feeds': {'klines': {}}
+    }
+
+    if market_data.get('feeds'):
+        for feed_name, feed_data in market_data['feeds']['klines'].items():
+            window_data['feeds']['klines'][feed_name] = feed_data[slice_range]
+
+    return window_data
 
 
 def latin_hypercube_sampling(
@@ -83,44 +119,3 @@ def latin_hypercube_sampling(
         samples.append(individual)
 
     return samples
-
-
-def create_window_data(
-    market_data: dict[str, Any],
-    window: dict[str, int],
-    data_type: str
-) -> dict[str, Any]:
-    """
-    Extract market data for a given window.
-
-    Returns either training or validation subset defined by window indices.
-
-    Args:
-        market_data: Full dataset with klines and feeds
-        window: Window index boundaries
-        data_type: 'train' or 'validation' subset
-
-    Returns:
-        dict[str, Any]: Window-specific dataset
-    """
-
-    if data_type == 'train':
-        start_idx = window['train_start']
-        end_idx = window['train_end']
-    else:
-        start_idx = window['validation_start']
-        end_idx = window['validation_end']
-
-    slice_range = slice(start_idx, end_idx)
-
-    window_data = {
-        **market_data,
-        'klines': market_data['klines'][slice_range],
-        'feeds': {'klines': {}}
-    }
-
-    if market_data.get('feeds'):
-        for feed_name, feed_data in market_data['feeds']['klines'].items():
-            window_data['feeds']['klines'][feed_name] = feed_data[slice_range]
-
-    return window_data

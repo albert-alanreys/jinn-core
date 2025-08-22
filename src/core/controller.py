@@ -98,7 +98,10 @@ class Controller():
                 )
                 automizer.run()
             case Mode.OPTIMIZATION:
-                optimizer = OptimizationService(self.strategy_contexts)
+                optimizer = OptimizationService(
+                    self.optimization_settings,
+                    self.strategy_contexts
+                )
                 optimizer.run()
 
         if self.mode in (Mode.AUTOMATION, Mode.BACKTESTING):

@@ -9,6 +9,12 @@ MODE = enums.Mode.BACKTESTING
 
 # Settings for different modes
 OPTIMIZATION_SETTINGS = {
+    # Service settings
+    'iterations': 1000,
+    'optimization_runs': 3,
+    'max_processes': 16,
+
+    # Strategy settings
     'strategy': enums.Strategy.NUGGET_V2,
     'exchange': enums.Exchange.BYBIT,
     'symbol': 'BTCUSDT',

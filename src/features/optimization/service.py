@@ -1,50 +1,52 @@
 import json
+import multiprocessing
 import os
 import random
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from logging import getLogger
-from typing import Any
-
-import numpy as np
 
 from src.infrastructure.messaging import TelegramClient
-from .dataclasses import OptimizationConfig
+from .config import OptimizationConfig
 from .utils import (
-    latin_hypercube_sampling,
-    create_walkforward_windows,
+    create_train_test_windows,
     create_window_data,
+    latin_hypercube_sampling
 )
 
 
 class OptimizationService:
     """
-    Optimization service with modern practices:
-    - Walk-Forward Analysis with candle-based windows
-    - Adaptive Genetic Algorithm with elitism and adaptive operators
-    - Early stopping with convergence detection
-    - Smart population initialization (LHS + random + extremes)
-    - Parallel fitness evaluation with proper error handling
-    - Multi-objective optimization with stability scoring
-    - Advanced crossover and mutation strategies
+    Core service responsible for optimizing trading strategy parameters.
+
+    Performs parameter optimization across multiple strategies in parallel,
+    using a combination of selection, recombination and mutation operations.
     """
 
-    def __init__(self, strategy_contexts: dict[str, dict[str, Any]]) -> None:
+    def __init__(self, settings: dict, strategy_contexts: dict) -> None:
         """
-        Initialize the optimization service.
+        Initialize OptimizationService with strategy contexts.
 
         Args:
             settings: Dictionary of optimization settings
             strategy_contexts: Dictionary of strategy contexts
         """
 
-        self.strategy_contexts = strategy_contexts
         self.config = OptimizationConfig()
+        self.config.__dict__.update(settings)
+        self.strategy_contexts = strategy_contexts
 
         self.telegram_client = TelegramClient()
         self.logger = getLogger(__name__)
 
     def run(self) -> None:
-        """Run optimization for all provided strategy contexts."""
+        """
+        Execute the optimization process.
+
+        Manages the complete optimization workflow:
+        1. Logs optimization start.
+        2. Runs parallel optimizations.
+        3. Saves best parameters.
+        4. Logs completion.
+        """
 
         summary = [
             ' | '.join([
@@ -60,540 +62,331 @@ class OptimizationService:
         self.logger.info(f"Optimization started for:\n{'\n'.join(summary)}")
         self.telegram_client.send_message('🔥 Optimization started')
 
-        with ProcessPoolExecutor(self.config.max_processes) as executor:
-            futures = {
-                executor.submit(self._optimize, context): cid
-                for cid, context in self.strategy_contexts.items()
-            }
+        with multiprocessing.Pool(self.config.max_processes) as pool:
+            best_params = pool.map(
+                func=self._optimize,
+                iterable=self.strategy_contexts.values()
+            )
 
-            for future in as_completed(futures):
-                cid = futures[future]
-
-                try:
-                    best_params = future.result()
-                    self.strategy_contexts[cid]['best_params'] = best_params
-                except Exception as exc:
-                    self.logger.error(
-                        f'Strategy {cid} optimization failed: {exc}'
-                    )
-                    self.strategy_contexts[cid]['best_params'] = []
+        for cid, params in zip(self.strategy_contexts, best_params):
+            self.strategy_contexts[cid]['best_params'] = params
 
         self._save_params()
 
         self.logger.info('Optimization completed')
         self.telegram_client.send_message('✅ Optimization completed')
 
-    def _optimize(
-        self,
-        strategy_context: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _optimize(self, strategy_context: dict) -> list:
         """
-        Run Walk-Forward Analysis optimization for a single strategy context.
+        Optimize parameters for a single strategy.
 
-        Initializes optimization, builds training/validation windows,
-        executes multiple optimization runs, and collects best parameter sets.
+        Executes genetic algorithm optimization cycle consisting of:
+        population creation, selection, recombination, mutation, and 
+        population management over multiple iterations.
 
         Args:
-            strategy_context: Strategy context dictionary
+            strategy_context: Context dictionary for the strategy
+                containing type, client, and market data
 
         Returns:
-            list[dict[str, Any]]:
-                List of parameter dictionaries representing best solutions
+            list: Best parameters found during optimization
         """
-
 
         self._init_optimization(strategy_context)
 
-        total_klines = len(self.market_data['klines'])
-        min_klines_needed = (
-            self.config.train_window_klines +
-            self.config.validation_window_klines
+        for _ in range(self.config.optimization_runs):
+            self._create_population()
+
+            for _ in range(self.config.iterations):
+                self._select()
+                self._recombine()
+                self._mutate()
+                self._expand()
+                self._kill()
+                self._destroy()
+
+            self.best_params.append(self._get_best_sample())
+            self.population.clear()
+
+        return self.best_params
+
+    def _init_optimization(self, strategy_context: dict) -> None:
+        """
+        Initialize optimization variables for a single strategy.
+
+        Sets up strategy instance, client, training/test data,
+        population dictionary, best parameters list, and parameter keys.
+
+        Args:
+            strategy_context: Context dictionary for the strategy
+        """
+
+        self.strategy = strategy_context['type']
+
+        windows = create_train_test_windows(
+            market_data=strategy_context['market_data'],
+            config=self.config
         )
 
-        if total_klines < min_klines_needed:
-            self.logger.error(
-                'Insufficient data for Walk-Forward Analysis.'
-                'Aborting optimization.'
-            )
-            return []
+        self.train_data = create_window_data(
+            market_data=strategy_context['market_data'],
+            window=windows,
+            data_type='train'
+        )
+        self.test_data = create_window_data(
+            market_data=strategy_context['market_data'],
+            window=windows,
+            data_type='test'
+        )
 
-        windows = create_walkforward_windows(self.market_data, self.config)
-
-        if len(windows) < self.config.min_windows:
-            self.logger.error(
-                'Insufficient windows for Walk-Forward Analysis. '
-                'Aborting optimization.'
-            )
-            return []
-
-        all_results = []
-        for _ in range(self.config.optimization_runs):
-            result = self._run_single_optimization(windows)
-
-            if result:
-                all_results.append(result)
-
-        if all_results:
-            all_results.sort(
-                key=lambda x: x['fitness'] + x['stability_score'],
-                reverse=True
-            )
-            return [result['params'] for result in all_results]
-
-        return []
-
-    def _init_optimization(self, strategy_context: dict[str, Any]) -> None:
-        """
-        Prepare optimization for a specific strategy context.
-
-        Extracts strategy class, client, market data, and
-        parameter space for subsequent optimization routines.
-
-        Args:
-            strategy_context: Strategy context dictionary
-        """
-
-        self.strategy_context = strategy_context
-        self.strategy = strategy_context['type']
-        self.client = strategy_context['client']
-        self.market_data = strategy_context['market_data']
-
+        self.population = {}
+        self.best_params = []
+        
         self.param_keys = list(self.strategy.opt_params.keys())
-        self.param_space = self.strategy.opt_params
 
-    def _run_single_optimization(
-        self,
-        windows: list[dict[str, int]]
-    ) -> dict[str, Any] | None:
-        """
-        Execute one complete optimization run using Walk-Forward Analysis.
-
-        Evolves population across generations, applies early stopping
-        and convergence checks, and evaluates the best candidate.
-
-        Args:
-            windows: List of training/validation windows
-
-        Returns:
-            dict | None: Best result with metrics, or None if failed
-        """
-
-        population = self._initialize_smart_population()
-
-        best_fitness_history = []
-        generations_without_improvement = 0
-        generation = 0
-
-        current_mutation_rate = self.config.base_mutation_rate
-        best_candidate = None
-
-        while generation < self.config.max_iterations:
-            print(generation)
-
-            fitness_scores = self._evaluate_population_walkforward(
-                population=population,
-                windows=windows
-            )
-
-            if not fitness_scores:
-                break
-
-            population_with_fitness = list(zip(population, fitness_scores))
-            population_with_fitness.sort(key=lambda x: x[1], reverse=True)
-
-            current_best_fitness = population_with_fitness[0][1]
-            best_fitness_history.append(current_best_fitness)
-            best_candidate = population_with_fitness[0]
-
-            has_converged = self._check_convergence(best_fitness_history)
-            min_iterations_reached = generation >= self.config.min_iterations
-            patience_exceeded = (
-                generations_without_improvement >=
-                self.config.convergence_patience
-            )
-
-            if has_converged:
-                generations_without_improvement += 1
-
-                if min_iterations_reached and patience_exceeded:
-                    break
-            else:
-                generations_without_improvement = 0
-
-            current_mutation_rate *= self.config.mutation_decay
-            population = self._create_next_generation(
-                population_with_fitness=population_with_fitness,
-                mutation_rate=current_mutation_rate
-            )
-            generation += 1
-
-        if best_candidate is None:
-            return None
-
-        best_params, best_fitness = best_candidate
-        stability_score = self._get_stability_score(best_params, windows)
-
-        return {
-            'params': best_params,
-            'fitness': best_fitness,
-            'stability_score': stability_score
-        }
-
-    def _initialize_smart_population(self) -> list[dict[str, Any]]:
+    def _create_population(self) -> None:
         """
         Create initial population of candidate parameter sets.
 
         Combines random sampling, Latin Hypercube Sampling, and
         extreme values to improve diversity and convergence speed.
-
-        Returns:
-            list[dict[str, Any]]: Population of parameter dictionaries
         """
 
         population = []
+        opt_params = self.strategy.opt_params
 
+        # Random sampling (30%)
         random_count = int(self.config.population_size * 0.3)
         for _ in range(random_count):
             population.append({
-                p: random.choice(v) for p, v in self.param_space.items()
+                param_name: random.choice(param_values)
+                for param_name, param_values in opt_params.items()
             })
 
+        # Latin Hypercube Sampling (40%)
         lhs_count = int(self.config.population_size * 0.4)
         population.extend(
-            latin_hypercube_sampling(self.param_space, lhs_count)
+            latin_hypercube_sampling(opt_params, lhs_count)
         )
 
+        # Extreme values (20%)
         extreme_count = int(self.config.population_size * 0.2)
         for _ in range(extreme_count):
             individual = {
-                p: random.choice([v[0], v[-1]])
-                for p, v in self.param_space.items()
+                param_name: random.choice([param_values[0], param_values[-1]])
+                for param_name, param_values in opt_params.items()
             }
             population.append(individual)
 
+        # Fill remaining with random samples if needed
         while len(population) < self.config.population_size:
             population.append({
-                p: random.choice(v) for p, v in self.param_space.items()
+                param_name: random.choice(param_values)
+                for param_name, param_values in opt_params.items()
             })
 
-        return population
+        # Evaluate and add to population
+        for individual in population:
+            fitness = self._evaluate(individual, self.train_data)
+            sample_key = self._dict_to_key(individual)
+            self.population[fitness] = sample_key
 
-    def _evaluate_population_walkforward(
-        self,
-        population: list[dict[str, Any]],
-        windows: list[dict[str, int]]
-    ) -> list[float]:
+    def _dict_to_key(self, param_dict: dict) -> tuple:
         """
-        Evaluate entire population across Walk-Forward windows.
-
-        Computes train and validation scores for each individual,
-        applies overfitting penalty and stability penalty,
-        and returns aggregated fitness scores.
+        Convert parameter dictionary to hashable tuple for population storage.
 
         Args:
-            population: Candidate parameter sets
-            windows: Training/validation windows
+            param_dict: Parameter dictionary
 
         Returns:
-            list[float]: Fitness scores for each candidate
+            tuple: Hashable representation of parameter values
         """
+        return tuple(param_dict[key] for key in self.param_keys)
 
-        fitness_scores = []
-    
-        for individual in population:
-            window_scores = []
-            train_scores = []
-            val_scores = []
+    def _key_to_dict(self, param_key: tuple) -> dict:
+        """
+        Convert parameter tuple back to dictionary.
 
-            for window in windows:
-                train_data = create_window_data(
-                    market_data=self.market_data,
-                    window=window,
-                    data_type='train'
-                )
-                val_data = create_window_data(
-                    market_data=self.market_data,
-                    window=window,
-                    data_type='validation'
-                )
+        Args:
+            param_key: Hashable parameter representation
 
-                train_score = self._evaluate_individual(
-                    params=individual,
-                    market_data=train_data
-                )
-                val_score = self._evaluate_individual(
-                    params=individual,
-                    market_data=val_data
-                )
+        Returns:
+            dict: Parameter dictionary
+        """
+        return dict(zip(self.param_keys, param_key))
 
-                train_scores.append(train_score)
-                val_scores.append(val_score)
-                window_scores.append(0.3 * train_score + 0.7 * val_score)
-
-            if not window_scores:
-                fitness_scores.append(float('-inf'))
-                continue
-
-            valid_scores = [
-                score for score in window_scores 
-                if not (np.isnan(score) or np.isinf(score))
-            ]
-            
-            if not valid_scores:
-                fitness_scores.append(float('-inf'))
-                continue
-
-            avg_score = np.mean(valid_scores)
-            score_std = np.std(valid_scores) if len(valid_scores) > 1 else 0
-
-        if train_scores and val_scores:
-            avg_train = np.mean(train_scores)
-            avg_val = np.mean(val_scores)
-            
-            if avg_train > 0 and avg_val > 0:
-                overfitting_ratio = avg_train / avg_val
-                if overfitting_ratio > 1.2:
-                    avg_score -= (
-                        (overfitting_ratio - 1.0) *
-                        self.config.overfitting_penalty * 2
-                    )
-            elif avg_train <= 0 or avg_val <= 0:
-                avg_score = float('-inf')
-
-            final_score = avg_score - score_std * self.config.stability_weight
-            fitness_scores.append(final_score)
-
-        return fitness_scores
-
-    def _evaluate_individual(
-        self,
-        params: dict[str, Any],
-        market_data: dict[str, Any]
-    ) -> float:
+    def _evaluate(self, sample_dict: dict, market_data: dict) -> float:
         """
         Evaluate strategy performance with given parameters.
 
         Instantiates strategy with provided parameter dictionary,
-        runs calculation on market data, and computes fitness
-        score based on completed deals performance.
+        runs calculation on market data, and computes fitness score
+        based on completed deals performance.
 
         Args:
-            params: Parameter dictionary to evaluate
+            sample_dict: Parameter dictionary to evaluate
             market_data: Dataset to evaluate against
 
         Returns:
             float: Fitness score (performance metric)
         """
 
-        try:
-            instance = self.strategy(params)
-            instance.calculate(market_data)
+        strategy_instance = self.strategy(sample_dict)
+        strategy_instance.calculate(market_data)
 
-            if len(instance.completed_deals_log) > 0:
-                return float(instance.completed_deals_log[:, 8].sum())
+        score = strategy_instance.completed_deals_log[:, 8].sum()
+        return score
+
+    def _select(self) -> None:
+        """
+        Select two parent samples for recombination.
+
+        Uses tournament selection: 50% chance to select best individual
+        plus random individual, 50% chance to select two random individuals.
+        Selected parents are stored in self.parents as dictionaries.
+        """
+
+        if random.randint(0, 1) == 0:
+            best_score = max(self.population)
+            parent_1_key = self.population[best_score]
+            parent_1 = self._key_to_dict(parent_1_key)
+
+            population_copy = self.population.copy()
+            population_copy.pop(best_score)
+
+            parent_2_key = random.choice(list(population_copy.values()))
+            parent_2 = self._key_to_dict(parent_2_key)
             
-            return float('-inf')
-        except Exception:
-            return float('-inf')
+            self.parents = [parent_1, parent_2]
+        else:
+            parent_keys = random.sample(list(self.population.values()), 2)
+            self.parents = [self._key_to_dict(key) for key in parent_keys]
 
-    def _check_convergence(self, fitness_history: list[float]) -> bool:
+    def _recombine(self) -> None:
         """
-        Check whether population fitness has converged.
+        Create offspring through crossover of selected parents.
 
-        Uses last 10 fitness values to determine if performance
-        improvement is below a defined threshold.
-
-        Args:
-            fitness_history: Sequence of best fitness values
-
-        Returns:
-            bool: True if convergence detected, False otherwise
-        """
-
-        if len(fitness_history) < 10:
-            return False
+        Implements two crossover strategies:
+        - Single-point crossover: splits parameter list at random position
+        - Two-point crossover: exchanges middle segment between parents
         
-        recent_scores = fitness_history[-10:]
-        convergence_threshold = self.config.convergence_threshold
-        return max(recent_scores) - min(recent_scores) < convergence_threshold
-
-    def _create_next_generation(
-        self,
-        population_with_fitness: list[tuple[dict[str, Any], float]],
-        mutation_rate: float
-    ) -> list[dict[str, Any]]:
-        """
-        Create the next generation of candidate solutions.
-
-        Applies elitism, tournament selection, adaptive crossover,
-        and adaptive mutation to evolve the population.
-
-        Args:
-            population_with_fitness: Current population with fitness scores
-            mutation_rate: Mutation rate for adaptive mutation
-
-        Returns:
-            list[dict[str, Any]]: New population of candidate parameter sets
+        Resulting child is stored in self.child as dictionary.
         """
 
-        elite_count = max(
-            1, int(len(population_with_fitness) * self.config.elite_ratio)
+        param_count = len(self.param_keys)
+        r_number = random.randint(0, 1)
+
+        if r_number == 0:
+            # Single-point crossover
+            delimiter = random.randint(1, param_count - 1)
+            
+            self.child = {}
+            for i, param_name in enumerate(self.param_keys):
+                if i < delimiter:
+                    self.child[param_name] = self.parents[0][param_name]
+                else:
+                    self.child[param_name] = self.parents[1][param_name]
+        else:
+            # Two-point crossover
+            delimiter_1 = random.randint(1, param_count // 2 - 1)
+            delimiter_2 = random.randint(
+                param_count // 2 + 1, param_count - 1
+            )
+
+            self.child = {}
+            for i, param_name in enumerate(self.param_keys):
+                if i < delimiter_1 or i >= delimiter_2:
+                    self.child[param_name] = self.parents[0][param_name]
+                else:
+                    self.child[param_name] = self.parents[1][param_name]
+
+    def _mutate(self) -> None:
+        """
+        Apply mutation to the offspring.
+
+        With 90% probability mutates single random parameter,
+        with 10% probability mutates all parameters.
+        Mutation selects random values from corresponding parameter ranges.
+        """
+
+        if random.random() <= 0.9:
+            # Mutate single parameter
+            param_name = random.choice(self.param_keys)
+            param_values = self.strategy.opt_params[param_name]
+            self.child[param_name] = random.choice(param_values)
+        else:
+            # Mutate all parameters
+            for param_name in self.param_keys:
+                param_values = self.strategy.opt_params[param_name]
+                self.child[param_name] = random.choice(param_values)
+
+    def _expand(self) -> None:
+        """
+        Add mutated offspring to population.
+
+        Evaluates fitness of the child on training data and
+        adds it to the population dictionary.
+        """
+
+        fitness = self._evaluate(self.child, self.train_data)
+        child_key = self._dict_to_key(self.child)
+        self.population[fitness] = child_key
+
+    def _kill(self) -> None:
+        """
+        Remove worst individuals to maintain population size.
+
+        Removes individuals with lowest fitness scores until
+        population size is within max_population_size limit.
+        """
+
+        while len(self.population) > self.config.max_population_size:
+            self.population.pop(min(self.population))
+
+    def _destroy(self) -> None:
+        """
+        Catastrophic population reduction event.
+
+        With 0.1% probability removes bottom 50% of population
+        to prevent premature convergence and maintain diversity.
+        """
+
+        if random.random() > 0.001:
+            return
+
+        sorted_population = sorted(
+            self.population.items(),
+            key=lambda x: x[0]
         )
-        next_population = [
-            ind for ind, _ in population_with_fitness[:elite_count]
-        ]
 
-        while len(next_population) < self.config.population_size:
-            parent1 = self._tournament_selection(population_with_fitness)
-            parent2 = self._tournament_selection(population_with_fitness)
+        for i in range(int(len(self.population) * 0.5)):
+            self.population.pop(sorted_population[i][0])
 
-            child1, child2 = self._adaptive_crossover(parent1, parent2)
-            child1 = self._adaptive_mutation(child1, mutation_rate)
-            child2 = self._adaptive_mutation(child2, mutation_rate)
-
-            next_population.extend([child1, child2])
-
-        return next_population[:self.config.population_size]
-
-    def _tournament_selection(
-        self,
-        population_with_fitness: list[tuple[dict[str, Any], float]]
-    ) -> dict[str, Any]:
+    def _get_best_sample(self) -> dict:
         """
-        Select one parent using tournament selection.
+        Select best parameter set based on combined train/test performance.
 
-        Randomly samples a subset of individuals, and returns the fittest.
-
-        Args:
-            population_with_fitness: Population with fitness scores
+        Evaluates all population samples on test data and selects
+        the one with highest combined fitness (50% train + 50% test).
 
         Returns:
-            dict[str, Any]: Selected parent parameter dictionary
+            dict: Best parameter dictionary considering
+                  both training and test results
         """
 
-        tournament_size = min(
-            self.config.tournament_size, len(population_with_fitness)
-        )
-        tournament = random.sample(population_with_fitness, tournament_size)
-        winner = max(tournament, key=lambda x: x[1])
-        return winner[0]
+        best_score = float('-inf')
+        best_sample = None
 
-    def _adaptive_crossover(
-        self,
-        parent1: dict[str, Any],
-        parent2: dict[str, Any]
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """
-        Perform adaptive crossover between two parents.
+        for train_fitness, sample_key in self.population.items():
+            sample_dict = self._key_to_dict(sample_key)
+            test_fitness = self._evaluate(sample_dict, self.test_data)
+            combined_fitness = 0.5 * train_fitness + 0.5 * test_fitness
 
-        Swaps parameter values randomly between parents to produce offspring.
+            if combined_fitness > best_score:
+                best_score = combined_fitness
+                best_sample = sample_dict
 
-        Args:
-            parent1: First parent parameters
-            parent2: Second parent parameters
-
-        Returns:
-            tuple[dict[str, Any], dict[str, Any]]:
-                Two offspring parameter dictionaries
-        """
-
-        child1, child2 = parent1.copy(), parent2.copy()
-
-        for param in self.param_keys:
-            if random.random() < 0.5:
-                child1[param], child2[param] = child2[param], child1[param]
-        
-        return child1, child2
-
-    def _adaptive_mutation(
-        self,
-        individual: dict[str, Any],
-        mutation_rate: float
-    ) -> dict[str, Any]:
-        """
-        Apply adaptive mutation to an individual.
-
-        Perturbs parameter values using Gaussian-like shifts in index space,
-        with fallback to random choice if invalid.
-
-        Args:
-            individual: Candidate parameter set
-            mutation_rate: Probability of mutating each parameter
-
-        Returns:
-            dict[str, Any]: Mutated individual
-        """
-        
-        mutated = individual.copy()
-
-        for param in self.param_keys:
-            if random.random() < mutation_rate:
-                values = self.param_space[param]
-                current_value = individual[param]
-
-                try:
-                    idx = values.index(current_value)
-                    std_dev = max(1, len(values) * 0.2)
-                    new_index = int(np.random.normal(idx, std_dev))
-                    new_index = max(0, min(len(values) - 1, new_index))
-                    mutated[param] = values[new_index]
-                except (ValueError, IndexError):
-                    mutated[param] = random.choice(values)
-        
-        return mutated
-
-    def _get_stability_score(
-        self,
-        best_params: dict[str, Any],
-        windows: list[dict[str, int]]
-    ) -> float:
-        """
-        Calculate stability score for the best parameters across all windows.
-
-        Args:
-            best_params: Parameter dictionary of best candidate
-            windows: Training/validation windows
-
-        Returns:
-            float: stability_score metrics
-        """
-
-        train_scores, validation_scores = [], []
-        stability_score = 0.0
-
-        for window in windows:
-            train_data = create_window_data(
-                market_data=self.market_data,
-                window=window,
-                data_type='train'
-            )
-            val_data = create_window_data(
-                market_data=self.market_data,
-                window=window,
-                data_type='validation'
-            )
-
-            train_scores.append(
-                self._evaluate_individual(best_params, train_data)
-            )
-            validation_scores.append(
-                self._evaluate_individual(best_params, val_data)
-            )
-
-        if train_scores and validation_scores:
-            train_std = (
-                float(np.std(train_scores))
-                if len(train_scores) > 1
-                else 0.0
-            )
-            val_std = (
-                float(np.std(validation_scores))
-                if len(validation_scores) > 1
-                else 0.0
-            )
-            stability_score = 1.0 / (1.0 + train_std + val_std)
-
-        return stability_score
+        return best_sample
 
     def _save_params(self) -> None:
         """
@@ -605,9 +398,6 @@ class OptimizationService:
         """
 
         for context in self.strategy_contexts.values():
-            if not context.get('best_params'):
-                continue
-
             filename = (
                 f'{context['client'].exchange_name}_'
                 f'{context['market_data']['symbol']}_'
@@ -637,11 +427,11 @@ class OptimizationService:
             existing_items = []
 
             if os.path.exists(file_path):
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as file:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    try:
                         existing_items = json.load(file)
-                except (json.JSONDecodeError, IOError):
-                    pass
+                    except json.JSONDecodeError:
+                        pass
 
             with open(file_path, 'w', encoding='utf-8') as file:
                 json.dump(existing_items + new_items, file, indent=4)
