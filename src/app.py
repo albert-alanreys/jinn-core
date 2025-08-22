@@ -9,12 +9,14 @@ from src.web.server import create_app
 
 
 class AppInitializer:
+    def __init__(self) -> None:
+        load_dotenv()
+        logging.basicConfig(level=logging.INFO)
+
     def start(self):
-        self._load_strategies()
+        self._init_strategies()
 
-        print(self.strategies)
-
-    def _load_strategies(self):
+    def _init_strategies(self):
         self.strategies = load_strategies()
 
 

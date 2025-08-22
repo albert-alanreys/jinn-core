@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from src.infrastructure.exchanges.enums import Interval
+
 
 class MarketClientInterface(ABC):
     """Interface for market data operations."""
@@ -8,7 +10,7 @@ class MarketClientInterface(ABC):
     def get_historical_klines(
         self,
         symbol: str,
-        interval: str | int,
+        interval: Interval,
         start: int,
         end: int
     ) -> list:
@@ -20,7 +22,7 @@ class MarketClientInterface(ABC):
         
         Args:
             symbol: Trading symbol (e.g., BTCUSDT)
-            interval: Kline interval (e.g., '1m', 60)
+            interval: Kline interval from Interval enum
             start: Start time in milliseconds
             end: End time in milliseconds
             
@@ -33,7 +35,7 @@ class MarketClientInterface(ABC):
     def get_last_klines(
         self,
         symbol: str,
-        interval: str | int,
+        interval: Interval,
         limit: int = 1000
     ) -> list:
         """
@@ -44,7 +46,7 @@ class MarketClientInterface(ABC):
         
         Args:
             symbol: Trading symbol (e.g., BTCUSDT)
-            interval: Kline interval (e.g., '1m', 60)
+            interval: Kline interval from Interval enum
             limit: Number of klines to retrieve (default: 1000)
             
         Returns:
@@ -98,18 +100,15 @@ class MarketClientInterface(ABC):
         pass
 
     @abstractmethod
-    def get_valid_interval(self, interval: str | int) -> str:
+    def get_valid_interval(self, interval: Interval) -> int | str:
         """
         Convert interval input to valid interval format.
         
-        Validates and normalizes interval input, supporting various formats
-        including strings and integers.
-        
         Args:
-            interval: Interval in various formats
+            interval: interval from Interval enum
             
         Returns:
-            str: Standardized interval string
+            int | str: Standardized interval
             
         Raises:
             ValueError: If interval format is invalid
@@ -117,12 +116,12 @@ class MarketClientInterface(ABC):
         pass
 
     @abstractmethod
-    def get_interval_duration(self, interval: str | int) -> int:
+    def get_interval_duration(self, interval: Interval) -> int:
         """
         Get interval duration in milliseconds for valid interval.
         
         Args:
-            interval: Kline interval (e.g., '1m', 60)
+            interval: Kline interval from Interval enum
         
         Returns:
             int: Duration in milliseconds for valid interval

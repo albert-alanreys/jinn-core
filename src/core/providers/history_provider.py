@@ -6,10 +6,12 @@ import numpy as np
 
 from src.core.quantklines import shrink, stretch
 from src.infrastructure.db import DBManager
+from src.infrastructure.exchanges.enums import Interval
 from src.shared.utils import (
     has_first_historical_kline,
     has_realtime_kline
 )
+from .typeddicts import MarketData, FeedsData
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -33,11 +35,11 @@ class HistoryProvider():
         self,
         client: 'BaseExchangeClient',
         symbol: str,
-        interval: str | int,
+        interval: Interval,
         start: str,
         end: str,
         feeds: dict | None
-    ) -> dict:
+    ) -> MarketData:
         """
         Fetches complete market data package:
           - klines
@@ -47,26 +49,29 @@ class HistoryProvider():
         Args:
             client: Exchange API client
             symbol: Trading symbol (e.g., BTCUSDT)
-            interval: Kline interval (e.g., '1m', 60)
+            interval: Kline interval from Interval enum
             start: Start date in 'YYYY-MM-DD' format
             end: End date in 'YYYY-MM-DD' format
             feeds: Optional feeds config
-            
+        
         Returns:
-            dict with:
-                - symbol, interval, start, end
-                - precisions
-                - klines
-                - feeds (if requested)
+            MarketData: Complete market data dictionary including:
+                - symbol: Trading symbol
+                - interval: Kline interval from Interval enum
+                - start: Start date in 'YYYY-MM-DD' format
+                - end: Start date in 'YYYY-MM-DD' format
+                - p_precision: Price precision
+                - q_precision: Quantity precision
+                - klines: Historical kline data
+                - feeds: additional feeds (if configured)
         """
         
         p_precision, q_precision = self._get_precisions(client, symbol)
-        valid_interval = client.market.get_valid_interval(interval)
 
         klines = self._get_klines(
             client=client,
             symbol=symbol,
-            interval=valid_interval,
+            interval=interval,
             start=start,
             end=end
         )
@@ -76,26 +81,26 @@ class HistoryProvider():
                 client=client,
                 symbol=symbol,
                 feeds=feeds,
-                main_interval=valid_interval,
+                main_interval=interval,
                 main_klines=klines,
                 start=start,
                 end=end
             )
             if feeds
-            else {'feeds': {}}
+            else FeedsData(klines={})
         )
 
-        return {
-            'symbol': symbol,
-            'interval': valid_interval,
-            'start': start,
-            'end': end,
-            'p_precision': p_precision,
-            'q_precision': q_precision,
-            'klines': klines,
-            **feeds_data
-        }
-
+        return MarketData(
+            symbol=symbol,
+            interval=interval,
+            p_precision=p_precision,
+            q_precision=q_precision,
+            klines=klines,
+            feeds=feeds_data,
+            start=start,
+            end=end
+        )
+    
     def _get_precisions(
         self,
         client: 'BaseExchangeClient',
@@ -145,7 +150,7 @@ class HistoryProvider():
         self,
         client: 'BaseExchangeClient',
         symbol: str,
-        interval: str | int,
+        interval: Interval,
         start: str,
         end: str
     ) -> np.ndarray:
@@ -161,7 +166,7 @@ class HistoryProvider():
         Args:
             client: Exchange API client
             symbol: Trading symbol (e.g., BTCUSDT)
-            interval: Kline interval (e.g., '1m', 60)
+            interval: Kline interval from Interval enum
             start: Start date in 'YYYY-MM-DD' format
             end: End date in 'YYYY-MM-DD' format
 
@@ -173,7 +178,7 @@ class HistoryProvider():
         """
 
         db_name = f'{client.exchange_name.lower()}.db'
-        table_name = f'{symbol}_{interval}'
+        table_name = f'{symbol}_{interval.name}'
 
         start_ms = self._to_ms(start)
         end_ms = self._to_ms(end)
@@ -252,7 +257,7 @@ class HistoryProvider():
         if klines.size == 0:
             raise ValueError(
                 f'No klines available | {client.exchange_name} | '
-                f'{symbol} | {interval} | {start} → {end}'
+                f'{symbol} | {interval.value} | {start} → {end}'
             )
         
         return klines
@@ -261,7 +266,7 @@ class HistoryProvider():
         self,
         client: 'BaseExchangeClient',
         symbol: str,
-        interval: str | int,
+        interval: Interval,
         start: int,
         end: int
     ) -> list:
@@ -271,7 +276,7 @@ class HistoryProvider():
         Args:
             client: Exchange API client
             symbol: Trading symbol (e.g., BTCUSDT)
-            interval: Kline interval (e.g., '1m', 60)
+            interval: Kline interval from Interval enum
             start: Start timestamp in milliseconds
             end: End timestamp in milliseconds
             
@@ -284,7 +289,7 @@ class HistoryProvider():
         
         self.logger.info(
             f'Requesting klines | {client.exchange_name} | '
-            f'{symbol} | {interval}'
+            f'{symbol} | {interval.value}'
         )
 
         klines = client.market.get_historical_klines(
@@ -310,11 +315,11 @@ class HistoryProvider():
         client: 'BaseExchangeClient',
         symbol: str,
         feeds: dict,
-        main_interval: str | int,
+        main_interval: Interval,
         main_klines: np.ndarray,
         start: str,
         end: str
-    ) -> dict:
+    ) -> FeedsData:
         """
         Fetch additional data feeds based on configuration.
         
@@ -331,20 +336,17 @@ class HistoryProvider():
             end: End date ('YYYY-MM-DD')
             
         Returns:
-            dict: Requested feeds data, structured as:
-                {'feeds': {'klines': {feed_name: np.ndarray, ...}}}
+            FeedsData: Requested feeds data, structured as:
+                {'klines': {feed_name: np.ndarray, ...}}
         """
 
         if 'klines' not in feeds:
-            return {}
+            return FeedsData(klines={})
 
-        klines_by_feed = {}
+        klines_by_feed: dict[str, np.ndarray] = {}
         for feed_name, feed_config in feeds['klines'].items():
-            feed_key, feed_interval_key = feed_config[:2]
+            feed_key, feed_interval = feed_config[:2]
             feed_symbol = symbol if feed_key == 'symbol' else feed_key
-            feed_interval = (
-                client.market.get_valid_interval(feed_interval_key)
-            )
 
             main_ms = client.market.get_interval_duration(main_interval)
             feed_ms = client.market.get_interval_duration(feed_interval)
@@ -372,7 +374,7 @@ class HistoryProvider():
 
             klines_by_feed[feed_name] = klines
         
-        return {'feeds': {'klines': klines_by_feed}}
+        return FeedsData(klines=klines_by_feed)
     
     @staticmethod
     def _to_ms(date_str: str) -> int:

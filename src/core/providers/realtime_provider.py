@@ -4,19 +4,19 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from src.core.quantklines import shrink, stretch
+from src.infrastructure.exchanges.enums import Interval
 from src.shared.utils import (
     has_last_historical_kline,
     has_realtime_kline
 )
+from .typeddicts import MarketData, FeedsData
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
 
 
 class RealtimeProvider():
-    """
-    Provides real-time market data for automated trading.
-    """
+    """Provides real-time market data for automated trading."""
 
     _KLINES_LIMIT = 1000
 
@@ -24,9 +24,9 @@ class RealtimeProvider():
         self,
         client: 'BaseExchangeClient',
         symbol: str,
-        interval: str | int,
+        interval: Interval,
         feeds: dict | None
-    ) -> dict:
+    ) -> MarketData:
         """
         Fetch initial real-time market data for a symbol.
 
@@ -37,22 +37,22 @@ class RealtimeProvider():
             feeds: Additional data feeds configuration
 
         Returns:
-            dict: Complete market data dictionary including:
+            MarketData: Complete market data dictionary including:
                 - symbol: Trading symbol
                 - interval: Validated interval
-                - precision (float): Price and quantity precision
+                - p_precision: Price precision
+                - q_precision: Quantity precision
                 - klines: Historical kline data
                 - feeds: additional feeds (if configured)
         """
 
         p_precision = client.market.get_price_precision(symbol)
         q_precision = client.market.get_qty_precision(symbol)   
-        valid_interval = client.market.get_valid_interval(interval)
 
         klines = np.array(
             client.market.get_last_klines(
                 symbol=symbol,
-                interval=valid_interval,
+                interval=interval,
                 limit=self._KLINES_LIMIT
             )
         )[:, :6].astype(float)
@@ -63,34 +63,32 @@ class RealtimeProvider():
         feeds_data = (
             self._get_feeds_data(
                 client=client,
-                main_interval=valid_interval,
+                main_interval=interval,
                 main_klines=klines,
                 symbol=symbol,
                 feeds=feeds,
             )
             if feeds
-            else {'feeds': {}}
+            else FeedsData(klines={})
         )
 
-        result = {
-            'symbol': symbol,
-            'interval': valid_interval,
-            'p_precision': p_precision,
-            'q_precision': q_precision,
-            'klines': klines,
-            **feeds_data
-        }
-
-        return result
+        return MarketData(
+            symbol=symbol,
+            interval=interval,
+            p_precision=p_precision,
+            q_precision=q_precision,
+            klines=klines,
+            feeds=feeds_data
+        )
 
     def _get_feeds_data(
         self,
         client: 'BaseExchangeClient',
         symbol: str,
         feeds: dict,
-        main_interval: str | int,
+        main_interval: Interval,
         main_klines: np.ndarray
-    ) -> dict:
+    ) -> FeedsData:
         """
         Fetch additional data feeds based on configuration.
         
@@ -105,27 +103,22 @@ class RealtimeProvider():
             main_klines: Main array of klines
 
         Returns:
-            dict: Requested feeds data, structured as:
+            FeedsData: Requested feeds data, structured as:
                 {
-                    'feeds': {
-                        'klines': {feed_name: np.ndarray, ...},
-                        'raw_klines': {feed_name: np.ndarray, ...}
-                    }
+                    'klines': {feed_name: np.ndarray, ...},
+                    'raw_klines': {feed_name: np.ndarray, ...}
                 }
         """
 
         if 'klines' not in feeds:
-            return {}
+            return FeedsData(klines={})
         
-        klines_by_feed = {}
-        raw_klines_by_feed = {}
+        klines_by_feed: dict[str, np.ndarray] = {}
+        raw_klines_by_feed: dict[str, np.ndarray] = {}
 
         for feed_name, feed_config in feeds['klines'].items():
-            feed_key, feed_interval_key = feed_config[:2]
+            feed_key, feed_interval = feed_config[:2]
             feed_symbol = symbol if feed_key == 'symbol' else feed_key
-            feed_interval = (
-                client.market.get_valid_interval(feed_interval_key)
-            )
 
             main_ms = client.market.get_interval_duration(main_interval)
             feed_ms = client.market.get_interval_duration(feed_interval)
@@ -161,12 +154,10 @@ class RealtimeProvider():
 
             klines_by_feed[feed_name] = klines
 
-        return {
-            'feeds': {
-                'klines': klines_by_feed,
-                'raw_klines': raw_klines_by_feed
-            }
-        }
+        return FeedsData(
+            klines=klines_by_feed,
+            raw_klines=raw_klines_by_feed
+        )
 
     def update_data(self, strategy_context: dict) -> bool:
         """
@@ -184,7 +175,7 @@ class RealtimeProvider():
 
         new_market_data = {
             'klines': original_market_data['klines'].copy(),
-            'feeds': {'klines': {}, 'raw_klines': {}}
+            'feeds': FeedsData(klines={}, raw_klines={})
             if 'feeds' in original_market_data else None
         }
 
@@ -255,14 +246,11 @@ class RealtimeProvider():
                     strategy_context['instance']
                     .params['feeds']['klines'][feed_name]
                 )
-                feed_key, feed_interval_key = feed_config[:2]
+                feed_key, feed_interval = feed_config[:2]
                 feed_symbol = (
                     original_market_data['symbol']
                     if feed_key == 'symbol'
                     else feed_key
-                )
-                feed_interval = (
-                    client.market.get_valid_interval(feed_interval_key)
                 )
                 feed_ms = client.market.get_interval_duration(feed_interval)
 
@@ -327,7 +315,7 @@ class RealtimeProvider():
         self,
         client: 'BaseExchangeClient',
         symbol: str,
-        interval: str | int,
+        interval: Interval,
         klines: np.ndarray
     ) -> np.ndarray:
         """
@@ -336,7 +324,7 @@ class RealtimeProvider():
         Args:
             client: Exchange API client
             symbol: Trading symbol (e.g., BTCUSDT)
-            interval: Kline interval (e.g., '1m', 60)
+            interval: Kline interval from Interval enum
             klines: Existing kline array
 
 

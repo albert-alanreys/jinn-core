@@ -5,6 +5,7 @@ import numpy as np
 import numba as nb
 
 import src.core.quantklines as qk
+from src.infrastructure.exchanges.enums import Interval
 from src.shared.constants import colors
 from src.shared.utils import adjust
 from .strategy import BaseStrategy
@@ -48,7 +49,8 @@ class ExampleV2(BaseStrategy):
         'adx_short_lower_limit': 1.0,
         'feeds': {
             'klines': {
-                'HTF': ['symbol', '1d'],
+                'HTF': ['symbol', Interval.DAY_1],
+                'LTF': ['symbol', Interval.MIN_1],
             }
         }
     }
