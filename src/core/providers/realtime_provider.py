@@ -18,7 +18,7 @@ class RealtimeProvider():
     Provides real-time market data for automated trading.
     """
 
-    _KLINES_LIMIT = 3000
+    _KLINES_LIMIT = 1000
 
     def get_market_data(
         self,
