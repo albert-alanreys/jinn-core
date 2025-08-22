@@ -15,23 +15,22 @@ if TYPE_CHECKING:
 
 class DailyProfitV1(BaseStrategy):
     # Strategy parameters
-    # Names must be in double quotes
     params = {
-        "stop": 0.5,
-        "trail_stop": True,
-        "take_multiplier_1": 3.0,
-        "take_volume_1": 30.0,
-        "take_2": True,
-        "take_multiplier_2": 2.0,
-        "take_volume_2": 30.0,
-        "st_atr_length": 14,
-        "st_factor": 2.5,
-        "rsi_length": 10,
-        "stoch_length": 10,
-        "stoch_rsi_upper_limit": 90.0,
-        "stoch_rsi_lower_limit": 10.0,
-        "vwap_zone": 0.3,
-        "vwap_close": False
+        'stop': 0.5,
+        'trail_stop': True,
+        'take_multiplier_1': 3.0,
+        'take_volume_1': 30.0,
+        'take_2': True,
+        'take_multiplier_2': 2.0,
+        'take_volume_2': 30.0,
+        'st_atr_length': 14,
+        'st_factor': 2.5,
+        'rsi_length': 10,
+        'stoch_length': 10,
+        'stoch_rsi_upper_limit': 90.0,
+        'stoch_rsi_lower_limit': 10.0,
+        'vwap_zone': 0.3,
+        'vwap_close': False
     }
 
     # Parameters to be optimized and their possible values

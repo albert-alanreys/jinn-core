@@ -15,18 +15,17 @@ if TYPE_CHECKING:
 
 class SisterV1(BaseStrategy):
     # Strategy parameters
-    # Names must be in double quotes
-    # take_type: 0 — "fixed", 1 — "trailing"
+    # take_type: 0 — 'fixed', 1 — 'trailing'
     params = {
-        "stop": 10.0,
-        "take_type": 1,
-        "take": 10.0,
-        "length_entry": 35,
-        "ratio_entry": 5.0,
-        "length_exit": 35,
-        "ratio_exit": 1.0,
-        "length_small_trend": 7,
-        "length_medium_trend": 35
+        'stop': 10.0,
+        'take_type': 1,
+        'take': 10.0,
+        'length_entry': 35,
+        'ratio_entry': 5.0,
+        'length_exit': 35,
+        'ratio_exit': 1.0,
+        'length_small_trend': 7,
+        'length_medium_trend': 35
     }
 
     # Parameters to be optimized and their possible values

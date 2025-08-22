@@ -16,28 +16,27 @@ if TYPE_CHECKING:
 
 class NuggetV5(BaseStrategy):
     # Strategy parameters
-    # Names must be in double quotes
     params = {
-        "min_capital": 100.0,
-        "stop": 2.8,
-        "atr_length": 14,
-        "take_value": [3.0, 4.0, 5.0, 6.0, 7.0],
-        "take_volume": [10.0, 10.0, 50.0, 20.0, 10.0],
-        "st_atr_period": 6,
-        "st_factor": 24.6,
-        "st_upper_limit": 5.8,
-        "st_lower_limit": 2.9,
-        "k_length": 14,
-        "d_length": 3,
-        "k_d_long_limit": 20.0,
-        "k_d_short_limit": 80.0,
-        "adx_filter": False,
-        "di_length": 14,
-        "adx_length": 6,
-        "adx_long_upper_limit": 44.0,
-        "adx_long_lower_limit": 28.0,
-        "adx_short_upper_limit": 77.0,
-        "adx_short_lower_limit": 1.0
+        'min_capital': 100.0,
+        'stop': 2.8,
+        'atr_length': 14,
+        'take_value': [3.0, 4.0, 5.0, 6.0, 7.0],
+        'take_volume': [10.0, 10.0, 50.0, 20.0, 10.0],
+        'st_atr_period': 6,
+        'st_factor': 24.6,
+        'st_upper_limit': 5.8,
+        'st_lower_limit': 2.9,
+        'k_length': 14,
+        'd_length': 3,
+        'k_d_long_limit': 20.0,
+        'k_d_short_limit': 80.0,
+        'adx_filter': False,
+        'di_length': 14,
+        'adx_length': 6,
+        'adx_long_upper_limit': 44.0,
+        'adx_long_lower_limit': 28.0,
+        'adx_short_upper_limit': 77.0,
+        'adx_short_lower_limit': 1.0
     }
 
     # Parameters to be optimized and their possible values

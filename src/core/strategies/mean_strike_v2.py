@@ -15,25 +15,24 @@ if TYPE_CHECKING:
 
 class MeanStrikeV2(BaseStrategy):
     # Strategy parameters
-    # Names must be in double quotes
     params = {
-        "direction": 0,
-        "leverage": 1,
-        "position_size_type": 0,
-        "position_size": 10.0,
-        "first_order_pct": 10.0,
-        "stop_loss": 1.0,
-        "take_profit": 2.0,
-        "grid_type": 1,
-        "grid_size": 4,
-        "first_grid_pct": 2.0,
-        "grid_depth": 5.0,
-        "martingale_coef": 0.0,
-        "density_coef": 1.5,
-        "lookback": 1,
-        "ma_length": 20,
-        "mult": 2.0,
-        "range_threshold": 30.0
+        'direction': 0,
+        'leverage': 1,
+        'position_size_type': 0,
+        'position_size': 10.0,
+        'first_order_pct': 10.0,
+        'stop_loss': 1.0,
+        'take_profit': 2.0,
+        'grid_type': 1,
+        'grid_size': 4,
+        'first_grid_pct': 2.0,
+        'grid_depth': 5.0,
+        'martingale_coef': 0.0,
+        'density_coef': 1.5,
+        'lookback': 1,
+        'ma_length': 20,
+        'mult': 2.0,
+        'range_threshold': 30.0
     }
 
     # Parameters to be optimized and their possible values

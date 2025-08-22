@@ -15,29 +15,28 @@ if TYPE_CHECKING:
 
 class DevourerV3(BaseStrategy):
     # Strategy parameters
-    # Names must be in double quotes
     params = {
-        "position_size": 5.0,
-        "stop_atr_p2": 0.5,
-        "stop_atr_p3": 1.0,
-        "take_atr_p3": 3.0,
-        "fast_len_p1": 12,
-        "slow_len_p1": 26,
-        "sig_len_p1": 14,
-        "k_len_p1": 14,
-        "d_len_p1": 3,
-        "kd_limit_p1": 70.0,
-        "atr_len_p1": 10,
-        "factor_p1": 2.0,
-        "body_atr_coef_p1": 2.0,
-        "ema_len_p1": 20,
-        "atr_len_p2": 14,
-        "highest_len_p2": 10,
-        "correction_p2": 37.0,
-        "ema_len_p2": 5,
-        "atr_len_p3": 14,
-        "ema_len_p3": 55,
-        "close_under_ema_p3": 3
+        'position_size': 5.0,
+        'stop_atr_p2': 0.5,
+        'stop_atr_p3': 1.0,
+        'take_atr_p3': 3.0,
+        'fast_len_p1': 12,
+        'slow_len_p1': 26,
+        'sig_len_p1': 14,
+        'k_len_p1': 14,
+        'd_len_p1': 3,
+        'kd_limit_p1': 70.0,
+        'atr_len_p1': 10,
+        'factor_p1': 2.0,
+        'body_atr_coef_p1': 2.0,
+        'ema_len_p1': 20,
+        'atr_len_p2': 14,
+        'highest_len_p2': 10,
+        'correction_p2': 37.0,
+        'ema_len_p2': 5,
+        'atr_len_p3': 14,
+        'ema_len_p3': 55,
+        'close_under_ema_p3': 3
     }
 
     # Parameters to be optimized and their possible values

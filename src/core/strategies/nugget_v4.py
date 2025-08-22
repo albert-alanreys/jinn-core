@@ -15,35 +15,34 @@ if TYPE_CHECKING:
 
 class NuggetV4(BaseStrategy):
     # Strategy parameters
-    # Names must be in double quotes
     params = {
-        "min_capital": 100.0,
-        "stop_type": 1,
-        "stop": 1.0,
-        "trail_stop": 4,
-        "trail_percent": 0.0,
-        "take_volume_1": [10.0, 10.0, 10.0, 10.0, 60.0],
-        "take_volume_2": [
+        'min_capital': 100.0,
+        'stop_type': 1,
+        'stop': 1.0,
+        'trail_stop': 4,
+        'trail_percent': 0.0,
+        'take_volume_1': [10.0, 10.0, 10.0, 10.0, 60.0],
+        'take_volume_2': [
             10.0, 5.0, 5.0, 5.0, 5.0,
             5.0, 10.0, 15.0, 10.0, 30.0
         ],
-        "st_atr_period": 7,
-        "st_factor": 10.5,
-        "st_upper_band": 4.8,
-        "st_lower_band": 2.2,
-        "rsi_length": 7,
-        "rsi_long_upper_limit": 47.0,
-        "rsi_long_lower_limit": 1.0,
-        "rsi_short_upper_limit": 100.0,
-        "rsi_short_lower_limit": 58.0,
-        "bb_filter": False,
-        "ma_length": 6,
-        "bb_mult": 2.5,
-        "bb_long_limit": 44.0,
-        "bb_short_limit": 55.0,
-        "pivot_bars": 2,
-        "look_back": 35,
-        "channel_range": 7.0
+        'st_atr_period': 7,
+        'st_factor': 10.5,
+        'st_upper_band': 4.8,
+        'st_lower_band': 2.2,
+        'rsi_length': 7,
+        'rsi_long_upper_limit': 47.0,
+        'rsi_long_lower_limit': 1.0,
+        'rsi_short_upper_limit': 100.0,
+        'rsi_short_lower_limit': 58.0,
+        'bb_filter': False,
+        'ma_length': 6,
+        'bb_mult': 2.5,
+        'bb_long_limit': 44.0,
+        'bb_short_limit': 55.0,
+        'pivot_bars': 2,
+        'look_back': 35,
+        'channel_range': 7.0
     }
 
     # Parameters to be optimized and their possible values

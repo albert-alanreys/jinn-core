@@ -10,11 +10,11 @@ from src.web.server import create_app
 
 class AppInitializer:
     def start(self):
-        self._init_strategies()
+        self._load_strategies()
 
         print(self.strategies)
 
-    def _init_strategies(self):
+    def _load_strategies(self):
         self.strategies = load_strategies()
 
 

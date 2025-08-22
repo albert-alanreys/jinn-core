@@ -15,18 +15,17 @@ if TYPE_CHECKING:
 
 class MeanStrikeV1(BaseStrategy):
     # Strategy parameters
-    # Names must be in double quotes
     params = {
-        "position_size":  50,
-        "entry_volume":  [10.0, 15.0, 25.0, 50.0],
-        "entry_percent_2":  2.0,
-        "entry_percent_3":  6.0,
-        "entry_percent_4":  8.0,
-        "take_profit":  1.0,
-        "lookback":  1,
-        "ma_length":  20,
-        "mult":  2.0,
-        "range_threshold":  30.0
+        'position_size':  50,
+        'entry_volume':  [10.0, 15.0, 25.0, 50.0],
+        'entry_percent_2':  2.0,
+        'entry_percent_3':  6.0,
+        'entry_percent_4':  8.0,
+        'take_profit':  1.0,
+        'lookback':  1,
+        'ma_length':  20,
+        'mult':  2.0,
+        'range_threshold':  30.0
     }
 
     # Parameters to be optimized and their possible values
