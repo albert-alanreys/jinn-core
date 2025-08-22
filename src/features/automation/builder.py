@@ -4,7 +4,6 @@ import re
 from glob import glob
 from logging import getLogger
 
-from src.core.enums import Exchange, Strategy
 from src.core.providers import RealtimeProvider
 from src.features.backtesting import BacktestingService
 from src.infrastructure.exchanges import BinanceClient
@@ -68,115 +67,115 @@ class AutomationBuilder():
                     - updated: Flag indicating if context was updated
         """
 
-        strategy_contexts = {}
+        # strategy_contexts = {}
 
-        for strategy in Strategy:
-            folder_path = os.path.abspath(
-                os.path.join(
-                    'src',
-                    'core',
-                    'strategies',
-                    strategy.name.lower(),
-                    'automation'
-                )
-            )
-            file_paths = glob(f'{folder_path}/*.json')
+        # for strategy in Strategy:
+        #     folder_path = os.path.abspath(
+        #         os.path.join(
+        #             'src',
+        #             'core',
+        #             'strategies',
+        #             strategy.name.lower(),
+        #             'automation'
+        #         )
+        #     )
+        #     file_paths = glob(f'{folder_path}/*.json')
 
-            for file_path in file_paths:
-                basename = os.path.basename(file_path)
-                pattern = r'(\w+)_(\w+)_(\w+)\.json'
-                groups = re.match(pattern, basename).groups()
-                exchange, symbol, interval = (
-                    groups[0].upper(),
-                    groups[1].upper(),
-                    groups[2]
-                )
+        #     for file_path in file_paths:
+        #         basename = os.path.basename(file_path)
+        #         pattern = r'(\w+)_(\w+)_(\w+)\.json'
+        #         groups = re.match(pattern, basename).groups()
+        #         exchange, symbol, interval = (
+        #             groups[0].upper(),
+        #             groups[1].upper(),
+        #             groups[2]
+        #         )
 
-                with open(file_path, 'r') as file:
-                    content = file.read()
-                    content = (
-                        content
-                        .replace('True', 'true')
-                        .replace('False', 'false')
-                    )
+        #         with open(file_path, 'r') as file:
+        #             content = file.read()
+        #             content = (
+        #                 content
+        #                 .replace('True', 'true')
+        #                 .replace('False', 'false')
+        #             )
 
-                try:
-                    json_data = json.loads(content)
+        #         try:
+        #             json_data = json.loads(content)
                     
-                    if isinstance(json_data, list):
-                        if json_data and 'params' in json_data[0]:
-                            params = {'params': json_data[0]['params']}
-                        else:
-                            self.logger.error(
-                                f'Invalid array format in {file_path}'
-                            )
-                            continue
-                    else:
-                        params = {'params': json_data}
+        #             if isinstance(json_data, list):
+        #                 if json_data and 'params' in json_data[0]:
+        #                     params = {'params': json_data[0]['params']}
+        #                 else:
+        #                     self.logger.error(
+        #                         f'Invalid array format in {file_path}'
+        #                     )
+        #                     continue
+        #             else:
+        #                 params = {'params': json_data}
                         
-                except json.JSONDecodeError:
-                    self.logger.error(
-                        f'Failed to load JSON from {file_path}'
-                    )
-                    continue
+        #         except json.JSONDecodeError:
+        #             self.logger.error(
+        #                 f'Failed to load JSON from {file_path}'
+        #             )
+        #             continue
 
-                match exchange:
-                    case Exchange.BINANCE.name:
-                        client = self.binance_client
-                    case Exchange.BYBIT.name:
-                        client = self.bybit_client
+        #         match exchange:
+        #             case Exchange.BINANCE.name:
+        #                 client = self.binance_client
+        #             case Exchange.BYBIT.name:
+        #                 client = self.bybit_client
 
-                try:
-                    instance = strategy.value(**params)
-                    market_data = self.realtime_provider.get_market_data(
-                        client=client,
-                        symbol=symbol,
-                        interval=interval,
-                        feeds=instance.params.get('feeds')
-                    )
-                    instance.calculate(market_data)
-                    metrics = BacktestingService.test(instance)
+        #         try:
+        #             instance = strategy.value(**params)
+        #             market_data = self.realtime_provider.get_market_data(
+        #                 client=client,
+        #                 symbol=symbol,
+        #                 interval=interval,
+        #                 feeds=instance.params.get('feeds')
+        #             )
+        #             instance.calculate(market_data)
+        #             metrics = BacktestingService.test(instance)
 
-                    context = {
-                        'name': strategy.name,
-                        'type': strategy.value,
-                        'instance': instance,
-                        'client': client,
-                        'market_data': market_data,
-                        'metrics': metrics
-                    }
-                    strategy_contexts[str(id(context))] = context
-                except Exception:
-                    self.logger.exception('An error occurred')
+        #             context = {
+        #                 'name': strategy.name,
+        #                 'type': strategy.value,
+        #                 'instance': instance,
+        #                 'client': client,
+        #                 'market_data': market_data,
+        #                 'metrics': metrics
+        #             }
+        #             strategy_contexts[str(id(context))] = context
+        #         except Exception:
+        #             self.logger.exception('An error occurred')
 
-        if not strategy_contexts:
-            match self.exchange:
-                case Exchange.BINANCE:
-                    client = self.binance_client
-                case Exchange.BYBIT:
-                    client = self.bybit_client
+        # if not strategy_contexts:
+        #     match self.exchange:
+        #         case Exchange.BINANCE:
+        #             client = self.binance_client
+        #         case Exchange.BYBIT:
+        #             client = self.bybit_client
 
-            try:
-                instance = self.strategy.value()
-                market_data = self.realtime_provider.get_market_data(
-                    client=client,
-                    symbol=self.symbol,
-                    interval=self.interval,
-                    feeds=instance.params.get('feeds')
-                )
-                instance.calculate(market_data)
-                metrics = BacktestingService.test(instance)
+        #     try:
+        #         instance = self.strategy.value()
+        #         market_data = self.realtime_provider.get_market_data(
+        #             client=client,
+        #             symbol=self.symbol,
+        #             interval=self.interval,
+        #             feeds=instance.params.get('feeds')
+        #         )
+        #         instance.calculate(market_data)
+        #         metrics = BacktestingService.test(instance)
 
-                context = {
-                    'name': self.strategy.name,
-                    'type': self.strategy.value,
-                    'instance': instance,
-                    'client': client,
-                    'market_data': market_data,
-                    'metrics': metrics
-                }
-                strategy_contexts[str(id(context))] = context
-            except Exception:
-                self.logger.exception('An error occurred')
+        #         context = {
+        #             'name': self.strategy.name,
+        #             'type': self.strategy.value,
+        #             'instance': instance,
+        #             'client': client,
+        #             'market_data': market_data,
+        #             'metrics': metrics
+        #         }
+        #         strategy_contexts[str(id(context))] = context
+        #     except Exception:
+        #         self.logger.exception('An error occurred')
 
-        return strategy_contexts
+        # return strategy_contexts

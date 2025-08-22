@@ -1,5 +1,6 @@
-from src.main import main
+from src.app import AppInitializer
 
 
 if __name__ == '__main__':
-    main()
+    app = AppInitializer()
+    app.start()

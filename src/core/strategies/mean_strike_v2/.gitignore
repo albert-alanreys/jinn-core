@@ -1,6 +1,0 @@
-automation/*
-!automation/.gitkeep
-backtesting/*
-!backtesting/.gitkeep
-optimization/*
-!optimization/.gitkeep

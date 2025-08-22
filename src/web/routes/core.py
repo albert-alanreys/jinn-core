@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, render_template
 
 from ..network import get_server_url
 
@@ -17,6 +17,5 @@ def index() -> str:
 
     return render_template(
         template_name_or_list='index.html',
-        server_url=get_server_url(),
-        server_mode=current_app.mode.value
+        server_url=get_server_url()
     )

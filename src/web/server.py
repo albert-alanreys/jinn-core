@@ -3,7 +3,6 @@ import os
 from flask import Flask
 from flask_cors import CORS
 
-from src.core.enums import Mode
 from .routes import register_routes
 
 
@@ -12,8 +11,7 @@ def create_app(
     static_folder: str,
     template_folder: str,
     strategy_contexts: dict,
-    strategy_alerts: dict,
-    mode: Mode
+    strategy_alerts: dict
 ) -> Flask:
     """
     Creates and configures a Flask application instance with necessary
@@ -42,7 +40,6 @@ def create_app(
     cors_origins = os.getenv('CORS_ORIGINS') or '*'
     CORS(app, resources={r'/api/*': {'origins': cors_origins}})
 
-    app.mode = mode
     app.strategy_contexts = strategy_contexts
     app.strategy_alerts = strategy_alerts
 

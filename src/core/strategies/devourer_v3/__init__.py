@@ -1,1 +1,0 @@
-from .devourer_v3 import DevourerV3

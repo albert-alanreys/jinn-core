@@ -4,7 +4,6 @@ import re
 from glob import glob
 from logging import getLogger
 
-from src.core.enums import Exchange, Strategy
 from src.infrastructure.exchanges import BinanceClient
 from src.infrastructure.exchanges import BybitClient
 from src.core.providers import HistoryProvider
@@ -71,101 +70,101 @@ class BacktestingBuilder:
                     - metrics: Strategy metrics from backtesting
         """
 
-        strategy_contexts = {}
+        # strategy_contexts = {}
 
-        for strategy in Strategy:
-            folder_path = os.path.abspath(
-                os.path.join(
-                    'src',
-                    'core',
-                    'strategies',
-                    strategy.name.lower(),
-                    'backtesting'
-                )
-            )
-            file_paths = glob(f'{folder_path}/*.json')
+        # for strategy in Strategy:
+        #     folder_path = os.path.abspath(
+        #         os.path.join(
+        #             'src',
+        #             'core',
+        #             'strategies',
+        #             strategy.name.lower(),
+        #             'backtesting'
+        #         )
+        #     )
+        #     file_paths = glob(f'{folder_path}/*.json')
 
-            for file_path in file_paths:
-                basename = os.path.basename(file_path) 
-                pattern = r'(\w+)_(\w+)_(\w+)\.json'
-                groups = re.match(pattern, basename).groups()
-                exchange, symbol, interval = (
-                    groups[0].upper(),
-                    groups[1].upper(),
-                    groups[2]
-                )
+        #     for file_path in file_paths:
+        #         basename = os.path.basename(file_path) 
+        #         pattern = r'(\w+)_(\w+)_(\w+)\.json'
+        #         groups = re.match(pattern, basename).groups()
+        #         exchange, symbol, interval = (
+        #             groups[0].upper(),
+        #             groups[1].upper(),
+        #             groups[2]
+        #         )
 
-                match exchange:
-                    case Exchange.BINANCE.name:
-                        client = self.binance_client
-                    case Exchange.BYBIT.name:
-                        client = self.bybit_client
+        #         match exchange:
+        #             case Exchange.BINANCE.name:
+        #                 client = self.binance_client
+        #             case Exchange.BYBIT.name:
+        #                 client = self.bybit_client
 
-                with open(file_path, 'r') as file:
-                    try:
-                        params_dicts = json.load(file)
-                    except json.JSONDecodeError:
-                        self.logger.error(
-                            f'Failed to load JSON from {file_path}'
-                        )
-                        continue
+        #         with open(file_path, 'r') as file:
+        #             try:
+        #                 params_dicts = json.load(file)
+        #             except json.JSONDecodeError:
+        #                 self.logger.error(
+        #                     f'Failed to load JSON from {file_path}'
+        #                 )
+        #                 continue
 
-                for params in params_dicts:
-                    try:
-                        instance = strategy.value(params['params'])
-                        market_data = self.history_provider.get_market_data(
-                            client=client,
-                            symbol=symbol,
-                            interval=interval,
-                            start=params['period']['start'],
-                            end=params['period']['end'],
-                            feeds=instance.params.get('feeds')
-                        )
-                        instance.calculate(market_data)
-                        metrics = BacktestingService.test(instance)
+        #         for params in params_dicts:
+        #             try:
+        #                 instance = strategy.value(params['params'])
+        #                 market_data = self.history_provider.get_market_data(
+        #                     client=client,
+        #                     symbol=symbol,
+        #                     interval=interval,
+        #                     start=params['period']['start'],
+        #                     end=params['period']['end'],
+        #                     feeds=instance.params.get('feeds')
+        #                 )
+        #                 instance.calculate(market_data)
+        #                 metrics = BacktestingService.test(instance)
 
-                        context = {
-                            'name': strategy.name,
-                            'type': strategy.value,
-                            'instance': instance,
-                            'client': client,
-                            'market_data': market_data,
-                            'metrics': metrics,
-                        }
-                        strategy_contexts[str(id(context))] = context
-                    except Exception:
-                        self.logger.exception('An error occurred')
+        #                 context = {
+        #                     'name': strategy.name,
+        #                     'type': strategy.value,
+        #                     'instance': instance,
+        #                     'client': client,
+        #                     'market_data': market_data,
+        #                     'metrics': metrics,
+        #                 }
+        #                 strategy_contexts[str(id(context))] = context
+        #             except Exception:
+        #                 self.logger.exception('An error occurred')
 
-        if not strategy_contexts:
-            match self.exchange:
-                case Exchange.BINANCE:
-                    client = self.binance_client
-                case Exchange.BYBIT:
-                    client = self.bybit_client
+        # if not strategy_contexts:
+        #     match self.exchange:
+        #         case Exchange.BINANCE:
+        #             client = self.binance_client
+        #         case Exchange.BYBIT:
+        #             client = self.bybit_client
 
-            try:
-                instance = self.strategy.value()
-                market_data = self.history_provider.get_market_data(
-                    client=client,
-                    symbol=self.symbol,
-                    interval=self.interval,
-                    start=self.start,
-                    end=self.end,
-                    feeds=instance.params.get('feeds')
-                )
-                instance.calculate(market_data)
-                metrics = BacktestingService.test(instance)
+        #     try:
+        #         instance = self.strategy.value()
+        #         market_data = self.history_provider.get_market_data(
+        #             client=client,
+        #             symbol=self.symbol,
+        #             interval=self.interval,
+        #             start=self.start,
+        #             end=self.end,
+        #             feeds=instance.params.get('feeds')
+        #         )
+        #         instance.calculate(market_data)
+        #         metrics = BacktestingService.test(instance)
 
-                context = {
-                    'name': self.strategy.name,
-                    'type': self.strategy.value,
-                    'instance': instance,
-                    'client': client,
-                    'market_data': market_data,
-                    'metrics': metrics,
-                }
-                strategy_contexts[str(id(context))] = context
-            except Exception:
-                self.logger.exception('An error occurred')
+        #         context = {
+        #             'name': self.strategy.name,
+        #             'type': self.strategy.value,
+        #             'instance': instance,
+        #             'client': client,
+        #             'market_data': market_data,
+        #             'metrics': metrics,
+        #         }
+        #         strategy_contexts[str(id(context))] = context
+        #     except Exception:
+        #         self.logger.exception('An error occurred')
 
-        return strategy_contexts
+        # return strategy_contexts
