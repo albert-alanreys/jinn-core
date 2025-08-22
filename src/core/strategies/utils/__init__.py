@@ -1,2 +1,1 @@
-from .load_strategies import load_strategies
 from .update_log import update_completed_deals_log

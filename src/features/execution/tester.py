@@ -1,12 +1,7 @@
-from typing import TYPE_CHECKING
-
 import numpy as np
 
-if TYPE_CHECKING:
-    from src.core.strategy import BaseStrategy
 
-
-class BacktestingService:
+class StrategyTester:
     """
     Core service responsible for calculating
     trading strategy metrics via backtesting.
@@ -19,7 +14,7 @@ class BacktestingService:
     """
 
     @staticmethod
-    def test(strategy_instance: 'BaseStrategy') -> dict:
+    def test(context: dict) -> None:
         """
         Performs backtesting analysis on a strategy instance.
 
@@ -39,20 +34,20 @@ class BacktestingService:
                 - risk: Risk-adjusted metrics
         """
 
-        initial_capital = strategy_instance.params['initial_capital']
-        completed_deals_log = strategy_instance.completed_deals_log
+        initial_capital = context['strategy'].params['initial_capital']
+        completed_deals_log = context['strategy'].completed_deals_log
 
-        all_metrics = BacktestingService._get_all_metrics(
+        all_metrics = StrategyTester._get_all_metrics(
             initial_capital=initial_capital,
             deals_log=completed_deals_log
         )
 
-        overview = BacktestingService._get_overview_metrics(all_metrics)
-        performance = BacktestingService._get_performance_metrics(all_metrics)
-        trades = BacktestingService._get_trade_metrics(all_metrics)
-        risk = BacktestingService._get_risk_metrics(all_metrics)
+        overview = StrategyTester._get_overview_metrics(all_metrics)
+        performance = StrategyTester._get_performance_metrics(all_metrics)
+        trades = StrategyTester._get_trade_metrics(all_metrics)
+        risk = StrategyTester._get_risk_metrics(all_metrics)
 
-        return {
+        context['metrics'] = {
             'overview': overview,
             'performance': performance,
             'trades': trades,

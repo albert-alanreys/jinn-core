@@ -1,11 +1,9 @@
 import logging
-import threading
 
 from dotenv import load_dotenv
 
-from src.core.strategies.utils import load_strategies
-from src.features.automation.service import AutomationService
-from src.web.server import create_app
+from src.features.execution import executionService
+# from src.web.server import create_app
 
 
 class AppInitializer:
@@ -14,21 +12,8 @@ class AppInitializer:
         logging.basicConfig(level=logging.INFO)
 
     def start(self):
-        self._init_strategies()
+        print(executionService)
 
-    def _init_strategies(self):
-        self.strategies = load_strategies()
-
-
-
-
-# def init_strategies():
-#     return load_strategies()
-
-# def init_services(strategies):
-#     automation_service = AutomationService(strategies)
-#     threading.Thread(target=automation_service.run, daemon=True).start()
-#     return automation_service
 
 # def init_web(strategies):
 #     app = create_app(strategies)
