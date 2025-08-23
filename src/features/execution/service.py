@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
 from logging import getLogger
 
 from .builder import ContextBuilder
 from .daemon import ExecutionDaemon
-from .tester import StrategyTester
+
+
+if TYPE_CHECKING:
+    from .models import ContextConfig
+    from .models import StrategyContext
 
 
 class ExecutionService:
@@ -32,31 +37,57 @@ class ExecutionService:
 
     def __init__(self) -> None:
         self.contexts = {}
+        self.statuses = {}
 
         self.context_builder = ContextBuilder()
-        self.strategy_tester = StrategyTester()
         self.execution_daemon = ExecutionDaemon()
 
         self.logger = getLogger()
 
-    def create_contexts(self, configs: dict) -> None:
+    def create_contexts(self, configs: dict[str, 'ContextConfig']) -> None:
+        self._init_statuses(configs)
+
+        new_contexts = self._build_contexts(configs)
+        self.contexts.update(new_contexts)
+        
+        self._complete_statuses(new_contexts)
+
+    def delete_context(self, context_id: str) -> bool:
+        try:
+            self.contexts.pop(context_id)
+        except KeyError:
+            raise KeyError
+    
+    def _init_statuses(self, configs: dict[str, 'ContextConfig']) -> None:
+        # flask-сервер сможет в другом потоке проверять статус контекста
         for cid in configs.keys():
-            self.contexts[cid] = {'status': 'in_progress'}
+            self.statuses[cid] = 'pending'
 
-        self.context_builder.build(self.contexts, configs)
+    def _build_contexts(
+        self,
+        configs: dict[str, 'ContextConfig']
+    ) -> dict[str, 'StrategyContext']:
+        new_contexts = {}
 
-        for context in self.contexts:
+        for cid, config in configs.items():
             try:
-                self.strategy_tester.test(context)
+                context = self.context_builder.build(config)
+
+                if config['is_live']:
+                    self.execution_daemon.watch(cid, context)
+                
+                new_contexts[cid] = context
             except Exception:
+                self.statuses[cid] = 'failed'
                 self.logger.exception('An error occurred')
-                context.update({'status': 'failed'})
 
-        self.execution_daemon.add_contexts(self.contexts)
+        return new_contexts
 
+
+    def _complete_statuses(self, configs: dict[str, 'ContextConfig']) -> None:
         for cid in configs.keys():
-            if self.contexts[cid]['status'] != 'failed':
-                self.contexts[cid] = {'status': 'success'}
+            if cid in self.contexts:
+                self.statuses[cid] = 'success'
 
 
 executionService = ExecutionService()

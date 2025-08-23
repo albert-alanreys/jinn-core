@@ -20,14 +20,8 @@ class ExecutionDaemon():
 
         Thread(target=self._run, daemon=True).start()
 
-    def add_contexts(self, contexts: dict) -> None:
-        for cid, context in contexts.items():
-            try:
-                if context['is_live']:
-                    self.contexts_weak_map[cid] = context
-            except Exception:
-                self.logger.exception('An error occurred')
-                contexts[cid].update({'status': 'failed'})
+    def watch(self, context_id: str, context: dict) -> None:
+        self.contexts_weak_map[context_id] = context
 
     def _run(self) -> None:
         while True:

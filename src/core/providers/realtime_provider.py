@@ -9,7 +9,7 @@ from src.shared.utils import (
     has_last_historical_kline,
     has_realtime_kline
 )
-from .typeddicts import MarketData, FeedsData
+from .models import MarketData, FeedsData
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient

@@ -1,4 +1,10 @@
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from src.core.strategies import BaseStrategy
+    from .models import Metric, OverviewMetrics, StrategyMetrics
 
 
 class StrategyTester:
@@ -14,7 +20,7 @@ class StrategyTester:
     """
 
     @staticmethod
-    def test(context: dict) -> None:
+    def test(strategy: 'BaseStrategy') -> 'StrategyMetrics':
         """
         Performs backtesting analysis on a strategy instance.
 
@@ -34,8 +40,8 @@ class StrategyTester:
                 - risk: Risk-adjusted metrics
         """
 
-        initial_capital = context['strategy'].params['initial_capital']
-        completed_deals_log = context['strategy'].completed_deals_log
+        initial_capital = strategy.params['initial_capital']
+        completed_deals_log = strategy.completed_deals_log
 
         all_metrics = StrategyTester._get_all_metrics(
             initial_capital=initial_capital,
@@ -47,7 +53,7 @@ class StrategyTester:
         trades = StrategyTester._get_trade_metrics(all_metrics)
         risk = StrategyTester._get_risk_metrics(all_metrics)
 
-        context['metrics'] = {
+        return {
             'overview': overview,
             'performance': performance,
             'trades': trades,
@@ -55,7 +61,9 @@ class StrategyTester:
         }
 
     @staticmethod
-    def _get_overview_metrics(all_metrics: dict) -> list:
+    def _get_overview_metrics(
+        all_metrics: dict[str, np.ndarray | 'Metric']
+    ) -> 'OverviewMetrics':
         """
         Extracts overview metrics.
 
@@ -82,7 +90,9 @@ class StrategyTester:
         }
 
     @staticmethod
-    def _get_performance_metrics(all_metrics: dict) -> list:
+    def _get_performance_metrics(
+        all_metrics: dict[str, np.ndarray | 'Metric']
+    ) -> list['Metric']:
         """
         Extracts performance metrics.
 
@@ -106,7 +116,9 @@ class StrategyTester:
         ]
 
     @staticmethod
-    def _get_trade_metrics(all_metrics: dict) -> list:
+    def _get_trade_metrics(
+        all_metrics: dict[str, np.ndarray | 'Metric']
+    ) -> list['Metric']:
         """
         Extracts trade-related metrics.
 
@@ -132,7 +144,9 @@ class StrategyTester:
         ]
 
     @staticmethod
-    def _get_risk_metrics(all_metrics: dict) -> list:
+    def _get_risk_metrics(
+        all_metrics: dict[str, np.ndarray | 'Metric']
+    ) -> list['Metric']:
         """
         Extracts risk-related metrics.
 
@@ -156,7 +170,7 @@ class StrategyTester:
     def _get_all_metrics(
         initial_capital: float,
         deals_log: np.ndarray
-    ) -> list:
+    ) -> dict[str, np.ndarray | 'Metric']:
         """
         Calculates strategy metrics from deal logs.
 
