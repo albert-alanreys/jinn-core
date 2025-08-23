@@ -1,46 +1,100 @@
 import os
+import logging
 
+from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
 
 from .routes import register_routes
 
 
-def create_app(
-    import_name: str,
-    static_folder: str,
-    template_folder: str,
-    strategy_contexts: dict,
-    strategy_alerts: dict
-) -> Flask:
+def create_app() -> Flask:
     """
-    Creates and configures a Flask application instance with necessary
-    routes, CORS settings, and strategy context integration.
-
-    Args:
-        import_name: Name of the application package
-        static_folder: Path to the folder with static files
-        template_folder: Path to the folder with HTML templates
-        strategy_contexts: Dictionary of strategy contexts
-        strategy_alerts: Dictionary of strategy alerts
-        mode: Operating mode of the application
-
+    Factory function to create and configure a Flask application.
+    
     Returns:
         Flask: Configured Flask application instance
     """
 
+    load_environment()
+    configure_logging()
+    
     app = Flask(
-        import_name=import_name,
-        static_folder=static_folder,
-        template_folder=template_folder
+        __name__,
+        static_folder=get_static_path(),
+        template_folder=get_templates_path()
+    )
+    
+    configure_app(app)
+    setup_cors(app)
+    register_routes(app)
+    
+    return app
+
+
+def load_environment() -> None:
+    """Load environment variables from .env file."""
+
+    load_dotenv()
+
+
+def configure_logging() -> None:
+    """Configure basic logging settings."""
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
-    register_routes(app)
 
-    cors_origins = os.getenv('CORS_ORIGINS') or '*'
-    CORS(app, resources={r'/api/*': {'origins': cors_origins}})
+def get_static_path() -> str:
+    """
+    Get absolute path to static files directory.
+    
+    Returns:
+        str: Absolute path to static directory
+    """
+    return os.path.abspath(os.path.join('src', 'web', 'dist'))
 
-    app.strategy_contexts = strategy_contexts
-    app.strategy_alerts = strategy_alerts
 
-    return app
+def get_templates_path() -> str:
+    """
+    Get absolute path to templates directory.
+    
+    Returns:
+        str: Absolute path to templates directory
+    """
+    return os.path.abspath(os.path.join('src', 'web', 'dist'))
+
+
+def configure_app(app: Flask) -> None:
+    """
+    Configure application settings from environment variables.
+    
+    Args:
+        app: Flask application instance to configure
+    """
+
+    app.config.update({
+        'PORT': int(os.getenv('SERVER_PORT', 5000)),
+        'DEBUG': os.getenv('FLASK_DEBUG', 'false').lower() == 'true',
+        'ENV': os.getenv('FLASK_ENV', 'production')
+    })
+
+
+def setup_cors(app: Flask) -> None:
+    """
+    Configure Cross-Origin Resource Sharing (CORS) for the application.
+    
+    Args:
+        app: Flask application instance to configure CORS for
+    """
+
+    cors_origins = os.getenv('CORS_ORIGINS', '')
+    
+    if cors_origins:
+        origins = [origin.strip() for origin in cors_origins.split(',')]
+    else:
+        origins = '*'
+    
+    CORS(app, resources={r'/api/*': {'origins': origins}})

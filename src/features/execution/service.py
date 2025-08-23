@@ -38,6 +38,7 @@ class ExecutionService:
     def __init__(self) -> None:
         self.contexts = {}
         self.statuses = {}
+        self.alerts = {}
 
         self.context_builder = ContextBuilder()
         self.execution_daemon = ExecutionDaemon()
@@ -90,4 +91,4 @@ class ExecutionService:
                 self.statuses[cid] = 'success'
 
 
-executionService = ExecutionService()
+execution_service = ExecutionService()
