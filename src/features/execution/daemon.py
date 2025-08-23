@@ -4,7 +4,6 @@ import time
 from logging import getLogger
 from threading import Event, Lock, Thread
 from typing import TYPE_CHECKING
-from weakref import WeakKeyDictionary
 
 from src.core.providers import RealtimeProvider
 from src.infrastructure.messaging import TelegramClient
@@ -25,6 +24,8 @@ class ExecutionDaemon:
     executes strategy calculations, and processes trading alerts in a
     separate daemon thread for non-blocking operation.
     """
+
+    _ALERTS_LIMIT = 1000
     
     def __init__(self, alert_registry: dict[str, AlertData]) -> None:
         """
@@ -34,7 +35,7 @@ class ExecutionDaemon:
             alert_registry: Shared alert storage
         """
 
-        self._contexts = WeakKeyDictionary()
+        self._contexts: dict[str, StrategyContext] = {}
         self._alert_registry = alert_registry
         
         self._realtime_provider = RealtimeProvider()
@@ -59,14 +60,31 @@ class ExecutionDaemon:
         with self._context_lock:
             self._contexts[context_id] = context
     
+    def remove_context(self, context_id: str) -> bool:
+        """
+        Remove strategy context from daemon monitoring.
+        
+        Args:
+            context_id: Unique identifier for the strategy context
+            
+        Returns:
+            True if context was removed, False if not found
+        """
+
+        with self._context_lock:
+            if context_id in self._contexts:
+                del self._contexts[context_id]
+                return True
+        
+        return False
+
     def _run(self) -> None:
         """Main daemon loop for continuous strategy monitoring."""
         
         while not self._shutdown_event.is_set():
             try:
-                with self._context_lock:
-                    self._process_all_contexts()
-                
+                self._process_all_contexts()
+                self._cleanup_old_alerts()
                 time.sleep(1.0)
             except Exception:
                 logger.exception('Error in daemon monitoring loop')
@@ -74,7 +92,10 @@ class ExecutionDaemon:
     def _process_all_contexts(self) -> None:
         """Process all monitored strategy contexts for updates."""
 
-        for context_id, context in self._contexts.items():
+        with self._context_lock:
+            context_items = list(self._contexts.items())
+        
+        for context_id, context in context_items:
             try:
                 if self._realtime_provider.update_data(context):
                     self._execute_strategy(context)
@@ -113,7 +134,10 @@ class ExecutionDaemon:
         if not alerts:
             return
         
-        for alert in alerts:
+        alerts_to_process = alerts.copy()
+        alerts.clear()
+        
+        for alert in alerts_to_process:
             alert_data = {
                 'context_id': context_id,
                 'strategy': context['name'],
@@ -123,10 +147,16 @@ class ExecutionDaemon:
             self._alert_registry[alert_id] = alert_data
 
             try:
-                self.telegram_client.send_order_alert(alert)
+                self._telegram_client.send_order_alert(alert)
             except Exception as e:
                 logger.warning(
                     f'Failed to send Telegram alert for {context_id}: {e}'
                 )
-        
-        alerts.clear()
+
+    def _cleanup_old_alerts(self) -> None:
+        """Clean up old alerts from registry."""
+
+        if len(self._alert_registry) > self._ALERTS_LIMIT:
+            self._alert_registry = dict(
+                list(self._alert_registry.items())[-self._ALERTS_LIMIT:]
+            )

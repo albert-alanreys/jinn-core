@@ -8,7 +8,6 @@ from src.core.strategies import strategies
 from src.infrastructure.exchanges import BinanceClient, BybitClient
 from src.infrastructure.exchanges.models import Exchange, Interval
 
-from .exceptions import ContextBuildError
 from .models import ContextConfig, StrategyContext
 from .tester import StrategyTester
 
@@ -53,27 +52,21 @@ class ExecutionContextBuilder:
             
         Returns:
             StrategyContext: Complete strategy context ready for execution
-            
-        Raises:
-            ContextBuildError: If context building fails due to invalid config
-                               or initialization errors
         """
 
-        try:
-            strategy = self._create_strategy(config)
-            client = self._get_exchange_client(config['exchange'])
-            market_data = self._prepare_market_data(config, strategy, client)
-            metrics = self._calculate_initial_metrics(strategy)
+        strategy = self._create_strategy(config)
+        client = self._get_exchange_client(config['exchange'])
+        market_data = self._prepare_market_data(config, strategy, client)
+        metrics = self._calculate_initial_metrics(strategy)
 
-            return {
-                'name': config['strategy'],
-                'strategy': strategy,
-                'client': client,
-                'market_data': market_data,
-                'metrics': metrics,
-            }
-        except Exception as e:
-            raise ContextBuildError(f'Context build failed: {e}')
+        return {
+            'name': config['strategy'],
+            'strategy': strategy,
+            'client': client,
+            'market_data': market_data,
+            'metrics': metrics,
+            'is_live': config['is_live'],
+        }
     
     def _create_strategy(self, config: ContextConfig) -> BaseStrategy:
         """

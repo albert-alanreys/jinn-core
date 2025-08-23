@@ -68,6 +68,7 @@ class StrategyContext(TypedDict):
     client: BaseExchangeClient
     market_data: MarketData
     metrics: StrategyMetrics
+    is_live: bool
 
 
 class AlertData(TypedDict):

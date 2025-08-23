@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from .builder import ExecutionContextBuilder
 from .daemon import ExecutionDaemon
-from .exceptions import ContextNotFoundError
 
 if TYPE_CHECKING:
     from .models import (
@@ -100,7 +99,7 @@ class ExecutionService:
         """
 
         if context_id not in self._contexts:
-            raise ContextNotFoundError(f'Context {context_id} not found')
+            raise KeyError(f'Context {context_id} not found')
         
         return self._contexts[context_id]
     
@@ -119,7 +118,11 @@ class ExecutionService:
         """
 
         if context_id not in self._contexts:
-            raise ContextNotFoundError(f'Context {context_id} not found')
+            raise KeyError(f'Context {context_id} not found')
+        
+        context = self._contexts[context_id]
+        if context['is_live']:
+            self._execution_daemon.remove_context(context_id)
         
         del self._contexts[context_id]
         self._context_statuses.pop(context_id, None)
