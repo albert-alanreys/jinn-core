@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def format_contexts(strategy_contexts: dict) -> dict:
     """
     Formats raw strategy contexts into a concise dictionary suitable.

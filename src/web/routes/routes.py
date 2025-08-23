@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .alerts import alerts_bp
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
     from flask import Flask
 
 
-def register_routes(app: 'Flask') -> None:
+def register_routes(app: Flask) -> None:
     """
     Register all application route blueprints.
     

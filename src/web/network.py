@@ -1,4 +1,5 @@
-import os
+from __future__ import annotations
+from os import getenv
 
 
 DEFAULT_SERVER_PORT = '1001'
@@ -19,8 +20,8 @@ def get_server_url(default_host: str = 'http://127.0.0.1') -> str:
         str: Fully qualified server URL
     """
 
-    base_url = os.getenv('BASE_URL')
-    port = os.getenv('SERVER_PORT') or DEFAULT_SERVER_PORT
+    base_url = getenv('BASE_URL')
+    port = getenv('SERVER_PORT') or DEFAULT_SERVER_PORT
 
     if base_url:
         return base_url

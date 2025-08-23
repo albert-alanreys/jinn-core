@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..base import BaseExchangeClient
@@ -53,25 +54,25 @@ class BybitClient(BaseExchangeClient):
         return 'BYBIT'
 
     @property
-    def account(self) -> 'AccountClientInterface':
+    def account(self) -> AccountClientInterface:
         """Access to account operations"""
 
         return self._account_client
 
     @property
-    def market(self) -> 'MarketClientInterface':
+    def market(self) -> MarketClientInterface:
         """Access to market operations"""  
 
         return self._market_client
 
     @property
-    def position(self) -> 'PositionClientInterface':
+    def position(self) -> PositionClientInterface:
         """Access to position operations"""
 
         return self._position_client
 
     @property
-    def trade(self) -> 'TradeClientInterface':
+    def trade(self) -> TradeClientInterface:
         """Access to trade operations"""
 
         return self._trade_client

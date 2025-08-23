@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from datetime import datetime, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING
@@ -12,6 +11,9 @@ if TYPE_CHECKING:
     from .account import AccountClient
     from .market import MarketClient
     from .position import PositionClient
+
+
+logger = getLogger(__name__)
 
 
 class OrderCreationError(Exception):
@@ -64,7 +66,6 @@ class TradeClient(BaseBinanceClient):
         self.position = position
 
         self.alerts = []
-        self.logger = getLogger(__name__)
 
     def market_open_long(
         self,
@@ -138,7 +139,7 @@ class TradeClient(BaseBinanceClient):
                 self.alerts.append(alert)
                 return
         except Exception:
-            self.logger.exception('Failed to execute market_open_long')
+            logger.exception('Failed to execute market_open_long')
 
     def market_open_short(
         self,
@@ -212,7 +213,7 @@ class TradeClient(BaseBinanceClient):
                 self.alerts.append(alert)
                 return
         except Exception:
-            self.logger.exception('Failed to execute market_open_short')
+            logger.exception('Failed to execute market_open_short')
 
     def market_close_long(self, symbol: str, size: str, hedge: bool) -> None:
         try:
@@ -269,7 +270,7 @@ class TradeClient(BaseBinanceClient):
                 self.alerts.append(alert)
                 return
         except Exception:
-            self.logger.exception('Failed to execute market_close_long')
+            logger.exception('Failed to execute market_close_long')
 
     def market_close_short(self, symbol: str, size: str, hedge: bool) -> None:
         try:
@@ -326,7 +327,7 @@ class TradeClient(BaseBinanceClient):
                 self.alerts.append(alert)
                 return
         except Exception:
-            self.logger.exception('Failed to execute market_close_short')
+            logger.exception('Failed to execute market_close_short')
 
     def market_stop_close_long(
         self,
@@ -396,7 +397,7 @@ class TradeClient(BaseBinanceClient):
 
             return order['orderId']
         except Exception:
-            self.logger.exception('Failed to execute market_stop_close_long')
+            logger.exception('Failed to execute market_stop_close_long')
 
     def market_stop_close_short(
         self,
@@ -466,7 +467,7 @@ class TradeClient(BaseBinanceClient):
 
             return order['orderId']
         except Exception:
-            self.logger.exception('Failed to execute market_stop_close_short')
+            logger.exception('Failed to execute market_stop_close_short')
 
     def limit_open_long(
         self,
@@ -549,7 +550,7 @@ class TradeClient(BaseBinanceClient):
 
             return order['orderId']
         except Exception:
-            self.logger.exception('Failed to execute limit_open_long')
+            logger.exception('Failed to execute limit_open_long')
 
     def limit_open_short(
         self,
@@ -632,7 +633,7 @@ class TradeClient(BaseBinanceClient):
 
             return order['orderId']
         except Exception:
-            self.logger.exception('Failed to execute limit_open_short')
+            logger.exception('Failed to execute limit_open_short')
 
     def limit_close_long(
         self,
@@ -704,7 +705,7 @@ class TradeClient(BaseBinanceClient):
 
             return order['orderId']
         except Exception:
-            self.logger.exception('Failed to execute limit_close_long')
+            logger.exception('Failed to execute limit_close_long')
 
     def limit_close_short(
         self,
@@ -776,13 +777,13 @@ class TradeClient(BaseBinanceClient):
 
             return order['orderId']
         except Exception:
-            self.logger.exception('Failed to execute limit_close_short')
+            logger.exception('Failed to execute limit_close_short')
 
     def cancel_all_orders(self, symbol: str) -> None:
         try:
             self._cancel_all_orders(symbol)
         except Exception:
-            self.logger.exception('Failed to execute cancel_all_orders')
+            logger.exception('Failed to execute cancel_all_orders')
 
     def cancel_orders(self, symbol: str, side: str) -> None:
         try:
@@ -797,7 +798,7 @@ class TradeClient(BaseBinanceClient):
             for order in one_sided_orders:
                 self._cancel_order(symbol, order['orderId'])
         except Exception:
-            self.logger.exception('Failed to execute cancel_orders')
+            logger.exception('Failed to execute cancel_orders')
 
     def cancel_limit_orders(self, symbol: str, side: str) -> None:
         try:
@@ -814,7 +815,7 @@ class TradeClient(BaseBinanceClient):
             for order in limit_orders:
                 self._cancel_order(symbol, order['orderId'])
         except Exception:
-            self.logger.exception('Failed to execute cancel_limit_orders')
+            logger.exception('Failed to execute cancel_limit_orders')
 
     def cancel_stop_orders(self, symbol: str, side: str) -> None:
         try:
@@ -831,7 +832,7 @@ class TradeClient(BaseBinanceClient):
             for order in stop_orders:
                 self._cancel_order(symbol, order['orderId'])
         except Exception:
-            self.logger.exception('Failed to execute cancel_stop_orders')
+            logger.exception('Failed to execute cancel_stop_orders')
 
     def check_stop_orders(self, symbol: str, order_ids: list) -> list:
         active_order_ids = []
@@ -874,7 +875,7 @@ class TradeClient(BaseBinanceClient):
 
             return active_order_ids
         except Exception:
-            self.logger.exception('Failed to execute check_stop_orders')
+            logger.exception('Failed to execute check_stop_orders')
             return order_ids
 
     def check_limit_orders(self, symbol: str, order_ids: list) -> list:
@@ -914,7 +915,7 @@ class TradeClient(BaseBinanceClient):
 
             return active_order_ids
         except Exception:
-            self.logger.exception('Failed to execute check_limit_orders')
+            logger.exception('Failed to execute check_limit_orders')
             return order_ids
 
     def _cancel_all_orders(self, symbol: str) -> dict:
@@ -1147,4 +1148,4 @@ class TradeClient(BaseBinanceClient):
             f'Error: {error} | '
             f"Context: {', '.join(context_parts)}"
         )
-        self.logger.warning(warning_msg)
+        logger.warning(warning_msg)

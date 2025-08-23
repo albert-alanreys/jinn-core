@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -499,7 +500,7 @@ class MeanStrikeV1(BaseStrategy):
             alert_close_long
         )
     
-    def _trade(self, client: 'BaseExchangeClient') -> None:
+    def _trade(self, client: BaseExchangeClient) -> None:
         if self.alert_close_long:
             client.trade.market_close_long(
                 symbol=self.symbol,

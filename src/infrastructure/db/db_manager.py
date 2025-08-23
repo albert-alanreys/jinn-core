@@ -1,7 +1,11 @@
-import os
-import sqlite3
+from __future__ import annotations
 from contextlib import contextmanager
 from logging import getLogger
+from os.path import dirname, join
+from sqlite3 import connect
+
+
+logger = getLogger(__name__)
 
 
 class DBManager():
@@ -9,13 +13,6 @@ class DBManager():
     A class for managing SQLite database operations such as fetching
     and saving data, with built-in error handling and logging.
     """
-
-    def __init__(self) -> None:
-        """
-        Initialize the DBManager instance with a logger.
-        """
-
-        self.logger = getLogger(__name__)
 
     def fetch_all(self, database_name: str, table_name: str) -> list:
         """
@@ -46,7 +43,7 @@ class DBManager():
                 cursor.execute(f'SELECT * FROM "{table_name}"')
                 return cursor.fetchall()
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to load data from {table_name}: '
                 f'{type(e).__name__} - {e}'
             )
@@ -97,7 +94,7 @@ class DBManager():
                 
                 return row
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to load row from {table_name}: '
                 f'{type(e).__name__} - {e}'
             )
@@ -153,7 +150,7 @@ class DBManager():
                 )
                 cursor.executemany(query_to_insert, rows)
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to save data into {table_name}: '
                 f'{type(e).__name__} - {e}'
             )
@@ -173,14 +170,12 @@ class DBManager():
             sqlite3.Cursor: Cursor object for executing SQL commands
         """
 
-        db_path = os.path.join(
-            os.path.dirname(__file__), 'databases', database_name
-        )
+        db_path = join(dirname(__file__), 'databases', database_name)
         connection = None
         cursor = None
 
         try:
-            connection = sqlite3.connect(db_path)
+            connection = connect(db_path)
             cursor = connection.cursor()
             yield cursor
             connection.commit()

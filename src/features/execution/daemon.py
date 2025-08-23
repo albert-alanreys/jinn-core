@@ -1,12 +1,12 @@
 from __future__ import annotations
-
-import time
 from logging import getLogger
 from threading import Event, Lock, Thread
+from time import sleep, time
 from typing import TYPE_CHECKING
 
 from src.core.providers import RealtimeProvider
 from src.infrastructure.messaging import TelegramClient
+
 from .tester import StrategyTester
 
 if TYPE_CHECKING:
@@ -85,7 +85,7 @@ class ExecutionDaemon:
             try:
                 self._process_all_contexts()
                 self._cleanup_old_alerts()
-                time.sleep(1.0)
+                sleep(1.0)
             except Exception:
                 logger.exception('Error in daemon monitoring loop')
     
@@ -143,7 +143,7 @@ class ExecutionDaemon:
                 'strategy': context['name'],
                 'message': alert.copy(),
             }
-            alert_id = str(hash(f'{context_id}_{time.time()}'))
+            alert_id = str(hash(f'{context_id}_{time()}'))
             self._alert_registry[alert_id] = alert_data
 
             try:

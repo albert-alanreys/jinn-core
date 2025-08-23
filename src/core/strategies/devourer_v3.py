@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -818,7 +819,7 @@ class DevourerV3(BaseStrategy):
             alert_close_short
         )
 
-    def _trade(self, client: 'BaseExchangeClient') -> None:
+    def _trade(self, client: BaseExchangeClient) -> None:
         if self.alert_cancel:
             client.trade.cancel_all_orders(self.symbol)
 

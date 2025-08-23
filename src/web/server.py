@@ -1,5 +1,7 @@
-import os
-import logging
+from __future__ import annotations
+from logging import basicConfig, INFO
+from os import getenv
+from os.path import abspath, join
 
 from dotenv import load_dotenv
 from flask import Flask
@@ -41,8 +43,8 @@ def load_environment() -> None:
 def configure_logging() -> None:
     """Configure basic logging settings."""
 
-    logging.basicConfig(
-        level=logging.INFO,
+    basicConfig(
+        level=INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
@@ -55,7 +57,7 @@ def get_static_path() -> str:
         str: Absolute path to static directory
     """
     
-    return os.path.abspath(os.path.join('src', 'web', 'dist'))
+    return abspath(join('src', 'web', 'dist'))
 
 
 def get_templates_path() -> str:
@@ -66,7 +68,7 @@ def get_templates_path() -> str:
         str: Absolute path to templates directory
     """
 
-    return os.path.abspath(os.path.join('src', 'web', 'dist'))
+    return abspath(join('src', 'web', 'dist'))
 
 
 def configure_app(app: Flask) -> None:
@@ -78,9 +80,9 @@ def configure_app(app: Flask) -> None:
     """
 
     app.config.update({
-        'PORT': int(os.getenv('SERVER_PORT', 5000)),
-        'DEBUG': os.getenv('FLASK_DEBUG', 'false').lower() == 'true',
-        'ENV': os.getenv('FLASK_ENV', 'production')
+        'PORT': int(getenv('SERVER_PORT', 5000)),
+        'DEBUG': getenv('FLASK_DEBUG', 'false').lower() == 'true',
+        'ENV': getenv('FLASK_ENV', 'production')
     })
 
 
@@ -92,7 +94,7 @@ def setup_cors(app: Flask) -> None:
         app: Flask application instance to configure CORS for
     """
 
-    cors_origins = os.getenv('CORS_ORIGINS', '')
+    cors_origins = getenv('CORS_ORIGINS', '')
     
     if cors_origins:
         origins = [origin.strip() for origin in cors_origins.split(',')]

@@ -1,14 +1,13 @@
 from __future__ import annotations
-
-import os
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from inspect import getfile
+from os.path import join, dirname
 from typing import TYPE_CHECKING
 
 import numpy as np
 
-from src.core.strategies.utils import order_cache
+from .utils import order_cache
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -186,9 +185,7 @@ class BaseStrategy(ABC):
     def trade(self, client: BaseExchangeClient) -> None:
         if not hasattr(self, 'order_ids'):
             self.order_ids = order_cache.load_order_cache(
-                base_dir=os.path.join(
-                    os.path.dirname(getfile(self.__class__)), '__cache__'
-                ),
+                base_dir=join(dirname(getfile(self.__class__)), '__cache__'),
                 strategy=self.__class__.__name__,
                 exchange=client.exchange_name,
                 symbol=self.symbol
@@ -198,9 +195,7 @@ class BaseStrategy(ABC):
             self._trade(client)
         finally:
             order_cache.save_order_cache(
-                base_dir=os.path.join(
-                    os.path.dirname(getfile(self.__class__)), '__cache__'
-                ),
+                base_dir=join(dirname(getfile(self.__class__)), '__cache__'),
                 strategy=self.__class__.__name__,
                 exchange=client.exchange_name,
                 symbol=self.symbol,
@@ -224,7 +219,7 @@ class BaseStrategy(ABC):
         pass
 
     @abstractmethod
-    def _trade(self, client: 'BaseExchangeClient') -> None:
+    def _trade(self, client: BaseExchangeClient) -> None:
         """
         Execute trading logic based on calculated signals.  
         Must be implemented by concrete strategy classes.

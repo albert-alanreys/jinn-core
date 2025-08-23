@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -24,24 +25,24 @@ class BaseExchangeClient(ABC):
 
     @property
     @abstractmethod
-    def account(self) -> 'AccountClientInterface':
+    def account(self) -> AccountClientInterface:
         """Access to account operations"""
         pass
 
     @property
     @abstractmethod
-    def market(self) -> 'MarketClientInterface':
+    def market(self) -> MarketClientInterface:
         """Access to market operations"""
         pass
 
     @property
     @abstractmethod
-    def position(self) -> 'PositionClientInterface':
+    def position(self) -> PositionClientInterface:
         """Access to position operations"""
         pass
 
     @property
     @abstractmethod
-    def trade(self) -> 'TradeClientInterface':
+    def trade(self) -> TradeClientInterface:
         """Access to trade operations"""
         pass

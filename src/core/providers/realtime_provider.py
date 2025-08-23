@@ -1,3 +1,4 @@
+from __future__ import annotations
 from time import sleep, time
 from typing import TYPE_CHECKING
 
@@ -22,11 +23,11 @@ class RealtimeProvider():
 
     def get_market_data(
         self,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         symbol: str,
         interval: Interval,
         feeds: dict | None
-    ) -> 'MarketData':
+    ) -> MarketData:
         """
         Fetch initial real-time market data for a symbol.
 
@@ -76,12 +77,12 @@ class RealtimeProvider():
 
     def _get_feeds_data(
         self,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         symbol: str,
         feeds: dict,
         main_interval: Interval,
         main_klines: np.ndarray
-    ) -> 'FeedsData':
+    ) -> FeedsData:
         """
         Fetch additional data feeds based on configuration.
         
@@ -197,7 +198,7 @@ class RealtimeProvider():
     def _update_feeds(
         self,
         strategy_context: dict,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         original_market_data: dict,
         new_market_data: dict,
         main_klines_updated: bool,
@@ -302,7 +303,7 @@ class RealtimeProvider():
 
     def _append_last_kline(
         self,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         symbol: str,
         interval: Interval,
         klines: np.ndarray

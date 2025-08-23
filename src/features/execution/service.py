@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from logging import getLogger
 from threading import Thread
 from typing import TYPE_CHECKING

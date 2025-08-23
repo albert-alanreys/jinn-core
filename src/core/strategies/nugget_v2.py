@@ -1,3 +1,4 @@
+from __future__ import annotations
 from random import randint
 from typing import TYPE_CHECKING
 
@@ -977,7 +978,7 @@ class NuggetV2(BaseStrategy):
             alert_short_new_stop
         )
 
-    def _trade(self, client: 'BaseExchangeClient') -> None:
+    def _trade(self, client: BaseExchangeClient) -> None:
         if self.alert_cancel:
             client.trade.cancel_all_orders(self.symbol)
 

@@ -1,4 +1,4 @@
-from logging import getLogger
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.shared.utils import adjust
@@ -20,8 +20,8 @@ class PositionClient(BaseBybitClient):
 
     def __init__(
         self,
-        account: 'AccountClient',
-        market: 'MarketClient'
+        account: AccountClient,
+        market: MarketClient
     ) -> None:
         """
         Initialize position client with required dependencies.
@@ -35,8 +35,6 @@ class PositionClient(BaseBybitClient):
 
         self.account = account
         self.market = market
-
-        self.logger = getLogger(__name__)
 
     def switch_position_mode(self, symbol: str, mode: int) -> dict:
         url = f'{self.BASE_ENDPOINT}/v5/position/switch-mode'

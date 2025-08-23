@@ -1,9 +1,10 @@
+from __future__ import annotations
 from ast import literal_eval
 from json import dumps
 
 from flask import Blueprint, Response, current_app, request
 
-from src.features.backtesting import BacktestingService
+from src.features.execution import execution_service
 from ..errors.contexts import handle_context_api_errors
 from ..formatting.contexts import format_contexts
 
@@ -133,7 +134,7 @@ def update_context(context_id: str) -> Response:
     instance.calculate(context['market_data'])
 
     context['instance'] = instance
-    context['metrics'] = BacktestingService.test(instance)
+    context['metrics'] = execution_service.test(instance)
 
     return Response(
         response=dumps({'status': 'success'}),

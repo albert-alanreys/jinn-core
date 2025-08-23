@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from flask import Blueprint, render_template
 
 from ..network import get_server_url

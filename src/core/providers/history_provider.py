@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import datetime, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING
@@ -12,10 +13,12 @@ from src.shared.utils import (
     has_realtime_kline
 )
 
-
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
     from .models import MarketData, FeedsData
+
+
+logger = getLogger(__name__)
 
 
 class HistoryProvider():
@@ -25,22 +28,19 @@ class HistoryProvider():
     """
 
     def __init__(self) -> None:
-        """
-        Initializes the HistoryProvider with DBManager instance and logger.
-        """
+        """Initializes the HistoryProvider with DBManager"""
 
         self.db_manager = DBManager()
-        self.logger = getLogger(__name__)
 
     def get_market_data(
         self,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         symbol: str,
         interval: Interval,
         start: str,
         end: str,
         feeds: dict | None
-    ) -> 'MarketData':
+    ) -> MarketData:
         """
         Fetches complete market data package:
           - klines
@@ -95,7 +95,7 @@ class HistoryProvider():
     
     def _get_precisions(
         self,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         symbol: str,
     ) -> tuple[float, float]:
         """
@@ -140,7 +140,7 @@ class HistoryProvider():
 
     def _get_klines(
         self,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         symbol: str,
         interval: Interval,
         start: str,
@@ -256,7 +256,7 @@ class HistoryProvider():
 
     def _get_klines_from_exchange(
         self,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         symbol: str,
         interval: Interval,
         start: int,
@@ -279,7 +279,7 @@ class HistoryProvider():
             ValueError: If no klines available from exchange
         """
         
-        self.logger.info(
+        logger.info(
             f'Requesting klines | {client.exchange_name} | '
             f'{symbol} | {interval.value}'
         )
@@ -304,14 +304,14 @@ class HistoryProvider():
 
     def _get_feeds_data(
         self,
-        client: 'BaseExchangeClient',
+        client: BaseExchangeClient,
         symbol: str,
         feeds: dict,
         main_interval: Interval,
         main_klines: np.ndarray,
         start: str,
         end: str
-    ) -> 'FeedsData':
+    ) -> FeedsData:
         """
         Fetch additional data feeds based on configuration.
         

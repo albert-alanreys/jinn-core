@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -1940,7 +1941,7 @@ class NuggetV4(BaseStrategy):
             alert_short_new_stop
         )
 
-    def _trade(self, client: 'BaseExchangeClient') -> None:
+    def _trade(self, client: BaseExchangeClient) -> None:
         if self.alert_cancel:
             client.trade.cancel_all_orders(self.symbol)
 

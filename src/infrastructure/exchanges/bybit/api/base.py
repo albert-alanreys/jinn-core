@@ -1,7 +1,7 @@
-import hmac
-import json
+from __future__ import annotations
 from hashlib import sha256
-from logging import getLogger
+from hmac import new
+from json import dumps
 from os import getenv
 from time import time
 
@@ -30,13 +30,10 @@ class BaseBybitClient(HttpClient):
         Initializes:
         - api_key: Stores the ByBit API key
         - api_secret: Stores the ByBit API secret
-        - logger: Logger instance for this module
         """
 
         self.api_key = getenv('BYBIT_API_KEY')
         self.api_secret = getenv('BYBIT_API_SECRET')
-
-        self.logger = getLogger(__name__)
 
     def get_headers(self, params: dict, method: str) -> dict:
         """
@@ -60,10 +57,10 @@ class BaseBybitClient(HttpClient):
             case 'GET':
                 query_str = '&'.join(f'{k}={v}' for k, v in params.items())
             case 'POST':
-                query_str = json.dumps(params)
+                query_str = dumps(params)
 
         str_to_sign = f'{timestamp}{self.api_key}{recv_window}{query_str}'
-        signature = hmac.new(
+        signature = new(
             key=self.api_secret.encode('utf-8'),
             msg=str_to_sign.encode('utf-8'),
             digestmod=sha256

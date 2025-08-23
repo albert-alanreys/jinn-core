@@ -1,3 +1,4 @@
+from __future__ import annotations
 from functools import wraps
 from json import dumps
 from logging import getLogger

@@ -1,4 +1,6 @@
+from __future__ import annotations
 from typing import TypedDict, NotRequired
+
 import numpy as np
 
 from src.infrastructure.exchanges.models import Interval

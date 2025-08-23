@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import numpy as np
 
 from src.shared.utils import decode_rgb, decode_rgb_vectorized
 from src.shared.utils import adjust_vectorized
+
 from .constants import (
     CLOSE_DEAL_STYLES,
     OPEN_DEAL_STYLES,

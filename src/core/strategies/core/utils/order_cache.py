@@ -1,9 +1,11 @@
-import os
-import json
-import logging
+from __future__ import annotations
+from json import JSONDecodeError, dump, load
+from logging import getLogger
+from os import makedirs
+from os.path import exists, join
 
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 def load_order_cache(
@@ -33,17 +35,17 @@ def load_order_cache(
 
     path = _get_cache_path(base_dir, strategy, exchange, symbol)
 
-    if not os.path.exists(path):
+    if not exists(path):
         return {'stop_ids': [], 'limit_ids': []}
 
     try:
         with open(path, 'r') as file:
-            data = json.load(file)
+            data = load(file)
         return {
             'stop_ids': data.get('stop_ids', []),
             'limit_ids': data.get('limit_ids', [])
         }
-    except json.JSONDecodeError:
+    except JSONDecodeError:
         logger.error(f'Failed to load JSON from {path}')
         return {'stop_ids': [], 'limit_ids': []}
 
@@ -71,7 +73,7 @@ def save_order_cache(
             - 'limit_ids': list of limit order IDs
     """
 
-    os.makedirs(base_dir, exist_ok=True)
+    makedirs(base_dir, exist_ok=True)
     path = _get_cache_path(base_dir, strategy, exchange, symbol)
     data = {
         'stop_ids': order_ids.get('stop_ids', []),
@@ -80,7 +82,7 @@ def save_order_cache(
 
     try:
         with open(path, 'w') as file:
-            json.dump(data, file, indent=4)
+            dump(data, file, indent=4)
     except Exception as e:
         logger.error(
             f'Failed to write JSON to {path}: {type(e).__name__} - {e}'
@@ -107,6 +109,4 @@ def _get_cache_path(
              {base_dir}/{strategy}_{exchange}_{symbol}_ORDER_IDS.json
     """
 
-    return os.path.join(
-        base_dir, f'{strategy}_{exchange}_{symbol}_ORDER_IDS.json'
-    )
+    return join(base_dir, f'{strategy}_{exchange}_{symbol}_ORDER_IDS.json')

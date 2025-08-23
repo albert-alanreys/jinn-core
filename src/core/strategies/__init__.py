@@ -1,3 +1,4 @@
+from __future__ import annotations
 from importlib import import_module
 from inspect import getmembers, isclass
 from pkgutil import iter_modules

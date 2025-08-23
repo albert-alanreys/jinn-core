@@ -1,3 +1,4 @@
+from __future__ import annotations
 from functools import wraps
 from logging import getLogger
 from time import sleep

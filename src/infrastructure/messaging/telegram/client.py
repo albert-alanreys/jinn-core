@@ -1,7 +1,11 @@
+from __future__ import annotations
 from logging import getLogger
 from os import getenv
 
 from src.infrastructure.transport import HttpClient
+
+
+logger = getLogger(__name__)
 
 
 class TelegramClient(HttpClient):
@@ -21,13 +25,10 @@ class TelegramClient(HttpClient):
         Initializes:
         - token: Stores the Telegram bot token
         - chat: Stores the target chat ID
-        - logger: Configured logger instance
         """
 
         self.token = getenv('TELEGRAM_BOT_TOKEN')
         self.chat = getenv('TELEGRAM_CHAT_ID')
-
-        self.logger = getLogger(__name__)
 
     def send_order_alert(self, alert: dict) -> None:
         """
@@ -64,7 +65,7 @@ class TelegramClient(HttpClient):
             )
             self.send_message(msg)
         except Exception as e:
-            self.logger.error(f'{type(e).__name__}: {str(e)}')
+            logger.error(f'{type(e).__name__}: {str(e)}')
 
     def send_message(self, msg: str) -> None:
         """

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from logging import getLogger
@@ -5,6 +6,9 @@ from time import time
 
 from src.infrastructure.exchanges.models import Interval
 from .base import BaseBinanceClient
+
+
+logger = getLogger(__name__)
 
 
 class MarketClient(BaseBinanceClient):
@@ -45,7 +49,6 @@ class MarketClient(BaseBinanceClient):
         """Initialize market client with base client functionality."""
 
         super().__init__()
-        self.logger = getLogger(__name__)
 
     def get_historical_klines(
         self,
@@ -64,7 +67,7 @@ class MarketClient(BaseBinanceClient):
             ]
             return self._fetch_concurrently(symbol, interval, time_ranges)
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to request data | Binance | {symbol} | '
                 f'{interval.value} | {type(e).__name__} - {e}'
             )
@@ -97,7 +100,7 @@ class MarketClient(BaseBinanceClient):
             klines = self._fetch_concurrently(symbol, interval, time_ranges)
             return klines[-limit:]
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to request data | Binance | {symbol} | '
                 f'{interval.value} | {type(e).__name__} - {e}'
             )
@@ -109,7 +112,7 @@ class MarketClient(BaseBinanceClient):
             symbol_info = self._get_symbol_info(symbol)
             return float(symbol_info['filters'][0]['tickSize'])
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to get price precision for {symbol} | '
                 f'{type(e).__name__} - {e}'
             )
@@ -120,7 +123,7 @@ class MarketClient(BaseBinanceClient):
             symbol_info = self._get_symbol_info(symbol)
             return float(symbol_info['filters'][1]['stepSize'])
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to get qty precision for {symbol} | '
                 f'{type(e).__name__} - {e}'
             )

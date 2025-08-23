@@ -1,3 +1,4 @@
+from __future__ import annotations
 from json import dumps
 
 from flask import Blueprint, Response, current_app, request
