@@ -1,4 +1,4 @@
-from src.web.server import create_app
+from src.web import create_app
 
 
 if __name__ == '__main__':
