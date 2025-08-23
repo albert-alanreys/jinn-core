@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from abc import ABC, abstractmethod
 from copy import deepcopy
@@ -6,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .order_cache import OrderCache
+from src.core.strategies.utils import order_cache
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -181,35 +183,29 @@ class BaseStrategy(ABC):
         # Strategy parameters
         self.equity = self.params['initial_capital']
 
-    def trade(self, client: 'BaseExchangeClient') -> None:
-        """
-        Execute automated trading with order cache handling.  
-        This method should NOT be overridden by child classes.
-
-        Automatically manages:
-        - Loading order IDs from cache on first run
-        - Saving order IDs to cache after execution
-
-        Args:
-            client: Exchange API client instance
-        """
-
-        if not hasattr(self, 'cache'):
-            self.cache = OrderCache(
+    def trade(self, client: BaseExchangeClient) -> None:
+        if not hasattr(self, 'order_ids'):
+            self.order_ids = order_cache.load_order_cache(
                 base_dir=os.path.join(
                     os.path.dirname(getfile(self.__class__)), '__cache__'
                 ),
-                exchange=client.exchange_name
+                strategy=self.__class__.__name__,
+                exchange=client.exchange_name,
+                symbol=self.symbol
             )
-            self.order_ids = None
 
-        if self.order_ids is None:
-            self.order_ids = self.cache.load(self.symbol)
-        
         try:
             self._trade(client)
         finally:
-            self.cache.save(self.symbol, self.order_ids)
+            order_cache.save_order_cache(
+                base_dir=os.path.join(
+                    os.path.dirname(getfile(self.__class__)), '__cache__'
+                ),
+                strategy=self.__class__.__name__,
+                exchange=client.exchange_name,
+                symbol=self.symbol,
+                order_ids=self.order_ids
+            )
 
     @abstractmethod
     def calculate(self, market_data: dict) -> None:

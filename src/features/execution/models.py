@@ -30,7 +30,6 @@ class ContextConfig(TypedDict):
     is_live: bool
     params: dict[str, Any]
 
-    # Optional fields for backtesting
     start: NotRequired[str]
     end: NotRequired[str]
 

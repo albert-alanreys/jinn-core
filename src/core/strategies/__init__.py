@@ -2,7 +2,8 @@ from importlib import import_module
 from inspect import getmembers, isclass
 from pkgutil import iter_modules
 
-from .strategy.base_strategy import BaseStrategy
+from .core import BaseStrategy
+from .core import update_completed_deals_log
 
 
 def _load_strategies() -> dict[str, type[BaseStrategy]]:

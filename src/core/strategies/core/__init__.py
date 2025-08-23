@@ -1,0 +1,2 @@
+from base import BaseStrategy
+from utils import update_completed_deals_log

@@ -7,8 +7,9 @@ import numba as nb
 import src.core.quantklines as qk
 from src.shared.constants import colors
 from src.shared.utils import adjust
-from .strategy import BaseStrategy
-from .utils import update_completed_deals_log
+
+from . import BaseStrategy
+from . import update_completed_deals_log
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
