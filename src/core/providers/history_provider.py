@@ -11,10 +11,11 @@ from src.shared.utils import (
     has_first_historical_kline,
     has_realtime_kline
 )
-from .models import MarketData, FeedsData
+
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
+    from .models import MarketData, FeedsData
 
 
 class HistoryProvider():
@@ -39,7 +40,7 @@ class HistoryProvider():
         start: str,
         end: str,
         feeds: dict | None
-    ) -> MarketData:
+    ) -> 'MarketData':
         """
         Fetches complete market data package:
           - klines
@@ -47,7 +48,7 @@ class HistoryProvider():
           - optional additional feeds
         
         Args:
-            client: Exchange API client
+            client: Exchange API client for data fetching
             symbol: Trading symbol (e.g., BTCUSDT)
             interval: Kline interval from Interval enum
             start: Start date in 'YYYY-MM-DD' format
@@ -55,15 +56,8 @@ class HistoryProvider():
             feeds: Optional feeds config
         
         Returns:
-            MarketData: Complete market data dictionary including:
-                - symbol: Trading symbol
-                - interval: Kline interval from Interval enum
-                - start: Start date in 'YYYY-MM-DD' format
-                - end: Start date in 'YYYY-MM-DD' format
-                - p_precision: Price precision
-                - q_precision: Quantity precision
-                - klines: Historical kline data
-                - feeds: additional feeds (if configured)
+            MarketData:
+                Market data package matching MarketData structure
         """
         
         p_precision, q_precision = self._get_precisions(client, symbol)
@@ -86,20 +80,19 @@ class HistoryProvider():
                 start=start,
                 end=end
             )
-            if feeds
-            else FeedsData(klines={})
+            if feeds else {}
         )
 
-        return MarketData(
-            symbol=symbol,
-            interval=interval,
-            p_precision=p_precision,
-            q_precision=q_precision,
-            klines=klines,
-            feeds=feeds_data,
-            start=start,
-            end=end
-        )
+        return {
+            'symbol': symbol,
+            'interval': interval,
+            'p_precision': p_precision,
+            'q_precision': q_precision,
+            'klines': klines,
+            'feeds': feeds_data,
+            'start': start,
+            'end': end,
+        }
     
     def _get_precisions(
         self,
@@ -110,7 +103,7 @@ class HistoryProvider():
         Get price and quantity precisions for a symbol.
         
         Args:
-            client: Exchange API client
+            client: Exchange API client for data fetching
             symbol: Trading symbol (e.g., BTCUSDT)
             
         Returns:
@@ -164,7 +157,7 @@ class HistoryProvider():
         - Date range filtering
 
         Args:
-            client: Exchange API client
+            client: Exchange API client for data fetching
             symbol: Trading symbol (e.g., BTCUSDT)
             interval: Kline interval from Interval enum
             start: Start date in 'YYYY-MM-DD' format
@@ -274,7 +267,7 @@ class HistoryProvider():
         Direct exchange API call for klines data with timestamp conversion.
         
         Args:
-            client: Exchange API client
+            client: Exchange API client for data fetching
             symbol: Trading symbol (e.g., BTCUSDT)
             interval: Kline interval from Interval enum
             start: Start timestamp in milliseconds
@@ -319,7 +312,7 @@ class HistoryProvider():
         main_klines: np.ndarray,
         start: str,
         end: str
-    ) -> FeedsData:
+    ) -> 'FeedsData':
         """
         Fetch additional data feeds based on configuration.
         
@@ -327,7 +320,7 @@ class HistoryProvider():
         symbols or intervals, resampled to match the main kline array.
             
         Args:
-            client: Exchange API client
+            client: Exchange API client for data fetching
             symbol: Base trading symbol
             feeds: Configuration dictionary specifying additional feeds
             main_interval: Interval of the main kline array
@@ -336,12 +329,12 @@ class HistoryProvider():
             end: End date ('YYYY-MM-DD')
             
         Returns:
-            FeedsData: Requested feeds data, structured as:
-                {'klines': {feed_name: np.ndarray, ...}}
+            FeedsData:
+                Feeds data package matching FeedsData structure
         """
 
         if 'klines' not in feeds:
-            return FeedsData(klines={})
+            return {}
 
         klines_by_feed: dict[str, np.ndarray] = {}
         for feed_name, feed_config in feeds['klines'].items():
@@ -374,7 +367,7 @@ class HistoryProvider():
 
             klines_by_feed[feed_name] = klines
         
-        return FeedsData(klines=klines_by_feed)
+        return {'klines': klines_by_feed}
     
     @staticmethod
     def _to_ms(date_str: str) -> int:

@@ -9,10 +9,10 @@ from src.shared.utils import (
     has_last_historical_kline,
     has_realtime_kline
 )
-from .models import MarketData, FeedsData
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
+    from .models import MarketData, FeedsData
 
 
 class RealtimeProvider():
@@ -26,24 +26,19 @@ class RealtimeProvider():
         symbol: str,
         interval: Interval,
         feeds: dict | None
-    ) -> MarketData:
+    ) -> 'MarketData':
         """
         Fetch initial real-time market data for a symbol.
 
         Args:
-            client: Exchange API client instance
+            client: Exchange API client for data fetching
             symbol: Trading symbol to fetch data for
             interval: Time interval for klines
             feeds: Additional data feeds configuration
 
         Returns:
-            MarketData: Complete market data dictionary including:
-                - symbol: Trading symbol
-                - interval: Validated interval
-                - p_precision: Price precision
-                - q_precision: Quantity precision
-                - klines: Historical kline data
-                - feeds: additional feeds (if configured)
+            MarketData:
+                Market data package matching MarketData structure
         """
 
         p_precision = client.market.get_price_precision(symbol)
@@ -68,18 +63,17 @@ class RealtimeProvider():
                 symbol=symbol,
                 feeds=feeds,
             )
-            if feeds
-            else FeedsData(klines={})
+            if feeds else {}
         )
 
-        return MarketData(
-            symbol=symbol,
-            interval=interval,
-            p_precision=p_precision,
-            q_precision=q_precision,
-            klines=klines,
-            feeds=feeds_data
-        )
+        return {
+            'symbol': symbol,
+            'interval': interval,
+            'p_precision': p_precision,
+            'q_precision': q_precision,
+            'klines': klines,
+            'feeds': feeds_data,
+        }
 
     def _get_feeds_data(
         self,
@@ -88,7 +82,7 @@ class RealtimeProvider():
         feeds: dict,
         main_interval: Interval,
         main_klines: np.ndarray
-    ) -> FeedsData:
+    ) -> 'FeedsData':
         """
         Fetch additional data feeds based on configuration.
         
@@ -96,22 +90,19 @@ class RealtimeProvider():
         symbols or intervals, resampled to match the main kline array.
 
         Args:
-            client: Exchange API client
+            client: Exchange API client for data fetching
             symbol: Base trading symbol
             feeds: Configuration dictionary specifying additional feeds
             main_interval: Interval of the main kline array
             main_klines: Main array of klines
 
         Returns:
-            FeedsData: Requested feeds data, structured as:
-                {
-                    'klines': {feed_name: np.ndarray, ...},
-                    'raw_klines': {feed_name: np.ndarray, ...}
-                }
+            FeedsData:
+                Feeds data package matching FeedsData structure
         """
 
         if 'klines' not in feeds:
-            return FeedsData(klines={})
+            return {}
         
         klines_by_feed: dict[str, np.ndarray] = {}
         raw_klines_by_feed: dict[str, np.ndarray] = {}
@@ -154,10 +145,10 @@ class RealtimeProvider():
 
             klines_by_feed[feed_name] = klines
 
-        return FeedsData(
-            klines=klines_by_feed,
-            raw_klines=raw_klines_by_feed
-        )
+        return {
+            'klines': klines_by_feed,
+            'raw_klines': raw_klines_by_feed
+        }
 
     def update_data(self, strategy_context: dict) -> bool:
         """
@@ -175,7 +166,7 @@ class RealtimeProvider():
 
         new_market_data = {
             'klines': original_market_data['klines'].copy(),
-            'feeds': FeedsData(klines={}, raw_klines={})
+            'feeds': {'klines': {}, 'raw_klines': {}}
             if 'feeds' in original_market_data else None
         }
 
@@ -218,7 +209,7 @@ class RealtimeProvider():
 
         Args:
             strategy_context: Strategy context dictionary
-            client: Exchange API client
+            client: Exchange API client for data fetching
             original_market_data: Original market data before update
             new_market_data: Target dict for updated market data
             main_klines_updated: Whether the main klines were updated
@@ -322,7 +313,7 @@ class RealtimeProvider():
         Append the latest kline to existing kline data.
 
         Args:
-            client: Exchange API client
+            client: Exchange API client for data fetching
             symbol: Trading symbol (e.g., BTCUSDT)
             interval: Kline interval from Interval enum
             klines: Existing kline array
