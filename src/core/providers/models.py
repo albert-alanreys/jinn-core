@@ -1,18 +1,18 @@
 from typing import TypedDict, NotRequired
 import numpy as np
 
-from src.infrastructure.exchanges.enums import Interval
+from src.infrastructure.exchanges.models import Interval
 
 
 class FeedsData(TypedDict):
-    """Typed dictionary for feeds data."""
+    """Configuration schema for feeds data."""
 
     klines: dict[str, np.ndarray]
     raw_klines: NotRequired[dict[str, np.ndarray]]
 
 
 class MarketData(TypedDict):
-    """Typed dictionary for market data."""
+    """Configuration schema for market data."""
     
     symbol: str
     interval: Interval

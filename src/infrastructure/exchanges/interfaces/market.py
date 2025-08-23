@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.infrastructure.exchanges.enums import Interval
+from src.infrastructure.exchanges.models import Interval
 
 
 class MarketClientInterface(ABC):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -9,72 +11,52 @@ if TYPE_CHECKING:
 
 class StrategyTester:
     """
-    Core service responsible for calculating
-    trading strategy metrics via backtesting.
-
-    Processes deal logs and returns metrics in four categories:
-    - Overview: Summary metrics and equity curve
-    - Performance: Performance metrics
-    - Trades: Trade-related metrics
-    - Risk: Risk-related metrics
+    Comprehensive strategy performance testing and metrics calculation.
+    
+    Processes trading deal logs to generate detailed performance
+    analytics across four key categories: overview,
+    performance, trades, and risk metrics.
     """
 
-    @staticmethod
-    def test(strategy: 'BaseStrategy') -> 'StrategyMetrics':
+    def test(self, strategy: BaseStrategy) -> StrategyMetrics:
         """
-        Performs backtesting analysis on a strategy instance.
-
-        Analyzes the strategy's completed deals log
-        to calculate strategy metrics.
-
+        Perform complete backtesting analysis on strategy instance.
+        
+        Analyzes the strategy's completed deals to calculate comprehensive
+        performance metrics across multiple categories.
+        
         Args:
-            strategy_instance (BaseStrategy): Strategy instance containing:
-                - params['initial_capital']: Starting capital amount
-                - completed_deals_log: Array of completed trades
-
+            strategy: Strategy instance containing deal history and params
+        
         Returns:
-            dict: Dictionary with four groups of backtesting metrics:
-                - overview: Summary metrics and equity curve
-                - performance: Strategy performance metrics
-                - trades: Trade-related execution metrics
-                - risk: Risk-adjusted metrics
+            StrategyMetrics: Complete set of strategy performance metrics
         """
 
         initial_capital = strategy.params['initial_capital']
-        completed_deals_log = strategy.completed_deals_log
+        deals_log = strategy.completed_deals_log
 
-        all_metrics = StrategyTester._get_all_metrics(
-            initial_capital=initial_capital,
-            deals_log=completed_deals_log
-        )
-
-        overview = StrategyTester._get_overview_metrics(all_metrics)
-        performance = StrategyTester._get_performance_metrics(all_metrics)
-        trades = StrategyTester._get_trade_metrics(all_metrics)
-        risk = StrategyTester._get_risk_metrics(all_metrics)
+        all_metrics = self._calculate_all_metrics(initial_capital, deals_log)
 
         return {
-            'overview': overview,
-            'performance': performance,
-            'trades': trades,
-            'risk': risk,
+            'overview': self._extract_overview_metrics(all_metrics),
+            'performance': self._extract_performance_metrics(all_metrics),
+            'trades': self._extract_trade_metrics(all_metrics),
+            'risk': self._extract_risk_metrics(all_metrics),
         }
 
-    @staticmethod
-    def _get_overview_metrics(
-        all_metrics: dict[str, np.ndarray | 'Metric']
-    ) -> 'OverviewMetrics':
+    def _extract_overview_metrics(
+        self,
+        all_metrics: dict[str, np.ndarray | Metric]
+    ) -> OverviewMetrics:
         """
-        Extracts overview metrics.
+        Extract high-level overview metrics for strategy summary.
 
         Args:
-            all_metrics: Complete set of calculated metrics
-                         from _get_all_metrics
+            all_metrics: Complete calculated metrics dictionary
 
         Returns:
-            dict: Overview metrics with two sections:
-                  - primary: Key strategy metrics
-                  - equity: Equity curve data
+            OverviewMetrics:
+                Overview metrics with primary indicators and equity curve
         """
 
         return {
@@ -89,19 +71,18 @@ class StrategyTester:
             'equity': all_metrics['equity'],
         }
 
-    @staticmethod
-    def _get_performance_metrics(
-        all_metrics: dict[str, np.ndarray | 'Metric']
-    ) -> list['Metric']:
+    def _extract_performance_metrics(
+        self,
+        all_metrics: dict[str, np.ndarray | Metric]
+    ) -> list[Metric]:
         """
-        Extracts performance metrics.
-
+        Extract performance-related metrics.
+        
         Args:
-            all_metrics: Complete set of calculated metrics
-                         from _get_all_metrics
-
+            all_metrics: Complete calculated metrics dictionary
+            
         Returns:
-            list: List of performance metrics
+            List of performance metrics
         """
 
         return [
@@ -115,19 +96,18 @@ class StrategyTester:
             all_metrics['Commission Paid'],
         ]
 
-    @staticmethod
-    def _get_trade_metrics(
-        all_metrics: dict[str, np.ndarray | 'Metric']
-    ) -> list['Metric']:
+    def _extract_trade_metrics(
+        self,
+        all_metrics: dict[str, np.ndarray | Metric]
+    ) -> list[Metric]:
         """
-        Extracts trade-related metrics.
-
+        Extract trade execution and quality metrics.
+        
         Args:
-            all_metrics: Complete set of calculated metrics
-                         from _get_all_metrics
-
+            all_metrics: Complete calculated metrics dictionary
+            
         Returns:
-            list: List of trade-related metrics
+            List of trade-related metrics
         """
 
         return [
@@ -143,19 +123,18 @@ class StrategyTester:
             all_metrics['Largest Losing Trade'],
         ]
 
-    @staticmethod
-    def _get_risk_metrics(
-        all_metrics: dict[str, np.ndarray | 'Metric']
-    ) -> list['Metric']:
+    def _extract_risk_metrics(
+        self,
+        all_metrics: dict[str, np.ndarray | Metric]
+    ) -> list[Metric]:
         """
-        Extracts risk-related metrics.
-
+        Extract risk management and volatility metrics.
+        
         Args:
-            all_metrics: Complete set of calculated metrics
-                         from _get_all_metrics
-
+            all_metrics: Complete calculated metrics dictionary
+            
         Returns:
-            list: List of risk-related metrics
+            List of risk-adjusted metrics
         """
 
         return [
@@ -166,30 +145,28 @@ class StrategyTester:
             all_metrics['Number of Liquidations'],
         ]
 
-    @staticmethod
-    def _get_all_metrics(
+    def _calculate_all_metrics(
+        self,
         initial_capital: float,
         deals_log: np.ndarray
-    ) -> dict[str, np.ndarray | 'Metric']:
+    ) -> dict[str, np.ndarray | Metric]:
         """
-        Calculates strategy metrics from deal logs.
+        Calculate comprehensive strategy metrics from deal logs.
 
-        The deals_log array is expected to contain columns:
+        Expected deals_log structure:
         - Column 0: Trade direction (0=long, 1=short)
-        - Column 2: Exit signal (signal code)
-        - Column 7: Position size (units)
-        - Column 8: Trade P&L in currency units
+        - Column 2: Exit signal code
+        - Column 7: Position size in units
+        - Column 8: Trade P&L in currency
         - Column 9: Trade P&L in percentage
         - Column 12: Commission paid
 
         Args:
-            initial_capital (float): Starting capital amount
-            deals_log (np.ndarray): Array of completed trades with columns
-                                    for direction, P&L, and commission
+            initial_capital: Starting capital amount
+            deals_log: Array of completed trades with structured columns
 
         Returns:
-            dict: Complete metrics dictionary with 'title', 'all',
-                  'long', and 'short' data for each metric
+            dict: Complete metrics dictionary with categorized data
         """
 
         def _mean(array: np.ndarray) -> float:

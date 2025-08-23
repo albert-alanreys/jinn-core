@@ -3,7 +3,7 @@ from functools import lru_cache
 from logging import getLogger
 from time import time
 
-from src.infrastructure.exchanges.enums import Interval
+from src.infrastructure.exchanges.models import Interval
 from .base import BaseBinanceClient
 
 

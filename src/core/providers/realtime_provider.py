@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from src.core.quantklines import shrink, stretch
-from src.infrastructure.exchanges.enums import Interval
+from src.infrastructure.exchanges.models import Interval
 from src.shared.utils import (
     has_last_historical_kline,
     has_realtime_kline
@@ -37,8 +37,7 @@ class RealtimeProvider():
             feeds: Additional data feeds configuration
 
         Returns:
-            MarketData:
-                Market data package matching MarketData structure
+            MarketData: Market data package matching MarketData structure
         """
 
         p_precision = client.market.get_price_precision(symbol)
@@ -97,8 +96,7 @@ class RealtimeProvider():
             main_klines: Main array of klines
 
         Returns:
-            FeedsData:
-                Feeds data package matching FeedsData structure
+            FeedsData: Feeds data package matching FeedsData structure
         """
 
         if 'klines' not in feeds:

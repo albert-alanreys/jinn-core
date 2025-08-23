@@ -54,6 +54,7 @@ def get_static_path() -> str:
     Returns:
         str: Absolute path to static directory
     """
+    
     return os.path.abspath(os.path.join('src', 'web', 'dist'))
 
 
@@ -64,6 +65,7 @@ def get_templates_path() -> str:
     Returns:
         str: Absolute path to templates directory
     """
+
     return os.path.abspath(os.path.join('src', 'web', 'dist'))
 
 

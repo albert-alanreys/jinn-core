@@ -1,1 +1,4 @@
-from .service import execution_service
+from .service import ExecutionService
+
+
+execution_service = ExecutionService()

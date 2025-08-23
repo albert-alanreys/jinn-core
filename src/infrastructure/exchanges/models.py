@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import TypedDict
 
 
 class Exchange(Enum):
@@ -41,3 +42,16 @@ class Interval(Enum):
     HOUR_6 = '6h'
     HOUR_12 = '12h'
     DAY_1 = '1d'
+
+
+class Alert(TypedDict):
+    """Configuration schema for alert."""
+    
+    exchange: str
+    type: str
+    status: str
+    side: str
+    symbol: str
+    qty: str
+    price: str
+    time: str

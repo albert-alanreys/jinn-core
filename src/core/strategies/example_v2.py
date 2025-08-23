@@ -5,7 +5,7 @@ import numpy as np
 import numba as nb
 
 import src.core.quantklines as qk
-from src.infrastructure.exchanges.enums import Interval
+from src.infrastructure.exchanges.models import Interval
 from src.shared.constants import colors
 from src.shared.utils import adjust
 from .strategy import BaseStrategy

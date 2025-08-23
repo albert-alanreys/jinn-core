@@ -12,6 +12,7 @@ def _load_strategies() -> dict[str, type[BaseStrategy]]:
     Returns:
         dict: Mapping from strategy class names to their class objects
     """
+    
     import src.core.strategies as package
 
     strategy_registry: dict[str, type[BaseStrategy]] = {}

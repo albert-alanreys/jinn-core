@@ -1,29 +1,42 @@
-from typing import TypedDict, Any, NotRequired, TYPE_CHECKING
+from __future__ import annotations
 
-from numpy import ndarray
+from enum import Enum
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
+
+import numpy as np
 
 if TYPE_CHECKING:
-    from src.core.providers import MarketData
+    from src.core.providers.models import MarketData
     from src.core.strategies import BaseStrategy
     from src.infrastructure.exchanges import BaseExchangeClient
+    from src.infrastructure.exchanges.models import Alert
+
+
+class ContextStatus(Enum):
+    """Strategy context lifecycle status."""
+    
+    PENDING = 'pending'
+    SUCCESS = 'success'
+    FAILED = 'failed'
 
 
 class ContextConfig(TypedDict):
-    """Configuration for strategy execution context."""
+    """Configuration schema for strategy execution context."""
 
     strategy: str
     symbol: str
     interval: str
     exchange: str
-    params: dict[str, Any]
     is_live: bool
+    params: dict[str, Any]
 
+    # Optional fields for backtesting
     start: NotRequired[str]
     end: NotRequired[str]
 
 
 class Metric(TypedDict):
-    """Typed dictionary for strategy metric."""
+    """Individual strategy performance metric."""
     
     title: str
     all: list[float | int]
@@ -32,14 +45,14 @@ class Metric(TypedDict):
 
 
 class OverviewMetrics(TypedDict):
-    """Typed dictionary for overview metrics."""
+    """High-level strategy overview metrics.."""
 
     primary: list[Metric]
-    equity: ndarray
+    equity: np.ndarray
 
 
 class StrategyMetrics(TypedDict):
-    """Typed dictionary for strategy metrics."""
+    """Complete set of strategy performance metrics."""
 
     overview: OverviewMetrics
     performance: list[Metric]
@@ -48,10 +61,18 @@ class StrategyMetrics(TypedDict):
 
 
 class StrategyContext(TypedDict):
-    """Typed dictionary for strategy context."""
+    """Complete strategy execution context."""
     
     name: str
-    strategy: 'BaseStrategy'
-    client: 'BaseExchangeClient'
-    market_data: 'MarketData'
+    strategy: BaseStrategy
+    client: BaseExchangeClient
+    market_data: MarketData
     metrics: StrategyMetrics
+
+
+class AlertData(TypedDict):
+    """Trading alert notification data."""
+    
+    context_id: str
+    strategy: str
+    message: Alert

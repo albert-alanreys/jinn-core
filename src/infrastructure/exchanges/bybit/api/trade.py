@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING
@@ -6,6 +8,7 @@ from src.shared.utils import adjust
 from .base import BaseBybitClient
 
 if TYPE_CHECKING:
+    from src.infrastructure.exchanges.models import Alert
     from .account import AccountClient
     from .market import MarketClient
     from .position import PositionClient
@@ -41,9 +44,9 @@ class TradeClient(BaseBybitClient):
 
     def __init__(
         self,
-        account: 'AccountClient',
-        market: 'MarketClient',
-        position: 'PositionClient'
+        account: AccountClient,
+        market: MarketClient,
+        position: PositionClient
     ) -> None:
         """
         Initialize trade client with required dependencies.
@@ -1056,7 +1059,7 @@ class TradeClient(BaseBybitClient):
         qty: str,
         price: str | None,
         created_time: str | None
-    ) -> dict:
+    ) -> Alert:
         """
         Create alert object for order events.
         
@@ -1074,7 +1077,7 @@ class TradeClient(BaseBybitClient):
             created_time: Order timestamp in milliseconds
             
         Returns:
-            dict: Formatted alert object
+            Alert: Alert data package matching Alert structure
         """
 
         if created_time is not None:
@@ -1095,7 +1098,7 @@ class TradeClient(BaseBybitClient):
             'side': side,
             'symbol': symbol,
             'qty': qty,
-            'price': price,
+            'price': price if price is not None else '',
             'time': order_time
         }
         return alert

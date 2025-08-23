@@ -6,7 +6,7 @@ import numpy as np
 
 from src.core.quantklines import shrink, stretch
 from src.infrastructure.db import DBManager
-from src.infrastructure.exchanges.enums import Interval
+from src.infrastructure.exchanges.models import Interval
 from src.shared.utils import (
     has_first_historical_kline,
     has_realtime_kline
@@ -56,8 +56,7 @@ class HistoryProvider():
             feeds: Optional feeds config
         
         Returns:
-            MarketData:
-                Market data package matching MarketData structure
+            MarketData: Market data package matching MarketData structure
         """
         
         p_precision, q_precision = self._get_precisions(client, symbol)
@@ -329,8 +328,7 @@ class HistoryProvider():
             end: End date ('YYYY-MM-DD')
             
         Returns:
-            FeedsData:
-                Feeds data package matching FeedsData structure
+            FeedsData: Feeds data package matching FeedsData structure
         """
 
         if 'klines' not in feeds:
