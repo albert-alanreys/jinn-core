@@ -65,7 +65,7 @@ class TradeClient(BaseBinanceClient):
         self.market = market
         self.position = position
 
-        self.alerts = []
+        self.alerts: list[Alert] = []
 
     def market_open_long(
         self,

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
+    from src.core.providers.models import MarketData
     from src.core.strategies import BaseStrategy
     from .models import Metric, OverviewMetrics, StrategyMetrics
 
@@ -17,19 +18,23 @@ class StrategyTester:
     performance, trades, and risk metrics.
     """
 
-    def test(self, strategy: BaseStrategy) -> StrategyMetrics:
+    def test(
+        self,
+        strategy: BaseStrategy,
+        market_data: MarketData
+    ) -> StrategyMetrics:
         """
-        Perform complete backtesting analysis on strategy instance.
-        
-        Analyzes the strategy's completed deals to calculate comprehensive
-        performance metrics across multiple categories.
+        Run full strategy backtest and compute metrics.
         
         Args:
-            strategy: Strategy instance containing deal history and params
-        
+            strategy: Strategy instance to evaluate
+            market_data: Market data for calculations
+
         Returns:
-            StrategyMetrics: Complete set of strategy performance metrics
+            StrategyMetrics: Complete performance metrics set
         """
+
+        strategy.calculate(market_data)
 
         initial_capital = strategy.params['initial_capital']
         deals_log = strategy.completed_deals_log

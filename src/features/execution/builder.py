@@ -15,22 +15,24 @@ if TYPE_CHECKING:
     from src.core.providers.models import MarketData
     from src.core.strategies import BaseStrategy
     from src.infrastructure.exchanges import BaseExchangeClient
-    from .models import StrategyMetrics
 
 
 logger = getLogger(__name__)
 
 
-class ExecutionContextBuilder:
+class StrategyContextBuilder:
     """
     Builds complete execution contexts for trading strategies.
     
-    Handles initialization of strategy instances, market data providers,
-    exchange clients, and performance metrics calculation.
+    This class manages initialization of:
+      - Strategy instances
+      - Market data providers
+      - Exchange clients
+      - Performance metrics calculation
     """
     
     def __init__(self) -> None:
-        """Initialize the context builder with required dependencies."""
+        """Initialize the builder with required dependencies."""
 
         self._history_provider = HistoryProvider()
         self._realtime_provider = RealtimeProvider()
@@ -45,27 +47,27 @@ class ExecutionContextBuilder:
     
     def create(self, config: ContextConfig) -> StrategyContext:
         """
-        Create a complete strategy context from configuration.
+        Build a complete strategy execution context from configuration.
         
         Args:
-            config: Strategy configuration containing all required parameters
+            config: Strategy configuration containing parameters
             
         Returns:
-            StrategyContext: Complete strategy context
+            StrategyContext: Complete initialized strategy context
         """
 
-        strategy = self._create_strategy(config)
+        strategy = self._build_strategy(config)
         client = self._get_exchange_client(config['exchange'])
-        market_data = self._prepare_market_data(config, strategy, client)
-        metrics = self._calculate_strategy_metrics(strategy)
+        market_data = self._build_market_data(config, strategy, client)
+        metrics = self._strategy_tester.test(strategy, market_data)
 
         return {
             'name': config['strategy'],
+            'is_live': config['is_live'],
             'strategy': strategy,
             'client': client,
             'market_data': market_data,
             'metrics': metrics,
-            'is_live': config['is_live'],
         }
     
     def update(
@@ -75,34 +77,26 @@ class ExecutionContextBuilder:
         param_value: Any
     ) -> StrategyContext:
         """
-        Update parameter in strategy context and restart strategy.
+        Update a strategy parameter and rebuild its execution context.
 
         Args:
-            context: Complete strategy execution context
-            param_name: strategy parameter name
-            param_value: new parameter value
-            
+            context: Existing strategy context
+            parameter_name: Name of the parameter to update
+            parameter_value: New parameter value
+
         Returns:
-            StrategyContext: Complete strategy context
+            StrategyContext:
+                Updated strategy context with recalculated metrics
+
+        Raises:
+            TypeError: If parameter type does not match existing one
         """
-
-        def _parse_value(raw):
-            if isinstance(raw, list):
-                return [float(x) for x in raw]
-
-            if isinstance(raw, str):
-                try:
-                    return literal_eval(raw.capitalize())
-                except (ValueError, SyntaxError):
-                    return raw.capitalize()
-
-            return raw
 
         strategy = context['strategy']
         params = strategy.params
 
         old_value = params[param_name]
-        new_value = _parse_value(param_value)
+        new_value = self._normalize_parameter_value(param_value)
 
         if (
             isinstance(old_value, (int, float)) and
@@ -110,15 +104,16 @@ class ExecutionContextBuilder:
         ):
             new_value = type(old_value)(new_value)
         elif type(old_value) != type(new_value):
-            raise TypeError()
-        
-        params[param_name] = new_value
+            raise TypeError(
+                f'Type mismatch for parameter {param_name}: '
+                f'{type(old_value).__name__} vs {type(new_value).__name__}'
+            )
 
-        strategy_class = strategies[context['name']]
-        strategy = strategy_class(params)
-        metrics = self._calculate_strategy_metrics(
-            strategy, context['market_data']
+        params[param_name] = new_value
+        strategy = self._build_strategy(
+            {'strategy': context['name'], 'params': params}
         )
+        metrics = self._strategy_tester.test(strategy, context['market_data'])
 
         return {
             **context,
@@ -126,19 +121,18 @@ class ExecutionContextBuilder:
             'metrics': metrics,
         }
     
-    def _create_strategy(self, config: ContextConfig) -> BaseStrategy:
+    def _build_strategy(self, config: ContextConfig) -> BaseStrategy:
         """
-        Create and initialize strategy instance from configuration.
-        
+        Create and initialize a strategy instance from configuration.
+
         Args:
-            config: Complete strategy configuration dictionary
-            
+            config: Strategy configuration dictionary
+
         Returns:
-            BaseStrategy:
-                Initialized strategy instance with configured parameters
-            
+            BaseStrategy: Initialized strategy instance
+
         Raises:
-            ValueError: If strategy name is not found in registered strategies
+            ValueError: If the strategy name is not found in the registry
         """
 
         strategy_name = config['strategy']
@@ -151,16 +145,16 @@ class ExecutionContextBuilder:
     
     def _get_exchange_client(self, exchange: str) -> BaseExchangeClient:
         """
-        Get the appropriate exchange client for the given exchange.
+        Get the exchange client corresponding to the given exchange name.
         
         Args:
-            exchange: Exchange name as string
+            exchange: Exchange name
             
         Returns:
-            BaseExchangeClient: Initialized exchange client instance
+            BaseExchangeClient: Exchange client instance
             
         Raises:
-            ValueError: If the specified exchange is not supported
+            ValueError: If the exchange is not supported
         """
 
         if exchange not in self._exchange_clients:
@@ -168,22 +162,22 @@ class ExecutionContextBuilder:
         
         return self._exchange_clients[exchange]
     
-    def _prepare_market_data(
+    def _build_market_data(
         self,
         config: ContextConfig,
         strategy: BaseStrategy,
         client: BaseExchangeClient,
     ) -> MarketData:
         """
-        Prepare market data based on execution mode.
+        Build market data based on execution mode.
         
         Args:
             config: Strategy configuration containing data parameters
             strategy: Initialized strategy instance
-            client: Exchange client instance for data retrieval
+            client: Exchange client for data retrieval
         
         Returns:
-            MarketData: Market data package matching MarketData structure
+            MarketData: Market data package
         """
 
         common_params = {
@@ -202,21 +196,17 @@ class ExecutionContextBuilder:
                 **common_params
             )
     
-    def _calculate_strategy_metrics(
-        self,
-        strategy: BaseStrategy,
-        market_data: MarketData,
-    ) -> StrategyMetrics:
-        """
-        Calculate initial performance metrics for the strategy.
-        
-        Args:
-            strategy: Initialized strategy instance to test
-            MarketData: Market data package matching MarketData structure
-            
-        Returns:
-            Complete set of strategy performance metrics
-        """
+    @staticmethod
+    def _normalize_parameter_value(raw: Any) -> Any:
+        """Normalize raw parameter input into the correct Python type."""
 
-        strategy.calculate(market_data)
-        return self._strategy_tester.test(strategy)
+        if isinstance(raw, list):
+            return [float(x) for x in raw]
+
+        if isinstance(raw, str):
+            try:
+                return literal_eval(raw.capitalize())
+            except (ValueError, SyntaxError):
+                return raw.capitalize()
+
+        return raw

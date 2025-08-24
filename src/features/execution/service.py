@@ -1,9 +1,9 @@
 from __future__ import annotations
 from logging import getLogger
-from threading import Thread
+from threading import RLock, Thread
 from typing import Any, TYPE_CHECKING
 
-from .builder import ExecutionContextBuilder
+from .builder import StrategyContextBuilder
 from .daemon import ExecutionDaemon
 
 if TYPE_CHECKING:
@@ -20,16 +20,14 @@ logger = getLogger(__name__)
 
 class ExecutionService:
     """
-    Comprehensive trading strategy execution and analysis service.
+    Unified service for trading strategy execution and analysis.
     
-    Provides unified interface for both real-time strategy execution
-    and historical performance analysis through backtesting capabilities.
+    Combines real-time execution with backtesting capabilities.
     
-    Key Features:
-    - Real-time strategy execution with daemon-based monitoring
-    - Historical backtesting with comprehensive metrics
+    Features:
+    - Real-time strategy execution with daemon monitoring
+    - Historical backtesting with performance metrics
     - Alert management and notification system
-    - Thread-safe context management
     """
     
     def __init__(self) -> None:
@@ -39,41 +37,52 @@ class ExecutionService:
         self._contexts: dict[str, StrategyContext] = {}
         self._context_statuses: dict[str, ContextStatus] = {}
         self._alerts: dict[str, AlertData] = {}
+
+        # Locks for thread-safe access
+        self._contexts_lock = RLock()
+        self._statuses_lock = RLock()
+        self._alerts_lock = RLock()
         
         # Service components
-        self._context_builder = ExecutionContextBuilder()
+        self._context_builder = StrategyContextBuilder()
         self._execution_daemon = ExecutionDaemon(self._alerts)
         
         logger.info('ExecutionService initialized successfully')
     
     @property
     def contexts(self) -> dict[str, StrategyContext]:
-        """Get read-only view of all strategy contexts."""
+        """Return a copy of all strategy contexts."""
 
-        return self._contexts.copy()
+        with self._contexts_lock:
+            return self._contexts.copy()
     
     @property
     def statuses(self) -> dict[str, ContextStatus]:
-        """Get read-only view of all context statuses."""
+        """Return a copy of all context statuses."""
 
-        return self._context_statuses.copy()
+        with self._statuses_lock:
+            return self._context_statuses.copy()
     
     @property
     def alerts(self) -> dict[str, AlertData]:
-        """Get read-only view of all alerts."""
+        """Return a copy of all active alerts."""
 
-        return self._alerts.copy()
+        with self._alerts_lock:
+            return self._alerts.copy()
     
     def create_contexts(self, configs: dict[str, ContextConfig]) -> None:
         """
-        Start asynchronous creation of multiple strategy contexts.
+        Create multiple strategy contexts asynchronously.
         
+        Spawns a background thread that builds contexts, updates statuses,
+        and registers live contexts in the execution daemon.
+
         Args:
-            configs: Dictionary mapping context IDs to their configurations
+            configs: Mapping from context_id to configuration
         """
 
         if not configs:
-            logger.warning('Configurations not provided')
+            logger.warning('No configurations provided for context creation')
             return
         
         creation_thread = Thread(
@@ -82,27 +91,26 @@ class ExecutionService:
             daemon=True
         )
         creation_thread.start()
-
-    
     
     def get_context(self, context_id: str) -> StrategyContext:
         """
-        Retrieve strategy context by ID.
+        Retrieve a strategy context by its identifier.
         
         Args:
             context_id: Unique context identifier
             
         Returns:
-            StrategyContext: Strategy context
+            StrategyContext: The requested strategy context
             
         Raises:
             KeyError: If context doesn't exist
         """
 
-        if context_id not in self._contexts:
-            raise KeyError(f'Context {context_id} not found')
-        
-        return self._contexts[context_id]
+        with self._contexts_lock:
+            if context_id not in self._contexts:
+                raise KeyError(f'Context {context_id} not found')
+            
+            return self._contexts[context_id]
 
     def update_context(
         self,
@@ -111,39 +119,46 @@ class ExecutionService:
         param_value: Any
     ) -> bool:
         """
-        Update parameter in strategy context and restart strategy.
+        Update a parameter in a strategy context and recompute its metrics.
 
         Args:
             context_id: Unique identifier of the strategy context
-            param_name: strategy parameter name
-            param_value: new parameter value
+            param_name: Strategy parameter name
+            param_value: New parameter value
 
         Returns:
-            bool: True if context was updated successfully
+            bool: True if the context was updated successfully
 
         Raises:
             KeyError: If context doesn't exist
+            Exception: Raised if updating the context fails
         """
 
-        if context_id not in self._contexts:
-            raise KeyError(f'Context {context_id} not found')
+        with self._contexts_lock:
+            if context_id not in self._contexts:
+                raise KeyError(f'Context {context_id} not found')
         
-        context = self._contexts[context_id]
+            context = self._contexts[context_id]
 
         try:
-            context = self._context_builder.update(
+            updated_context = self._context_builder.update(
                 context, param_name, param_value
             )
-            self._contexts[context_id] = context
+
+            with self._contexts_lock:
+                self._contexts[context_id] = updated_context
+            
+            return True
         except Exception as e:
             logger.error(
                 f'Failed to update context {context_id}: '
                 f'{type(e).__name__} - {e}'
             )
+            raise
     
     def delete_context(self, context_id: str) -> bool:
         """
-        Delete strategy context and stop monitoring.
+        Delete a strategy context and stop monitoring if necessary.
         
         Args:
             context_id: Unique context identifier
@@ -153,33 +168,45 @@ class ExecutionService:
             
         Raises:
             KeyError: If context doesn't exist
+            Exception: Raised if deleting the context fails
         """
 
-        if context_id not in self._contexts:
-            raise KeyError(f'Context {context_id} not found')
+        with self._contexts_lock:
+            if context_id not in self._contexts:
+                raise KeyError(f'Context {context_id} not found')
         
-        context = self._contexts[context_id]
-        if context['is_live']:
-            self._execution_daemon.remove_context(context_id)
-        
-        del self._contexts[context_id]
-        self._context_statuses.pop(context_id, None)
+            context = self._contexts[context_id]
 
-        return True
+        try:
+            if context['is_live']:
+                self._execution_daemon.remove_context(context_id)
+
+            with self._contexts_lock:
+                del self._contexts[context_id]
+
+            with self._statuses_lock:
+                self._context_statuses.pop(context_id, None)
+        except Exception as e:
+            logger.error(
+                f'Failed to delete context {context_id}: '
+                f'{type(e).__name__} - {e}'
+            )
+            raise
     
     def get_contexts_status(self) -> dict[str, ContextStatus]:
         """
-        Get current status of all strategy contexts.
+        Get current status for all strategy contexts.
         
         Returns:
-            dict: Dictionary mapping context IDs to their current statuses
+            dict: Mapping of context IDs to their statuses
         """
 
-        return self._context_statuses.copy()
+        with self._statuses_lock:
+            return self._context_statuses.copy()
     
     def get_context_status(self, context_id: str) -> ContextStatus:
         """
-        Get current status of a strategy context.
+        Get current status for a specific strategy context.
         
         Args:
             context_id: Unique context identifier
@@ -188,33 +215,42 @@ class ExecutionService:
             ContextStatus: Current context status
         """
 
-        return self._context_statuses.get(context_id, ContextStatus.FAILED)
+        with self._statuses_lock:
+            return self._context_statuses.get(context_id)
     
     def delete_alert(self, alert_id: str) -> bool:
         """
-        Remove alert from active alerts collection.
+        Remove an alert from the active alerts collection.
         
         Args:
             alert_id: Unique identifier of the alert
             
         Returns:
-            bool: True if alert was deleted successfully
+            bool: True if the alert was deleted successfully
             
         Raises:
             KeyError: If alert doesn't exist
         """
 
-        if alert_id not in self._alerts:
-            raise KeyError(f'Alert {alert_id} not found')
-        
-        del self._alerts[alert_id]
+        with self._alerts_lock:
+            if alert_id not in self._alerts:
+                raise KeyError(f'Alert {alert_id} not found')
+            
+            del self._alerts[alert_id]
     
     def _create_contexts(
         self,
         configs: dict[str, ContextConfig],
     ) -> dict[str, bool]:
         """
-        Create strategy contexts from configurations.
+        Build strategy contexts in the background thread.
+
+        For each context:
+          - set status to CREATING
+          - build context via StrategyContextBuilder
+          - attach to daemon if live
+          - set final status to CREATED or FAILED
+          - store in shared state on success
         
         Args:
             configs: Context configurations
@@ -228,33 +264,30 @@ class ExecutionService:
 
                 if config['is_live']:
                     self._execution_daemon.add_context(context_id, context)
-                
-                self._contexts[context_id] = context
-            except Exception as e:
-                self._context_statuses[context_id] = ContextStatus.FAILED
 
+                with self._contexts_lock:
+                    self._contexts[context_id] = context
+
+                self._set_status(context_id, ContextStatus.CREATED)
+            except Exception as e:
+                self._set_status(context_id, ContextStatus.FAILED)
                 logger.error(
                     f'Failed to create context {context_id}: '
                     f'{type(e).__name__} - {e}'
                 )
 
-        self._update_statuses_after_creation(configs)
-
     def _init_statuses_as_creating(
         self,
         configs: dict[str, ContextConfig],
     ) -> None:
-        """Set all context statuses to CREATING before processing."""
+        """Initialize all context statuses with CREATING state."""
 
-        for context_id in configs:
-            self._context_statuses[context_id] = ContextStatus.CREATING
+        with self._statuses_lock:
+            for context_id in configs:
+                self._context_statuses[context_id] = ContextStatus.CREATING
     
-    def _update_statuses_after_creation(
-        self,
-        configs: dict[str, ContextConfig],
-    ) -> None:
-        """Update statuses for successfully created contexts."""
-        
-        for context_id in configs:
-            if self._context_statuses[context_id] == ContextStatus.CREATING:
-                self._context_statuses[context_id] = ContextStatus.CREATED
+    def _set_status(self, context_id: str, status: ContextStatus) -> None:
+        """Update context status."""
+
+        with self._statuses_lock:
+            self._context_statuses[context_id] = status

@@ -1,10 +1,17 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.infrastructure.exchanges.models import Alert
 
 
 class TradeClientInterface(ABC):
     """Interface for trading operations."""
     
+    def __init__(self) -> None:
+        self.alerts: list[Alert] = []
+
     @abstractmethod
     def market_open_long(
         self,

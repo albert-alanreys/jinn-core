@@ -33,6 +33,14 @@ class ContextConfig(TypedDict):
     end: NotRequired[str]
 
 
+class AlertData(TypedDict):
+    """Trading alert notification data."""
+    
+    context_id: str
+    strategy: str
+    message: Alert
+
+
 class Metric(TypedDict):
     """Individual strategy performance metric."""
     
@@ -62,16 +70,8 @@ class StrategyContext(TypedDict):
     """Complete strategy execution context."""
     
     name: str
+    is_live: bool
     strategy: BaseStrategy
     client: BaseExchangeClient
     market_data: MarketData
     metrics: StrategyMetrics
-    is_live: bool
-
-
-class AlertData(TypedDict):
-    """Trading alert notification data."""
-    
-    context_id: str
-    strategy: str
-    message: Alert

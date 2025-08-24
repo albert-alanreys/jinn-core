@@ -1,6 +1,6 @@
 from __future__ import annotations
 from logging import getLogger
-from threading import Event, Lock, Thread
+from threading import Event, RLock, Thread
 from time import sleep, time
 from typing import TYPE_CHECKING
 
@@ -26,6 +26,7 @@ class ExecutionDaemon:
     """
 
     _ALERTS_LIMIT = 1000
+    _MONITOR_INTERVAL = 1.0
     
     def __init__(self, alert_registry: dict[str, AlertData]) -> None:
         """
@@ -42,10 +43,13 @@ class ExecutionDaemon:
         self._telegram_client = TelegramClient()
         self._strategy_tester = StrategyTester()
         
-        self._shutdown_event = Event()
-        self._context_lock = Lock()
+        self._pause_event = Event()
+        self._context_lock = RLock()
         
-        self._daemon_thread = Thread(target=self._run, daemon=True)
+        self._daemon_thread = Thread(
+            target=self._run_monitoring_loop,
+            daemon=True
+        )
         self._daemon_thread.start()
     
     def add_context(self, context_id: str, context: StrategyContext) -> None:
@@ -59,6 +63,7 @@ class ExecutionDaemon:
 
         with self._context_lock:
             self._contexts[context_id] = context
+            self._pause_event.set()
     
     def remove_context(self, context_id: str) -> bool:
         """
@@ -74,18 +79,25 @@ class ExecutionDaemon:
         with self._context_lock:
             if context_id in self._contexts:
                 del self._contexts[context_id]
+
+                if len(self._contexts) == 0:
+                    self._pause_event.clear()
+                
                 return True
         
         return False
 
-    def _run(self) -> None:
+    def _run_monitoring_loop(self) -> None:
         """Main daemon loop for continuous strategy monitoring."""
         
-        while not self._shutdown_event.is_set():
+        while not self._pause_event.is_set():
+            self._pause_event.wait()
+
             try:
                 self._process_all_contexts()
                 self._cleanup_old_alerts()
-                sleep(1.0)
+
+                sleep(self._MONITOR_INTERVAL)
             except Exception:
                 logger.exception('Error in daemon monitoring loop')
     
@@ -94,6 +106,9 @@ class ExecutionDaemon:
 
         with self._context_lock:
             context_items = list(self._contexts.items())
+
+        if not context_items:
+            return
         
         for context_id, context in context_items:
             try:
@@ -122,7 +137,8 @@ class ExecutionDaemon:
         context: StrategyContext,
     ) -> None:
         """
-        Process and distribute trading alerts.
+        Process trading alerts by storing them in the registry
+        and sending via Telegram.
         
         Args:
             context_id: Strategy context identifier
@@ -142,8 +158,9 @@ class ExecutionDaemon:
                 'context_id': context_id,
                 'strategy': context['name'],
                 'message': alert.copy(),
+                'timestamp': time(),
             }
-            alert_id = str(hash(f'{context_id}_{time()}'))
+            alert_id = str(hash(f"{context_id}_{alert_data['timestamp']}"))
             self._alert_registry[alert_id] = alert_data
 
             try:
@@ -154,9 +171,9 @@ class ExecutionDaemon:
                 )
 
     def _cleanup_old_alerts(self) -> None:
-        """Clean up old alerts from registry."""
+        """Remove oldest alerts if registry exceeds the limit."""
 
-        if len(self._alert_registry) > self._ALERTS_LIMIT:
-            self._alert_registry = dict(
-                list(self._alert_registry.items())[-self._ALERTS_LIMIT:]
-            )
+        excess = len(self._alert_registry) - self._ALERTS_LIMIT
+        if excess > 0:
+            items = list(self._alert_registry.items())[excess:]
+            self._alert_registry = dict(items)
