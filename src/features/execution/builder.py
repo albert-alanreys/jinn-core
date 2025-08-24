@@ -1,6 +1,7 @@
 from __future__ import annotations
+from ast import literal_eval
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from src.core.providers import HistoryProvider, RealtimeProvider
 from src.core.strategies import strategies
@@ -42,21 +43,21 @@ class ExecutionContextBuilder:
             Exchange.BYBIT.value: self._bybit_client,
         }
     
-    def build(self, config: ContextConfig) -> StrategyContext:
+    def create(self, config: ContextConfig) -> StrategyContext:
         """
-        Build a complete strategy execution context from configuration.
+        Create a complete strategy context from configuration.
         
         Args:
             config: Strategy configuration containing all required parameters
             
         Returns:
-            StrategyContext: Complete strategy context ready for execution
+            StrategyContext: Complete strategy context
         """
 
         strategy = self._create_strategy(config)
         client = self._get_exchange_client(config['exchange'])
         market_data = self._prepare_market_data(config, strategy, client)
-        metrics = self._calculate_initial_metrics(strategy)
+        metrics = self._calculate_strategy_metrics(strategy)
 
         return {
             'name': config['strategy'],
@@ -65,6 +66,64 @@ class ExecutionContextBuilder:
             'market_data': market_data,
             'metrics': metrics,
             'is_live': config['is_live'],
+        }
+    
+    def update(
+        self,
+        context: StrategyContext,
+        param_name: str,
+        param_value: Any
+    ) -> StrategyContext:
+        """
+        Update parameter in strategy context and restart strategy.
+
+        Args:
+            context: Complete strategy execution context
+            param_name: strategy parameter name
+            param_value: new parameter value
+            
+        Returns:
+            StrategyContext: Complete strategy context
+        """
+
+        def _parse_value(raw):
+            if isinstance(raw, list):
+                return [float(x) for x in raw]
+
+            if isinstance(raw, str):
+                try:
+                    return literal_eval(raw.capitalize())
+                except (ValueError, SyntaxError):
+                    return raw.capitalize()
+
+            return raw
+
+        strategy = context['strategy']
+        params = strategy.params
+
+        old_value = params[param_name]
+        new_value = _parse_value(param_value)
+
+        if (
+            isinstance(old_value, (int, float)) and
+            isinstance(new_value, (int, float))
+        ):
+            new_value = type(old_value)(new_value)
+        elif type(old_value) != type(new_value):
+            raise TypeError()
+        
+        params[param_name] = new_value
+
+        strategy_class = strategies[context['name']]
+        strategy = strategy_class(params)
+        metrics = self._calculate_strategy_metrics(
+            strategy, context['market_data']
+        )
+
+        return {
+            **context,
+            'strategy': strategy,
+            'metrics': metrics,
         }
     
     def _create_strategy(self, config: ContextConfig) -> BaseStrategy:
@@ -143,18 +202,21 @@ class ExecutionContextBuilder:
                 **common_params
             )
     
-    def _calculate_initial_metrics(
+    def _calculate_strategy_metrics(
         self,
-        strategy: BaseStrategy
+        strategy: BaseStrategy,
+        market_data: MarketData,
     ) -> StrategyMetrics:
         """
         Calculate initial performance metrics for the strategy.
         
         Args:
             strategy: Initialized strategy instance to test
+            MarketData: Market data package matching MarketData structure
             
         Returns:
             Complete set of strategy performance metrics
         """
 
+        strategy.calculate(market_data)
         return self._strategy_tester.test(strategy)

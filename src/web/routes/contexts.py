@@ -130,7 +130,7 @@ def update_context(context_id: str) -> Response:
         raise TypeError()
 
     params[param] = new_value
-    instance = context['type'](context['client'], params)
+    instance = context['type'](params)
     instance.calculate(context['market_data'])
 
     context['instance'] = instance

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from logging import getLogger
 from threading import Thread
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from .builder import ExecutionContextBuilder
 from .daemon import ExecutionDaemon
@@ -82,6 +82,8 @@ class ExecutionService:
             daemon=True
         )
         creation_thread.start()
+
+    
     
     def get_context(self, context_id: str) -> StrategyContext:
         """
@@ -94,13 +96,50 @@ class ExecutionService:
             StrategyContext: Strategy context
             
         Raises:
-            ContextNotFoundError: If context doesn't exist
+            KeyError: If context doesn't exist
         """
 
         if context_id not in self._contexts:
             raise KeyError(f'Context {context_id} not found')
         
         return self._contexts[context_id]
+
+    def update_context(
+        self,
+        context_id: str,
+        param_name: str,
+        param_value: Any
+    ) -> bool:
+        """
+        Update parameter in strategy context and restart strategy.
+
+        Args:
+            context_id: Unique identifier of the strategy context
+            param_name: strategy parameter name
+            param_value: new parameter value
+
+        Returns:
+            bool: True if context was updated successfully
+
+        Raises:
+            KeyError: If context doesn't exist
+        """
+
+        if context_id not in self._contexts:
+            raise KeyError(f'Context {context_id} not found')
+        
+        context = self._contexts[context_id]
+
+        try:
+            context = self._context_builder.update(
+                context, param_name, param_value
+            )
+            self._contexts[context_id] = context
+        except Exception as e:
+            logger.error(
+                f'Failed to update context {context_id}: '
+                f'{type(e).__name__} - {e}'
+            )
     
     def delete_context(self, context_id: str) -> bool:
         """
@@ -113,7 +152,7 @@ class ExecutionService:
             bool: True if context was deleted successfully
             
         Raises:
-            ContextNotFoundError: If context doesn't exist
+            KeyError: If context doesn't exist
         """
 
         if context_id not in self._contexts:
@@ -151,22 +190,41 @@ class ExecutionService:
 
         return self._context_statuses.get(context_id, ContextStatus.FAILED)
     
+    def delete_alert(self, alert_id: str) -> bool:
+        """
+        Remove alert from active alerts collection.
+        
+        Args:
+            alert_id: Unique identifier of the alert
+            
+        Returns:
+            bool: True if alert was deleted successfully
+            
+        Raises:
+            KeyError: If alert doesn't exist
+        """
+
+        if alert_id not in self._alerts:
+            raise KeyError(f'Alert {alert_id} not found')
+        
+        del self._alerts[alert_id]
+    
     def _create_contexts(
         self,
         configs: dict[str, ContextConfig],
     ) -> dict[str, bool]:
         """
-        Build strategy contexts from configurations.
+        Create strategy contexts from configurations.
         
         Args:
             configs: Context configurations
         """
 
-        self._initialize_context_statuses(configs)
+        self._init_statuses_as_creating(configs)
 
         for context_id, config in configs.items():
             try:
-                context = self._context_builder.build(config)
+                context = self._context_builder.create(config)
 
                 if config['is_live']:
                     self._execution_daemon.add_context(context_id, context)
@@ -180,23 +238,23 @@ class ExecutionService:
                     f'{type(e).__name__} - {e}'
                 )
 
-        self._finalize_context_statuses(configs)
+        self._update_statuses_after_creation(configs)
 
-    def _initialize_context_statuses(
+    def _init_statuses_as_creating(
         self,
         configs: dict[str, ContextConfig],
     ) -> None:
-        """Initialize all context statuses to PENDING."""
+        """Set all context statuses to CREATING before processing."""
 
         for context_id in configs:
-            self._context_statuses[context_id] = ContextStatus.PENDING
+            self._context_statuses[context_id] = ContextStatus.CREATING
     
-    def _finalize_context_statuses(
+    def _update_statuses_after_creation(
         self,
         configs: dict[str, ContextConfig],
     ) -> None:
-        """Update successful context statuses to SUCCESS."""
+        """Update statuses for successfully created contexts."""
         
         for context_id in configs:
-            if self._context_statuses[context_id] == ContextStatus.PENDING:
-                self._context_statuses[context_id] = ContextStatus.SUCCESS
+            if self._context_statuses[context_id] == ContextStatus.CREATING:
+                self._context_statuses[context_id] = ContextStatus.CREATED
