@@ -31,7 +31,8 @@ class ContextConfig(TypedDict):
 class StrategyContext(TypedDict):
     """Complete strategy optimization context."""
     
-    context_config: ContextConfig
+    name: str
+    exchange: str
     market_data: MarketData
-    strategy_class: BaseStrategy
-    opt_params: list[dict[str, Any]]
+    strategy_class: type[BaseStrategy]
+    optimized_params: list[dict[str, Any]]

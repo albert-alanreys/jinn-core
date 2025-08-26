@@ -21,6 +21,14 @@ logger = getLogger(__name__)
 
 
 class OptimizationService:
+    """
+    Service for managing strategy optimization contexts in separate processes.
+    
+    Handles context creation, optimization execution via genetic algorithms,
+    and result collection. Uses multi-threading for queue processing and 
+    multi-processing for CPU-intensive optimization tasks.
+    """
+
     def __init__(self) -> None:
         """Initialize the optimization service with required components."""
 
@@ -141,7 +149,7 @@ class OptimizationService:
     
     def delete_context(self, context_id: str) -> bool:
         """
-        Delete a strategy context.
+        Delete a strategy context and terminate associated processes.
         
         Args:
             context_id: Unique context identifier
@@ -279,16 +287,21 @@ class OptimizationService:
                 continue
 
             with self._contexts_lock:
-                context = self._contexts.get(context_id)
+                if context_id not in self._contexts:
+                    context = None
+                else:
+                    context = self._contexts[context_id]
+                    if params is not None:
+                        context['opt_params'] = params
 
-                if context is not None and params is not None:
-                    context['opt_params'] = params
-
-            if error is None:
-                self._set_status(context_id, ContextStatus.READY)
-            else:
-                self._set_status(context_id, ContextStatus.FAILED)
-                logger.error(f'Optimization failed for {context_id}: {error}')
+            if context is not None:
+                if error is None:
+                    self._set_status(context_id, ContextStatus.READY)
+                else:
+                    self._set_status(context_id, ContextStatus.FAILED)
+                    logger.error(
+                        f'Optimization failed for {context_id}: {error}'
+                    )
 
             with self._active_lock:
                 proc = self._active_procs.pop(context_id, None)

@@ -15,9 +15,6 @@ def create_train_test_windows(
     """
     Create indices for train and test datasets.
 
-    Splits the data into train/test sets using the ratio specified in config.
-    Train set comes first, followed immediately by test set.
-
     Args:
         market_data: Market data package
         config: Configuration for optimization
@@ -50,8 +47,6 @@ def create_window_data(
 ) -> dict[str, Any]:
     """
     Extract market data for a given window.
-
-    Returns either training or testing subset defined by window indices.
 
     Args:
         market_data: Market data package
@@ -90,8 +85,6 @@ def latin_hypercube_sampling(
 ) -> list[dict[str, Any]]:
     """
     Generate parameter samples using Latin Hypercube Sampling.
-
-    Ensures uniform coverage of parameter ranges by stratified sampling.
 
     Args:
         param_space: Parameter space with value lists

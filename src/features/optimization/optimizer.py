@@ -91,9 +91,9 @@ class StrategyOptimizer:
 
     def _init_optimization(self, context: StrategyContext) -> None:
         """
-        Initialize optimization variables for a single strategy.
+        Initialize optimization variables for a strategy context.
 
-        Sets up strategy instance, client, training/test data,
+        Sets up strategy class, training/test data windows,
         population dictionary, best parameters list, and parameter keys.
 
         Args:
@@ -125,10 +125,14 @@ class StrategyOptimizer:
 
     def _create_population(self) -> None:
         """
-        Create initial population of candidate parameter sets.
+        Create initial population of candidate parameter sets
+        using multiple sampling methods.
 
-        Combines random sampling, Latin Hypercube Sampling, and
-        extreme values to improve diversity and convergence speed.
+        Uses a diversified approach:
+        - Random sampling (30%): Random selection from parameter ranges
+        - Latin Hypercube Sampling (40%): Space-filling statistical sampling 
+        - Extreme values (20%): Combinations of min/max parameter values
+        - Random fill (remaining): Additional random samples if needed
         """
 
         population = []
@@ -202,16 +206,12 @@ class StrategyOptimizer:
         """
         Evaluate strategy performance with given parameters.
 
-        Instantiates strategy with provided parameter dictionary,
-        runs calculation on market data, and computes fitness score
-        based on completed deals performance.
-
         Args:
-            sample_dict: Parameter dictionary to evaluate
+            sample_dict: Dictionary of strategy parameters to test
             market_data: Market data package
 
         Returns:
-            float: Fitness score (performance metric)
+            float: Fitness score based on sum of completed deals profit/loss
         """
 
         strategy = self.strategy_class(sample_dict)

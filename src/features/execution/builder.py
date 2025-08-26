@@ -55,9 +55,9 @@ class ExecutionContextBuilder:
             StrategyContext: Initialized strategy context
         """
 
-        strategy = self._build_strategy(config)
+        strategy = self._create_strategy(config)
         client = self._get_exchange_client(config['exchange'])
-        market_data = self._build_market_data(config, strategy, client)
+        market_data = self._get_market_data(config, strategy, client)
         metrics = self._strategy_tester.test(strategy, market_data)
 
         return {
@@ -109,7 +109,7 @@ class ExecutionContextBuilder:
             )
 
         params[param_name] = new_value
-        strategy = self._build_strategy(
+        strategy = self._create_strategy(
             {'strategy': context['name'], 'params': params}
         )
         metrics = self._strategy_tester.test(strategy, context['market_data'])
@@ -120,9 +120,9 @@ class ExecutionContextBuilder:
             'metrics': metrics,
         }
     
-    def _build_strategy(self, config: ContextConfig) -> BaseStrategy:
+    def _create_strategy(self, config: ContextConfig) -> BaseStrategy:
         """
-        Create and initialize a strategy instance from configuration.
+        Create a strategy instance from the name specified in configuration.
 
         Args:
             config: Context configuration package
@@ -144,7 +144,7 @@ class ExecutionContextBuilder:
     
     def _get_exchange_client(self, exchange: str) -> BaseExchangeClient:
         """
-        Get the exchange client corresponding to the given exchange name.
+        Get the client for the given exchange name.
         
         Args:
             exchange: Exchange name
@@ -161,14 +161,17 @@ class ExecutionContextBuilder:
         
         return self._exchange_clients[exchange]
     
-    def _build_market_data(
+    def _get_market_data(
         self,
         config: ContextConfig,
         strategy: BaseStrategy,
         client: BaseExchangeClient,
     ) -> MarketData:
         """
-        Build market data based on execution mode.
+        Get market data from appropriate provider based on execution mode.
+
+        Returns real-time data for live mode or
+        historical data for backtest mode.
         
         Args:
             config: Context configuration package

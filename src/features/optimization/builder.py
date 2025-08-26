@@ -52,7 +52,7 @@ class OptimizationContextBuilder:
 
         strategy_class = self._get_strategy_class(config['strategy'])
         client = self._get_exchange_client(config['exchange'])
-        market_data = self._build_market_data(config, strategy_class, client)
+        market_data = self._get_market_data(config, strategy_class, client)
 
         return {
             'context_config': config,
@@ -60,7 +60,7 @@ class OptimizationContextBuilder:
             'strategy_class': strategy_class,
         }
    
-    def _get_strategy_class(self, strategy: str) -> BaseStrategy:
+    def _get_strategy_class(self, strategy: str) -> type[BaseStrategy]:
         """
         Get the strategy class from registry.
 
@@ -68,7 +68,7 @@ class OptimizationContextBuilder:
             strategy: Strategy name
 
         Returns:
-            BaseStrategy: Strategy class
+            type[BaseStrategy]: Strategy class
 
         Raises:
             ValueError: If the strategy name is not found in the registry
@@ -81,7 +81,7 @@ class OptimizationContextBuilder:
     
     def _get_exchange_client(self, exchange: str) -> BaseExchangeClient:
         """
-        Get the exchange client corresponding to the given exchange name.
+        Get the client for the given exchange name.
         
         Args:
             exchange: Exchange name
@@ -98,18 +98,18 @@ class OptimizationContextBuilder:
         
         return self._exchange_clients[exchange]
     
-    def _build_market_data(
+    def _get_market_data(
         self,
         config: ContextConfig,
-        strategy: BaseStrategy,
+        strategy_class: type[BaseStrategy],
         client: BaseExchangeClient,
     ) -> MarketData:
         """
-        Build market data.
+        Get historical data market data.
         
         Args:
             config: Context configuration package
-            strategy: Initialized strategy instance
+            strategy_class: Strategy class
             client: Exchange client for data retrieval
         
         Returns:
@@ -122,5 +122,5 @@ class OptimizationContextBuilder:
             interval=Interval(config['interval']),
             start=config['start'],
             end=config['end'],
-            feeds=strategy.params.get('feeds')
+            feeds=strategy_class.params.get('feeds')
         )
