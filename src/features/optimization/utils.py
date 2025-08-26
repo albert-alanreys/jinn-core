@@ -1,11 +1,16 @@
-from typing import Any
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
+if TYPE_CHECKING:
+    from src.core.providers import MarketData
+    from .config import OptimizationConfig
+
 
 def create_train_test_windows(
-    market_data: dict[str, Any],
-    config: Any
+    market_data: MarketData,
+    config: OptimizationConfig
 ) -> dict[str, int]:
     """
     Create indices for train and test datasets.
@@ -14,8 +19,8 @@ def create_train_test_windows(
     Train set comes first, followed immediately by test set.
 
     Args:
-        market_data: Dataset containing klines and metadata
-        config: Configuration with window sizes as ratios (0.0-1.0)
+        market_data: Market data package
+        config: Configuration for optimization
 
     Returns:
         dict[str, int]:
@@ -24,8 +29,8 @@ def create_train_test_windows(
 
     total_klines = len(market_data['klines'])
     
-    train_size = int(total_klines * config.train_window_klines)
-    test_size = int(total_klines * config.validation_window_klines)
+    train_size = int(total_klines * config.train_window)
+    test_size = int(total_klines * config.test_window)
     
     if train_size + test_size > total_klines:
         test_size = total_klines - train_size
@@ -39,7 +44,7 @@ def create_train_test_windows(
 
 
 def create_window_data(
-    market_data: dict[str, Any],
+    market_data: MarketData,
     window: dict[str, int],
     data_type: str
 ) -> dict[str, Any]:
@@ -49,7 +54,7 @@ def create_window_data(
     Returns either training or testing subset defined by window indices.
 
     Args:
-        market_data: Full dataset with klines and feeds
+        market_data: Market data package
         window: Window index boundaries
         data_type: 'train' or 'test' subset
 

@@ -56,7 +56,7 @@ class HistoryProvider():
             feeds: Optional feeds config
         
         Returns:
-            MarketData: Market data package matching MarketData structure
+            MarketData: Market data package
         """
         
         p_precision, q_precision = self._get_precisions(client, symbol)
@@ -328,7 +328,7 @@ class HistoryProvider():
             end: End date ('YYYY-MM-DD')
             
         Returns:
-            FeedsData: Feeds data package matching FeedsData structure
+            FeedsData: Additional market data feeds package
         """
 
         if 'klines' not in feeds:

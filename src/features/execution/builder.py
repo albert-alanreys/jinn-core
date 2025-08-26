@@ -7,22 +7,21 @@ from src.core.providers import HistoryProvider, RealtimeProvider
 from src.core.strategies import strategies
 from src.infrastructure.exchanges import BinanceClient, BybitClient
 from src.infrastructure.exchanges.models import Exchange, Interval
-
-from .models import ContextConfig, StrategyContext
 from .tester import StrategyTester
 
 if TYPE_CHECKING:
     from src.core.providers import MarketData
     from src.core.strategies import BaseStrategy
     from src.infrastructure.exchanges import BaseExchangeClient
+    from .models import ContextConfig, StrategyContext
 
 
 logger = getLogger(__name__)
 
 
-class StrategyContextBuilder:
+class ExecutionContextBuilder:
     """
-    Builds complete execution contexts for trading strategies.
+    Builds execution contexts for trading strategies.
     
     This class manages initialization of:
       - Strategy instances
@@ -50,10 +49,10 @@ class StrategyContextBuilder:
         Build a complete strategy execution context from configuration.
         
         Args:
-            config: Strategy configuration containing parameters
+            config: Context configuration package
             
         Returns:
-            StrategyContext: Complete initialized strategy context
+            StrategyContext: Initialized strategy context
         """
 
         strategy = self._build_strategy(config)
@@ -80,7 +79,7 @@ class StrategyContextBuilder:
         Update a strategy parameter and rebuild its execution context.
 
         Args:
-            context: Existing strategy context
+            context: Existing strategy context package
             parameter_name: Name of the parameter to update
             parameter_value: New parameter value
 
@@ -126,7 +125,7 @@ class StrategyContextBuilder:
         Create and initialize a strategy instance from configuration.
 
         Args:
-            config: Strategy configuration dictionary
+            config: Context configuration package
 
         Returns:
             BaseStrategy: Initialized strategy instance
@@ -172,7 +171,7 @@ class StrategyContextBuilder:
         Build market data based on execution mode.
         
         Args:
-            config: Strategy configuration containing data parameters
+            config: Context configuration package
             strategy: Initialized strategy instance
             client: Exchange client for data retrieval
         

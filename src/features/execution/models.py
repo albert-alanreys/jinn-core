@@ -16,7 +16,7 @@ class ContextStatus(Enum):
     
     QUEUED = 'queued'
     CREATING = 'creating'
-    CREATED = 'created'
+    READY = 'ready'
     FAILED = 'failed'
 
 

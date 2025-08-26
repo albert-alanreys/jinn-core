@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from src.core.providers import RealtimeProvider
 from src.infrastructure.messaging import TelegramClient
-
 from .tester import StrategyTester
 
 if TYPE_CHECKING:

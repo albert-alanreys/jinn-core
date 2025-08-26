@@ -1,437 +1,310 @@
-import json
-import multiprocessing
-import os
-import random
+from __future__ import annotations
 from logging import getLogger
+from os import cpu_count, getenv
+from queue import Queue, Empty
+from threading import Event, RLock, Thread
+from typing import TYPE_CHECKING
+from multiprocessing import Process, Queue as MPQueue
 
-from src.infrastructure.messaging import TelegramClient
-from .config import OptimizationConfig
-from .utils import (
-    create_train_test_windows,
-    create_window_data,
-    latin_hypercube_sampling
-)
+from .builder import OptimizationContextBuilder
+from .optimizer import optimize_worker
+
+if TYPE_CHECKING:
+    from .models import (
+        ContextConfig,
+        ContextStatus,
+        StrategyContext
+    )
+
+
+logger = getLogger(__name__)
 
 
 class OptimizationService:
-    """
-    Core service responsible for optimizing trading strategy parameters.
+    def __init__(self) -> None:
+        """Initialize the optimization service with required components."""
 
-    Performs parameter optimization across multiple strategies in parallel,
-    using a combination of selection, recombination and mutation operations.
-    """
+        self._contexts: dict[str, StrategyContext] = {}
+        self._context_statuses: dict[str, ContextStatus] = {}
 
-    def __init__(self, settings: dict, strategy_contexts: dict) -> None:
-        """
-        Initialize OptimizationService with strategy contexts.
-
-        Args:
-            settings: Dictionary of optimization settings
-            strategy_contexts: Dictionary of strategy contexts
-        """
-
-        self.config = OptimizationConfig()
-        self.config.__dict__.update(settings)
-        self.strategy_contexts = strategy_contexts
-
-        self.telegram_client = TelegramClient()
-        self.logger = getLogger(__name__)
-
-    def run(self) -> None:
-        """
-        Execute the optimization process.
-
-        Manages the complete optimization workflow:
-        1. Logs optimization start.
-        2. Runs parallel optimizations.
-        3. Saves best parameters.
-        4. Logs completion.
-        """
-
-        summary = [
-            ' | '.join([
-                item['name'],
-                item['client'].exchange_name,
-                item['market_data']['symbol'],
-                str(item['market_data']['interval']),
-                f"{item['market_data']['start']} → "
-                f"{item['market_data']['end']}"
-            ])
-            for item in self.strategy_contexts.values()
-        ]
-        self.logger.info(f"Optimization started for:\n{'\n'.join(summary)}")
-        self.telegram_client.send_message('🔥 Optimization started')
-
-        with multiprocessing.Pool(self.config.max_processes) as pool:
-            best_params = pool.map(
-                func=self._optimize,
-                iterable=self.strategy_contexts.values()
-            )
-
-        for cid, params in zip(self.strategy_contexts, best_params):
-            self.strategy_contexts[cid]['best_params'] = params
-
-        self._save_params()
-
-        self.logger.info('Optimization completed')
-        self.telegram_client.send_message('✅ Optimization completed')
-
-    def _optimize(self, strategy_context: dict) -> list:
-        """
-        Optimize parameters for a single strategy.
-
-        Executes genetic algorithm optimization cycle consisting of:
-        population creation, selection, recombination, mutation, and 
-        population management over multiple iterations.
-
-        Args:
-            strategy_context: Context dictionary for the strategy
-                containing type, client, and market data
-
-        Returns:
-            list: Best parameters found during optimization
-        """
-
-        self._init_optimization(strategy_context)
-
-        for _ in range(self.config.optimization_runs):
-            self._create_population()
-
-            for _ in range(self.config.iterations):
-                self._select()
-                self._recombine()
-                self._mutate()
-                self._expand()
-                self._kill()
-                self._destroy()
-
-            self.best_params.append(self._get_best_sample())
-            self.population.clear()
-
-        return self.best_params
-
-    def _init_optimization(self, strategy_context: dict) -> None:
-        """
-        Initialize optimization variables for a single strategy.
-
-        Sets up strategy instance, client, training/test data,
-        population dictionary, best parameters list, and parameter keys.
-
-        Args:
-            strategy_context: Context dictionary for the strategy
-        """
-
-        self.strategy = strategy_context['type']
-
-        windows = create_train_test_windows(
-            market_data=strategy_context['market_data'],
-            config=self.config
-        )
-
-        self.train_data = create_window_data(
-            market_data=strategy_context['market_data'],
-            window=windows,
-            data_type='train'
-        )
-        self.test_data = create_window_data(
-            market_data=strategy_context['market_data'],
-            window=windows,
-            data_type='test'
-        )
-
-        self.population = {}
-        self.best_params = []
+        self._contexts_lock = RLock()
+        self._statuses_lock = RLock()
         
-        self.param_keys = list(self.strategy.opt_params.keys())
+        self._context_builder = OptimizationContextBuilder()
 
-    def _create_population(self) -> None:
-        """
-        Create initial population of candidate parameter sets.
+        self._config_queue: Queue[tuple[str, ContextConfig]] = Queue()
+        self._optimization_queue: Queue[tuple[str, ContextConfig]] = Queue()
 
-        Combines random sampling, Latin Hypercube Sampling, and
-        extreme values to improve diversity and convergence speed.
-        """
+        self._config_event = Event()
+        self._opt_event = Event()
+        self._proc_event = Event()
 
-        population = []
-        opt_params = self.strategy.opt_params
+        self._mp_results_queue: MPQueue[
+            tuple[str, list[dict] | None, str | None]
+        ] = MPQueue()
+        self._active_procs: dict[str, Process] = {}
+        self._active_lock = RLock()
 
-        # Random sampling (30%)
-        random_count = int(self.config.population_size * 0.3)
-        for _ in range(random_count):
-            population.append({
-                param_name: random.choice(param_values)
-                for param_name, param_values in opt_params.items()
-            })
-
-        # Latin Hypercube Sampling (40%)
-        lhs_count = int(self.config.population_size * 0.4)
-        population.extend(
-            latin_hypercube_sampling(opt_params, lhs_count)
+        max_processes = getenv('MAX_PROCESSES')
+        self._max_processes = (
+            cpu_count() if max_processes is None
+            else max(int(max_processes), 1)
         )
 
-        # Extreme values (20%)
-        extreme_count = int(self.config.population_size * 0.2)
-        for _ in range(extreme_count):
-            individual = {
-                param_name: random.choice([param_values[0], param_values[-1]])
-                for param_name, param_values in opt_params.items()
-            }
-            population.append(individual)
+        self._config_thread = Thread(
+            target=self._run_monitor_config_queue,
+            daemon=True
+        )
+        self._config_thread.start()
 
-        # Fill remaining with random samples if needed
-        while len(population) < self.config.population_size:
-            population.append({
-                param_name: random.choice(param_values)
-                for param_name, param_values in opt_params.items()
-            })
+        self._opt_thread = Thread(
+            target=self._run_monitor_optimization_queue,
+            daemon=True
+        )
+        self._opt_thread.start()
 
-        # Evaluate and add to population
-        for individual in population:
-            fitness = self._evaluate(individual, self.train_data)
-            sample_key = self._dict_to_key(individual)
-            self.population[fitness] = sample_key
+        self._results_thread = Thread(
+            target=self._listen_results,
+            daemon=True
+        )
+        self._results_thread.start()
 
-    def _dict_to_key(self, param_dict: dict) -> tuple:
+        logger.info('OptimizationService initialized successfully')
+    
+    @property
+    def contexts(self) -> dict[str, StrategyContext]:
+        """Return a copy of all strategy contexts."""
+
+        with self._contexts_lock:
+            return self._contexts.copy()
+    
+    @property
+    def statuses(self) -> dict[str, ContextStatus]:
+        """Return a copy of all context statuses."""
+
+        with self._statuses_lock:
+            return self._context_statuses.copy()
+    
+    def add_contexts(self, configs: dict[str, ContextConfig]) -> list[str]:
         """
-        Convert parameter dictionary to hashable tuple for population storage.
+        Add new strategy contexts to the processing queue.
+
+        - Skips contexts that already exist in contexts or statuses.
+        - Marks accepted contexts as QUEUED.
+        - Returns identifiers of successfully queued contexts.
 
         Args:
-            param_dict: Parameter dictionary
+            configs: Mapping from context_id to configuration
 
         Returns:
-            tuple: Hashable representation of parameter values
-        """
-        return tuple(param_dict[key] for key in self.param_keys)
-
-    def _key_to_dict(self, param_key: tuple) -> dict:
-        """
-        Convert parameter tuple back to dictionary.
-
-        Args:
-            param_key: Hashable parameter representation
-
-        Returns:
-            dict: Parameter dictionary
-        """
-        return dict(zip(self.param_keys, param_key))
-
-    def _evaluate(self, sample_dict: dict, market_data: dict) -> float:
-        """
-        Evaluate strategy performance with given parameters.
-
-        Instantiates strategy with provided parameter dictionary,
-        runs calculation on market data, and computes fitness score
-        based on completed deals performance.
-
-        Args:
-            sample_dict: Parameter dictionary to evaluate
-            market_data: Dataset to evaluate against
-
-        Returns:
-            float: Fitness score (performance metric)
+            list[str]: List of successfully queued context identifiers
         """
 
-        strategy_instance = self.strategy(sample_dict)
-        strategy_instance.calculate(market_data)
+        if not configs:
+            logger.warning('No configs provided for queueing')
+            return []
 
-        score = strategy_instance.completed_deals_log[:, 8].sum()
-        return score
+        added: list[str] = []
+        for context_id, config in configs.items():
+            with self._contexts_lock, self._statuses_lock:
+                if context_id in self._context_statuses:
+                    continue
 
-    def _select(self) -> None:
+                self._context_statuses[context_id] = ContextStatus.QUEUED
+                self._config_queue.put((context_id, config))
+                added.append(context_id)
+
+        if added:
+            self._config_event.set()
+
+        return added
+    
+    def get_context(self, context_id: str) -> StrategyContext:
         """
-        Select two parent samples for recombination.
-
-        Uses tournament selection: 50% chance to select best individual
-        plus random individual, 50% chance to select two random individuals.
-        Selected parents are stored in self.parents as dictionaries.
-        """
-
-        if random.randint(0, 1) == 0:
-            best_score = max(self.population)
-            parent_1_key = self.population[best_score]
-            parent_1 = self._key_to_dict(parent_1_key)
-
-            population_copy = self.population.copy()
-            population_copy.pop(best_score)
-
-            parent_2_key = random.choice(list(population_copy.values()))
-            parent_2 = self._key_to_dict(parent_2_key)
-            
-            self.parents = [parent_1, parent_2]
-        else:
-            parent_keys = random.sample(list(self.population.values()), 2)
-            self.parents = [self._key_to_dict(key) for key in parent_keys]
-
-    def _recombine(self) -> None:
-        """
-        Create offspring through crossover of selected parents.
-
-        Implements two crossover strategies:
-        - Single-point crossover: splits parameter list at random position
-        - Two-point crossover: exchanges middle segment between parents
+        Retrieve a strategy context by its identifier.
         
-        Resulting child is stored in self.child as dictionary.
-        """
-
-        param_count = len(self.param_keys)
-        r_number = random.randint(0, 1)
-
-        if r_number == 0:
-            # Single-point crossover
-            delimiter = random.randint(1, param_count - 1)
+        Args:
+            context_id: Unique context identifier
             
-            self.child = {}
-            for i, param_name in enumerate(self.param_keys):
-                if i < delimiter:
-                    self.child[param_name] = self.parents[0][param_name]
-                else:
-                    self.child[param_name] = self.parents[1][param_name]
-        else:
-            # Two-point crossover
-            delimiter_1 = random.randint(1, param_count // 2 - 1)
-            delimiter_2 = random.randint(
-                param_count // 2 + 1, param_count - 1
-            )
-
-            self.child = {}
-            for i, param_name in enumerate(self.param_keys):
-                if i < delimiter_1 or i >= delimiter_2:
-                    self.child[param_name] = self.parents[0][param_name]
-                else:
-                    self.child[param_name] = self.parents[1][param_name]
-
-    def _mutate(self) -> None:
-        """
-        Apply mutation to the offspring.
-
-        With 90% probability mutates single random parameter,
-        with 10% probability mutates all parameters.
-        Mutation selects random values from corresponding parameter ranges.
-        """
-
-        if random.random() <= 0.9:
-            # Mutate single parameter
-            param_name = random.choice(self.param_keys)
-            param_values = self.strategy.opt_params[param_name]
-            self.child[param_name] = random.choice(param_values)
-        else:
-            # Mutate all parameters
-            for param_name in self.param_keys:
-                param_values = self.strategy.opt_params[param_name]
-                self.child[param_name] = random.choice(param_values)
-
-    def _expand(self) -> None:
-        """
-        Add mutated offspring to population.
-
-        Evaluates fitness of the child on training data and
-        adds it to the population dictionary.
-        """
-
-        fitness = self._evaluate(self.child, self.train_data)
-        child_key = self._dict_to_key(self.child)
-        self.population[fitness] = child_key
-
-    def _kill(self) -> None:
-        """
-        Remove worst individuals to maintain population size.
-
-        Removes individuals with lowest fitness scores until
-        population size is within max_population_size limit.
-        """
-
-        while len(self.population) > self.config.max_population_size:
-            self.population.pop(min(self.population))
-
-    def _destroy(self) -> None:
-        """
-        Catastrophic population reduction event.
-
-        With 0.1% probability removes bottom 50% of population
-        to prevent premature convergence and maintain diversity.
-        """
-
-        if random.random() > 0.001:
-            return
-
-        sorted_population = sorted(
-            self.population.items(),
-            key=lambda x: x[0]
-        )
-
-        for i in range(int(len(self.population) * 0.5)):
-            self.population.pop(sorted_population[i][0])
-
-    def _get_best_sample(self) -> dict:
-        """
-        Select best parameter set based on combined train/test performance.
-
-        Evaluates all population samples on test data and selects
-        the one with highest combined fitness (50% train + 50% test).
-
         Returns:
-            dict: Best parameter dictionary considering
-                  both training and test results
+            StrategyContext: The requested strategy context
+            
+        Raises:
+            KeyError: If context doesn't exist
         """
 
-        best_score = float('-inf')
-        best_sample = None
-
-        for train_fitness, sample_key in self.population.items():
-            sample_dict = self._key_to_dict(sample_key)
-            test_fitness = self._evaluate(sample_dict, self.test_data)
-            combined_fitness = 0.5 * train_fitness + 0.5 * test_fitness
-
-            if combined_fitness > best_score:
-                best_score = combined_fitness
-                best_sample = sample_dict
-
-        return best_sample
-
-    def _save_params(self) -> None:
+        with self._contexts_lock:
+            if context_id not in self._contexts:
+                raise KeyError(f'Context {context_id} not found')
+            
+            return self._contexts[context_id]
+    
+    def delete_context(self, context_id: str) -> bool:
         """
-        Save optimized parameters to strategy JSON files.
-
-        Preserves existing optimization results while adding new ones.
-        Files are organized by exchange/symbol/interval structure
-        and stored in strategy-specific optimization directories.
+        Delete a strategy context.
+        
+        Args:
+            context_id: Unique context identifier
+            
+        Returns:
+            bool: True if context was deleted successfully
+            
+        Raises:
+            KeyError: If context doesn't exist
+            Exception: Raised if deleting the context fails
         """
 
-        for context in self.strategy_contexts.values():
-            filename = (
-                f'{context['client'].exchange_name}_'
-                f'{context['market_data']['symbol']}_'
-                f'{context['market_data']['interval']}.json'
+        with self._contexts_lock:
+            if context_id not in self._contexts:
+                raise KeyError(f'Context {context_id} not found')
+
+        try:
+            with self._contexts_lock:
+                del self._contexts[context_id]
+
+            with self._statuses_lock:
+                self._context_statuses.pop(context_id, None)
+
+            with self._active_lock:
+                proc = self._active_procs.pop(context_id, None)
+            
+            if proc is not None and proc.is_alive():
+                try:
+                    proc.terminate()
+                    proc.join(timeout=1.0)
+                except Exception:
+                    logger.exception(
+                        f'Failed to terminate process for {context_id}', 
+                    )
+            
+            return True
+        except Exception as e:
+            logger.error(
+                f'Failed to delete context {context_id}: '
+                f'{type(e).__name__} - {e}'
             )
-            file_path = os.path.abspath(
-                os.path.join(
-                    'src',
-                    'core',
-                    'strategies',
-                    context['name'].lower(),
-                    'optimization',
-                    filename
+            raise
+    
+    def get_contexts_status(self) -> dict[str, ContextStatus]:
+        """
+        Get current status for all strategy contexts.
+        
+        Returns:
+            dict: Mapping of context IDs to their statuses
+        """
+
+        with self._statuses_lock:
+            return self._context_statuses.copy()
+    
+    def get_context_status(self, context_id: str) -> ContextStatus:
+        """
+        Get current status for a specific strategy context.
+        
+        Args:
+            context_id: Unique context identifier
+            
+        Returns:
+            ContextStatus: Current context status
+        """
+
+        with self._statuses_lock:
+            return self._context_statuses.get(context_id)
+    
+    def _run_monitor_config_queue(self) -> None:
+        while True:
+            if self._config_queue.empty():
+                self._config_event.clear()
+                self._config_event.wait()
+
+            try:
+                context_id, config = self._config_queue.get(timeout=0.5)
+            except Empty:
+                continue
+
+            self._set_status(context_id, ContextStatus.CREATING)
+
+            try:
+                context = self._context_builder.create(config)
+                with self._contexts_lock:
+                    self._contexts[context_id] = context
+
+                self._set_status(context_id, ContextStatus.OPTIMIZATION)
+                self._optimization_queue.put((context_id, context))
+                self._opt_event.set()
+            except Exception as e:
+                self._set_status(context_id, ContextStatus.FAILED)
+                logger.error(
+                    f'Failed to create context {context_id}: '
+                    f'{type(e).__name__} - {e}'
                 )
+
+    def _run_monitor_optimization_queue(self) -> None:
+        while True:
+            if self._optimization_queue.empty():
+                self._opt_event.clear()
+                self._opt_event.wait()
+
+            try:
+                context_id, context = (
+                    self._optimization_queue.get(timeout=1.0)
+                )
+            except Empty:
+                continue
+
+            while True:
+                with self._active_lock:
+                    active_count = len(self._active_procs)
+                
+                if active_count < self._max_processes:
+                    break
+
+                self._proc_event.clear()
+                self._proc_event.wait(timeout=1.0)
+
+            proc = Process(
+                target=optimize_worker,
+                args=(context_id, context, self._mp_results_queue),
+                daemon=True
             )
+            proc.start()
 
-            new_items = [
-                {
-                    'period': {
-                        'start': context['market_data']['start'],
-                        'end': context['market_data']['end']
-                    },
-                    'params': params
-                }
-                for params in context['best_params']
-            ]
-            existing_items = []
+            with self._active_lock:
+                self._active_procs[context_id] = proc
 
-            if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    try:
-                        existing_items = json.load(file)
-                    except json.JSONDecodeError:
-                        pass
+    def _listen_results(self) -> None:
+        while True:
+            try:
+                context_id, params, error = self._mp_results_queue.get()
+            except Exception:
+                continue
 
-            with open(file_path, 'w', encoding='utf-8') as file:
-                json.dump(existing_items + new_items, file, indent=4)
+            with self._contexts_lock:
+                context = self._contexts.get(context_id)
+
+                if context is not None and params is not None:
+                    context['opt_params'] = params
+
+            if error is None:
+                self._set_status(context_id, ContextStatus.READY)
+            else:
+                self._set_status(context_id, ContextStatus.FAILED)
+                logger.error(f'Optimization failed for {context_id}: {error}')
+
+            with self._active_lock:
+                proc = self._active_procs.pop(context_id, None)
+
+            if proc is not None:
+                try:
+                    proc.join(timeout=1.0)
+                except Exception:
+                    logger.exception(
+                        f'Error joining process for {context_id}'
+                    )
+
+            self._proc_event.set()
+
+    def _set_status(self, context_id: str, status: ContextStatus) -> None:
+        """Update context status."""
+
+        with self._statuses_lock:
+            self._context_statuses[context_id] = status

@@ -4,7 +4,7 @@ from queue import Queue
 from threading import Event, RLock, Thread
 from typing import Any, TYPE_CHECKING
 
-from .builder import StrategyContextBuilder
+from .builder import ExecutionContextBuilder
 from .daemon import ExecutionDaemon
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ class ExecutionService:
         self._statuses_lock = RLock()
         self._alerts_lock = RLock()
         
-        self._context_builder = StrategyContextBuilder()
+        self._context_builder = ExecutionContextBuilder()
         self._execution_daemon = ExecutionDaemon(self._alerts)
 
         self._queue: Queue[tuple[str, ContextConfig]] = Queue()
@@ -279,7 +279,7 @@ class ExecutionService:
 
         Steps:
           - Set status to CREATING
-          - Build context via StrategyContextBuilder
+          - Build context via ExecutionContextBuilder
           - Attach to daemon if live
           - On success: store context and set status to CREATED
           - On failure: set status to FAILED and log error
@@ -300,7 +300,7 @@ class ExecutionService:
             with self._contexts_lock:
                 self._contexts[context_id] = context
 
-            self._set_status(context_id, ContextStatus.CREATED)
+            self._set_status(context_id, ContextStatus.READY)
         except Exception as e:
             self._set_status(context_id, ContextStatus.FAILED)
             logger.error(

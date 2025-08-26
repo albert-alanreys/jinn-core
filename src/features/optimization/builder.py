@@ -1,148 +1,126 @@
-import json
-import os
+from __future__ import annotations
 from logging import getLogger
+from typing import TYPE_CHECKING
 
 from src.core.providers import HistoryProvider
-from src.infrastructure.exchanges import BinanceClient
-from src.infrastructure.exchanges import BybitClient
+from src.core.strategies import strategies
+from src.infrastructure.exchanges import BinanceClient, BybitClient
+from src.infrastructure.exchanges.models import Exchange, Interval
+
+if TYPE_CHECKING:
+    from src.core.providers import MarketData
+    from src.core.strategies import BaseStrategy
+    from src.infrastructure.exchanges import BaseExchangeClient
+    from .models import ContextConfig, StrategyContext
 
 
-class OptimizationBuilder:
+logger = getLogger(__name__)
+
+
+class OptimizationContextBuilder:
     """
     Builds optimization contexts for trading strategies.
-
-    Handles the creation of strategy contexts by loading configuration files,
-    fetching market data, and preparing data splits for training and testing.
+    
+    This class manages initialization of:
+      - Strategy instances
+      - Market data providers
+      - Exchange clients
     """
+    
+    def __init__(self) -> None:
+        """Initialize the builder with required dependencies."""
 
-    def __init__(self, settings: dict) -> None:
+        self._history_provider = HistoryProvider()
+        self._binance_client = BinanceClient()
+        self._bybit_client = BybitClient()
+        
+        self._exchange_clients: dict[str, BaseExchangeClient] = {
+            Exchange.BINANCE.value: self._binance_client,
+            Exchange.BYBIT.value: self._bybit_client,
+        }
+    
+    def create(self, config: ContextConfig) -> StrategyContext:
         """
-        Initialize OptimizationBuilder with configuration parameters.
+        Build a strategy optimization context from configuration.
+        
+        Args:
+            config: Context configuration package
+        
+        Returns:
+            StrategyContext: Initialized strategy context
+        """
 
-        Sets up instance variables from configuration dictionary
-        and initializes history provider, Binance client,
-        Bybit client, and logger.
+        strategy_class = self._get_strategy_class(config['strategy'])
+        client = self._get_exchange_client(config['exchange'])
+        market_data = self._build_market_data(config, strategy_class, client)
+
+        return {
+            'context_config': config,
+            'market_data': market_data,
+            'strategy_class': strategy_class,
+        }
+   
+    def _get_strategy_class(self, strategy: str) -> BaseStrategy:
+        """
+        Get the strategy class from registry.
 
         Args:
-            settings: Configuration dictionary containing:
-                - strategy: Trading strategy to optimize
-                - exchange: Exchange name
-                - symbol: Trading symbol
-                - interval: Kline interval
-                - start: Start date for data (format: 'YYYY-MM-DD')
-                - end: End date for data (format: 'YYYY-MM-DD')
+            strategy: Strategy name
+
+        Returns:
+            BaseStrategy: Strategy class
+
+        Raises:
+            ValueError: If the strategy name is not found in the registry
+        """
+        
+        if strategy not in strategies:
+            raise ValueError(f'Unknown strategy: {strategy}')
+        
+        return strategies[strategy]
+    
+    def _get_exchange_client(self, exchange: str) -> BaseExchangeClient:
+        """
+        Get the exchange client corresponding to the given exchange name.
+        
+        Args:
+            exchange: Exchange name
+            
+        Returns:
+            BaseExchangeClient: Exchange client instance
+            
+        Raises:
+            ValueError: If the exchange is not supported
         """
 
-    #     self.strategy = settings['strategy']
-    #     self.exchange = settings['exchange']
-    #     self.symbol = settings['symbol']
-    #     self.interval = settings['interval']
-    #     self.start = settings['start']
-    #     self.end = settings['end']
+        if exchange not in self._exchange_clients:
+            raise ValueError(f'Unsupported exchange: {exchange}')
+        
+        return self._exchange_clients[exchange]
+    
+    def _build_market_data(
+        self,
+        config: ContextConfig,
+        strategy: BaseStrategy,
+        client: BaseExchangeClient,
+    ) -> MarketData:
+        """
+        Build market data.
+        
+        Args:
+            config: Context configuration package
+            strategy: Initialized strategy instance
+            client: Exchange client for data retrieval
+        
+        Returns:
+            MarketData: Market data package
+        """
 
-    #     self.history_provider = HistoryProvider()
-    #     self.binance_client = BinanceClient()
-    #     self.bybit_client = BybitClient()
-
-    #     self.logger = getLogger(__name__)
-
-    # def build(self) -> dict:
-    #     """
-    #     Construct optimization contexts for all strategies.
-
-    #     Loads optimization configurations from JSON files,
-    #     fetches market data, and creates contexts for each strategy.
-    #     Falls back to instance settings if no strategy files are found.
-
-    #     Returns:
-    #         dict: Dictionary of strategy contexts keyed by context ID,
-    #               each containing:
-    #                 - name: Strategy name
-    #                 - type: Strategy type
-    #                 - client: Exchange API client
-    #                 - market_data: Training and test data
-    #     """
-
-    #     strategy_contexts = {}
-
-    #     for strategy in Strategy:
-    #         file_path = os.path.abspath(
-    #             os.path.join(
-    #                 'src',
-    #                 'core',
-    #                 'strategies',
-    #                 strategy.name.lower(),
-    #                 'optimization',
-    #                 'optimization.json'
-    #             )
-    #         )
-
-    #         if not os.path.exists(file_path):
-    #             continue
-
-    #         with open(file_path, 'r') as file:
-    #             try:
-    #                 configs = json.load(file)
-    #             except json.JSONDecodeError:
-    #                 self.logger.error(f'Failed to load JSON from {file_path}')
-    #                 continue
-
-    #         for config in configs:
-    #             exchange = config['exchange'].upper()
-    #             symbol = config['symbol'].upper()
-    #             interval = config['interval']
-    #             start = config['start']
-    #             end = config['end']
-
-    #             match exchange:
-    #                 case Exchange.BINANCE.name:
-    #                     client = self.binance_client
-    #                 case Exchange.BYBIT.name:
-    #                     client = self.bybit_client
-
-    #             try:
-    #                 market_data = self.history_provider.get_market_data(
-    #                     client=client,
-    #                     symbol=symbol,
-    #                     interval=interval,
-    #                     start=start,
-    #                     end=end,
-    #                     feeds=strategy.value.params.get('feeds')
-    #                 )
-    #                 context = {
-    #                     'name': strategy.name,
-    #                     'type': strategy.value,
-    #                     'client': client,
-    #                     'market_data': market_data
-    #                 }
-    #                 strategy_contexts[str(id(context))] = context
-    #             except Exception:
-    #                 self.logger.exception('An error occurred')
-
-    #     if not strategy_contexts:
-    #         match self.exchange:
-    #             case Exchange.BINANCE:
-    #                 client = self.binance_client
-    #             case Exchange.BYBIT:
-    #                 client = self.bybit_client
-
-    #         try:
-    #             market_data = self.history_provider.get_market_data(
-    #                 client=client,
-    #                 symbol=self.symbol,
-    #                 interval=self.interval,
-    #                 start=self.start,
-    #                 end=self.end,
-    #                 feeds=self.strategy.value.params.get('feeds')
-    #             )
-    #             context = {
-    #                 'name': self.strategy.name,
-    #                 'type': self.strategy.value,
-    #                 'client': client,
-    #                 'market_data': market_data
-    #             }
-    #             strategy_contexts[str(id(context))] = context
-    #         except Exception:
-    #             self.logger.exception('An error occurred')
-
-    #     return strategy_contexts
+        return self._history_provider.get_market_data(
+            client=client,
+            symbol=config['symbol'],
+            interval=Interval(config['interval']),
+            start=config['start'],
+            end=config['end'],
+            feeds=strategy.params.get('feeds')
+        )

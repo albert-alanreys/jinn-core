@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from os import cpu_count
 
 
 @dataclass
@@ -12,12 +11,9 @@ class OptimizationConfig:
     population_size: float = 200
     max_population_size: float = 250
     
-    # Parallel processing parameters
-    max_processes: int = cpu_count()
-    
     # Data splitting parameters
-    train_window_klines: float = 0.7
-    validation_window_klines: float = 0.3
+    train_window: float = 0.7
+    test_window: float = 0.3
 
 
 CONFIG = OptimizationConfig()
