@@ -38,14 +38,16 @@ class ExecutionDaemon:
 
         self._contexts: dict[str, StrategyContext] = {}
         self._alert_registry = alert_registry
-        
+
         self._realtime_provider = RealtimeProvider()
         self._telegram_client = TelegramClient()
         self._strategy_tester = StrategyTester()
-        
-        self._pause_event = Event()
+
         self._context_lock = RLock()
-        
+
+        self._pause_event = Event()
+        self._pause_event.clear()
+
         self._daemon_thread = Thread(
             target=self._run_monitoring_loop,
             daemon=True
@@ -88,15 +90,21 @@ class ExecutionDaemon:
         return False
 
     def _run_monitoring_loop(self) -> None:
-        """Main daemon loop for continuous strategy monitoring."""
-        
-        while not self._pause_event.is_set():
+        """
+        Continuous background loop for monitoring strategy contexts.
+
+        - Waits until _pause_event is set.
+        - Processes all contexts and cleans up alerts.
+        - Sleeps for configured interval between cycles.
+        - Never exits during normal operation (runs as daemon thread).
+        """
+
+        while True:
             self._pause_event.wait()
 
             try:
                 self._process_all_contexts()
                 self._cleanup_old_alerts()
-
                 sleep(self._MONITOR_INTERVAL)
             except Exception:
                 logger.exception('Error in daemon monitoring loop')

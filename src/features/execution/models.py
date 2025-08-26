@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 class ContextStatus(Enum):
     """Strategy context lifecycle status."""
     
+    QUEUED = 'queued'
     CREATING = 'creating'
     CREATED = 'created'
     FAILED = 'failed'

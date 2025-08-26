@@ -1,6 +1,7 @@
 from __future__ import annotations
 from logging import getLogger
-from threading import RLock, Thread
+from queue import Queue
+from threading import Event, RLock, Thread
 from typing import Any, TYPE_CHECKING
 
 from .builder import StrategyContextBuilder
@@ -33,20 +34,25 @@ class ExecutionService:
     def __init__(self) -> None:
         """Initialize the execution service with required components."""
 
-        # Core storage
         self._contexts: dict[str, StrategyContext] = {}
         self._context_statuses: dict[str, ContextStatus] = {}
         self._alerts: dict[str, AlertData] = {}
 
-        # Locks for thread-safe access
         self._contexts_lock = RLock()
         self._statuses_lock = RLock()
         self._alerts_lock = RLock()
         
-        # Service components
         self._context_builder = StrategyContextBuilder()
         self._execution_daemon = ExecutionDaemon(self._alerts)
-        
+
+        self._queue: Queue[tuple[str, ContextConfig]] = Queue()
+        self._pause_event = Event()
+        self._monitor_thread = Thread(
+            target=self._run_monitor_queue,
+            daemon=True
+        )
+        self._monitor_thread.start()
+
         logger.info('ExecutionService initialized successfully')
     
     @property
@@ -70,27 +76,39 @@ class ExecutionService:
         with self._alerts_lock:
             return self._alerts.copy()
     
-    def create_contexts(self, configs: dict[str, ContextConfig]) -> None:
+    def add_contexts(self, configs: dict[str, ContextConfig]) -> list[str]:
         """
-        Create multiple strategy contexts asynchronously.
-        
-        Spawns a background thread that builds contexts, updates statuses,
-        and registers live contexts in the execution daemon.
+        Add new strategy contexts to the processing queue.
+
+        - Skips contexts that already exist in contexts or statuses.
+        - Marks accepted contexts as QUEUED.
+        - Returns identifiers of successfully queued contexts.
 
         Args:
             configs: Mapping from context_id to configuration
+
+        Returns:
+            list[str]: List of successfully queued context identifiers
         """
 
         if not configs:
-            logger.warning('No configurations provided for context creation')
-            return
-        
-        creation_thread = Thread(
-            target=self._create_contexts,
-            args=(configs,),
-            daemon=True
-        )
-        creation_thread.start()
+            logger.warning('No configs provided for queueing')
+            return []
+
+        added: list[str] = []
+        for context_id, config in configs.items():
+            with self._contexts_lock, self._statuses_lock:
+                if context_id in self._context_statuses:
+                    continue
+
+                self._context_statuses[context_id] = ContextStatus.QUEUED
+                self._queue.put((context_id, config))
+                added.append(context_id)
+
+        if added:
+            self._pause_event.set()
+
+        return added
     
     def get_context(self, context_id: str) -> StrategyContext:
         """
@@ -237,54 +255,58 @@ class ExecutionService:
                 raise KeyError(f'Alert {alert_id} not found')
             
             del self._alerts[alert_id]
-    
-    def _create_contexts(
-        self,
-        configs: dict[str, ContextConfig],
-    ) -> dict[str, bool]:
-        """
-        Build strategy contexts in the background thread.
 
-        For each context:
-          - set status to CREATING
-          - build context via StrategyContextBuilder
-          - attach to daemon if live
-          - set final status to CREATED or FAILED
-          - store in shared state on success
-        
+    def _run_monitor_queue(self) -> None:
+        """
+        Background monitor loop for processing queued context creations.
+
+        - Waits when queue is empty.
+        - Wakes up when new contexts are queued via add_contexts.
+        - Sequentially creates each context via _create_context.
+        """
+
+        while True:
+            if self._queue.empty():
+                self._pause_event.clear()
+                self._pause_event.wait()
+
+            context_id, config = self._queue.get()
+            self._create_context(context_id, config)
+
+    def _create_context(self, context_id: str, config: ContextConfig) -> None:
+        """
+        Create a single strategy context and update its lifecycle status.
+
+        Steps:
+          - Set status to CREATING
+          - Build context via StrategyContextBuilder
+          - Attach to daemon if live
+          - On success: store context and set status to CREATED
+          - On failure: set status to FAILED and log error
+
         Args:
-            configs: Context configurations
+            context_id: Unique identifier for the strategy context
+            config: Configuration of the context
         """
 
-        self._init_statuses_as_creating(configs)
+        self._set_status(context_id, ContextStatus.CREATING)
 
-        for context_id, config in configs.items():
-            try:
-                context = self._context_builder.create(config)
+        try:
+            context = self._context_builder.create(config)
 
-                if config['is_live']:
-                    self._execution_daemon.add_context(context_id, context)
+            if config['is_live']:
+                self._execution_daemon.add_context(context_id, context)
 
-                with self._contexts_lock:
-                    self._contexts[context_id] = context
+            with self._contexts_lock:
+                self._contexts[context_id] = context
 
-                self._set_status(context_id, ContextStatus.CREATED)
-            except Exception as e:
-                self._set_status(context_id, ContextStatus.FAILED)
-                logger.error(
-                    f'Failed to create context {context_id}: '
-                    f'{type(e).__name__} - {e}'
-                )
-
-    def _init_statuses_as_creating(
-        self,
-        configs: dict[str, ContextConfig],
-    ) -> None:
-        """Initialize all context statuses with CREATING state."""
-
-        with self._statuses_lock:
-            for context_id in configs:
-                self._context_statuses[context_id] = ContextStatus.CREATING
+            self._set_status(context_id, ContextStatus.CREATED)
+        except Exception as e:
+            self._set_status(context_id, ContextStatus.FAILED)
+            logger.error(
+                f'Failed to create context {context_id}: '
+                f'{type(e).__name__} - {e}'
+            )
     
     def _set_status(self, context_id: str, status: ContextStatus) -> None:
         """Update context status."""
