@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from src.core.providers.models import MarketData
+    from src.core.providers import MarketData
     from src.core.strategies import BaseStrategy
     from .models import Metric, OverviewMetrics, StrategyMetrics
 

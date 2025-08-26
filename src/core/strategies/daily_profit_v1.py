@@ -4,10 +4,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numba as nb
 
-import src.core.quantklines as qk
 from src.shared.utils import adjust
-
-from . import BaseStrategy, colors, update_completed_deals_log
+from . import (
+    BaseStrategy,
+    colors,
+    quantklines,
+    update_completed_deals_log
+)
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -125,7 +128,7 @@ class DailyProfitV1(BaseStrategy):
 
         self.take_volumes = np.full(2, np.nan)
 
-        self.dst_upper_band, self.dst_lower_band = qk.dst(
+        self.dst_upper_band, self.dst_lower_band = quantklines.dst(
             high=self.high,
             low=self.low,
             close=self.close,
@@ -133,26 +136,26 @@ class DailyProfitV1(BaseStrategy):
             atr_length=self.params['st_atr_length']
         )
 
-        self.rsi_high = qk.rsi(
+        self.rsi_high = quantklines.rsi(
             source=self.high,
             length=self.params['rsi_length']
         )
-        self.rsi_low = qk.rsi(
+        self.rsi_low = quantklines.rsi(
             source=self.low,
             length=self.params['rsi_length']
         )
-        self.rsi_close = qk.rsi(
+        self.rsi_close = quantklines.rsi(
             source=self.close,
             length=self.params['rsi_length']
         )
-        self.stoch_rsi = qk.stoch(
+        self.stoch_rsi = quantklines.stoch(
             source=self.rsi_close,
             high=self.rsi_close,
             low=self.rsi_close,
             length=self.params['stoch_length']
         )
 
-        self.vwap = qk.vwap(
+        self.vwap = quantklines.vwap(
             time=self.time,
             high=self.high,
             low=self.low,

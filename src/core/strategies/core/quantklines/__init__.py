@@ -19,10 +19,6 @@ from .momentum import rsi
 from .momentum import stoch
 from .momentum import wpr
 
-# Timeframe utilities
-from .timeframes import stretch
-from .timeframes import shrink
-
 # Trend indicators
 from .trend import dmi
 from .trend import donchian

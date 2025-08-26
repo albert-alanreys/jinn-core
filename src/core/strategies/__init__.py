@@ -3,9 +3,12 @@ from importlib import import_module
 from inspect import getmembers, isclass
 from pkgutil import iter_modules
 
-from .core import BaseStrategy
-from .core.constants import colors
-from .core.utils.update_log import update_completed_deals_log
+from .core import (
+    BaseStrategy,
+    colors,
+    quantklines,
+    update_completed_deals_log
+)
 
 
 def _load_strategies() -> dict[str, type[BaseStrategy]]:

@@ -4,10 +4,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numba as nb
 
-import src.core.quantklines as qk
 from src.shared.utils import adjust
-
-from . import BaseStrategy, colors, update_completed_deals_log
+from . import (
+    BaseStrategy,
+    colors,
+    quantklines,
+    update_completed_deals_log
+)
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -99,27 +102,27 @@ class DevourerV3(BaseStrategy):
         self.close_under_ema_counter_p3 = 0
 
         self.macd_p1 = (
-            qk.ema(
+            quantklines.ema(
                 source=self.close,
                 length=self.params['fast_len_p1']
             ) -
-            qk.ema(
+            quantklines.ema(
                 source=self.close,
                 length=self.params['slow_len_p1']
             )
         )
-        self.signal_p1 = qk.ema(
+        self.signal_p1 = quantklines.ema(
             source=self.macd_p1,
             length=self.params['sig_len_p1']
         )
-        self.k_p1 = qk.stoch(
+        self.k_p1 = quantklines.stoch(
             source=self.close,
             high=self.high,
             low=self.low,
             length=self.params['k_len_p1']
         )
-        self.d_p1 = qk.sma(source=self.k_p1, length=self.params['d_len_p1'])
-        supertrend = qk.supertrend(
+        self.d_p1 = quantklines.sma(source=self.k_p1, length=self.params['d_len_p1'])
+        supertrend = quantklines.supertrend(
             high=self.high,
             low=self.low,
             close=self.close,
@@ -127,51 +130,51 @@ class DevourerV3(BaseStrategy):
             atr_length=self.params['atr_len_p1']
         )
         self.direction_p1 = supertrend[1]
-        self.atr_p1 = qk.atr(
+        self.atr_p1 = quantklines.atr(
             high=self.high,
             low=self.low,
             close=self.close,
             length=self.params['atr_len_p1']
         )
-        self.ema_p1 = qk.ema(
-            source=qk.highest(
+        self.ema_p1 = quantklines.ema(
+            source=quantklines.highest(
                 source=self.close,
                 length=self.params['ema_len_p1']
             ),
             length=self.params['ema_len_p1']
         )
-        self.cross_up1_p1 = qk.crossover(
+        self.cross_up1_p1 = quantklines.crossover(
             source1=self.macd_p1,
             source2=self.signal_p1
         )
-        self.cross_down_p1 = qk.crossunder(
+        self.cross_down_p1 = quantklines.crossunder(
             source1=self.macd_p1,
             source2=self.signal_p1
         )
-        self.cross_up2_p1 = qk.crossover(
+        self.cross_up2_p1 = quantklines.crossover(
             source1=self.close,
             source2=self.ema_p1
         )
         self.lower_band_p2 = (
-            qk.highest(
+            quantklines.highest(
                 source=self.high,
                 length=self.params['highest_len_p2']
             ) * (self.params['correction_p2'] - 100) / -100
         )
-        self.signal_p2 = qk.ema(
+        self.signal_p2 = quantklines.ema(
             source=self.macd_p1,
             length=self.params['ema_len_p2']
         )
-        self.cross_p2 = qk.cross(source1=self.signal_p2, source2=self.macd_p1)
-        self.atr_p2 = qk.atr(
+        self.cross_p2 = quantklines.cross(source1=self.signal_p2, source2=self.macd_p1)
+        self.atr_p2 = quantklines.atr(
             high=self.high,
             low=self.low,
             close=self.close,
             length=self.params['atr_len_p2']
         )
-        self.ema_p3 = qk.ema(
-            source=qk.ema(
-                source=qk.ema(
+        self.ema_p3 = quantklines.ema(
+            source=quantklines.ema(
+                source=quantklines.ema(
                     source=self.close,
                     length=self.params['ema_len_p3']
                 ),
@@ -179,7 +182,7 @@ class DevourerV3(BaseStrategy):
             ),
             length=self.params['ema_len_p3']
         )
-        self.atr_p3 = qk.atr(
+        self.atr_p3 = quantklines.atr(
             high=self.high,
             low=self.low,
             close=self.close,

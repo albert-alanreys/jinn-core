@@ -4,10 +4,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numba as nb
 
-import src.core.quantklines as qk
 from src.shared.utils import adjust
-
-from . import BaseStrategy, colors, update_completed_deals_log
+from . import (
+    BaseStrategy,
+    colors,
+    quantklines,
+    update_completed_deals_log
+)
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -211,19 +214,19 @@ class NuggetV4(BaseStrategy):
         self.pivot_HH = np.nan
         self.pivot_LL = np.nan
 
-        self.dst = qk.dst(
+        self.dst = quantklines.dst(
             high=self.high,
             low=self.low,
             close=self.close,
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.change_upper_band = qk.change(source=self.dst[0], length=1)
-        self.change_lower_band = qk.change(source=self.dst[1], length=1)
-        self.rsi = qk.rsi(source=self.close, length=self.params['rsi_length'])
+        self.change_upper_band = quantklines.change(source=self.dst[0], length=1)
+        self.change_lower_band = quantklines.change(source=self.dst[1], length=1)
+        self.rsi = quantklines.rsi(source=self.close, length=self.params['rsi_length'])
 
         if self.params['bb_filter']:
-            self.bb_rsi = qk.bb(
+            self.bb_rsi = quantklines.bb(
                 source=self.rsi,
                 length=self.params['ma_length'],
                 mult=self.params['bb_mult']
@@ -231,12 +234,12 @@ class NuggetV4(BaseStrategy):
         else:
             self.bb_rsi = np.full(self.time.shape[0], np.nan)
 
-        self.pivot_LH = qk.pivothigh(
+        self.pivot_LH = quantklines.pivothigh(
             source=self.high,
             leftbars=self.params['pivot_bars'],
             rightbars=self.params['pivot_bars']
         )
-        self.pivot_HL = qk.pivotlow(
+        self.pivot_HL = quantklines.pivotlow(
             source=self.low,
             leftbars=self.params['pivot_bars'],
             rightbars=self.params['pivot_bars']

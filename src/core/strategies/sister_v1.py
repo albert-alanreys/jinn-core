@@ -4,10 +4,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numba as nb
 
-import src.core.quantklines as qk
 from src.shared.utils import adjust
-
-from . import BaseStrategy, colors, update_completed_deals_log
+from . import (
+    BaseStrategy,
+    colors,
+    quantklines,
+    update_completed_deals_log
+)
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -102,13 +105,13 @@ class SisterV1(BaseStrategy):
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
 
-        self.atr_entry = qk.atr(
+        self.atr_entry = quantklines.atr(
             high=self.high,
             low=self.low,
             close=self.close,
             length=self.params['length_entry']
         )
-        self.sma_entry = qk.sma(
+        self.sma_entry = quantklines.sma(
             source=self.close,
             length=self.params['length_entry']
         )
@@ -121,13 +124,13 @@ class SisterV1(BaseStrategy):
             self.atr_entry * self.params['ratio_entry']
         )
 
-        self.atr_exit = qk.atr(
+        self.atr_exit = quantklines.atr(
             high=self.high,
             low=self.low,
             close=self.close,
             length=self.params['length_exit']
         )
-        self.sma_exit = qk.sma(
+        self.sma_exit = quantklines.sma(
             source=self.close,
             length=self.params['length_exit']
         )
@@ -140,20 +143,20 @@ class SisterV1(BaseStrategy):
             self.atr_exit * self.params['ratio_exit']
         )
 
-        self.sma_small_trend = qk.sma(
+        self.sma_small_trend = quantklines.sma(
             source=self.close,
             length=self.params['length_small_trend']
         )
-        self.sma_medium_trend = qk.sma(
+        self.sma_medium_trend = quantklines.sma(
             source=self.close,
             length=self.params['length_medium_trend']
         )
 
-        self.cond_exit_long = qk.crossover(
+        self.cond_exit_long = quantklines.crossover(
             source1=self.close,
             source2=self.sma_long_exit
         )
-        self.cond_exit_short = qk.crossover(
+        self.cond_exit_short = quantklines.crossover(
             source1=self.close,
             source2=self.sma_short_exit
         )

@@ -4,16 +4,16 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from src.core.quantklines import shrink, stretch
 from src.infrastructure.exchanges.models import Interval
 from src.shared.utils import (
     has_last_historical_kline,
     has_realtime_kline
 )
+from ..common.utils import shrink, stretch
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
-    from .models import MarketData, FeedsData
+    from ..common.models import MarketData, FeedsData
 
 
 class RealtimeProvider():

@@ -5,10 +5,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numba as nb
 
-import src.core.quantklines as qk
 from src.shared.utils import adjust
-
-from . import BaseStrategy, colors, update_completed_deals_log
+from . import (
+    BaseStrategy,
+    colors,
+    quantklines,
+    update_completed_deals_log
+)
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -152,31 +155,31 @@ class NuggetV5(BaseStrategy):
 
         self.qty_take = np.full(5, np.nan)
 
-        self.atr = qk.atr(
+        self.atr = quantklines.atr(
             high=self.high,
             low=self.low,
             close=self.close,
             length=self.params['atr_length']
         )
-        self.dst = qk.dst(
+        self.dst = quantklines.dst(
             high=self.high,
             low=self.low,
             close=self.close,
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.st_upper_band_changed = qk.change(source=self.dst[0], length=1)
-        self.st_lower_band_changed = qk.change(source=self.dst[1], length=1)
-        self.k = qk.stoch(
+        self.st_upper_band_changed = quantklines.change(source=self.dst[0], length=1)
+        self.st_lower_band_changed = quantklines.change(source=self.dst[1], length=1)
+        self.k = quantklines.stoch(
             source=self.close,
             high=self.high,
             low=self.low,
             length=self.params['k_length']
         )
-        self.d = qk.sma(source=self.k, length=self.params['d_length'])
+        self.d = quantklines.sma(source=self.k, length=self.params['d_length'])
 
         if self.params['adx_filter']:
-            dmi = qk.dmi(
+            dmi = quantklines.dmi(
                 high=self.high,
                 low=self.low,
                 close=self.close,

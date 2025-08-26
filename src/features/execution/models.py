@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 import numpy as np
 
 if TYPE_CHECKING:
-    from src.core.providers.models import MarketData
+    from src.core.providers import MarketData
     from src.core.strategies import BaseStrategy
     from src.infrastructure.exchanges import BaseExchangeClient
     from src.infrastructure.exchanges.models import Alert

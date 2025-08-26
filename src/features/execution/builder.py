@@ -12,7 +12,7 @@ from .models import ContextConfig, StrategyContext
 from .tester import StrategyTester
 
 if TYPE_CHECKING:
-    from src.core.providers.models import MarketData
+    from src.core.providers import MarketData
     from src.core.strategies import BaseStrategy
     from src.infrastructure.exchanges import BaseExchangeClient
 

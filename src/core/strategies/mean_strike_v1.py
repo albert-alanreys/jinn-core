@@ -4,10 +4,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numba as nb
 
-import src.core.quantklines as qk
 from src.shared.utils import adjust
-
-from . import BaseStrategy, colors, update_completed_deals_log
+from . import (
+    BaseStrategy,
+    colors,
+    quantklines,
+    update_completed_deals_log
+)
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
@@ -100,11 +103,11 @@ class MeanStrikeV1(BaseStrategy):
 
         self.qty_entry = np.full(4, np.nan)
 
-        self.lowest = qk.lowest(
+        self.lowest = quantklines.lowest(
             source=np.roll(self.low, 1),
             length=self.params['lookback']
         )
-        self.sma = qk.sma(
+        self.sma = quantklines.sma(
             source=(self.high - self.low), 
             length=self.params['ma_length']
         )
