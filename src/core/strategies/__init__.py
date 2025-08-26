@@ -3,6 +3,10 @@ from importlib import import_module
 from inspect import getmembers, isclass
 from pkgutil import iter_modules
 
+from src.infrastructure.exchanges import BaseExchangeClient
+from src.infrastructure.exchanges.models import Interval
+from src.shared.utils import adjust
+
 from .core import (
     BaseStrategy,
     colors,

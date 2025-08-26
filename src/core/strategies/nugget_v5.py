@@ -1,20 +1,14 @@
-from __future__ import annotations
-from random import randint
-from typing import TYPE_CHECKING
-
 import numpy as np
 import numba as nb
 
-from src.shared.utils import adjust
 from . import (
     BaseStrategy,
+    BaseExchangeClient,
+    adjust,
     colors,
     quantklines,
     update_completed_deals_log
 )
-
-if TYPE_CHECKING:
-    from src.infrastructure.exchanges import BaseExchangeClient
 
 
 class NuggetV5(BaseStrategy):
@@ -48,11 +42,11 @@ class NuggetV5(BaseStrategy):
         'atr_length': [i for i in range(1, 21)],
         'take_value': [   
             sorted([
-                float(randint(2, 6)),
-                float(randint(7, 10)),
-                float(randint(11, 16)),
-                float(randint(17, 21)),
-                float(randint(22, 30))
+                float(np.random.randint(2, 7)),
+                float(np.random.randint(7, 11)),
+                float(np.random.randint(11, 17)),
+                float(np.random.randint(17, 22)),
+                float(np.random.randint(22, 31))
             ])
             for _ in range(100)
         ],

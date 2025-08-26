@@ -1,19 +1,14 @@
-from __future__ import annotations
-from typing import TYPE_CHECKING
-
 import numpy as np
 import numba as nb
 
-from src.shared.utils import adjust
 from . import (
     BaseStrategy,
+    BaseExchangeClient,
+    adjust,
     colors,
     quantklines,
     update_completed_deals_log
 )
-
-if TYPE_CHECKING:
-    from src.infrastructure.exchanges import BaseExchangeClient
 
 
 class NuggetV4(BaseStrategy):

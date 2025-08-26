@@ -1,21 +1,15 @@
-from __future__ import annotations
-from random import randint
-from typing import TYPE_CHECKING
-
 import numpy as np
 import numba as nb
 
-from src.infrastructure.exchanges.models import Interval
-from src.shared.utils import adjust
 from . import (
     BaseStrategy,
+    BaseExchangeClient,
+    Interval,
+    adjust,
     colors,
     quantklines,
     update_completed_deals_log
 )
-
-if TYPE_CHECKING:
-    from src.infrastructure.exchanges import BaseExchangeClient
 
 
 class ExampleV2(BaseStrategy):
@@ -66,9 +60,9 @@ class ExampleV2(BaseStrategy):
         'trail_percent': [float(i) for i in range(0, 55, 1)],
         'take_percent': [
             [
-                randint(12, 46) / 10,
-                randint(48, 86) / 10,
-                randint(88, 146) / 10
+                np.random.randint(12, 47) / 10,
+                np.random.randint(48, 87) / 10,
+                np.random.randint(88, 147) / 10
             ] for _ in range(100)
         ],
         'take_volume': [
