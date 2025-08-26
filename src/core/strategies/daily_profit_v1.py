@@ -5,11 +5,9 @@ import numpy as np
 import numba as nb
 
 import src.core.quantklines as qk
-from src.shared.constants import colors
 from src.shared.utils import adjust
 
-from . import BaseStrategy
-from . import update_completed_deals_log
+from . import BaseStrategy, colors, update_completed_deals_log
 
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient

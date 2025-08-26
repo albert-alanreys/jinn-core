@@ -1,2 +1,3 @@
-from base import BaseStrategy
-from utils import update_completed_deals_log
+from . import constants
+from . import utils
+from .base import BaseStrategy
