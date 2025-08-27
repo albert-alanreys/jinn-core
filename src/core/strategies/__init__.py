@@ -44,4 +44,4 @@ def _load_strategies() -> dict[str, type[BaseStrategy]]:
     return strategy_registry
 
 
-strategies = _load_strategies()
+strategy_registry = _load_strategies()
