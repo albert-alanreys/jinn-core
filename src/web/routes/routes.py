@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 
 from .alerts import alerts_bp
 from .chart import chart_bp
-from .context import context_bp
 from .core import core_bp
+from .data import data_bp
 from .report import report_bp
 
 if TYPE_CHECKING:
@@ -22,7 +22,7 @@ def register_routes(app: Flask) -> None:
     blueprints = (
         core_bp,
         alerts_bp,
-        context_bp,
+        data_bp,
         chart_bp,
         report_bp,
     )

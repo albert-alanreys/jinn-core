@@ -7,10 +7,10 @@ from src.core.strategies import strategy_registry
 from src.infrastructure.exchanges.models import Exchange, Interval
 
 
-context_bp = Blueprint('context_api', __name__, url_prefix='/api/context')
+data_bp = Blueprint('data_api', __name__, url_prefix='/api/data')
 
 
-@context_bp.route('/exchanges', methods=['GET'])
+@data_bp.route('/exchanges', methods=['GET'])
 def get_exchanges() -> Response:
     """
     Get supported cryptocurrency exchanges.
@@ -26,7 +26,7 @@ def get_exchanges() -> Response:
     )
 
 
-@context_bp.route('/intervals', methods=['GET'])
+@data_bp.route('/intervals', methods=['GET'])
 def get_intervals() -> Response:
     """
     Get supported kline intervals.
@@ -42,7 +42,7 @@ def get_intervals() -> Response:
     )
 
 
-@context_bp.route('/strategies', methods=['GET'])
+@data_bp.route('/strategies', methods=['GET'])
 def get_strategies() -> Response:
     """
     Get registry of all available strategies with their parameters.
