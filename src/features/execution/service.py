@@ -137,7 +137,7 @@ class ExecutionService:
         param_value: Any
     ) -> None:
         """
-        Update a parameter in a strategy context and recompute its metrics.
+        Update a parameter in a strategy context and recompute metrics.
 
         Args:
             context_id: Unique identifier of the strategy context

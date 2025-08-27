@@ -71,6 +71,7 @@ class StrategyContext(TypedDict):
     """Complete strategy execution context."""
     
     name: str
+    exchange: str
     is_live: bool
     strategy: BaseStrategy
     client: BaseExchangeClient

@@ -1,44 +1,47 @@
 from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.features.execution.models import (
+        StrategyContext as ExecutionContext
+    )
 
 
-def format_contexts(strategy_contexts: dict) -> dict:
+def format_execution_contexts(contexts: ExecutionContext) -> dict[str, Any]:
     """
-    Formats raw strategy contexts into a concise dictionary suitable.
+    Format strategy contexts for frontend display.
 
     Args:
-        strategy_contexts: Dictionary of strategy contexts
+        contexts: Dictionary of strategy contexts
 
     Returns:
         dict: Formatted context data
     """
 
     result = {}
-
-    for cid, context in strategy_contexts.items():
+    for context_id, context in contexts.items():
+        strategy = context['strategy']
         market_data = context['market_data']
-        instance = context['instance']
         min_move = market_data['p_precision']
         precision = (
             len(str(min_move).split('.')[1])
             if '.' in str(min_move) else 0
         )
 
-        result[cid] = {
-            'name': '-'.join(
-                word.capitalize()
-                for word in context['name'].split('_')
-            ),
-            'exchange': context['client'].exchange_name,
+        result[context_id] = {
+            'name': context['name'],
+            'exchange': context['exchange'],
+            'isLive': context['is_live'],
             'symbol': market_data['symbol'],
             'interval': market_data['interval'],
             'minMove': min_move,
             'precision': precision,
             'strategyParams': {
                 k: v 
-                for k, v in instance.params.items() 
+                for k, v in strategy.params.items() 
                 if k != 'feeds'
             },
-            'indicatorOptions': instance.indicator_options
+            'indicatorOptions': strategy.indicator_options
         }
 
     return result

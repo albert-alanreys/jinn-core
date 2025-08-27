@@ -62,6 +62,7 @@ class ExecutionContextBuilder:
 
         return {
             'name': config['strategy'],
+            'exchange': config['exchange'],
             'is_live': config['is_live'],
             'strategy': strategy,
             'client': client,

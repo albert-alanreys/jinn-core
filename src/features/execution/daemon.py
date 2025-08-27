@@ -162,12 +162,11 @@ class ExecutionDaemon:
         
         for alert in alerts_to_process:
             alert_data = {
-                'context_id': context_id,
+                'context': context_id,
                 'strategy': context['name'],
                 'message': alert.copy(),
-                'timestamp': time(),
             }
-            alert_id = str(hash(f"{context_id}_{alert_data['timestamp']}"))
+            alert_id = str(hash(f'{context_id}_{time()}'))
             self._alert_registry[alert_id] = alert_data
 
             try:
