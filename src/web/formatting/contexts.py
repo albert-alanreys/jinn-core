@@ -45,3 +45,7 @@ def format_execution_contexts(contexts: ExecutionContext) -> dict[str, Any]:
         }
 
     return result
+
+
+def format_optimization_contexts(contexts: ExecutionContext) -> dict[str, Any]:
+    pass

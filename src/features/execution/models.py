@@ -37,7 +37,7 @@ class ContextConfig(TypedDict):
 class AlertData(TypedDict):
     """Trading alert notification data."""
     
-    context_id: str
+    context: str
     strategy: str
     message: Alert
 

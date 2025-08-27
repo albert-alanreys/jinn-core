@@ -5,6 +5,8 @@ from .alerts import alerts_bp
 from .chart import chart_bp
 from .core import core_bp
 from .data import data_bp
+from .execution import execution_bp
+from .optimization import optimization_bp
 from .report import report_bp
 
 if TYPE_CHECKING:
@@ -20,10 +22,12 @@ def register_routes(app: Flask) -> None:
     """
 
     blueprints = (
-        core_bp,
         alerts_bp,
-        data_bp,
         chart_bp,
+        core_bp,
+        data_bp,
+        execution_bp,
+        optimization_bp,
         report_bp,
     )
     
