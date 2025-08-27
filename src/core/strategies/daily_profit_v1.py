@@ -28,7 +28,7 @@ class DailyProfitV1(BaseStrategy):
         'stoch_rsi_upper_limit': 90.0,
         'stoch_rsi_lower_limit': 10.0,
         'vwap_zone': 0.3,
-        'vwap_close': False
+        'vwap_close': False,
     }
 
     # Parameters to be optimized and their possible values
@@ -47,7 +47,7 @@ class DailyProfitV1(BaseStrategy):
         'stoch_rsi_upper_limit': [80.0, 90.0],
         'stoch_rsi_lower_limit': [10.0, 20.0],
         'vwap_zone': [0.2, 0.3, 0.4],
-        'vwap_close': [True, False]
+        'vwap_close': [True, False],
     }
 
     # Frontend rendering settings for indicators
@@ -56,49 +56,49 @@ class DailyProfitV1(BaseStrategy):
             'pane': 0,
             'type': 'line',
             'color': colors.CRIMSON,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'TP #1': {
             'pane': 0,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'TP #2': {
             'pane': 0,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'ST ↑' : {
             'pane': 0,
             'type': 'line',
             'color': colors.TEAL,
             'lineWidth': 1,
-            'lineStyle': 2
+            'lineStyle': 2,
         },
         'ST ↓' : {
             'pane': 0,
             'type': 'line',
             'color': colors.DARK_RED,
             'lineWidth': 1,
-            'lineStyle': 2
+            'lineStyle': 2,
         },
         'VWAP': {
             'pane': 0,
             'type': 'line',
-            'lineWidth': 3
+            'lineWidth': 3,
         },
         'VWAP UB': {
             'pane': 0,
             'type': 'line',
-            'lineWidth': 1
+            'lineWidth': 1,
         },
         'VWAP LB': {
             'pane': 0,
             'type': 'line',
-            'lineWidth': 1
-        }
+            'lineWidth': 1,
+        },
     }
 
     vwap_color_1 = colors.DODGER_BLUE
@@ -214,8 +214,8 @@ class DailyProfitV1(BaseStrategy):
             self.completed_deals_log,
             self.position_type,
             self.order_signal,
-            self.order_date,
             self.order_price,
+            self.order_date,
             self.order_size,
             self.time,
             self.high,
@@ -248,39 +248,39 @@ class DailyProfitV1(BaseStrategy):
         self.indicators = {
             'SL': {
                 'options': self.indicator_options['SL'],
-                'values': self.stop_prices
+                'values': self.stop_prices,
             },
             'TP #1': {
                 'options': self.indicator_options['TP #1'],
-                'values': self.take_prices[0]
+                'values': self.take_prices[0],
             },
             'TP #2': {
                 'options': self.indicator_options['TP #2'],
-                'values': self.take_prices[1]
+                'values': self.take_prices[1],
             },
             'ST ↑': {
                 'options': self.indicator_options['ST ↑'],
-                'values': self.dst_upper_band
+                'values': self.dst_upper_band,
             },
             'ST ↓': {
                 'options': self.indicator_options['ST ↓'],
-                'values': self.dst_lower_band
+                'values': self.dst_lower_band,
             },
             'VWAP': {
                 'options': self.indicator_options['VWAP'],
                 'values': self.vwap,
-                'colors': self.vwap_colors
+                'colors': self.vwap_colors,
             },
             'VWAP UB': {
                 'options': self.indicator_options['VWAP UB'],
                 'values': self.vwap_upper_band,
-                'colors': self.vwap_colors
+                'colors': self.vwap_colors,
             },
             'VWAP LB': {
                 'options': self.indicator_options['VWAP LB'],
                 'values': self.vwap_lower_band,
-                'colors': self.vwap_colors
-            }
+                'colors': self.vwap_colors,
+            },
         }
 
     @staticmethod
@@ -306,8 +306,8 @@ class DailyProfitV1(BaseStrategy):
         completed_deals_log: np.ndarray,
         position_type: float,
         order_signal: float,
-        order_date: float,
         order_price: float,
+        order_date: float,
         order_size: float,
         time: np.ndarray,
         high: np.ndarray,

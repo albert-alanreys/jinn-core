@@ -20,9 +20,13 @@ class ExampleV2(BaseStrategy):
         'stop_type': 1,
         'trail_stop': 1,
         'stop': 2.0,
-        'trail_percent': 30.0,
-        'take_percent': [2.0, 4.0, 6.0],
-        'take_volume': [10.0, 10.0, 50.0],
+        'trail_percent': 2.0,
+        'take_percent_1': 4.0,
+        'take_percent_2': 6.0,
+        'take_percent_3': 12.8,
+        'take_volume_1': 30.0,
+        'take_volume_2': 20.0,
+        'take_volume_3': 50.0,
         'st_atr_period': 6,
         'st_factor': 24.6,
         'st_upper_band': 5.8,
@@ -48,8 +52,8 @@ class ExampleV2(BaseStrategy):
             'klines': {
                 'HTF': ['symbol', Interval.DAY_1],
                 'LTF': ['symbol', Interval.MIN_1],
-            }
-        }
+            },
+        },
     }
 
     # Parameters to be optimized and their possible values
@@ -58,13 +62,9 @@ class ExampleV2(BaseStrategy):
         'trail_stop': [1, 2],
         'stop': [i / 10 for i in range(1, 31)],
         'trail_percent': [float(i) for i in range(0, 55, 1)],
-        'take_percent': [
-            [
-                np.random.randint(12, 47) / 10,
-                np.random.randint(48, 87) / 10,
-                np.random.randint(88, 147) / 10
-            ] for _ in range(100)
-        ],
+        'take_percent_1': [i / 10 for i in range(12, 47)],
+        'take_percent_2': [i / 10 for i in range(48, 87)],
+        'take_percent_3': [i / 10 for i in range(88, 147)],
         'st_atr_period': [i for i in range(2, 21)],
         'st_factor': [i / 100 for i in range(1000, 2501, 5)],
         'st_upper_band': [i / 10 for i in range(39, 69)],
@@ -85,7 +85,7 @@ class ExampleV2(BaseStrategy):
         'adx_long_upper_limit': [float(i) for i in range(29, 51)],
         'adx_long_lower_limit': [float(i) for i in range(1, 29)],
         'adx_short_upper_limit': [float(i) for i in range(69, 101)],
-        'adx_short_lower_limit': [float(i) for i in range(1, 69)]
+        'adx_short_lower_limit': [float(i) for i in range(1, 69)],
     }
 
     # Frontend rendering settings
@@ -93,49 +93,49 @@ class ExampleV2(BaseStrategy):
         'HTF': {
             'pane': 0,
             'type': 'line',
-            'color': colors.CRIMSON
+            'color': colors.CRIMSON,
         },
         'SL': {
             'pane': 0,
             'type': 'line',
-            'color': colors.CRIMSON
+            'color': colors.CRIMSON,
         },
         'TP #1': {
             'pane': 0,
             'type': 'line',
-            'color': colors.GREEN
+            'color': colors.GREEN,
         },
         'TP #2': {
             'pane': 0,
             'type': 'line',
-            'color': colors.GREEN
+            'color': colors.GREEN,
         },
         'TP #3': {
             'pane': 0,
             'type': 'line',
-            'color': colors.GREEN
+            'color': colors.GREEN,
         },
         'Volume': {
             'pane': 1,
-            'type': 'histogram'
+            'type': 'histogram',
         },
         '+DI': {
             'pane': 2,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 1
+            'lineWidth': 1,
         },
         '-DI': {
             'pane': 2,
             'type': 'line',
             'color': colors.CRIMSON,
-            'lineWidth': 1
+            'lineWidth': 1,
         },
         'ADX': {
             'pane': 2,
             'type': 'line',
             'color': colors.DEEP_SKY_BLUE,
-            'lineWidth': 1
+            'lineWidth': 1,
         },
     }
 
@@ -149,22 +149,32 @@ class ExampleV2(BaseStrategy):
         # Initialize base variables from market data
         super().init_variables(market_data)
 
-        # Initialize strategy-specific arrays
+        # Exit price levels
         self.stop_price = np.full(self.time.shape[0], np.nan)
-        self.take_price = np.array(
+        self.take_prices = np.array(
             [
                 np.full(self.time.shape[0], np.nan),
                 np.full(self.time.shape[0], np.nan),
                 np.full(self.time.shape[0], np.nan)
             ]
         )
-
-        # Position tracking variables
+        self.take_percents = np.array([
+            self.params['take_percent_1'],
+            self.params['take_percent_2'],
+            self.params['take_percent_3'],
+        ])
         self.liquidation_price = np.nan
-        self.qty_take = np.full(5, np.nan)
         self.stop_moved = False
 
-        # Calculate technical indicators
+        # Quantity management
+        self.take_volumes = np.array([
+            self.params['take_volume_1'],
+            self.params['take_volume_2'],
+            self.params['take_volume_3'],
+        ])
+        self.take_quantities = np.full(5, np.nan)
+
+        # Technical indicators
         self.dst = quantklines.dst(
             high=self.high,
             low=self.low,
@@ -227,7 +237,7 @@ class ExampleV2(BaseStrategy):
         (
             self.completed_deals_log,
             self.open_deals_log,
-            self.take_price,
+            self.take_prices,
             self.stop_price,
             self.alert_cancel,
             self.alert_open_long,
@@ -246,8 +256,6 @@ class ExampleV2(BaseStrategy):
             self.params['stop'],
             self.params['trail_stop'],
             self.params['trail_percent'],
-            self.params['take_percent'],
-            self.params['take_volume'],
             self.params['st_upper_band'],
             self.params['st_lower_band'],
             self.params['rsi_long_upper_limit'],
@@ -273,14 +281,16 @@ class ExampleV2(BaseStrategy):
             self.open_deals_log,
             self.position_type,
             self.order_signal,
-            self.order_date,
             self.order_price,
-            self.liquidation_price,
-            self.take_price,
-            self.stop_price,
+            self.order_date,
             self.order_size,
-            self.qty_take,
+            self.stop_price,
+            self.take_prices,
+            self.take_percents,
+            self.liquidation_price,
             self.stop_moved,
+            self.take_volumes,
+            self.take_quantities,
             self.dst[0],
             self.dst[1],
             self.upper_band_change,
@@ -299,41 +309,41 @@ class ExampleV2(BaseStrategy):
         self.indicators = {
             'HTF': {
                 'options': self.indicator_options['HTF'],
-                'values': self.htf_close
+                'values': self.htf_close,
             },
             'SL': {
                 'options': self.indicator_options['SL'],
-                'values': self.stop_price
+                'values': self.stop_price,
             },
             'TP #1': {
                 'options': self.indicator_options['TP #1'],
-                'values': self.take_price[0]
+                'values': self.take_price[0],
             },
             'TP #2': {
                 'options': self.indicator_options['TP #2'],
-                'values': self.take_price[1]
+                'values': self.take_price[1],
             },
             'TP #3': {
                 'options': self.indicator_options['TP #3'],
-                'values': self.take_price[2]
+                'values': self.take_price[2],
             },
             'Volume': {
                 'options': self.indicator_options['Volume'],
                 'values': self.volume,
-                'colors': self.volume_colors
+                'colors': self.volume_colors,
             },
             '+DI': {
                 'options': self.indicator_options['+DI'],
-                'values': self.dmi[0]
+                'values': self.dmi[0],
             },
             '-DI': {
                 'options': self.indicator_options['-DI'],
-                'values': self.dmi[1]
+                'values': self.dmi[1],
             },
             'ADX': {
                 'options': self.indicator_options['ADX'],
-                'values': self.dmi[2]
-            }
+                'values': self.dmi[2],
+            },
         }
 
     @staticmethod
@@ -350,8 +360,6 @@ class ExampleV2(BaseStrategy):
         stop: float,
         trail_stop: int,
         trail_percent: float,
-        take_percent: list,
-        take_volume: list,
         st_upper_band: float,
         st_lower_band: float,
         rsi_long_upper_limit: float,
@@ -377,14 +385,16 @@ class ExampleV2(BaseStrategy):
         open_deals_log: np.ndarray,
         position_type: float,
         order_signal: float,
-        order_date: float,
         order_price: float,
-        liquidation_price: float,
-        take_price: np.ndarray,
-        stop_price: np.ndarray,
+        order_date: float,
         order_size: float,
-        qty_take: np.ndarray,
+        stop_price: np.ndarray,
+        take_prices: np.ndarray,
+        take_percents: np.ndarray,
+        liquidation_price: float,
         stop_moved: int,
+        take_volumes: np.ndarray,
+        take_quantities: np.ndarray,
         dst_upper_band: np.ndarray,
         dst_lower_band: np.ndarray,
         upper_band_change: np.ndarray,
@@ -401,7 +411,7 @@ class ExampleV2(BaseStrategy):
     ) -> tuple:
         for i in range(1, time.shape[0]):
             stop_price[i] = stop_price[i - 1]
-            take_price[:, i] = take_price[:, i - 1]
+            take_prices[:, i] = take_prices[:, i - 1]
 
             # Reset alerts
             alert_cancel = False
@@ -434,10 +444,10 @@ class ExampleV2(BaseStrategy):
                 order_date = np.nan
                 order_price = np.nan
                 liquidation_price = np.nan
-                take_price[:, i] = np.nan
+                take_prices[:, i] = np.nan
                 stop_price[i] = np.nan
                 order_size = np.nan
-                qty_take[:] = np.nan
+                take_quantities[:] = np.nan
                 stop_moved = False
                 alert_cancel = True
 
@@ -463,10 +473,10 @@ class ExampleV2(BaseStrategy):
                 order_date = np.nan
                 order_price = np.nan
                 liquidation_price = np.nan
-                take_price[:, i] = np.nan
+                take_prices[:, i] = np.nan
                 stop_price[i] = np.nan
                 order_size = np.nan
-                qty_take[:] = np.nan
+                take_quantities[:] = np.nan
                 stop_moved = False
                 alert_cancel = True
 
@@ -496,10 +506,10 @@ class ExampleV2(BaseStrategy):
                     order_date = np.nan
                     order_price = np.nan
                     liquidation_price = np.nan
-                    take_price[:, i] = np.nan
+                    take_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     order_size = np.nan
-                    qty_take[:] = np.nan
+                    take_quantities[:] = np.nan
                     stop_moved = False
                     alert_cancel = True
 
@@ -516,11 +526,11 @@ class ExampleV2(BaseStrategy):
                     take = None
 
                     if (trail_stop == 2 and
-                            high[i] >= take_price[1, i]):
-                        take = take_price[1, i]
+                            high[i] >= take_prices[1, i]):
+                        take = take_prices[1, i]
                     elif (trail_stop == 1 and
-                            high[i] >= take_price[0, i]):
-                        take = take_price[0, i]
+                            high[i] >= take_prices[0, i]):
+                        take = take_prices[0, i]
 
                     if take is not None:
                         stop_moved = True
@@ -532,7 +542,10 @@ class ExampleV2(BaseStrategy):
                         alert_long_new_stop = True
 
                 # Take profit checks
-                if not np.isnan(take_price[0, i]) and high[i] >= take_price[0, i]:
+                if (
+                    not np.isnan(take_prices[0, i]) and
+                    high[i] >= take_prices[0, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -542,18 +555,21 @@ class ExampleV2(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[0, i],
-                        qty_take[0],
+                        take_prices[0, i],
+                        take_quantities[0],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[0], 8)
+                    order_size = round(order_size - take_quantities[0], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[0, i] = np.nan
-                    qty_take[0] = np.nan
+                    take_prices[0, i] = np.nan
+                    take_quantities[0] = np.nan
 
-                if not np.isnan(take_price[1, i]) and high[i] >= take_price[1, i]:
+                if (
+                    not np.isnan(take_prices[1, i]) and
+                    high[i] >= take_prices[1, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -563,18 +579,21 @@ class ExampleV2(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[1, i],
-                        qty_take[1],
+                        take_prices[1, i],
+                        take_quantities[1],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[1], 8)
+                    order_size = round(order_size - take_quantities[1], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[1, i] = np.nan
-                    qty_take[1] = np.nan
+                    take_prices[1, i] = np.nan
+                    take_quantities[1] = np.nan
 
-                if not np.isnan(take_price[2, i]) and high[i] >= take_price[2, i]:
+                if (
+                    not np.isnan(take_prices[2, i]) and
+                    high[i] >= take_prices[2, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -584,8 +603,8 @@ class ExampleV2(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[2, i],
-                        round(qty_take[2], 8),
+                        take_prices[2, i],
+                        round(take_quantities[2], 8),
                         initial_capital
                     )
                     equity += pnl
@@ -596,8 +615,8 @@ class ExampleV2(BaseStrategy):
                     order_date = np.nan
                     order_price = np.nan
                     order_size = np.nan
-                    take_price[2, i] = np.nan
-                    qty_take[2] = np.nan
+                    take_prices[2, i] = np.nan
+                    take_quantities[2] = np.nan
                     stop_price[i] = np.nan
                     stop_moved = False
                     alert_cancel = True
@@ -648,26 +667,26 @@ class ExampleV2(BaseStrategy):
                 stop_price[i] = adjust(
                     dst_lower_band[i] * (100 - stop) / 100, p_precision
                 )
-                take_price[0, i] = adjust(
-                    close[i] * (100 + take_percent[0]) / 100, p_precision
+                take_prices[0, i] = adjust(
+                    close[i] * (100 + take_percents[0]) / 100, p_precision
                 )
-                take_price[1, i] = adjust(
-                    close[i] * (100 + take_percent[1]) / 100, p_precision
+                take_prices[1, i] = adjust(
+                    close[i] * (100 + take_percents[1]) / 100, p_precision
                 )
-                take_price[2, i] = adjust(
-                    close[i] * (100 + take_percent[2]) / 100, p_precision
+                take_prices[2, i] = adjust(
+                    close[i] * (100 + take_percents[2]) / 100, p_precision
                 )
                 order_size = adjust(
                     order_size, q_precision
                 )
-                qty_take[0] = adjust(
-                    order_size * take_volume[0] / 100, q_precision
+                take_quantities[0] = adjust(
+                    order_size * take_volumes[0] / 100, q_precision
                 )
-                qty_take[1] = adjust(
-                    order_size * take_volume[1] / 100, q_precision
+                take_quantities[1] = adjust(
+                    order_size * take_volumes[1] / 100, q_precision
                 )
-                qty_take[2] = adjust(
-                    order_size * take_volume[2] / 100, q_precision
+                take_quantities[2] = adjust(
+                    order_size * take_volumes[2] / 100, q_precision
                 )
                 open_deals_log[0] = np.array(
                     [
@@ -701,10 +720,10 @@ class ExampleV2(BaseStrategy):
                     order_date = np.nan
                     order_price = np.nan
                     liquidation_price = np.nan
-                    take_price[:, i] = np.nan
+                    take_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     order_size = np.nan
-                    qty_take[:] = np.nan
+                    take_quantities[:] = np.nan
                     stop_moved = False
                     alert_cancel = True 
 
@@ -721,11 +740,11 @@ class ExampleV2(BaseStrategy):
                     take = None
 
                     if (trail_stop == 2 and
-                            low[i] <= take_price[1, i]):
-                        take = take_price[1, i]
+                            low[i] <= take_prices[1, i]):
+                        take = take_prices[1, i]
                     elif (trail_stop == 1 and
-                            low[i] <= take_price[0, i]):
-                        take = take_price[0, i]
+                            low[i] <= take_prices[0, i]):
+                        take = take_prices[0, i]
 
                     if take is not None:
                         stop_moved = True
@@ -736,7 +755,10 @@ class ExampleV2(BaseStrategy):
                         )
                         alert_short_new_stop = True
 
-                if not np.isnan(take_price[0, i]) and low[i] <= take_price[0, i]:
+                if (
+                    not np.isnan(take_prices[0, i]) and
+                    low[i] <= take_prices[0, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -746,18 +768,21 @@ class ExampleV2(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[0, i],
-                        qty_take[0],
+                        take_prices[0, i],
+                        take_quantities[0],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[0], 8)
+                    order_size = round(order_size - take_quantities[0], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[0, i] = np.nan
-                    qty_take[0] = np.nan
+                    take_prices[0, i] = np.nan
+                    take_quantities[0] = np.nan
 
-                if not np.isnan(take_price[1, i]) and low[i] <= take_price[1, i]:
+                if (
+                    not np.isnan(take_prices[1, i]) and
+                    low[i] <= take_prices[1, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -767,18 +792,21 @@ class ExampleV2(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[1, i],
-                        qty_take[1],
+                        take_prices[1, i],
+                        take_quantities[1],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[1], 8)
+                    order_size = round(order_size - take_quantities[1], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[1, i] = np.nan
-                    qty_take[1] = np.nan         
+                    take_prices[1, i] = np.nan
+                    take_quantities[1] = np.nan         
 
-                if not np.isnan(take_price[2, i]) and low[i] <= take_price[2, i]:
+                if (
+                    not np.isnan(take_prices[2, i]) and
+                    low[i] <= take_prices[2, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -788,8 +816,8 @@ class ExampleV2(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[2, i],
-                        round(qty_take[2], 8),
+                        take_prices[2, i],
+                        round(take_quantities[2], 8),
                         initial_capital
                     )
                     equity += pnl
@@ -800,8 +828,8 @@ class ExampleV2(BaseStrategy):
                     order_date = np.nan
                     order_price = np.nan
                     order_size = np.nan
-                    take_price[2, i] = np.nan
-                    qty_take[2] = np.nan
+                    take_prices[2, i] = np.nan
+                    take_quantities[2] = np.nan
                     stop_price[i] = np.nan
                     stop_moved = False
                     alert_cancel = True
@@ -850,26 +878,26 @@ class ExampleV2(BaseStrategy):
                 stop_price[i] = adjust(
                     dst_upper_band[i] * (100 + stop) / 100, p_precision
                 )
-                take_price[0, i] = adjust(
-                    close[i] * (100 - take_percent[0]) / 100, p_precision
+                take_prices[0, i] = adjust(
+                    close[i] * (100 - take_percents[0]) / 100, p_precision
                 )
-                take_price[1, i] = adjust(
-                    close[i] * (100 - take_percent[1]) / 100, p_precision
+                take_prices[1, i] = adjust(
+                    close[i] * (100 - take_percents[1]) / 100, p_precision
                 )
-                take_price[2, i] = adjust(
-                    close[i] * (100 - take_percent[2]) / 100, p_precision
+                take_prices[2, i] = adjust(
+                    close[i] * (100 - take_percents[2]) / 100, p_precision
                 )
                 order_size = adjust(
                     order_size, q_precision
                 )
-                qty_take[0] = adjust(
-                    order_size * take_volume[0] / 100, q_precision
+                take_quantities[0] = adjust(
+                    order_size * take_volumes[0] / 100, q_precision
                 )
-                qty_take[1] = adjust(
-                    order_size * take_volume[1] / 100, q_precision
+                take_quantities[1] = adjust(
+                    order_size * take_volumes[1] / 100, q_precision
                 )
-                qty_take[2] = adjust(
-                    order_size * take_volume[2] / 100, q_precision
+                take_quantities[2] = adjust(
+                    order_size * take_volumes[2] / 100, q_precision
                 )
                 open_deals_log[0] = np.array(
                     [
@@ -882,7 +910,7 @@ class ExampleV2(BaseStrategy):
         return (
             completed_deals_log,
             open_deals_log,
-            take_price,
+            take_prices,
             stop_price,
             alert_cancel,
             alert_open_long,
@@ -971,8 +999,8 @@ class ExampleV2(BaseStrategy):
 
             order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][0]}%',
-                price=self.take_price[0, -1],
+                size=f'{self.take_volumes[0]}%',
+                price=self.take_prices[0, -1],
                 hedge=False
             )
 
@@ -981,8 +1009,8 @@ class ExampleV2(BaseStrategy):
 
             order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][1]}%',
-                price=self.take_price[1, -1],
+                size=f'{self.take_volumes[1]}%',
+                price=self.take_prices[1, -1],
                 hedge=False
             )
 
@@ -992,7 +1020,7 @@ class ExampleV2(BaseStrategy):
             order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
-                price=self.take_price[2, -1],
+                price=self.take_prices[2, -1],
                 hedge=False
             )
 
@@ -1024,8 +1052,8 @@ class ExampleV2(BaseStrategy):
 
             order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][0]}%',
-                price=self.take_price[0, -1],
+                size=f'{self.take_volumes[0]}%',
+                price=self.take_prices[0, -1],
                 hedge=False
             )
 
@@ -1034,8 +1062,8 @@ class ExampleV2(BaseStrategy):
 
             order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][1]}%',
-                price=self.take_price[1, -1],
+                size=f'{self.take_volumes[1]}%',
+                price=self.take_prices[1, -1],
                 hedge=False
             )
 
@@ -1045,7 +1073,7 @@ class ExampleV2(BaseStrategy):
             order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
                 size='100%',
-                price=self.take_price[2, -1],
+                price=self.take_prices[2, -1],
                 hedge=False
             )
 

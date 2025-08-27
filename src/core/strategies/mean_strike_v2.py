@@ -30,7 +30,7 @@ class MeanStrikeV2(BaseStrategy):
         'lookback': 1,
         'ma_length': 20,
         'mult': 2.0,
-        'range_threshold': 30.0
+        'range_threshold': 30.0,
     }
 
     # Parameters to be optimized and their possible values
@@ -45,7 +45,7 @@ class MeanStrikeV2(BaseStrategy):
         'lookback': [i for i in range(1, 21)],
         'ma_length': [i for i in range(10, 101)],
         'mult': [i / 10 for i in range(10, 31)],
-        'range_threshold': [float(i) for i in range(10, 100)]
+        'range_threshold': [float(i) for i in range(10, 100)],
     }
 
     # Frontend rendering settings for indicators
@@ -53,34 +53,34 @@ class MeanStrikeV2(BaseStrategy):
         'Stop-Loss': {
             'pane': 0,
             'type': 'line',
-            'color': colors.CRIMSON
+            'color': colors.CRIMSON,
         },
         'Take-Profit': {
             'pane': 0,
             'type': 'line',
-            'color': colors.FOREST_GREEN
+            'color': colors.FOREST_GREEN,
         },
         'Highest': {
             'pane': 0,
             'type': 'line',
             'lineWidth': 1,
-            'color': colors.DARK_TURQUOISE
+            'color': colors.DARK_TURQUOISE,
         },
         'Lowest': {
             'pane': 0,
             'type': 'line',
             'lineWidth': 1,
-            'color': colors.DARK_ORCHID
+            'color': colors.DARK_ORCHID,
         },
         'Price Range': {
             'pane': 1,
             'type': 'line',
-            'color': colors.DEEP_SKY_BLUE
+            'color': colors.DEEP_SKY_BLUE,
         },
         'SMA Threshold': {
             'pane': 1,
             'type': 'line',
-            'color': colors.ORANGE
+            'color': colors.ORANGE,
         },
     }
 
@@ -125,7 +125,8 @@ class MeanStrikeV2(BaseStrategy):
         self.order_values = np.full(self.params['grid_size'] + 1, np.nan)
 
         first_order_value =  (
-            self.params['first_order_pct'] * self.params['position_size'] / 100
+            self.params['first_order_pct'] *
+            self.params['position_size'] / 100
         )
 
         for n in range(self.order_values.shape[0]):
@@ -200,27 +201,27 @@ class MeanStrikeV2(BaseStrategy):
         self.indicators = {
             'Stop-Loss': {
                 'options': self.indicator_options['Stop-Loss'],
-                'values': self.stop_price
+                'values': self.stop_price,
             },
             'Take-Profit': {
                 'options': self.indicator_options['Take-Profit'],
-                'values': self.take_price
+                'values': self.take_price,
             },
             'Highest': {
                 'options': self.indicator_options['Highest'],
-                'values': self.highest
+                'values': self.highest,
             },
             'Lowest': {
                 'options': self.indicator_options['Lowest'],
-                'values': self.lowest
+                'values': self.lowest,
             },
             'Price Range': {
                 'options': self.indicator_options['Price Range'],
-                'values': self.price_range
+                'values': self.price_range,
             },
             'SMA Threshold': {
                 'options': self.indicator_options['SMA Threshold'],
-                'values': self.sma_threshold
+                'values': self.sma_threshold,
             },
         }
 

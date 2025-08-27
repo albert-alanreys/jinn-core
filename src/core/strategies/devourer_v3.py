@@ -34,7 +34,7 @@ class DevourerV3(BaseStrategy):
         'ema_len_p2': 5,
         'atr_len_p3': 14,
         'ema_len_p3': 55,
-        'close_under_ema_p3': 3
+        'close_under_ema_p3': 3,
     }
 
     # Parameters to be optimized and their possible values
@@ -58,7 +58,7 @@ class DevourerV3(BaseStrategy):
         'ema_len_p2': [i for i in range(2, 15)],
         'atr_len_p3': [i for i in range(5, 25)],
         'ema_len_p3': [i for i in range(40, 80)],
-        'close_under_ema_p3': [i for i in range(1, 5)]
+        'close_under_ema_p3': [i for i in range(1, 5)],
     }
 
     # Frontend rendering settings for indicators
@@ -66,13 +66,13 @@ class DevourerV3(BaseStrategy):
         'SL': {
             'pane': 0,
             'type': 'line',
-            'color': colors.CRIMSON
+            'color': colors.CRIMSON,
         },
         'TP': {
             'pane': 0,
             'type': 'line',
-            'color': colors.GREEN
-        }
+            'color': colors.GREEN,
+        },
     }
 
     def __init__(self, params: dict | None = None) -> None:
@@ -116,7 +116,10 @@ class DevourerV3(BaseStrategy):
             low=self.low,
             length=self.params['k_len_p1']
         )
-        self.d_p1 = quantklines.sma(source=self.k_p1, length=self.params['d_len_p1'])
+        self.d_p1 = quantklines.sma(
+            source=self.k_p1,
+            length=self.params['d_len_p1']
+        )
         supertrend = quantklines.supertrend(
             high=self.high,
             low=self.low,
@@ -160,7 +163,10 @@ class DevourerV3(BaseStrategy):
             source=self.macd_p1,
             length=self.params['ema_len_p2']
         )
-        self.cross_p2 = quantklines.cross(source1=self.signal_p2, source2=self.macd_p1)
+        self.cross_p2 = quantklines.cross(
+            source1=self.signal_p2,
+            source2=self.macd_p1
+        )
         self.atr_p2 = quantklines.atr(
             high=self.high,
             low=self.low,
@@ -225,12 +231,12 @@ class DevourerV3(BaseStrategy):
             self.open_deals_log,
             self.position_type,
             self.order_signal,
-            self.order_date,
             self.order_price,
+            self.order_date,
+            self.order_size,
             self.take_price,
             self.stop_price,
             self.liquidation_price,
-            self.order_size,
             self.deal_p1,
             self.deal_p2,
             self.deal_p3,
@@ -263,12 +269,12 @@ class DevourerV3(BaseStrategy):
         self.indicators = {
             'SL': {
                 'options': self.indicator_options['SL'],
-                'values': self.stop_price
+                'values': self.stop_price,
             },
             'TP': {
                 'options': self.indicator_options['TP'],
-                'values': self.take_price
-            }
+                'values': self.take_price,
+            },
         }
 
     @staticmethod
@@ -298,12 +304,12 @@ class DevourerV3(BaseStrategy):
         open_deals_log: np.ndarray,
         position_type: float,
         order_signal: float,
-        order_date: float,
         order_price: float,
+        order_date: float,
+        order_size: float,
         take_price: np.ndarray,
         stop_price: np.ndarray,
         liquidation_price: float,
-        order_size: float,
         deal_p1: bool,
         deal_p2: bool,
         deal_p3: bool,

@@ -23,7 +23,7 @@ class SisterV1(BaseStrategy):
         'length_exit': 35,
         'ratio_exit': 1.0,
         'length_small_trend': 7,
-        'length_medium_trend': 35
+        'length_medium_trend': 35,
     }
 
     # Parameters to be optimized and their possible values
@@ -35,7 +35,7 @@ class SisterV1(BaseStrategy):
         'length_exit': [i for i in range(5, 105, 5)],
         'ratio_exit': [i / 4 for i in range(0, 13)],
         'length_small_trend': [i for i in range(3, 21)],
-        'length_medium_trend': [i for i in range(25, 135, 5)]
+        'length_medium_trend': [i for i in range(25, 135, 5)],
     }
 
     # Frontend rendering settings for indicators
@@ -44,50 +44,50 @@ class SisterV1(BaseStrategy):
             'pane': 0,
             'type': 'line',
             'color': colors.CRIMSON,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'TP': {
             'pane': 0,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'SMA ST': {
             'pane': 0,
             'type': 'line',
             'color': colors.BLUE_VIOLET,
-            'lineWidth': 1
+            'lineWidth': 1,
         },
         'SMA MT': {
             'pane': 0,
             'type': 'line',
             'color': colors.INDIGO,
-            'lineWidth': 1
+            'lineWidth': 1,
         },
         'SMA L Entry': {
             'pane': 0,
             'type': 'line',
             'color': colors.CORAL,
-            'lineWidth': 1
+            'lineWidth': 1,
         },
         'SMA L Exit': {
             'pane': 0,
             'type': 'line',
             'color': colors.PALE_GOLDENROD,
-            'lineWidth': 1
+            'lineWidth': 1,
         },
         'SMA S Entry': {
             'pane': 0,
             'type': 'line',
             'color': colors.DEEP_SKY_BLUE,
-            'lineWidth': 1
+            'lineWidth': 1,
         },
         'SMA S Exit': {
             'pane': 0,
             'type': 'line',
             'color': colors.TEAL,
-            'lineWidth': 1
-        }
+            'lineWidth': 1,
+        },
     }
 
     def __init__(self, params: dict | None = None) -> None:
@@ -198,12 +198,12 @@ class SisterV1(BaseStrategy):
             self.open_deals_log,
             self.position_type,
             self.order_signal,
-            self.order_date,
             self.order_price,
+            self.order_date,
+            self.order_size,
             self.take_price,
             self.stop_price,
             self.liquidation_price,
-            self.order_size,
             self.sma_long_entry,
             self.sma_short_entry,
             self.sma_long_exit,
@@ -224,36 +224,36 @@ class SisterV1(BaseStrategy):
         self.indicators = {
             'SL': {
                 'options': self.indicator_options['SL'],
-                'values': self.stop_price
+                'values': self.stop_price,
             },
             'TP': {
                 'options': self.indicator_options['TP'],
-                'values': self.take_price
+                'values': self.take_price,
             },
             'SMA ST': {
                 'options': self.indicator_options['SMA ST'],
-                'values': self.sma_small_trend
+                'values': self.sma_small_trend,
             },
             'SMA MT': {
                 'options': self.indicator_options['SMA MT'],
-                'values': self.sma_medium_trend
+                'values': self.sma_medium_trend,
             },
             'SMA L Entry': {
                 'options': self.indicator_options['SMA L Entry'],
-                'values': self.sma_long_entry
+                'values': self.sma_long_entry,
             },
             'SMA L Exit': {
                 'options': self.indicator_options['SMA L Exit'],
-                'values': self.sma_long_exit
+                'values': self.sma_long_exit,
             },
             'SMA S Entry': {
                 'options': self.indicator_options['SMA S Entry'],
-                'values': self.sma_short_entry
+                'values': self.sma_short_entry,
             },
             'SMA S Exit': {
                 'options': self.indicator_options['SMA S Exit'],
-                'values': self.sma_short_exit
-            }
+                'values': self.sma_short_exit,
+            },
         }
 
     @staticmethod
@@ -280,12 +280,12 @@ class SisterV1(BaseStrategy):
         open_deals_log: np.ndarray,
         position_type: float,
         order_signal: float,
-        order_date: float,
         order_price: float,
+        order_date: float,
+        order_size: float,
         take_price: np.ndarray,
         stop_price: np.ndarray,
         liquidation_price: float,
-        order_size: float,
         sma_long_entry: np.ndarray,
         sma_short_entry: np.ndarray,
         sma_long_exit: np.ndarray,

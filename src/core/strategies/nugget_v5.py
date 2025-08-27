@@ -17,8 +17,16 @@ class NuggetV5(BaseStrategy):
         'min_capital': 100.0,
         'stop': 2.8,
         'atr_length': 14,
-        'take_value': [3.0, 4.0, 5.0, 6.0, 7.0],
-        'take_volume': [10.0, 10.0, 50.0, 20.0, 10.0],
+        'take_factor_1': 3.0,
+        'take_factor_2': 4.0,
+        'take_factor_3': 5.0,
+        'take_factor_4': 6.0,
+        'take_factor_5': 7.0,
+        'take_volume_1': 10.0,
+        'take_volume_2': 10.0,
+        'take_volume_3': 50.0,
+        'take_volume_4': 20.0,
+        'take_volume_5': 10.0,
         'st_atr_period': 6,
         'st_factor': 24.6,
         'st_upper_limit': 5.8,
@@ -33,23 +41,18 @@ class NuggetV5(BaseStrategy):
         'adx_long_upper_limit': 44.0,
         'adx_long_lower_limit': 28.0,
         'adx_short_upper_limit': 77.0,
-        'adx_short_lower_limit': 1.0
+        'adx_short_lower_limit': 1.0,
     }
 
     # Parameters to be optimized and their possible values
     opt_params = {
         'stop': [i / 10 for i in range(1, 31)],
         'atr_length': [i for i in range(1, 21)],
-        'take_value': [   
-            sorted([
-                float(np.random.randint(2, 7)),
-                float(np.random.randint(7, 11)),
-                float(np.random.randint(11, 17)),
-                float(np.random.randint(17, 22)),
-                float(np.random.randint(22, 31))
-            ])
-            for _ in range(100)
-        ],
+        'take_factor_1': [i / 10 for i in range(20, 71, 5)],
+        'take_factor_2': [i / 10 for i in range(70, 111, 5)],
+        'take_factor_3': [i / 10 for i in range(110, 171, 5)],
+        'take_factor_4': [i / 10 for i in range(170, 221, 5)],
+        'take_factor_5': [i / 10 for i in range(220, 311, 5)],
         'st_atr_period': [i for i in range(2, 21)],
         'st_factor': [i / 100 for i in range(1000, 2501, 5)],
         'st_upper_limit': [i / 10 for i in range(39, 71)],
@@ -64,7 +67,7 @@ class NuggetV5(BaseStrategy):
         'adx_long_upper_limit': [float(i) for i in range(29, 51)],
         'adx_long_lower_limit': [float(i) for i in range(1, 29)],
         'adx_short_upper_limit': [float(i) for i in range(69, 101)],
-        'adx_short_lower_limit': [float(i) for i in range(1, 69)]
+        'adx_short_lower_limit': [float(i) for i in range(1, 69)],
     }
 
     # Frontend rendering settings for indicators
@@ -73,38 +76,38 @@ class NuggetV5(BaseStrategy):
             'pane': 0,
             'type': 'line',
             'color': colors.CRIMSON,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'TP #1': {
             'pane': 0,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'TP #2': {
             'pane': 0,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'TP #3': {
             'pane': 0,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'TP #4': {
             'pane': 0,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 2
+            'lineWidth': 2,
         },
         'TP #5': {
             'pane': 0,
             'type': 'line',
             'color': colors.GREEN,
-            'lineWidth': 2
-        }
+            'lineWidth': 2,
+        },
     }
 
     def __init__(self, params: dict | None = None) -> None:
@@ -114,7 +117,7 @@ class NuggetV5(BaseStrategy):
         super().init_variables(market_data)
 
         self.stop_price = np.full(self.time.shape[0], np.nan)
-        self.take_price = np.array(
+        self.take_prices = np.array(
             [
                 np.full(self.time.shape[0], np.nan),
                 np.full(self.time.shape[0], np.nan),
@@ -123,9 +126,23 @@ class NuggetV5(BaseStrategy):
                 np.full(self.time.shape[0], np.nan)
             ]
         )
+        self.take_factors = np.array([
+            self.params['take_factor_1'],
+            self.params['take_factor_2'],
+            self.params['take_factor_3'],
+            self.params['take_factor_4'],
+            self.params['take_factor_5']
+        ])
         self.liquidation_price = np.nan
 
-        self.qty_take = np.full(5, np.nan)
+        self.take_volumes = np.array([
+            self.params['take_volume_1'],
+            self.params['take_volume_2'],
+            self.params['take_volume_3'],
+            self.params['take_volume_4'],
+            self.params['take_volume_5']
+        ])
+        self.take_quantities = np.full(5, np.nan)
 
         self.atr = quantklines.atr(
             high=self.high,
@@ -180,7 +197,7 @@ class NuggetV5(BaseStrategy):
         (
             self.completed_deals_log,
             self.open_deals_log,
-            self.take_price,
+            self.take_prices,
             self.stop_price,
             self.alert_cancel,
             self.alert_open_long,
@@ -196,8 +213,6 @@ class NuggetV5(BaseStrategy):
             self.params['position_size'],
             self.params['leverage'],
             self.params['stop'],
-            self.params['take_value'],
-            self.params['take_volume'],
             self.params['st_upper_limit'],
             self.params['st_lower_limit'],
             self.params['k_d_long_limit'],
@@ -218,13 +233,15 @@ class NuggetV5(BaseStrategy):
             self.open_deals_log,
             self.position_type,
             self.order_signal,
-            self.order_date,
             self.order_price,
-            self.liquidation_price,
-            self.take_price,
-            self.stop_price,
+            self.order_date,
             self.order_size,
-            self.qty_take,
+            self.stop_price,
+            self.take_prices,
+            self.take_factors,
+            self.liquidation_price,
+            self.take_volumes,
+            self.take_quantities,
             self.atr,
             self.dst[0],
             self.dst[1],
@@ -243,28 +260,28 @@ class NuggetV5(BaseStrategy):
         self.indicators = {
             'SL': {
                 'options': self.indicator_options['SL'],
-                'values': self.stop_price
+                'values': self.stop_price,
             },
             'TP #1': {
                 'options': self.indicator_options['TP #1'],
-                'values': self.take_price[0]
+                'values': self.take_prices[0],
             },
             'TP #2': {
                 'options': self.indicator_options['TP #2'],
-                'values': self.take_price[1]
+                'values': self.take_prices[1],
             },
             'TP #3': {
                 'options': self.indicator_options['TP #3'],
-                'values': self.take_price[2]
+                'values': self.take_prices[2],
             },
             'TP #4': {
                 'options': self.indicator_options['TP #4'],
-                'values': self.take_price[3]
+                'values': self.take_prices[3],
             },
             'TP #5': {
                 'options': self.indicator_options['TP #5'],
-                'values': self.take_price[4]
-            }
+                'values': self.take_prices[4],
+            },
         }
 
     @staticmethod
@@ -278,8 +295,6 @@ class NuggetV5(BaseStrategy):
         position_size: float,
         leverage: int,
         stop: float,
-        take_value: list,
-        take_volume: list,
         st_upper_limit: float,
         st_lower_limit: float,
         k_d_long_limit: float,
@@ -300,13 +315,15 @@ class NuggetV5(BaseStrategy):
         open_deals_log: np.ndarray,
         position_type: float,
         order_signal: float,
-        order_date: float,
         order_price: float,
-        liquidation_price: float,
-        take_price: np.ndarray,
-        stop_price: np.ndarray,
+        order_date: float,
         order_size: float,
-        qty_take: np.ndarray,
+        stop_price: np.ndarray,
+        take_prices: np.ndarray,
+        take_factors: np.ndarray,
+        liquidation_price: float,
+        take_volumes: np.ndarray,
+        take_quantities: np.ndarray,
         atr: np.ndarray,
         dst_upper_band: np.ndarray,
         dst_lower_band: np.ndarray,
@@ -323,7 +340,7 @@ class NuggetV5(BaseStrategy):
     ) -> tuple:
         for i in range(1, time.shape[0]):
             stop_price[i] = stop_price[i - 1]
-            take_price[:, i] = take_price[:, i - 1]
+            take_prices[:, i] = take_prices[:, i - 1]
 
             alert_cancel = False
             alert_open_long = False
@@ -354,10 +371,10 @@ class NuggetV5(BaseStrategy):
                 order_date = np.nan
                 order_price = np.nan
                 liquidation_price = np.nan
-                take_price[:, i] = np.nan
+                take_prices[:, i] = np.nan
                 stop_price[i] = np.nan
                 order_size = np.nan
-                qty_take[:] = np.nan
+                take_quantities[:] = np.nan
                 alert_cancel = True
 
             if (position_type == 1 and high[i] >= liquidation_price):
@@ -382,10 +399,10 @@ class NuggetV5(BaseStrategy):
                 order_date = np.nan
                 order_price = np.nan
                 liquidation_price = np.nan
-                take_price[:, i] = np.nan
+                take_prices[:, i] = np.nan
                 stop_price[i] = np.nan
                 order_size = np.nan
-                qty_take[:] = np.nan
+                take_quantities[:] = np.nan
                 alert_cancel = True
 
             # Trading logic (longs)
@@ -413,10 +430,10 @@ class NuggetV5(BaseStrategy):
                     order_date = np.nan
                     order_price = np.nan
                     liquidation_price = np.nan
-                    take_price[:, i] = np.nan
+                    take_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     order_size = np.nan
-                    qty_take[:] = np.nan
+                    take_quantities[:] = np.nan
                     alert_cancel = True
 
                 if (st_lower_band_changed[i] and
@@ -428,7 +445,10 @@ class NuggetV5(BaseStrategy):
                     )
                     alert_long_new_stop = True
 
-                if not np.isnan(take_price[0, i]) and high[i] >= take_price[0, i]:
+                if (
+                    not np.isnan(take_prices[0, i]) and
+                    high[i] >= take_prices[0, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -438,18 +458,21 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[0, i],
-                        qty_take[0],
+                        take_prices[0, i],
+                        take_quantities[0],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[0], 8)
+                    order_size = round(order_size - take_quantities[0], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[0, i] = np.nan
-                    qty_take[0] = np.nan
+                    take_prices[0, i] = np.nan
+                    take_quantities[0] = np.nan
 
-                if not np.isnan(take_price[1, i]) and high[i] >= take_price[1, i]:
+                if (
+                    not np.isnan(take_prices[1, i]) and
+                    high[i] >= take_prices[1, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -459,18 +482,21 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[1, i],
-                        qty_take[1],
+                        take_prices[1, i],
+                        take_quantities[1],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[1], 8)
+                    order_size = round(order_size - take_quantities[1], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[1, i] = np.nan
-                    qty_take[1] = np.nan
+                    take_prices[1, i] = np.nan
+                    take_quantities[1] = np.nan
 
-                if not np.isnan(take_price[2, i]) and high[i] >= take_price[2, i]:
+                if (
+                    not np.isnan(take_prices[2, i]) and
+                    high[i] >= take_prices[2, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -480,18 +506,21 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[2, i],
-                        qty_take[2],
+                        take_prices[2, i],
+                        take_quantities[2],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[2], 8)
+                    order_size = round(order_size - take_quantities[2], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[2, i] = np.nan
-                    qty_take[2] = np.nan
+                    take_prices[2, i] = np.nan
+                    take_quantities[2] = np.nan
 
-                if not np.isnan(take_price[3, i]) and high[i] >= take_price[3, i]:
+                if (
+                    not np.isnan(take_prices[3, i]) and
+                    high[i] >= take_prices[3, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -501,18 +530,21 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[3, i],
-                        qty_take[3],
+                        take_prices[3, i],
+                        take_quantities[3],
                         initial_capital
                     ) 
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[3], 8)
+                    order_size = round(order_size - take_quantities[3], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[3, i] = np.nan
-                    qty_take[3] = np.nan
+                    take_prices[3, i] = np.nan
+                    take_quantities[3] = np.nan
 
-                if not np.isnan(take_price[4, i]) and high[i] >= take_price[4, i]:
+                if (
+                    not np.isnan(take_prices[4, i]) and
+                    high[i] >= take_prices[4, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -522,8 +554,8 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[4, i],
-                        round(qty_take[4], 8),
+                        take_prices[4, i],
+                        round(take_quantities[4], 8),
                         initial_capital
                     )
                     equity += pnl
@@ -534,8 +566,8 @@ class NuggetV5(BaseStrategy):
                     order_date = np.nan
                     order_price = np.nan
                     order_size = np.nan
-                    take_price[4, i] = np.nan
-                    qty_take[4] = np.nan
+                    take_prices[4, i] = np.nan
+                    take_quantities[4] = np.nan
                     stop_price[i] = np.nan
                     alert_cancel = True
 
@@ -581,38 +613,38 @@ class NuggetV5(BaseStrategy):
                 stop_price[i] = adjust(
                     dst_lower_band[i] * (100 - stop) / 100, p_precision
                 )
-                take_price[0, i] = adjust(
-                    close[i] + take_value[0] * atr[i], p_precision
+                take_prices[0, i] = adjust(
+                    close[i] + take_factors[0] * atr[i], p_precision
                 )
-                take_price[1, i] = adjust(
-                    close[i] + take_value[1] * atr[i], p_precision
+                take_prices[1, i] = adjust(
+                    close[i] + take_factors[1] * atr[i], p_precision
                 )
-                take_price[2, i] = adjust(
-                    close[i] + take_value[2] * atr[i], p_precision
+                take_prices[2, i] = adjust(
+                    close[i] + take_factors[2] * atr[i], p_precision
                 )
-                take_price[3, i] = adjust(
-                    close[i] + take_value[3] * atr[i], p_precision
+                take_prices[3, i] = adjust(
+                    close[i] + take_factors[3] * atr[i], p_precision
                 )
-                take_price[4, i] = adjust(
-                    close[i] + take_value[4] * atr[i], p_precision
+                take_prices[4, i] = adjust(
+                    close[i] + take_factors[4] * atr[i], p_precision
                 )
                 order_size = adjust(
                     order_size, q_precision
                 )
-                qty_take[0] = adjust(
-                    order_size * take_volume[0] / 100, q_precision
+                take_quantities[0] = adjust(
+                    order_size * take_volumes[0] / 100, q_precision
                 )
-                qty_take[1] = adjust(
-                    order_size * take_volume[1] / 100, q_precision
+                take_quantities[1] = adjust(
+                    order_size * take_volumes[1] / 100, q_precision
                 )
-                qty_take[2] = adjust(
-                    order_size * take_volume[2] / 100, q_precision
+                take_quantities[2] = adjust(
+                    order_size * take_volumes[2] / 100, q_precision
                 )
-                qty_take[3] = adjust(
-                    order_size * take_volume[3] / 100, q_precision
+                take_quantities[3] = adjust(
+                    order_size * take_volumes[3] / 100, q_precision
                 )
-                qty_take[4] = adjust(
-                    order_size * take_volume[4] / 100, q_precision
+                take_quantities[4] = adjust(
+                    order_size * take_volumes[4] / 100, q_precision
                 )
                 open_deals_log[0] = np.array(
                     [
@@ -646,10 +678,10 @@ class NuggetV5(BaseStrategy):
                     order_date = np.nan
                     order_price = np.nan
                     liquidation_price = np.nan
-                    take_price[:, i] = np.nan
+                    take_prices[:, i] = np.nan
                     stop_price[i] = np.nan
                     order_size = np.nan
-                    qty_take[:] = np.nan
+                    take_quantities[:] = np.nan
                     alert_cancel = True 
 
                 if (st_upper_band_changed[i] and
@@ -661,7 +693,10 @@ class NuggetV5(BaseStrategy):
                     )
                     alert_short_new_stop = True
 
-                if not np.isnan(take_price[0, i]) and low[i] <= take_price[0, i]:
+                if (
+                    not np.isnan(take_prices[0, i]) and
+                    low[i] <= take_prices[0, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -671,18 +706,21 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[0, i],
-                        qty_take[0],
+                        take_prices[0, i],
+                        take_quantities[0],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[0], 8)
+                    order_size = round(order_size - take_quantities[0], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[0, i] = np.nan
-                    qty_take[0] = np.nan
+                    take_prices[0, i] = np.nan
+                    take_quantities[0] = np.nan
 
-                if not np.isnan(take_price[1, i]) and low[i] <= take_price[1, i]:
+                if (
+                    not np.isnan(take_prices[1, i]) and
+                    low[i] <= take_prices[1, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -692,18 +730,21 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[1, i],
-                        qty_take[1],
+                        take_prices[1, i],
+                        take_quantities[1],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[1], 8)
+                    order_size = round(order_size - take_quantities[1], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[1, i] = np.nan
-                    qty_take[1] = np.nan      
+                    take_prices[1, i] = np.nan
+                    take_quantities[1] = np.nan      
 
-                if not np.isnan(take_price[2, i]) and low[i] <= take_price[2, i]:
+                if (
+                    not np.isnan(take_prices[2, i]) and
+                    low[i] <= take_prices[2, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -713,18 +754,21 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[2, i],
-                        qty_take[2],
+                        take_prices[2, i],
+                        take_quantities[2],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[2], 8)
+                    order_size = round(order_size - take_quantities[2], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[2, i] = np.nan
-                    qty_take[2] = np.nan
+                    take_prices[2, i] = np.nan
+                    take_quantities[2] = np.nan
 
-                if not np.isnan(take_price[3, i]) and low[i] <= take_price[3, i]:
+                if (
+                    not np.isnan(take_prices[3, i]) and
+                    low[i] <= take_prices[3, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -734,18 +778,21 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[3, i],
-                        qty_take[3],
+                        take_prices[3, i],
+                        take_quantities[3],
                         initial_capital
                     )
                     equity += pnl
 
-                    order_size = round(order_size - qty_take[3], 8)
+                    order_size = round(order_size - take_quantities[3], 8)
                     open_deals_log[0][4] = order_size
-                    take_price[3, i] = np.nan
-                    qty_take[3] = np.nan     
+                    take_prices[3, i] = np.nan
+                    take_quantities[3] = np.nan     
 
-                if not np.isnan(take_price[4, i]) and low[i] <= take_price[4, i]:
+                if (
+                    not np.isnan(take_prices[4, i]) and
+                    low[i] <= take_prices[4, i]
+                ):
                     completed_deals_log, pnl = update_completed_deals_log(
                         completed_deals_log,
                         commission,
@@ -755,8 +802,8 @@ class NuggetV5(BaseStrategy):
                         order_date,
                         time[i],
                         order_price,
-                        take_price[4, i],
-                        round(qty_take[4], 8),
+                        take_prices[4, i],
+                        round(take_quantities[4], 8),
                         initial_capital
                     )
                     equity += pnl
@@ -767,8 +814,8 @@ class NuggetV5(BaseStrategy):
                     order_date = np.nan
                     order_price = np.nan
                     order_size = np.nan
-                    take_price[4, i] = np.nan
-                    qty_take[4] = np.nan
+                    take_prices[4, i] = np.nan
+                    take_quantities[4] = np.nan
                     stop_price[i] = np.nan
                     alert_cancel = True
 
@@ -814,38 +861,38 @@ class NuggetV5(BaseStrategy):
                 stop_price[i] = adjust(
                     dst_upper_band[i] * (100 + stop) / 100, p_precision
                 )
-                take_price[0, i] = adjust(
-                    close[i] - take_value[0] * atr[i], p_precision
+                take_prices[0, i] = adjust(
+                    close[i] - take_factors[0] * atr[i], p_precision
                 )
-                take_price[1, i] = adjust(
-                    close[i] - take_value[1] * atr[i], p_precision
+                take_prices[1, i] = adjust(
+                    close[i] - take_factors[1] * atr[i], p_precision
                 )
-                take_price[2, i] = adjust(
-                    close[i] - take_value[2] * atr[i], p_precision
+                take_prices[2, i] = adjust(
+                    close[i] - take_factors[2] * atr[i], p_precision
                 )
-                take_price[3, i] = adjust(
-                    close[i] - take_value[3] * atr[i], p_precision
+                take_prices[3, i] = adjust(
+                    close[i] - take_factors[3] * atr[i], p_precision
                 )
-                take_price[4, i] = adjust(
-                    close[i] - take_value[4] * atr[i], p_precision
+                take_prices[4, i] = adjust(
+                    close[i] - take_factors[4] * atr[i], p_precision
                 )
                 order_size = adjust(
                     order_size, q_precision
                 )
-                qty_take[0] = adjust(
-                    order_size * take_volume[0] / 100, q_precision
+                take_quantities[0] = adjust(
+                    order_size * take_volumes[0] / 100, q_precision
                 )
-                qty_take[1] = adjust(
-                    order_size * take_volume[1] / 100, q_precision
+                take_quantities[1] = adjust(
+                    order_size * take_volumes[1] / 100, q_precision
                 )
-                qty_take[2] = adjust(
-                    order_size * take_volume[2] / 100, q_precision
+                take_quantities[2] = adjust(
+                    order_size * take_volumes[2] / 100, q_precision
                 )
-                qty_take[3] = adjust(
-                    order_size * take_volume[3] / 100, q_precision
+                take_quantities[3] = adjust(
+                    order_size * take_volumes[3] / 100, q_precision
                 )
-                qty_take[4] = adjust(
-                    order_size * take_volume[4] / 100, q_precision
+                take_quantities[4] = adjust(
+                    order_size * take_volumes[4] / 100, q_precision
                 )
                 open_deals_log[0] = np.array(
                     [
@@ -858,7 +905,7 @@ class NuggetV5(BaseStrategy):
         return (
             completed_deals_log,
             open_deals_log,
-            take_price,
+            take_prices,
             stop_price,
             alert_cancel,
             alert_open_long,
@@ -943,8 +990,8 @@ class NuggetV5(BaseStrategy):
 
             order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][0]}%',
-                price=self.take_price[0, -1],
+                size=f'{self.take_volumes[0]}%',
+                price=self.take_prices[0, -1],
                 hedge=False
             )
 
@@ -953,8 +1000,8 @@ class NuggetV5(BaseStrategy):
 
             order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][1]}%',
-                price=self.take_price[1, -1],
+                size=f'{self.take_volumes[1]}%',
+                price=self.take_prices[1, -1],
                 hedge=False
             )
 
@@ -963,8 +1010,8 @@ class NuggetV5(BaseStrategy):
 
             order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][2]}%',
-                price=self.take_price[2, -1],
+                size=f'{self.take_volumes[2]}%',
+                price=self.take_prices[2, -1],
                 hedge=False
             )
 
@@ -973,8 +1020,8 @@ class NuggetV5(BaseStrategy):
 
             order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][3]}%',
-                price=self.take_price[3, -1],
+                size=f'{self.take_volumes[3]}%',
+                price=self.take_prices[3, -1],
                 hedge=False
             )
 
@@ -984,7 +1031,7 @@ class NuggetV5(BaseStrategy):
             order_id = client.trade.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
-                price=self.take_price[4, -1],
+                price=self.take_prices[4, -1],
                 hedge=False
             )
 
@@ -1016,8 +1063,8 @@ class NuggetV5(BaseStrategy):
 
             order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][0]}%',
-                price=self.take_price[0, -1],
+                size=f'{self.take_volumes[0]}%',
+                price=self.take_prices[0, -1],
                 hedge=False
             )
 
@@ -1026,8 +1073,8 @@ class NuggetV5(BaseStrategy):
 
             order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][1]}%',
-                price=self.take_price[1, -1],
+                size=f'{self.take_volumes[1]}%',
+                price=self.take_prices[1, -1],
                 hedge=False
             )
 
@@ -1036,8 +1083,8 @@ class NuggetV5(BaseStrategy):
 
             order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][2]}%',
-                price=self.take_price[2, -1],
+                size=f'{self.take_volumes[2]}%',
+                price=self.take_prices[2, -1],
                 hedge=False
             )
 
@@ -1046,8 +1093,8 @@ class NuggetV5(BaseStrategy):
 
             order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
-                size=f'{self.params['take_volume'][3]}%',
-                price=self.take_price[3, -1],
+                size=f'{self.take_volumes[3]}%',
+                price=self.take_prices[3, -1],
                 hedge=False
             )
 
@@ -1057,7 +1104,7 @@ class NuggetV5(BaseStrategy):
             order_id = client.trade.limit_close_short(
                 symbol=self.symbol,
                 size='100%',
-                price=self.take_price[4, -1],
+                price=self.take_prices[4, -1],
                 hedge=False
             )
 

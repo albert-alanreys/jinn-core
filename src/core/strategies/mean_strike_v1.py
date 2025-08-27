@@ -15,15 +15,18 @@ class MeanStrikeV1(BaseStrategy):
     # Strategy parameters
     params = {
         'position_size':  50,
-        'entry_volume':  [10.0, 15.0, 25.0, 50.0],
-        'entry_percent_2':  2.0,
-        'entry_percent_3':  6.0,
-        'entry_percent_4':  8.0,
-        'take_profit':  1.0,
-        'lookback':  1,
-        'ma_length':  20,
-        'mult':  2.0,
-        'range_threshold':  30.0
+        'entry_volume_1': 10.0,
+        'entry_volume_2': 15.0,
+        'entry_volume_3': 25.0,
+        'entry_volume_4': 50.0,
+        'entry_percent_2': 2.0,
+        'entry_percent_3': 6.0,
+        'entry_percent_4': 8.0,
+        'take_profit': 1.0,
+        'lookback': 1,
+        'ma_length': 20,
+        'mult': 2.0,
+        'range_threshold': 30.0,
     }
 
     # Parameters to be optimized and their possible values
@@ -35,7 +38,7 @@ class MeanStrikeV1(BaseStrategy):
         'lookback': [i for i in range(1, 21)],
         'ma_length': [i for i in range(10, 101)],
         'mult': [i / 10 for i in range(10, 31)],
-        'range_threshold': [float(i) for i in range(10, 100)]
+        'range_threshold': [float(i) for i in range(10, 100)],
     }
 
     # Frontend rendering settings for indicators
@@ -43,23 +46,23 @@ class MeanStrikeV1(BaseStrategy):
         'EP #2': {
             'pane': 0,
             'type': 'line',
-            'color': colors.INDIGO
+            'color': colors.INDIGO,
         },
         'EP #3': {
             'pane': 0,
             'type': 'line',
-            'color': colors.INDIGO
+            'color': colors.INDIGO,
         },
         'EP #4': {
             'pane': 0,
             'type': 'line',
-            'color': colors.INDIGO
+            'color': colors.INDIGO,
         },
         'TP': {
             'pane': 0,
             'type': 'line',
-            'color': colors.FOREST_GREEN
-        }
+            'color': colors.FOREST_GREEN,
+        },
     }
 
     def __init__(self, params: dict | None = None) -> None:
@@ -68,13 +71,20 @@ class MeanStrikeV1(BaseStrategy):
     def calculate(self, market_data) -> None:
         super().init_variables(market_data, 4)
 
+        self.take_price = np.full(self.time.shape[0], np.nan)
+        self.liquidation_price = np.nan
+        self.qty_entry = np.full(4, np.nan)
+
         self.entry_price_2 = np.full(self.time.shape[0], np.nan)
         self.entry_price_3 = np.full(self.time.shape[0], np.nan)
         self.entry_price_4 = np.full(self.time.shape[0], np.nan)
-        self.take_price = np.full(self.time.shape[0], np.nan)
-        self.liquidation_price = np.nan
 
-        self.qty_entry = np.full(4, np.nan)
+        self.entry_volumes = np.array([
+            self.params['entry_volume_1'],
+            self.params['entry_volume_2'],
+            self.params['entry_volume_3'],
+            self.params['entry_volume_4'],
+        ])
 
         self.lowest = quantklines.lowest(
             source=np.roll(self.low, 1),
@@ -103,7 +113,6 @@ class MeanStrikeV1(BaseStrategy):
             self.params['position_size_type'],
             self.params['position_size'],
             self.params['leverage'],
-            self.params['entry_volume'],
             self.params['entry_percent_2'],
             self.params['entry_percent_3'],
             self.params['entry_percent_4'],
@@ -120,17 +129,18 @@ class MeanStrikeV1(BaseStrategy):
             self.equity,
             self.completed_deals_log,
             self.open_deals_log,
-            self.order_size,
             self.order_signal,
             self.order_price,
             self.order_date,
+            self.order_size,
             self.position_type,
-            self.liquidation_price,
             self.take_price,
+            self.liquidation_price,
             self.qty_entry,
             self.entry_price_2,
             self.entry_price_3,
             self.entry_price_4,
+            self.entry_volumes,
             self.lowest,
             self.sma,
             self.alert_open_long,
@@ -140,20 +150,20 @@ class MeanStrikeV1(BaseStrategy):
         self.indicators = {
             'EP #2': {
                 'options': self.indicator_options['EP #2'],
-                'values': self.entry_price_2
+                'values': self.entry_price_2,
             },
             'EP #3': {
                 'options': self.indicator_options['EP #3'],
-                'values': self.entry_price_3
+                'values': self.entry_price_3,
             },
             'EP #4': {
                 'options': self.indicator_options['EP #4'],
-                'values': self.entry_price_4
+                'values': self.entry_price_4,
             },
             'TP': {
                 'options': self.indicator_options['TP'],
-                'values': self.take_price
-            }
+                'values': self.take_price,
+            },
         }
 
     @staticmethod
@@ -164,7 +174,6 @@ class MeanStrikeV1(BaseStrategy):
         position_size_type: int,
         position_size: float,
         leverage: int,
-        entry_volume: list,
         entry_percent_2: float,
         entry_percent_3: float,
         entry_percent_4: float,
@@ -181,27 +190,28 @@ class MeanStrikeV1(BaseStrategy):
         equity: float,
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray,
-        order_size: float,
         order_signal: float,
         order_price: float,
         order_date: float,
+        order_size: float,
         position_type: float,
-        liquidation_price: float,
         take_price: np.ndarray,
+        liquidation_price: float,
         qty_entry: np.ndarray,
         entry_price_2: np.ndarray,
         entry_price_3: np.ndarray,
         entry_price_4: np.ndarray,
+        entry_volumes: np.ndarray,
         lowest: np.ndarray,
         sma: np.ndarray,
         alert_open_long: bool,
         alert_close_long: bool
     ) -> tuple:
         for i in range(1, time.shape[0]):
+            take_price[i] = take_price[i - 1]
             entry_price_2[i] = entry_price_2[i - 1]
             entry_price_3[i] = entry_price_3[i - 1]
             entry_price_4[i] = entry_price_4[i - 1]
-            take_price[i] = take_price[i - 1]
 
             alert_open_long = False
             alert_close_long = False
@@ -241,7 +251,10 @@ class MeanStrikeV1(BaseStrategy):
             # Trading logic (longs)
             if position_type == 0:
                 if close[i] <= open[i]:
-                    if not np.isnan(take_price[i]) and high[i] >= take_price[i]:
+                    if (
+                        not np.isnan(take_price[i]) and
+                        high[i] >= take_price[i]
+                    ):
                         for deal in open_deals_log:
                             if not np.isnan(deal[0]):
                                 (
@@ -275,7 +288,10 @@ class MeanStrikeV1(BaseStrategy):
                         entry_price_4[i] = np.nan
                         alert_close_long = True
 
-                if not np.isnan(entry_price_2[i]) and low[i] <= entry_price_2[i]:
+                if (
+                    not np.isnan(entry_price_2[i]) and
+                    low[i] <= entry_price_2[i]
+                ):
                     order_signal = 301
                     order_price = entry_price_2[i]
                     order_date = time[i]
@@ -301,7 +317,10 @@ class MeanStrikeV1(BaseStrategy):
 
                     entry_price_2[i] = np.nan
 
-                if not np.isnan(entry_price_3[i]) and low[i] <= entry_price_3[i]:
+                if (
+                    not np.isnan(entry_price_3[i]) and
+                    low[i] <= entry_price_3[i]
+                ):
                     order_signal = 302
                     order_price = entry_price_3[i]
                     order_date = time[i]
@@ -327,7 +346,10 @@ class MeanStrikeV1(BaseStrategy):
 
                     entry_price_3[i] = np.nan
 
-                if not np.isnan(entry_price_4[i]) and low[i] <= entry_price_4[i]:
+                if (
+                    not np.isnan(entry_price_4[i]) and
+                    low[i] <= entry_price_4[i]
+                ):
                     order_signal = 303
                     order_price = entry_price_4[i]
                     order_date = time[i]
@@ -354,7 +376,10 @@ class MeanStrikeV1(BaseStrategy):
                     entry_price_4[i] = np.nan
 
                 if close[i] > open[i]:
-                    if not np.isnan(take_price[i]) and high[i] >= take_price[i]:
+                    if (
+                        not np.isnan(take_price[i]) and
+                        high[i] >= take_price[i]
+                    ):
                         for deal in open_deals_log:
                             if not np.isnan(deal[0]):
                                 (
@@ -440,16 +465,16 @@ class MeanStrikeV1(BaseStrategy):
                     order_size, q_precision
                 )
                 qty_entry[0] = adjust(
-                    order_size * entry_volume[0] / 100, q_precision
+                    order_size * entry_volumes[0] / 100, q_precision
                 )
                 qty_entry[1] = adjust(
-                    order_size * entry_volume[1] / 100, q_precision
+                    order_size * entry_volumes[1] / 100, q_precision
                 )
                 qty_entry[2] = adjust(
-                    order_size * entry_volume[2] / 100, q_precision
+                    order_size * entry_volumes[2] / 100, q_precision
                 )
                 qty_entry[3] = adjust(
-                    order_size * entry_volume[3] / 100, q_precision
+                    order_size * entry_volumes[3] / 100, q_precision
                 )
 
                 if np.any(qty_entry == 0):
@@ -499,7 +524,7 @@ class MeanStrikeV1(BaseStrategy):
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size'] *
-                       self.params['entry_volume'][0] / 100}'
+                       self.entry_volumes[0] / 100}'
                     f'{'u' if self.params['position_size_type'] else '%'}'
                 ),
                 margin=(
@@ -513,7 +538,7 @@ class MeanStrikeV1(BaseStrategy):
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size'] *
-                       self.params['entry_volume'][1] / 100}'
+                       self.entry_volumes[1] / 100}'
                     f'{'u' if self.params['position_size_type'] else '%'}'
                 ),
                 margin=(
@@ -531,7 +556,7 @@ class MeanStrikeV1(BaseStrategy):
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size'] *
-                       self.params['entry_volume'][2] / 100}'
+                       self.entry_volumes[2] / 100}'
                     f'{'u' if self.params['position_size_type'] else '%'}'
                 ),
                 margin=(
@@ -549,7 +574,7 @@ class MeanStrikeV1(BaseStrategy):
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size'] *
-                       self.params['entry_volume'][3] / 100}'
+                       self.entry_volumes[3] / 100}'
                     f'{'u' if self.params['position_size_type'] else '%'}'
                 ),
                 margin=(
