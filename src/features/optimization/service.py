@@ -292,7 +292,7 @@ class OptimizationService:
                 else:
                     context = self._contexts[context_id]
                     if params is not None:
-                        context['opt_params'] = params
+                        context['optimized_params'] = params
 
             if context is not None:
                 if error is None:
@@ -310,9 +310,7 @@ class OptimizationService:
                 try:
                     proc.join(timeout=1.0)
                 except Exception:
-                    logger.exception(
-                        f'Error joining process for {context_id}'
-                    )
+                    logger.exception(f'Join failed for {context_id}')
 
             self._proc_event.set()
 

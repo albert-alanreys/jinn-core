@@ -35,4 +35,4 @@ class StrategyContext(TypedDict):
     exchange: str
     market_data: MarketData
     strategy_class: type[BaseStrategy]
-    optimized_params: list[dict[str, Any]]
+    optimized_params: list[dict[str, Any]] | None

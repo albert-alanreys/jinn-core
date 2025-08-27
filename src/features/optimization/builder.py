@@ -55,9 +55,11 @@ class OptimizationContextBuilder:
         market_data = self._get_market_data(config, strategy_class, client)
 
         return {
-            'context_config': config,
+            'name': config['strategy'],
+            'exchange': config['exchange'],
             'market_data': market_data,
             'strategy_class': strategy_class,
+            'optimized_params': None,
         }
    
     def _get_strategy_class(self, strategy: str) -> type[BaseStrategy]:
