@@ -4,14 +4,14 @@ from json import dumps
 from flask import Blueprint, Response, request
 
 from src.features.execution import execution_service
-from ..errors.alerts import handle_alert_api_errors
+from ..errors.alerts import with_alert_error_handling
 
 
 alerts_bp = Blueprint('alerts_api', __name__, url_prefix='/api/alerts')
 
 
 @alerts_bp.route('', methods=['GET'])
-@handle_alert_api_errors
+@with_alert_error_handling
 def get_alerts() -> Response:
     """
     Get active strategy alerts with optional filtering.
@@ -51,7 +51,7 @@ def get_alerts() -> Response:
 
 
 @alerts_bp.route('/<string:alert_id>', methods=['DELETE'])
-@handle_alert_api_errors
+@with_alert_error_handling
 def delete_alert(alert_id: str) -> Response:
     """
     Remove alert from active alerts collection.

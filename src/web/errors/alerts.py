@@ -10,7 +10,7 @@ from flask import Response
 logger = getLogger(__name__)
 
 
-def handle_alert_api_errors(f: Callable) -> Callable:
+def with_alert_error_handling(f: Callable) -> Callable:
     """
     Decorator for handling errors in alert API endpoints.
     
@@ -24,29 +24,30 @@ def handle_alert_api_errors(f: Callable) -> Callable:
     def wrapper(*args: Any, **kwargs: Any) -> Response:
         try:
             return f(*args, **kwargs)
-        except KeyError as e:
+        except KeyError:
             logger.exception('Alert not found')
+            alert_id = kwargs.get('alert_id', 'unknown')
             return Response(
                 dumps({
                     'status': 'error',
                     'type': 'alert_not_found',
-                    'message': f"Alert {kwargs['alert_id']} not found"
+                    'message': f'Alert {alert_id} not found'
                 }),
                 mimetype='application/json',
                 status=404
             )
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError):
             logger.exception('Invalid request')
             return Response(
                 dumps({
                     'status': 'error',
                     'type': 'invalid_request',
-                    'message': str(e) or 'Invalid request parameters'
+                    'message': 'Invalid request parameters'
                 }),
                 mimetype='application/json',
                 status=400
             )
-        except Exception as e:
+        except Exception:
             logger.exception('Server error')
             return Response(
                 dumps({
@@ -57,4 +58,5 @@ def handle_alert_api_errors(f: Callable) -> Callable:
                 mimetype='application/json',
                 status=500
             )
+    
     return wrapper

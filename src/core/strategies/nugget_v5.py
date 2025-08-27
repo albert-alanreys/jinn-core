@@ -140,15 +140,24 @@ class NuggetV5(BaseStrategy):
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.st_upper_band_changed = quantklines.change(source=self.dst[0], length=1)
-        self.st_lower_band_changed = quantklines.change(source=self.dst[1], length=1)
+        self.st_upper_band_changed = quantklines.change(
+            source=self.dst[0],
+            length=1
+        )
+        self.st_lower_band_changed = quantklines.change(
+            source=self.dst[1],
+            length=1
+        )
         self.k = quantklines.stoch(
             source=self.close,
             high=self.high,
             low=self.low,
             length=self.params['k_length']
         )
-        self.d = quantklines.sma(source=self.k, length=self.params['d_length'])
+        self.d = quantklines.sma(
+            source=self.k,
+            length=self.params['d_length']
+        )
 
         if self.params['adx_filter']:
             dmi = quantklines.dmi(
