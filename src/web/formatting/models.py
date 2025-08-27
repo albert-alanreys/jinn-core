@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, TypedDict
+from typing import TypedDict
 
 
 class ExecutionContextResponse(TypedDict):
@@ -12,8 +12,8 @@ class ExecutionContextResponse(TypedDict):
     interval: str
     minMove: float
     precision: int
-    strategyParams: dict[str, Any]
-    indicatorOptions: dict[str, Any]
+    strategyParams: dict[str, bool | int | float]
+    indicatorOptions: dict[str, bool | int | str]
 
 
 class OptimizationContextResponse(TypedDict):
@@ -25,4 +25,4 @@ class OptimizationContextResponse(TypedDict):
     exchange: str
     start: str
     end: str
-    optimizedParams: list[dict]
+    optimizedParams: list[dict[str, bool | int | float]]

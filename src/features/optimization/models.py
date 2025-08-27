@@ -1,6 +1,6 @@
 from __future__ import annotations
 from enum import Enum
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
     from src.core.providers import MarketData
@@ -35,4 +35,4 @@ class StrategyContext(TypedDict):
     exchange: str
     market_data: MarketData
     strategy_class: type[BaseStrategy]
-    optimized_params: list[dict[str, Any]] | None
+    optimized_params: list[dict[str, bool | int | float]]

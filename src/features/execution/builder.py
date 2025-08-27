@@ -1,7 +1,6 @@
 from __future__ import annotations
-from ast import literal_eval
 from logging import getLogger
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from src.core.providers import HistoryProvider, RealtimeProvider
 from src.core.strategies import strategies
@@ -74,10 +73,10 @@ class ExecutionContextBuilder:
         self,
         context: StrategyContext,
         param_name: str,
-        param_value: Any
+        param_value: bool | int | float
     ) -> StrategyContext:
         """
-        Update a strategy parameter and rebuild its execution context.
+        Update a strategy parameter and rebuild execution context.
 
         Args:
             context: Existing strategy context package
@@ -87,32 +86,18 @@ class ExecutionContextBuilder:
         Returns:
             StrategyContext:
                 Updated strategy context with recalculated metrics
-
-        Raises:
-            TypeError: If parameter type does not match existing one
         """
 
         strategy = context['strategy']
-        params = strategy.params
+        params = strategy.params.copy()
 
         old_value = params[param_name]
-        new_value = self._normalize_parameter_value(param_value)
+        params[param_name] = type(old_value)(param_value)
 
-        if (
-            isinstance(old_value, (int, float)) and
-            isinstance(new_value, (int, float))
-        ):
-            new_value = type(old_value)(new_value)
-        elif type(old_value) != type(new_value):
-            raise TypeError(
-                f'Type mismatch for parameter {param_name}: '
-                f'{type(old_value).__name__} vs {type(new_value).__name__}'
-            )
-
-        params[param_name] = new_value
-        strategy = self._create_strategy(
-            {'strategy': context['name'], 'params': params}
-        )
+        strategy = self._create_strategy({
+            'strategy': context['name'], 
+            'params': params
+        })
         metrics = self._strategy_tester.test(strategy, context['market_data'])
 
         return {
@@ -198,18 +183,3 @@ class ExecutionContextBuilder:
                 end=config['end'],
                 **common_params
             )
-    
-    @staticmethod
-    def _normalize_parameter_value(raw: Any) -> Any:
-        """Normalize raw parameter input into the correct Python type."""
-
-        if isinstance(raw, list):
-            return [float(x) for x in raw]
-
-        if isinstance(raw, str):
-            try:
-                return literal_eval(raw.capitalize())
-            except (ValueError, SyntaxError):
-                return raw.capitalize()
-
-        return raw

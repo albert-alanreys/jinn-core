@@ -1,6 +1,6 @@
 from __future__ import annotations
 from enum import Enum
-from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
+from typing import TYPE_CHECKING, NotRequired, TypedDict
 
 import numpy as np
 
@@ -28,7 +28,7 @@ class ContextConfig(TypedDict):
     interval: str
     exchange: str
     is_live: bool
-    params: dict[str, Any]
+    params: dict[str, bool | int | float]
 
     start: NotRequired[str]
     end: NotRequired[str]

@@ -2,7 +2,7 @@ from __future__ import annotations
 from logging import getLogger
 from queue import Queue
 from threading import Event, RLock, Thread
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from .builder import ExecutionContextBuilder
 from .daemon import ExecutionDaemon
@@ -134,7 +134,7 @@ class ExecutionService:
         self,
         context_id: str,
         param_name: str,
-        param_value: Any
+        param_value: bool | int | float
     ) -> None:
         """
         Update a parameter in a strategy context and recompute metrics.
