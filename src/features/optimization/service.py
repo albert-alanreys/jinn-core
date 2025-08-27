@@ -147,19 +147,16 @@ class OptimizationService:
             
             return self._contexts[context_id]
     
-    def delete_context(self, context_id: str) -> bool:
+    def delete_context(self, context_id: str) -> None:
         """
         Delete a strategy context and terminate associated processes.
         
         Args:
             context_id: Unique context identifier
             
-        Returns:
-            bool: True if context was deleted successfully
-            
         Raises:
             KeyError: If context doesn't exist
-            Exception: Raised if deleting the context fails
+            Exception: If deleting the context fails
         """
 
         with self._contexts_lock:
@@ -184,8 +181,6 @@ class OptimizationService:
                     logger.exception(
                         f'Failed to terminate process for {context_id}', 
                     )
-            
-            return True
         except Exception as e:
             logger.error(
                 f'Failed to delete context {context_id}: '

@@ -135,7 +135,7 @@ class ExecutionService:
         context_id: str,
         param_name: str,
         param_value: Any
-    ) -> bool:
+    ) -> None:
         """
         Update a parameter in a strategy context and recompute its metrics.
 
@@ -144,12 +144,9 @@ class ExecutionService:
             param_name: Strategy parameter name
             param_value: New parameter value
 
-        Returns:
-            bool: True if the context was updated successfully
-
         Raises:
             KeyError: If context doesn't exist
-            Exception: Raised if updating the context fails
+            Exception: If updating the context fails
         """
 
         with self._contexts_lock:
@@ -162,11 +159,8 @@ class ExecutionService:
             updated_context = self._context_builder.update(
                 context, param_name, param_value
             )
-
             with self._contexts_lock:
                 self._contexts[context_id] = updated_context
-            
-            return True
         except Exception as e:
             logger.error(
                 f'Failed to update context {context_id}: '
@@ -174,19 +168,16 @@ class ExecutionService:
             )
             raise
     
-    def delete_context(self, context_id: str) -> bool:
+    def delete_context(self, context_id: str) -> None:
         """
         Delete a strategy context and stop monitoring if necessary.
         
         Args:
             context_id: Unique context identifier
-            
-        Returns:
-            bool: True if context was deleted successfully
-            
+        
         Raises:
             KeyError: If context doesn't exist
-            Exception: Raised if deleting the context fails
+            Exception: If deleting the context fails
         """
 
         with self._contexts_lock:
@@ -236,15 +227,12 @@ class ExecutionService:
         with self._statuses_lock:
             return self._context_statuses.get(context_id)
     
-    def delete_alert(self, alert_id: str) -> bool:
+    def delete_alert(self, alert_id: str) -> None:
         """
         Remove an alert from the active alerts collection.
         
         Args:
             alert_id: Unique identifier of the alert
-            
-        Returns:
-            bool: True if the alert was deleted successfully
             
         Raises:
             KeyError: If alert doesn't exist
