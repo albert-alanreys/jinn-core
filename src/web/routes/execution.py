@@ -125,3 +125,44 @@ def delete_context(context_id: str) -> Response:
         status=200,
         mimetype='application/json'
     )
+
+
+@execution_bp.route('/status', methods=['GET'])
+@with_context_error_handling
+def get_all_contexts_status() -> Response:
+    """
+    Get current status information for all strategy execution contexts.
+
+    Returns:
+        Response: JSON response containing status data
+                  for all strategy execution contexts
+    """
+
+    statuses = execution_service.get_contexts_status()
+    return Response(
+        response=dumps(statuses),
+        status=200,
+        mimetype='application/json'
+    )
+
+
+@execution_bp.route('/<string:context_id>/status', methods=['GET'])
+@with_context_error_handling
+def get_context_status(context_id: str) -> Response:
+    """
+    Get current status information for a specific strategy execution context.
+
+    Path Parameters:
+        context_id: Unique identifier of the strategy context
+
+    Returns:
+        Response: JSON response containing context status.
+                  Returns null if context doesn't exist.
+    """
+
+    status = execution_service.get_context_status(context_id)
+    return Response(
+        response=dumps({'status': status}),
+        status=200,
+        mimetype='application/json'
+    )
