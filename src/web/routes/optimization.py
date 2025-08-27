@@ -1,7 +1,7 @@
 from __future__ import annotations
 from json import dumps
 
-from flask import Blueprint, Response
+from flask import Blueprint, Response, request
 
 from src.features.optimization import optimization_service
 from ..errors.contexts import with_context_error_handling
@@ -13,6 +13,39 @@ optimization_bp = Blueprint(
     import_name=__name__,
     url_prefix='/api/contexts/optimization'
 )
+
+
+@optimization_bp.route('', methods=['POST'])
+@with_context_error_handling
+def add_contexts() -> Response:
+    """
+    Add new strategy optimization contexts to the processing queue.
+
+    Request Body:
+        {
+            "context_id_1": {
+                "strategy": "strategy_name",
+                "symbol": "BTCUSDT",
+                "interval": "1h",
+                "exchange": "BINANCE",
+                "start": "2020-01-01",
+                "end": "2024-12-31"
+            },
+            "context_id_2": {...}
+        }
+
+    Returns:
+        Response: JSON response containing list of successfully
+                  queued context identifiers
+    """
+
+    configs = request.get_json()
+    added = optimization_service.add_contexts(configs)
+    return Response(
+        response=dumps({'added': added}),
+        status=201,
+        mimetype='application/json'
+    )
 
 
 @optimization_bp.route('', methods=['GET'])

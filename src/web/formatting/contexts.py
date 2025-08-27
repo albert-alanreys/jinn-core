@@ -1,15 +1,24 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.features.execution.models import (
         StrategyContext as ExecutionContext
     )
+    from src.features.optimization.models import (
+        StrategyContext as OptimizationContext
+    )
+    from .models import (
+        ExecutionContextResponse,
+        OptimizationContextResponse
+    )
 
 
-def format_execution_contexts(contexts: ExecutionContext) -> dict[str, Any]:
+def format_execution_contexts(
+    contexts: ExecutionContext
+) -> dict[str, ExecutionContextResponse]:
     """
-    Format strategy contexts for frontend display.
+    Format strategy execution contexts.
 
     Args:
         contexts: Dictionary of strategy contexts
@@ -47,5 +56,31 @@ def format_execution_contexts(contexts: ExecutionContext) -> dict[str, Any]:
     return result
 
 
-def format_optimization_contexts(contexts: ExecutionContext) -> dict[str, Any]:
-    pass
+def format_optimization_contexts(
+        contexts: OptimizationContext
+    ) -> dict[str, OptimizationContextResponse]:
+    """
+    Format strategy optimization contexts.
+
+    Args:
+        contexts: Dictionary of strategy contexts
+
+    Returns:
+        dict: Formatted context data
+    """
+
+    result = {}
+    for context_id, context in contexts.items():
+        market_data = context['market_data']
+
+        result[context_id] = {
+            'strategy': context['name'],
+            'symbol': market_data['symbol'],
+            'interval': market_data['interval'],
+            'exchange': context['exchange'],
+            'start': market_data['start'],
+            'end': market_data['end'],
+            'optimizedParams': context['optimized_params'],
+        }
+
+    return result
