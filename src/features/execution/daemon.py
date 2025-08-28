@@ -1,8 +1,9 @@
 from __future__ import annotations
 from logging import getLogger
 from threading import Event, RLock, Thread
-from time import sleep, time
+from time import sleep
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 from src.core.providers import RealtimeProvider
 from src.infrastructure.messaging import TelegramClient
@@ -134,9 +135,12 @@ class ExecutionDaemon:
         """
 
         strategy = context['strategy']
-        strategy.calculate(context['market_data'])
+        market_data = context['market_data']
+
+        metrics = self._strategy_tester.test(strategy, market_data)
+        context['metrics'] = metrics
+
         strategy.trade(context['client'])
-        context['metrics'] = self._strategy_tester.test(strategy)
     
     def _process_alerts(
         self,
@@ -159,15 +163,11 @@ class ExecutionDaemon:
         
         alerts_to_process = alerts.copy()
         alerts.clear()
-        
+
         for alert in alerts_to_process:
-            alert_data = {
-                'context': context_id,
-                'strategy': context['name'],
-                'content': alert.copy(),
+            self._alert_registry[str(uuid4())] = {
+                'context': context_id, **alert,
             }
-            alert_id = str(hash(f'{context_id}_{time()}'))
-            self._alert_registry[alert_id] = alert_data
 
             try:
                 self._telegram_client.send_order_alert(alert)

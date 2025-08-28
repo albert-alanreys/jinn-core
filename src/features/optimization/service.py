@@ -50,7 +50,11 @@ class OptimizationService:
         self._active_procs: dict[str, Process] = {}
         self._active_lock = RLock()
 
-        self._max_processes = int(getenv('MAX_PROCESSES', cpu_count()))
+        max_processes_env = getenv('MAX_PROCESSES')
+        if max_processes_env and max_processes_env.strip():
+            self._max_processes = int(max_processes_env)
+        else:
+            self._max_processes = cpu_count()
 
         self._config_thread = Thread(
             target=self._run_monitor_config_queue,

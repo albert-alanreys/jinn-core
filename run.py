@@ -1,8 +1,11 @@
+from dotenv import load_dotenv
 from waitress import serve
 
-from src.web import create_app
 
+load_dotenv()
 
 if __name__ == '__main__':
+    from src.web import create_app
+
     app = create_app()
     serve(app, host='127.0.0.1', port=app.config['PORT'])

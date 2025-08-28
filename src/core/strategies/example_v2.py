@@ -55,7 +55,7 @@ class ExampleV2(BaseStrategy):
     # Market data sources required for strategy calculations
     feeds = {
         'klines': {
-            'HTF': ['symbol', Interval.DAY_1],
+            'HTF': ['symbol', Interval.MIN_5],
             'LTF': ['symbol', Interval.MIN_1],
         },
     }
@@ -362,15 +362,15 @@ class ExampleV2(BaseStrategy):
             },
             'TP #1': {
                 'options': self.indicator_options['TP #1'],
-                'values': self.take_price[0],
+                'values': self.take_prices[0],
             },
             'TP #2': {
                 'options': self.indicator_options['TP #2'],
-                'values': self.take_price[1],
+                'values': self.take_prices[1],
             },
             'TP #3': {
                 'options': self.indicator_options['TP #3'],
-                'values': self.take_price[2],
+                'values': self.take_prices[2],
             },
             'Volume': {
                 'options': self.indicator_options['Volume'],

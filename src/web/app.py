@@ -2,7 +2,6 @@ from __future__ import annotations
 from os import getenv
 from os.path import abspath, join
 
-from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
 
@@ -24,7 +23,6 @@ def create_app() -> Flask:
         template_folder=get_templates_path()
     )
     
-    load_dotenv()
     configure_app(app)
     setup_cors(app)
     register_routes(app)
