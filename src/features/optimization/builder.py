@@ -3,7 +3,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from src.core.providers import HistoryProvider
-from src.core.strategies import strategies
+from src.core.strategies import strategy_registry
 from src.infrastructure.exchanges import BinanceClient, BybitClient
 from src.infrastructure.exchanges.models import Exchange, Interval
 
@@ -76,10 +76,10 @@ class OptimizationContextBuilder:
             ValueError: If the strategy name is not found in the registry
         """
         
-        if strategy not in strategies:
+        if strategy not in strategy_registry:
             raise ValueError(f'Unknown strategy: {strategy}')
         
-        return strategies[strategy]
+        return strategy_registry[strategy]
     
     def _get_exchange_client(self, exchange: str) -> BaseExchangeClient:
         """

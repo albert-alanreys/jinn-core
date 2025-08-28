@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import numba as nb
 
-from src.core.quantklines.math import rma
-from src.core.quantklines.volatility import tr
+from ..math import rma
+from ..volatility import tr
 
 
 @nb.njit(

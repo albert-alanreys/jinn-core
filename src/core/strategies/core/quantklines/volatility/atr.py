@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import numba as nb
 
-from src.core.quantklines.math import rma
 from .tr import tr
+from ..math import rma
 
 
 @nb.njit(

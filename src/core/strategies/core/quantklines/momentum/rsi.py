@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import numba as nb
 
-from src.core.quantklines.math import rma
+from ..math import rma
 
 
 @nb.njit(nb.float64[:](nb.float64[:], nb.int16), cache=True, nogil=True)

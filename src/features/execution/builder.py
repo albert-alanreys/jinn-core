@@ -3,7 +3,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from src.core.providers import HistoryProvider, RealtimeProvider
-from src.core.strategies import strategies
+from src.core.strategies import strategy_registry
 from src.infrastructure.exchanges import BinanceClient, BybitClient
 from src.infrastructure.exchanges.models import Exchange, Interval
 from .tester import StrategyTester
@@ -122,10 +122,10 @@ class ExecutionContextBuilder:
 
         strategy_name = config['strategy']
         
-        if strategy_name not in strategies:
+        if strategy_name not in strategy_registry:
             raise ValueError(f'Unknown strategy: {strategy_name}')
         
-        strategy_class = strategies[strategy_name]
+        strategy_class = strategy_registry[strategy_name]
         return strategy_class(config['params'])
     
     def _get_exchange_client(self, exchange: str) -> BaseExchangeClient:

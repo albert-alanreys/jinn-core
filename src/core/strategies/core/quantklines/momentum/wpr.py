@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import numba as nb
 
-from src.core.quantklines.utils import highest, lowest
+from ..utils import highest, lowest
 
 
 @nb.njit(

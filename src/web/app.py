@@ -37,7 +37,7 @@ def create_app() -> Flask:
 def load_environment() -> None:
     """Load environment variables from .env file."""
 
-    load_dotenv()
+    load_dotenv(override=True)
 
 
 def configure_logging() -> None:
@@ -81,8 +81,6 @@ def configure_app(app: Flask) -> None:
 
     app.config.update({
         'PORT': int(getenv('SERVER_PORT', 5000)),
-        'DEBUG': getenv('FLASK_DEBUG', 'false').lower() == 'true',
-        'ENV': getenv('FLASK_ENV', 'production')
     })
 
 
