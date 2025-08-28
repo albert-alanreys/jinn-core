@@ -15,41 +15,6 @@ execution_bp = Blueprint(
 )
 
 
-@execution_bp.route('', methods=['POST'])
-@with_context_error_handling
-def add_contexts() -> Response:
-    """
-    Add new strategy execution contexts to the processing queue.
-
-    Request Body:
-        {
-            "context_id_1": {
-                "strategy": "strategy_name",
-                "symbol": "BTCUSDT",
-                "interval": "1h",
-                "exchange": "BINANCE",
-                "is_live": false,
-                "params": {...},
-                "start": "2020-01-01",  // optional
-                "end": "2024-12-31"     // optional
-            },
-            "context_id_2": {...}
-        }
-
-    Returns:
-        Response: JSON response containing list of successfully
-                  queued context identifiers
-    """
-
-    configs = request.get_json()
-    added = execution_service.add_contexts(configs)
-    return Response(
-        response=dumps({'added': added}),
-        status=201,
-        mimetype='application/json'
-    )
-
-
 @execution_bp.route('', methods=['GET'])
 @with_context_error_handling
 def get_all_contexts() -> Response:
@@ -106,6 +71,41 @@ def get_context(context_id: str) -> Response:
     return Response(
         response=dumps(formatted),
         status=200,
+        mimetype='application/json'
+    )
+
+
+@execution_bp.route('', methods=['POST'])
+@with_context_error_handling
+def add_contexts() -> Response:
+    """
+    Add new strategy execution contexts to the processing queue.
+
+    Request Body:
+        {
+            "context_id_1": {
+                "strategy": "strategy_name",
+                "symbol": "BTCUSDT",
+                "interval": "1h",
+                "exchange": "BINANCE",
+                "is_live": false,
+                "params": {...},
+                "start": "2020-01-01",  // optional
+                "end": "2024-12-31"     // optional
+            },
+            "context_id_2": {...}
+        }
+
+    Returns:
+        Response: JSON response containing list of successfully
+                  queued context identifiers
+    """
+
+    configs = request.get_json()
+    added = execution_service.add_contexts(configs)
+    return Response(
+        response=dumps({'added': added}),
+        status=201,
         mimetype='application/json'
     )
 
