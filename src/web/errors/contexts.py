@@ -25,19 +25,17 @@ def with_context_error_handling(f: Callable) -> Callable:
         try:
             return f(*args, **kwargs)
         except KeyError:
-            logger.exception('Context not found')
             context_id = kwargs.get('context_id', 'unknown')
             return Response(
                 dumps({
                     'status': 'error',
                     'type': 'context_not_found',
-                    'message': f'Context {context_id} not found'
+                    'message': f"Context '{context_id}' not found"
                 }),
                 mimetype='application/json',
                 status=404
             )
         except (TypeError, ValueError):
-            logger.exception('Invalid request')
             return Response(
                 dumps({
                     'status': 'error',
@@ -48,7 +46,7 @@ def with_context_error_handling(f: Callable) -> Callable:
                 status=400
             )
         except Exception:
-            logger.exception('An error occurred')
+            logger.exception('An unexpected server error occurred')
             return Response(
                 dumps({
                     'status': 'error',

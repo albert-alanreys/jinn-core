@@ -3,10 +3,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.features.execution.models import (
-        StrategyContext as ExecutionContext
+        StrategyContext as ExecutionContext,
+        ContextStatus as ExecutionContextStatus
     )
     from src.features.optimization.models import (
-        StrategyContext as OptimizationContext
+        StrategyContext as OptimizationContext,
+        ContextStatus as OptimizationContextStatus
     )
     from .models import (
         ExecutionContextResponse,
@@ -40,7 +42,7 @@ def format_execution_contexts(
         result[context_id] = {
             'strategy': context['name'],
             'symbol': market_data['symbol'],
-            'interval': market_data['interval'],
+            'interval': market_data['interval'].value,
             'exchange': context['exchange'],
             'isLive': context['is_live'],
             'minMove': min_move,
@@ -71,7 +73,7 @@ def format_optimization_contexts(
         result[context_id] = {
             'strategy': context['name'],
             'symbol': market_data['symbol'],
-            'interval': market_data['interval'],
+            'interval': market_data['interval'].value,
             'exchange': context['exchange'],
             'start': market_data['start'],
             'end': market_data['end'],
@@ -79,3 +81,23 @@ def format_optimization_contexts(
         }
 
     return result
+
+
+def format_contexts_statuses(
+    statuses: dict[str, ExecutionContextStatus | OptimizationContextStatus]
+) -> dict[str, str]:
+    """
+    Format strategy execution context statuses for frontend.
+    Converts ContextStatus enums to string values.
+
+    Args:
+        statuses: Dictionary of strategy context statuses
+
+    Returns:
+        dict[str, str]: Status data with enum values as strings
+    """
+    
+    return {
+        context_id: status.value
+        for context_id, status in statuses.items()
+    }

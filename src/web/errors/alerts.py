@@ -25,19 +25,17 @@ def with_alert_error_handling(f: Callable) -> Callable:
         try:
             return f(*args, **kwargs)
         except KeyError:
-            logger.exception('Alert not found')
             alert_id = kwargs.get('alert_id', 'unknown')
             return Response(
                 dumps({
                     'status': 'error',
                     'type': 'alert_not_found',
-                    'message': f'Alert {alert_id} not found'
+                    'message': f"Alert '{alert_id}' not found"
                 }),
                 mimetype='application/json',
                 status=404
             )
         except (TypeError, ValueError):
-            logger.exception('Invalid request')
             return Response(
                 dumps({
                     'status': 'error',
@@ -48,7 +46,7 @@ def with_alert_error_handling(f: Callable) -> Callable:
                 status=400
             )
         except Exception:
-            logger.exception('Server error')
+            logger.exception('An unexpected server error occurred')
             return Response(
                 dumps({
                     'status': 'error',

@@ -6,14 +6,10 @@ from typing import TYPE_CHECKING
 
 from .builder import ExecutionContextBuilder
 from .daemon import ExecutionDaemon
+from .models import ContextStatus
 
 if TYPE_CHECKING:
-    from .models import (
-        AlertData,
-        ContextConfig,
-        ContextStatus,
-        StrategyContext
-    )
+    from .models import AlertData, ContextConfig, StrategyContext
 
 
 logger = getLogger(__name__)
@@ -199,17 +195,6 @@ class ExecutionService:
                 f'{type(e).__name__} - {e}'
             )
             raise
-    
-    def get_contexts_status(self) -> dict[str, ContextStatus]:
-        """
-        Get current status for all strategy contexts.
-        
-        Returns:
-            dict: Mapping of context IDs to their statuses
-        """
-
-        with self._statuses_lock:
-            return self._context_statuses.copy()
     
     def get_context_status(self, context_id: str) -> ContextStatus:
         """

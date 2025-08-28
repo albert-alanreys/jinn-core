@@ -105,11 +105,13 @@ class HistoryProvider():
         """
 
         db_name = f'{client.exchange_name.lower()}.db'
+        symbol_key = symbol.lower()
+
         precision_data = db_manager.fetch_one(
             database_name=db_name,
             table_name='symbol_precisions',
             key_column='symbol',
-            key_value=symbol
+            key_value=symbol_key
         )
 
         if precision_data:
@@ -127,7 +129,7 @@ class HistoryProvider():
                     'price_precision': 'REAL',
                     'qty_precision': 'REAL'
                 },
-                row=(symbol, p_precision, q_precision),
+                row=(symbol_key, p_precision, q_precision),
                 replace=True
             )
 
@@ -165,7 +167,7 @@ class HistoryProvider():
         """
 
         db_name = f'{client.exchange_name.lower()}.db'
-        table_name = f'{symbol}_{interval.name}'
+        table_name = f'{symbol}_{interval.name}'.lower()
 
         start_ms = self._to_ms(start)
         end_ms = self._to_ms(end)
@@ -180,8 +182,8 @@ class HistoryProvider():
             first_meta = db_manager.fetch_one(
                 database_name=db_name,
                 table_name='klines_metadata',
-                key_column='klines_key',
-                key_value=table_name
+                key_column='table_name',
+                key_value=table_name.lower()
             )
 
             if not first_meta:
@@ -230,7 +232,7 @@ class HistoryProvider():
                     database_name=db_name,
                     table_name='klines_metadata',
                     columns={
-                        'klines_key': 'TEXT PRIMARY KEY',
+                        'table_name': 'TEXT PRIMARY KEY',
                         'has_first_kline': 'BOOLEAN'
                     },
                     row=(table_name, True),

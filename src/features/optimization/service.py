@@ -7,14 +7,11 @@ from typing import TYPE_CHECKING
 from multiprocessing import Process, Queue as MPQueue
 
 from .builder import OptimizationContextBuilder
+from .models import ContextStatus
 from .optimizer import optimize_worker
 
 if TYPE_CHECKING:
-    from .models import (
-        ContextConfig,
-        ContextStatus,
-        StrategyContext
-    )
+    from .models import ContextConfig, StrategyContext
 
 
 logger = getLogger(__name__)
@@ -181,17 +178,6 @@ class OptimizationService:
                 f'{type(e).__name__} - {e}'
             )
             raise
-    
-    def get_contexts_status(self) -> dict[str, ContextStatus]:
-        """
-        Get current status for all strategy contexts.
-        
-        Returns:
-            dict: Mapping of context IDs to their statuses
-        """
-
-        with self._statuses_lock:
-            return self._context_statuses.copy()
     
     def get_context_status(self, context_id: str) -> ContextStatus:
         """

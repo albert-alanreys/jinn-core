@@ -5,7 +5,10 @@ from flask import Blueprint, Response, request
 
 from src.features.optimization import optimization_service
 from ..errors.contexts import with_context_error_handling
-from ..formatting.contexts import format_optimization_contexts
+from ..formatting.contexts import (
+    format_optimization_contexts,
+    format_contexts_statuses
+)
 
 
 optimization_bp = Blueprint(
@@ -122,9 +125,10 @@ def get_all_contexts_status() -> Response:
                   for all strategy optimization contexts
     """
 
-    statuses = optimization_service.get_contexts_status()
+    statuses = optimization_service.statuses
+    formatted = format_contexts_statuses(statuses)
     return Response(
-        response=dumps(statuses),
+        response=dumps(formatted),
         status=200,
         mimetype='application/json'
     )
@@ -147,7 +151,7 @@ def get_context_status(context_id: str) -> Response:
 
     status = optimization_service.get_context_status(context_id)
     return Response(
-        response=dumps({'status': status}),
+        response=dumps({'status': status.value}),
         status=200,
         mimetype='application/json'
     )

@@ -29,7 +29,7 @@ def load_order_cache(
     
     db_name = f'{exchange.lower()}.db'
     table_name = 'order_identifiers'
-    key = f'{strategy}_{symbol}'
+    key = f'{strategy}_{symbol}'.lower()
     
     try:
         row = db_manager.fetch_one(
@@ -78,7 +78,7 @@ def save_order_cache(
     
     db_name = f'{exchange.lower()}.db'
     table_name = 'order_identifiers'
-    key = f'{strategy}_{symbol}'
+    key = f'{strategy}_{symbol}'.lower()
     
     stop_ids_str = _format_ids_list(order_ids.get('stop_ids', []))
     limit_ids_str = _format_ids_list(order_ids.get('limit_ids', []))
