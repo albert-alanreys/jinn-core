@@ -1,6 +1,8 @@
+from waitress import serve
+
 from src.web import create_app
 
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(port=app.config['PORT'])
+    serve(app, host='127.0.0.1', port=app.config['PORT'])

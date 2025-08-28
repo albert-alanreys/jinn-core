@@ -22,7 +22,8 @@ def create_app() -> Flask:
     configure_logging()
     
     app = Flask(
-        __name__,
+        import_name=__name__,
+        static_url_path='',
         static_folder=get_static_path(),
         template_folder=get_templates_path()
     )
@@ -37,7 +38,7 @@ def create_app() -> Flask:
 def load_environment() -> None:
     """Load environment variables from .env file."""
 
-    load_dotenv(override=True)
+    load_dotenv()
 
 
 def configure_logging() -> None:
@@ -45,7 +46,8 @@ def configure_logging() -> None:
 
     basicConfig(
         level=INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
 
 
@@ -81,6 +83,7 @@ def configure_app(app: Flask) -> None:
 
     app.config.update({
         'PORT': int(getenv('SERVER_PORT', 5000)),
+        'BASE_URL': getenv('BASE_URL', 'http://127.0.0.1'),
     })
 
 
