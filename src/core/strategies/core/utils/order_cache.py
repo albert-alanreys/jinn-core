@@ -1,70 +1,73 @@
 from __future__ import annotations
-from json import JSONDecodeError, dump, load
 from logging import getLogger
-from os import makedirs
-from os.path import exists, join
+
+from src.infrastructure.db import db_manager
 
 
 logger = getLogger(__name__)
 
 
 def load_order_cache(
-    base_dir: str,
     strategy: str,
     exchange: str,
     symbol: str
-) -> dict:
+) -> dict[str, list[str]]:
     """
-    Load cached order IDs for a given strategy, exchange, and symbol.
-
-    This function reads JSON data from the corresponding cache file and
-    returns stop and limit order IDs. If the file does not exist or
-    contains invalid JSON, empty lists are returned.
+    Load cached order IDs for a given strategy, exchange,
+    and symbol from SQLite database.
 
     Args:
-        base_dir: Root cache directory
         strategy: Strategy name
-        exchange: Exchange name
+        exchange: Exchange name  
         symbol: Trading symbol
 
     Returns:
-        dict: Dictionary containing:
-              - 'stop_ids': list of stop order IDs
-              - 'limit_ids': list of limit order IDs
+        dict[str, list[str]]: Dictionary containing:
+            - 'stop_ids': list of stop order IDs
+            - 'limit_ids': list of limit order IDs
     """
-
-    path = _get_cache_path(base_dir, strategy, exchange, symbol)
-
-    if not exists(path):
-        return {'stop_ids': [], 'limit_ids': []}
-
+    
+    db_name = f'{exchange.lower()}.db'
+    table_name = 'order_identifiers'
+    key = f'{strategy}_{symbol}'
+    
     try:
-        with open(path, 'r') as file:
-            data = load(file)
+        row = db_manager.fetch_one(
+            database_name=db_name,
+            table_name=table_name,
+            key_column='key',
+            key_value=key
+        )
+        
+        if not row:
+            return {'stop_ids': [], 'limit_ids': []}
+        
+        stop_ids = _parse_ids_string(row[1]) if row[1] else []
+        limit_ids = _parse_ids_string(row[2]) if row[2] else []
+        
         return {
-            'stop_ids': data.get('stop_ids', []),
-            'limit_ids': data.get('limit_ids', [])
+            'stop_ids': stop_ids,
+            'limit_ids': limit_ids
         }
-    except JSONDecodeError:
-        logger.error(f'Failed to load JSON from {path}')
+    except Exception as e:
+        logger.error(
+            f'Failed to load order cache for {key}: '
+            f'{type(e).__name__} - {e}'
+        )
         return {'stop_ids': [], 'limit_ids': []}
 
 
 def save_order_cache(
-    base_dir: str,
     strategy: str,
     exchange: str,
     symbol: str,
-    order_ids: dict
+    order_ids: dict[str, list[str]]
 ) -> None:
     """
-    Save order IDs to cache for a given strategy, exchange, and symbol.
-
-    The function creates the cache directory if necessary and writes
-    order IDs in JSON format. Existing file will be overwritten.
+    Save order IDs to SQLite database for a given strategy,
+    exchange, and symbol.
 
     Args:
-        base_dir: Root cache directory
         strategy: Strategy name
         exchange: Exchange name
         symbol: Trading symbol
@@ -72,41 +75,65 @@ def save_order_cache(
             - 'stop_ids': list of stop order IDs
             - 'limit_ids': list of limit order IDs
     """
-
-    makedirs(base_dir, exist_ok=True)
-    path = _get_cache_path(base_dir, strategy, exchange, symbol)
-    data = {
-        'stop_ids': order_ids.get('stop_ids', []),
-        'limit_ids': order_ids.get('limit_ids', [])
+    
+    db_name = f'{exchange.lower()}.db'
+    table_name = 'order_identifiers'
+    key = f'{strategy}_{symbol}'
+    
+    stop_ids_str = _format_ids_list(order_ids.get('stop_ids', []))
+    limit_ids_str = _format_ids_list(order_ids.get('limit_ids', []))
+    
+    columns = {
+        'key': 'TEXT PRIMARY KEY',
+        'stop_ids': 'TEXT',
+        'limit_ids': 'TEXT'
     }
-
+    row = (key, stop_ids_str, limit_ids_str)
+    
     try:
-        with open(path, 'w') as file:
-            dump(data, file, indent=4)
+        db_manager.insert_one(
+            database_name=db_name,
+            table_name=table_name,
+            columns=columns,
+            row=row,
+            replace=True
+        )
     except Exception as e:
         logger.error(
-            f'Failed to write JSON to {path}: {type(e).__name__} - {e}'
+            f'Failed to save order cache for {key}: '
+            f'{type(e).__name__} - {e}'
         )
 
 
-def _get_cache_path(
-    base_dir: str,
-    strategy: str,
-    exchange: str,
-    symbol: str
-) -> str:
+def _parse_ids_string(ids_str: str) -> list[str]:
     """
-    Build the full path for the cache file.
-
+    Parse comma-separated string of IDs into a list.
+    
     Args:
-        base_dir: Root directory where cache files are stored
-        strategy: Strategy name. Used to separate cache files per strategy
-        exchange: Exchange name. Used in filename
-        symbol: Trading symbol (e.g., 'BTCUSDT')
-
+        ids_str: Comma-separated string of IDs
+        
     Returns:
-        str: Full path to the cache file in format:
-             {base_dir}/{strategy}_{exchange}_{symbol}_ORDER_IDS.json
+        list[str]: List of order IDs
     """
 
-    return join(base_dir, f'{strategy}_{exchange}_{symbol}_ORDER_IDS.json')
+    if not ids_str or ids_str.strip() == '':
+        return []
+    
+    return [id_str.strip() for id_str in ids_str.split(',') if id_str.strip()]
+
+
+def _format_ids_list(ids_list: list[str]) -> str:
+    """
+    Format list of IDs into comma-separated string.
+    
+    Args:
+        ids_list: List of order IDs
+        
+    Returns:
+        str: Comma-separated string of IDs
+    """
+
+    if not ids_list:
+        return ''
+    
+    return ','.join(str(id_val) for id_val in ids_list)

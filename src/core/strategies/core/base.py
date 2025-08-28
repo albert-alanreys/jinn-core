@@ -1,8 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from inspect import getfile
-from os.path import join, dirname
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -216,9 +214,28 @@ class BaseStrategy(ABC):
         self.equity = self.params['initial_capital']
 
     def trade(self, client: BaseExchangeClient) -> None:
+        """
+        Execute trading strategy with automatic order cache management.
+        
+        This method handles the complete trading workflow including:
+        - Loading cached order IDs from database
+        - Executing strategy-specific trading logic
+        - Saving updated order IDs back to database
+        
+        The order cache is automatically managed using SQLite database
+        with structure: {exchange_name}.db -> order_identifiers table.
+        Cache key format: {strategy_name}_{symbol}
+        
+        Order cache contains:
+        - stop_ids: List of active stop order identifiers
+        - limit_ids: List of active limit order identifiers
+        
+        Args:
+            client: Exchange client instance
+        """
+
         if not hasattr(self, 'order_ids'):
             self.order_ids = order_cache.load_order_cache(
-                base_dir=join(dirname(getfile(self.__class__)), '__cache__'),
                 strategy=self.__class__.__name__,
                 exchange=client.exchange_name,
                 symbol=self.symbol
@@ -228,7 +245,6 @@ class BaseStrategy(ABC):
             self._trade(client)
         finally:
             order_cache.save_order_cache(
-                base_dir=join(dirname(getfile(self.__class__)), '__cache__'),
                 strategy=self.__class__.__name__,
                 exchange=client.exchange_name,
                 symbol=self.symbol,

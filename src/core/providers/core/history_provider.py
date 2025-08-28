@@ -119,7 +119,7 @@ class HistoryProvider():
         q_precision = client.market.get_qty_precision(symbol)
 
         if p_precision is not None and q_precision is not None:
-            db_manager.save(
+            db_manager.insert_one(
                 database_name=db_name,
                 table_name='symbol_precisions',
                 columns={
@@ -127,8 +127,8 @@ class HistoryProvider():
                     'price_precision': 'REAL',
                     'qty_precision': 'REAL'
                 },
-                rows=[[symbol, p_precision, q_precision]],
-                drop=False
+                row=(symbol, p_precision, q_precision),
+                replace=True
             )
 
         return p_precision, q_precision
@@ -210,7 +210,7 @@ class HistoryProvider():
             if has_realtime_kline(klines):
                 klines = klines[:-1]
 
-            db_manager.save(
+            db_manager.insert_many(
                 database_name=db_name,
                 table_name=table_name,
                 columns={
@@ -226,15 +226,15 @@ class HistoryProvider():
             )
 
             if has_first_historical_kline(raw_klines, start_ms):
-                db_manager.save(
+                db_manager.insert_one(
                     database_name=db_name,
                     table_name='klines_metadata',
                     columns={
                         'klines_key': 'TEXT PRIMARY KEY',
                         'has_first_kline': 'BOOLEAN'
                     },
-                    rows=[[table_name, True]],
-                    drop=False
+                    row=(table_name, True),
+                    replace=True
                 )
         else:
             klines = np.array(raw_klines)

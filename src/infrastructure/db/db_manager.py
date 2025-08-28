@@ -107,7 +107,7 @@ class DBManager():
             )
             return ()
 
-    def save(
+    def insert_many(
         self,
         database_name: str,
         table_name: str,
@@ -116,7 +116,7 @@ class DBManager():
         drop: bool
     ) -> None:
         """
-        Save multiple rows into the specified table in the SQLite database.
+        Insert multiple rows into the specified table in the SQLite database.
 
         If the table does not exist, it will be created using the provided
         column definitions. Optionally drops the table before inserting.
@@ -159,6 +159,58 @@ class DBManager():
         except Exception as e:
             logger.error(
                 f'Failed to save data into {table_name}: '
+                f'{type(e).__name__} - {e}'
+            )
+
+    def insert_one(
+        self,
+        database_name: str,
+        table_name: str,
+        columns: dict[str, str],
+        row: tuple[Any, ...],
+        replace: bool = False
+    ) -> None:
+        """
+        Insert a single row into the specified table in the SQLite database.
+
+        If the table does not exist, it will be created using the provided
+        column definitions.
+
+        Args:
+            database_name: Name of the database file
+            table_name: Name of the table to insert data into
+            columns: Dictionary mapping column names to SQLite types
+            row: Tuple containing values to be inserted
+            replace: If True, use INSERT OR REPLACE
+        """
+
+        try:
+            with self._db_session(database_name) as cursor:
+                query_to_check = (
+                    'SELECT name FROM sqlite_master '
+                    'WHERE type="table" AND name=?'
+                )
+                cursor.execute(query_to_check, (table_name,))
+                
+                if not cursor.fetchone():
+                    column_defs = [
+                        f'"{col}" {dtype}' for col, dtype in columns.items()
+                    ]
+                    query_to_create = (
+                        f'CREATE TABLE "{table_name}" '
+                        f'({", ".join(column_defs)})'
+                    )
+                    cursor.execute(query_to_create)
+
+                insert_type = 'OR REPLACE' if replace else 'OR IGNORE'
+                query_to_insert = (
+                    f'INSERT {insert_type} INTO "{table_name}" '
+                    f'VALUES ({", ".join(["?"] * len(columns))})'
+                )
+                cursor.execute(query_to_insert, row)
+        except Exception as e:
+            logger.error(
+                f'Failed to insert row into {table_name}: '
                 f'{type(e).__name__} - {e}'
             )
 
