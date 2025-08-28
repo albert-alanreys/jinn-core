@@ -52,8 +52,6 @@ class ExecutionService:
             daemon=True
         )
         self._monitor_thread.start()
-
-        logger.info('ExecutionService initialized successfully')
     
     @property
     def contexts(self) -> dict[str, StrategyContext]:

@@ -1,5 +1,4 @@
 from __future__ import annotations
-from logging import basicConfig, INFO
 from os import getenv
 from os.path import abspath, join
 
@@ -18,9 +17,6 @@ def create_app() -> Flask:
         Flask: Configured Flask application instance
     """
 
-    load_environment()
-    configure_logging()
-    
     app = Flask(
         import_name=__name__,
         static_url_path='',
@@ -28,27 +24,12 @@ def create_app() -> Flask:
         template_folder=get_templates_path()
     )
     
+    load_dotenv()
     configure_app(app)
     setup_cors(app)
     register_routes(app)
     
     return app
-
-
-def load_environment() -> None:
-    """Load environment variables from .env file."""
-
-    load_dotenv()
-
-
-def configure_logging() -> None:
-    """Configure basic logging settings."""
-
-    basicConfig(
-        level=INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
 
 
 def get_static_path() -> str:

@@ -72,8 +72,6 @@ class OptimizationService:
             daemon=True
         )
         self._results_thread.start()
-
-        logger.info('OptimizationService initialized successfully')
     
     @property
     def contexts(self) -> dict[str, StrategyContext]:
