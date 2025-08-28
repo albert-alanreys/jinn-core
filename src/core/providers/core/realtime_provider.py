@@ -1,6 +1,6 @@
 from __future__ import annotations
 from time import sleep, time
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
@@ -12,6 +12,7 @@ from src.shared.utils import (
 from ..common.utils import shrink, stretch
 
 if TYPE_CHECKING:
+    from src.features.execution.models import StrategyContext
     from src.infrastructure.exchanges import BaseExchangeClient
     from ..common.models import MarketData, FeedsData
 
@@ -26,7 +27,7 @@ class RealtimeProvider():
         client: BaseExchangeClient,
         symbol: str,
         interval: Interval,
-        feeds: dict | None
+        feeds: dict[str, dict[str, Any]]
     ) -> MarketData:
         """
         Fetch initial real-time market data for a symbol.
@@ -35,7 +36,7 @@ class RealtimeProvider():
             client: Exchange API client for data fetching
             symbol: Trading symbol to fetch data for
             interval: Time interval for klines
-            feeds: Additional data feeds configuration
+            feeds: Optional feeds config
 
         Returns:
             MarketData: Market data package
@@ -79,7 +80,7 @@ class RealtimeProvider():
         self,
         client: BaseExchangeClient,
         symbol: str,
-        feeds: dict,
+        feeds: dict[str, dict[str, Any]],
         main_interval: Interval,
         main_klines: np.ndarray
     ) -> FeedsData:
@@ -149,31 +150,30 @@ class RealtimeProvider():
             'raw_klines': raw_klines_by_feed
         }
 
-    def update_data(self, strategy_context: dict) -> bool:
+    def update_data(self, context: StrategyContext) -> bool:
         """
         Update market data for a strategy context.
 
         Args:
-            strategy_context: Strategy context dictionary
+            context: Strategy context package
 
         Returns:
             bool: True if main klines was updated, False otherwise
         """
 
-        client = strategy_context['client']
-        original_market_data = strategy_context['market_data']
+        original_market_data = context['market_data']
 
-        new_market_data = {
+        new_market_data: MarketData = {
+            **original_market_data,
             'klines': original_market_data['klines'].copy(),
-            'feeds': {'klines': {}, 'raw_klines': {}}
-            if 'feeds' in original_market_data else None
+            'feeds': {'klines': {}, 'raw_klines': {}},
         }
 
         main_klines_updated = False
 
         if not has_last_historical_kline(original_market_data['klines']):
             new_market_data['klines'] = self._append_last_kline(
-                client=client,
+                client=context['client'],
                 symbol=original_market_data['symbol'],
                 interval=original_market_data['interval'],
                 klines=original_market_data['klines']
@@ -181,42 +181,37 @@ class RealtimeProvider():
             )
             main_klines_updated = True
 
-        if new_market_data['feeds'] is not None:
+        if original_market_data['feeds']:
             self._update_feeds(
-                strategy_context=strategy_context,
-                client=client,
+                context=context,
                 original_market_data=original_market_data,
                 new_market_data=new_market_data,
                 main_klines_updated=main_klines_updated
             )
 
         if main_klines_updated:
-            strategy_context['market_data'].update(new_market_data)
+            context['market_data'].update(new_market_data)
 
         return main_klines_updated
 
     def _update_feeds(
         self,
-        strategy_context: dict,
-        client: BaseExchangeClient,
-        original_market_data: dict,
-        new_market_data: dict,
+        context: StrategyContext,
+        original_market_data: MarketData,
+        new_market_data: MarketData,
         main_klines_updated: bool,
     ) -> None:
         """
         Update feed klines and align them with main klines if needed.
 
         Args:
-            strategy_context: Strategy context dictionary
-            client: Exchange API client for data fetching
+            context: Strategy context package
             original_market_data: Original market data before update
             new_market_data: Target dict for updated market data
             main_klines_updated: Whether the main klines were updated
-
-        Returns:
-            None
         """
 
+        client = context['client']
         main_ms = client.market.get_interval_duration(
             original_market_data['interval']
         )
@@ -233,8 +228,7 @@ class RealtimeProvider():
 
             if need_feed_params:
                 feed_config = (
-                    strategy_context['instance']
-                    .params['feeds']['klines'][feed_name]
+                    context['strategy'].feeds['klines'][feed_name]
                 )
                 feed_key, feed_interval = feed_config[:2]
                 feed_symbol = (
@@ -267,7 +261,7 @@ class RealtimeProvider():
         main_ms: int,
         feed_ms: int,
         feed_name: str,
-        new_market_data: dict
+        new_market_data: MarketData
     ) -> None:
         """
         Resample feed data to match the main klines timeframe.
@@ -280,9 +274,6 @@ class RealtimeProvider():
             feed_ms: Milliseconds duration of the feed klines interval
             feed_name: Feed identifier
             new_market_data: Container for updated feed data
-
-        Returns:
-            None
         """
 
         feed_data = new_market_data['feeds']['raw_klines'][feed_name]
@@ -332,6 +323,7 @@ class RealtimeProvider():
             )
 
             if len(last_klines) != 2:
+                sleep(1.0)
                 continue
 
             new_kline = np.array(last_klines)[:, :6].astype(float)[:-1]

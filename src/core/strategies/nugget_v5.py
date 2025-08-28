@@ -12,7 +12,8 @@ from . import (
 
 
 class NuggetV5(BaseStrategy):
-    # Strategy parameters
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'min_capital': 100.0,
         'stop': 2.8,
@@ -44,7 +45,8 @@ class NuggetV5(BaseStrategy):
         'adx_short_lower_limit': 1.0,
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'stop': [i / 10 for i in range(1, 31)],
         'atr_length': [i for i in range(1, 21)],
@@ -70,7 +72,41 @@ class NuggetV5(BaseStrategy):
         'adx_short_lower_limit': [float(i) for i in range(1, 69)],
     }
 
-    # Frontend rendering settings for indicators
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'min_capital': 'Min Capital',
+        'stop': 'Stop Loss (%)',
+        'atr_length': 'ATR Length',
+        'take_factor_1': 'TP Factor 1',
+        'take_factor_2': 'TP Factor 2',
+        'take_factor_3': 'TP Factor 3',
+        'take_factor_4': 'TP Factor 4',
+        'take_factor_5': 'TP Factor 5',
+        'take_volume_1': 'TP Volume 1',
+        'take_volume_2': 'TP Volume 2',
+        'take_volume_3': 'TP Volume 3',
+        'take_volume_4': 'TP Volume 4',
+        'take_volume_5': 'TP Volume 5',
+        'st_atr_period': 'ST ATR Period',
+        'st_factor': 'ST Factor',
+        'st_upper_limit': 'ST Upper Limit',
+        'st_lower_limit': 'ST Lower Limit',
+        'k_length': 'Stoch K Length',
+        'd_length': 'Stoch D Length',
+        'k_d_long_limit': 'Stoch Long Limit',
+        'k_d_short_limit': 'Stoch Short Limit',
+        'adx_filter': 'ADX Filter',
+        'di_length': 'DI Length',
+        'adx_length': 'ADX Length',
+        'adx_long_upper_limit': 'ADX Long Upper',
+        'adx_long_lower_limit': 'ADX Long Lower',
+        'adx_short_upper_limit': 'ADX Short Upper',
+        'adx_short_lower_limit': 'ADX Short Lower',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'SL': {
             'pane': 0,

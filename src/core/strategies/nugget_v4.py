@@ -12,7 +12,8 @@ from . import (
 
 
 class NuggetV4(BaseStrategy):
-    # Strategy parameters
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'min_capital': 100.0,
         'stop_type': 1,
@@ -53,7 +54,8 @@ class NuggetV4(BaseStrategy):
         'channel_range': 7.0,
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'stop_type': [i for i in range(3, 4)],
         'stop': [i / 10 for i in range(1, 11)],
@@ -78,7 +80,50 @@ class NuggetV4(BaseStrategy):
         'channel_range': [float(i) for i in range(3, 21)],
     }
 
-    # Frontend rendering settings for indicators
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'min_capital': 'Min Capital',
+        'stop_type': 'Stop Type',
+        'stop': 'Stop Loss (%)',
+        'trail_stop': 'Trailing Stop Type',
+        'trail_percent': 'Trailing Stop (%)',
+        'take_volume_1_1': 'TP Group 1 - Vol 1',
+        'take_volume_1_2': 'TP Group 1 - Vol 2',
+        'take_volume_1_3': 'TP Group 1 - Vol 3',
+        'take_volume_1_4': 'TP Group 1 - Vol 4',
+        'take_volume_1_5': 'TP Group 1 - Vol 5',
+        'take_volume_2_1': 'TP Group 2 - Vol 1',
+        'take_volume_2_2': 'TP Group 2 - Vol 2',
+        'take_volume_2_3': 'TP Group 2 - Vol 3',
+        'take_volume_2_4': 'TP Group 2 - Vol 4',
+        'take_volume_2_5': 'TP Group 2 - Vol 5',
+        'take_volume_2_6': 'TP Group 2 - Vol 6',
+        'take_volume_2_7': 'TP Group 2 - Vol 7',
+        'take_volume_2_8': 'TP Group 2 - Vol 8',
+        'take_volume_2_9': 'TP Group 2 - Vol 9',
+        'take_volume_2_10': 'TP Group 2 - Vol 10',
+        'st_atr_period': 'ST ATR Period',
+        'st_factor': 'ST Factor',
+        'st_upper_band': 'ST Upper Band',
+        'st_lower_band': 'ST Lower Band',
+        'rsi_length': 'RSI Length',
+        'rsi_long_upper_limit': 'RSI Long Upper',
+        'rsi_long_lower_limit': 'RSI Long Lower',
+        'rsi_short_upper_limit': 'RSI Short Upper',
+        'rsi_short_lower_limit': 'RSI Short Lower',
+        'bb_filter': 'BB Filter',
+        'ma_length': 'MA Length',
+        'bb_mult': 'BB Multiplier',
+        'bb_long_limit': 'BB Long Limit',
+        'bb_short_limit': 'BB Short Limit',
+        'pivot_bars': 'Pivot Bars',
+        'look_back': 'Lookback Bars',
+        'channel_range': 'Channel Range',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'SL': {
             'pane': 0,

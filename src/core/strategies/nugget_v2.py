@@ -12,7 +12,8 @@ from . import (
 
 
 class NuggetV2(BaseStrategy):
-    # Strategy parameters
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'min_capital': 100.0,
         'stop_type': 1,
@@ -52,7 +53,8 @@ class NuggetV2(BaseStrategy):
         'adx_short_lower_limit': 1.0,
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'stop_type': [i for i in range(1, 3)],
         'stop': [i / 10 for i in range(1, 31)],
@@ -86,7 +88,49 @@ class NuggetV2(BaseStrategy):
         'adx_short_lower_limit': [float(i) for i in range(1, 69)],
     }
 
-    # Frontend rendering settings for indicators
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'min_capital': 'Min Capital',
+        'stop_type': 'Stop Type',
+        'stop': 'Stop Loss (%)',
+        'trail_stop': 'Trailing Stop',
+        'trail_percent': 'Trail Percent',
+        'take_percent_1': 'Take Profit 1 (%)',
+        'take_percent_2': 'Take Profit 2 (%)',
+        'take_percent_3': 'Take Profit 3 (%)',
+        'take_percent_4': 'Take Profit 4 (%)',
+        'take_percent_5': 'Take Profit 5 (%)',
+        'take_volume_1': 'Take Volume 1 (%)',
+        'take_volume_2': 'Take Volume 2 (%)',
+        'take_volume_3': 'Take Volume 3 (%)',
+        'take_volume_4': 'Take Volume 4 (%)',
+        'take_volume_5': 'Take Volume 5 (%)',
+        'st_atr_period': 'ST ATR Period',
+        'st_factor': 'ST Factor',
+        'st_upper_band': 'ST Upper Band',
+        'st_lower_band': 'ST Lower Band',
+        'rsi_length': 'RSI Length',
+        'rsi_long_upper_limit': 'RSI Long Upper',
+        'rsi_long_lower_limit': 'RSI Long Lower',
+        'rsi_short_upper_limit': 'RSI Short Upper',
+        'rsi_short_lower_limit': 'RSI Short Lower',
+        'bb_filter': 'BB Filter',
+        'ma_length': 'MA Length',
+        'bb_mult': 'BB Multiplier',
+        'bb_long_limit': 'BB Long Limit',
+        'bb_short_limit': 'BB Short Limit',
+        'adx_filter': 'ADX Filter',
+        'adx_length': 'ADX Length',
+        'di_length': 'DI Length',
+        'adx_long_upper_limit': 'ADX Long Upper',
+        'adx_long_lower_limit': 'ADX Long Lower',
+        'adx_short_upper_limit': 'ADX Short Upper',
+        'adx_short_lower_limit': 'ADX Short Lower',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'SL': {
             'pane': 0,

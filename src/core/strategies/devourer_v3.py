@@ -12,7 +12,8 @@ from . import (
 
 
 class DevourerV3(BaseStrategy):
-    # Strategy parameters
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'position_size': 5.0,
         'stop_atr_p2': 0.5,
@@ -37,7 +38,8 @@ class DevourerV3(BaseStrategy):
         'close_under_ema_p3': 3,
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'stop_atr_p2': [i / 10 for i in range(1, 30)],
         'stop_atr_p3': [i / 10 for i in range(1, 30)],
@@ -61,7 +63,34 @@ class DevourerV3(BaseStrategy):
         'close_under_ema_p3': [i for i in range(1, 5)],
     }
 
-    # Frontend rendering settings for indicators
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'position_size': 'Position Size',
+        'stop_atr_p2': 'Stop ATR P2',
+        'stop_atr_p3': 'Stop ATR P3',
+        'take_atr_p3': 'Take ATR P3',
+        'fast_len_p1': 'Fast Length P1',
+        'slow_len_p1': 'Slow Length P1',
+        'sig_len_p1': 'Signal Length P1',
+        'k_len_p1': 'Stoch K Length P1',
+        'd_len_p1': 'Stoch D Length P1',
+        'kd_limit_p1': 'Stoch KD Limit P1',
+        'atr_len_p1': 'ATR Length P1',
+        'factor_p1': 'ATR Factor P1',
+        'body_atr_coef_p1': 'Body/ATR Coef P1',
+        'ema_len_p1': 'EMA Length P1',
+        'atr_len_p2': 'ATR Length P2',
+        'highest_len_p2': 'Highest Length P2',
+        'correction_p2': 'Correction % P2',
+        'ema_len_p2': 'EMA Length P2',
+        'atr_len_p3': 'ATR Length P3',
+        'ema_len_p3': 'EMA Length P3',
+        'close_under_ema_p3': 'Closes < EMA P3',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'SL': {
             'pane': 0,

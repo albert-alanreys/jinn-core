@@ -5,15 +5,14 @@ from typing import TypedDict
 class ExecutionContextResponse(TypedDict):
     """Response format for execution context data."""
     
-    name: str
-    exchange: str
-    isLive: bool
+    strategy: str
     symbol: str
     interval: str
+    exchange: str
+    isLive: bool
     minMove: float
     precision: int
-    strategyParams: dict[str, bool | int | float]
-    indicatorOptions: dict[str, bool | int | str]
+    params: dict[str, bool | int | float]
 
 
 class OptimizationContextResponse(TypedDict):
@@ -25,4 +24,4 @@ class OptimizationContextResponse(TypedDict):
     exchange: str
     start: str
     end: str
-    optimizedParams: list[dict[str, bool | int | float]]
+    params: list[dict[str, bool | int | float]]

@@ -13,7 +13,8 @@ from . import (
 
 
 class ExampleV2(BaseStrategy):
-    # Strategy parameters
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'position_size': 90.0, 
         'min_capital': 100.0,
@@ -48,15 +49,19 @@ class ExampleV2(BaseStrategy):
         'adx_long_lower_limit': 28.0,
         'adx_short_upper_limit': 77.0,
         'adx_short_lower_limit': 1.0,
-        'feeds': {
-            'klines': {
-                'HTF': ['symbol', Interval.DAY_1],
-                'LTF': ['symbol', Interval.MIN_1],
-            },
+    }
+
+    # --- Data Feed Configuration ---
+    # Market data sources required for strategy calculations
+    feeds = {
+        'klines': {
+            'HTF': ['symbol', Interval.DAY_1],
+            'LTF': ['symbol', Interval.MIN_1],
         },
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'stop_type': [1, 2],
         'trail_stop': [1, 2],
@@ -88,7 +93,46 @@ class ExampleV2(BaseStrategy):
         'adx_short_lower_limit': [float(i) for i in range(1, 69)],
     }
 
-    # Frontend rendering settings
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'position_size': 'Position Size',
+        'min_capital': 'Min Capital',
+        'stop_type': 'Stop Type',
+        'trail_stop': 'Trailing Stop',
+        'stop': 'Stop Loss (%)',
+        'trail_percent': 'Trail Percent',
+        'take_percent_1': 'Take Profit 1 (%)',
+        'take_percent_2': 'Take Profit 2 (%)',
+        'take_percent_3': 'Take Profit 3 (%)',
+        'take_volume_1': 'Take Volume 1 (%)',
+        'take_volume_2': 'Take Volume 2 (%)',
+        'take_volume_3': 'Take Volume 3 (%)',
+        'st_atr_period': 'ST ATR Period',
+        'st_factor': 'ST Factor',
+        'st_upper_band': 'ST Upper Band',
+        'st_lower_band': 'ST Lower Band',
+        'rsi_length': 'RSI Length',
+        'rsi_long_upper_limit': 'RSI Long Upper',
+        'rsi_long_lower_limit': 'RSI Long Lower',
+        'rsi_short_upper_limit': 'RSI Short Upper',
+        'rsi_short_lower_limit': 'RSI Short Lower',
+        'bb_filter': 'BB Filter',
+        'ma_length': 'MA Length',
+        'bb_mult': 'BB Multiplier',
+        'bb_long_limit': 'BB Long Limit',
+        'bb_short_limit': 'BB Short Limit',
+        'adx_filter': 'ADX Filter',
+        'adx_length': 'ADX Length',
+        'di_length': 'DI Length',
+        'adx_long_upper_limit': 'ADX Long Upper',
+        'adx_long_lower_limit': 'ADX Long Lower',
+        'adx_short_upper_limit': 'ADX Short Upper',
+        'adx_short_lower_limit': 'ADX Short Lower',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'HTF': {
             'pane': 0,
@@ -213,11 +257,11 @@ class ExampleV2(BaseStrategy):
         )
         self.adx = self.dmi[2]
 
-        # Additional data
+        # Additional market data
         self.htf_close = np.full(self.time.shape[0], np.nan)
 
-        if len(self.feeds['klines']['HTF']['close'].shape) == 1:
-            self.htf_close = self.feeds['klines']['HTF']['close']
+        if len(self.feeds_data['klines']['HTF']['close'].shape) == 1:
+            self.htf_close = self.feeds_data['klines']['HTF']['close']
 
         # Alert flags for signals
         self.alert_cancel = False
@@ -306,6 +350,7 @@ class ExampleV2(BaseStrategy):
             self.alert_short_new_stop
         )
 
+        # Indicator Visualization Data
         self.indicators = {
             'HTF': {
                 'options': self.indicator_options['HTF'],

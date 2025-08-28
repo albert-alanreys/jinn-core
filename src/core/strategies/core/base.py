@@ -73,24 +73,45 @@ class BaseStrategy(ABC):
                 - 'colors': optional sequence of point-specific colors
     """
 
-    # Common trading parameters for all strategies
+    # Common trading default parameter values for all strategies
     base_params = {
         # Core trading settings
-        "direction": 0,              # 0 - all, 1 - longs, 2 - shorts
-        "margin_type": 0,            # 0 - ISOLATED, 1 - CROSSED
-        "leverage": 1,               # Leverage multiplier
+        'direction': 0,              # 0 - all, 1 - longs, 2 - shorts
+        'margin_type': 0,            # 0 - ISOLATED, 1 - CROSSED
+        'leverage': 1,               # Leverage multiplier
         
         # Capital management
-        "initial_capital": 10000.0,  # Starting capital in USDT
-        "position_size_type": 0,        # 0 - PERCENT, 1 - CURRENCY
-        "position_size": 100.0,         # Size in % or absolute value
-        "commission": 0.05,          # Fee percentage (0.05 = 0.05%)
+        'initial_capital': 10000.0,  # Starting capital in USDT
+        'position_size_type': 0,        # 0 - PERCENT, 1 - CURRENCY
+        'position_size': 100.0,         # Size in % or absolute value
+        'commission': 0.05,          # Fee percentage (0.05 = 0.05%)
     }
 
-    # Frontend rendering settings for indicators
+    # Default parameter values for backtesting and live trading
+    params = {}
+
+    # Market data sources required for strategy calculations
+    feeds = {}
+
+    # Parameter ranges for hyperparameter optimization
+    opt_params = {}
+
+    # Human-readable labels for frontend parameter display
+    base_param_labels = {
+        'direction': 'Trade Direction',
+        'margin_type': 'Margin Type',
+        'leverage': 'Leverage',
+        'initial_capital': 'Initial Capital (USDT)',
+        'position_size_type': 'Position Size Type',
+        'position_size': 'Position Size',
+        'commission': 'Commission (%)',
+    }
+    param_labels = {}
+
+    # Chart styling configuration for technical indicators
     indicator_options = {}
 
-    # Indicator values for visualization
+    # Indicator Visualization Data
     indicators = {}
 
     def __init__(self, params: dict | None = None) -> None:
@@ -108,6 +129,18 @@ class BaseStrategy(ABC):
 
         if params is not None:
             self.params.update(params)
+    
+    @property
+    def all_params(self) -> dict[str, bool | int | float]:
+        """Return a copy of all strategy parameters."""
+
+        return self.params.copy()
+    
+    @property
+    def all_labels(self) -> dict[str, str]:
+        """Return a copy of all strategy parameter labels."""
+
+        return {**self.base_param_labels, **self.param_labels}
 
     def init_variables(
         self,
@@ -163,14 +196,14 @@ class BaseStrategy(ABC):
         self.close = market_data['klines'][:, 4]
         self.volume = market_data['klines'][:, 5]
 
-        # Additional feeds
-        self.feeds = {'klines': {}}
+        # Additional market data
+        self.feeds_data = {'klines': {}}
 
         if market_data['feeds']:
             for feed_name, feed_data in (
                 market_data['feeds']['klines'].items()
             ):
-                self.feeds['klines'][feed_name] = {
+                self.feeds_data['klines'][feed_name] = {
                     'time': feed_data[:, 0],
                     'open': feed_data[:, 1],
                     'high': feed_data[:, 2],

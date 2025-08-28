@@ -124,5 +124,5 @@ class OptimizationContextBuilder:
             interval=Interval(config['interval']),
             start=config['start'],
             end=config['end'],
-            feeds=strategy_class.params.get('feeds')
+            feeds=strategy_class.feeds
         )

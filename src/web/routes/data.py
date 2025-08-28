@@ -54,13 +54,11 @@ def get_strategies() -> Response:
     strategy_data = {}
     
     for strategy_name, strategy_class in strategy_registry.items():
-        params = {
-            param_name: param_value
-            for param_name, param_value in strategy_class.params.items()
-        }
         strategy_data[strategy_name] = {
             'name': strategy_name,
-            'params': params,
+            'params': strategy_class.all_params,
+            'paramLabels': strategy_class.all_labels,
+            'indicatorOptions': strategy_class.indicator_options,
         }
     
     return Response(

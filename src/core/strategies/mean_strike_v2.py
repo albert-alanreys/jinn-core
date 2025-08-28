@@ -12,7 +12,8 @@ from . import (
 
 
 class MeanStrikeV2(BaseStrategy):
-    # Strategy parameters
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'direction': 0,
         'leverage': 1,
@@ -33,7 +34,8 @@ class MeanStrikeV2(BaseStrategy):
         'range_threshold': 30.0,
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'stop_loss': [i / 10 for i in range(2, 101, 2)],
         'take_profit': [i / 10 for i in range(2, 101, 2)],
@@ -48,7 +50,30 @@ class MeanStrikeV2(BaseStrategy):
         'range_threshold': [float(i) for i in range(10, 100)],
     }
 
-    # Frontend rendering settings for indicators
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'direction': 'Trade Direction',
+        'leverage': 'Leverage',
+        'position_size_type': 'Position Size Type',
+        'position_size': 'Position Size',
+        'first_order_pct': 'First Order (%)',
+        'stop_loss': 'Stop Loss (%)',
+        'take_profit': 'Take Profit (%)',
+        'grid_type': 'Grid Type',
+        'grid_size': 'Grid Levels',
+        'first_grid_pct': 'First Grid (%)',
+        'grid_depth': 'Grid Depth (%)',
+        'martingale_coef': 'Martingale Coef',
+        'density_coef': 'Density Coef',
+        'lookback': 'Lookback Bars',
+        'ma_length': 'MA Length',
+        'mult': 'Multiplier',
+        'range_threshold': 'Range Threshold',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'Stop-Loss': {
             'pane': 0,

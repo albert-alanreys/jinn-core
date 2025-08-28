@@ -38,19 +38,14 @@ def format_execution_contexts(
         )
 
         result[context_id] = {
-            'name': context['name'],
-            'exchange': context['exchange'],
-            'isLive': context['is_live'],
+            'strategy': context['name'],
             'symbol': market_data['symbol'],
             'interval': market_data['interval'],
+            'exchange': context['exchange'],
+            'isLive': context['is_live'],
             'minMove': min_move,
             'precision': precision,
-            'strategyParams': {
-                k: v 
-                for k, v in strategy.params.items() 
-                if k != 'feeds'
-            },
-            'indicatorOptions': strategy.indicator_options
+            'params': strategy.all_params,
         }
 
     return result
@@ -80,7 +75,7 @@ def format_optimization_contexts(
             'exchange': context['exchange'],
             'start': market_data['start'],
             'end': market_data['end'],
-            'optimizedParams': context['optimized_params'],
+            'params': context['optimized_params'],
         }
 
     return result

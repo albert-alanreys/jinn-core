@@ -1,11 +1,11 @@
 from __future__ import annotations
 from datetime import datetime, timezone
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
-from src.infrastructure.db import DBManager
+from src.infrastructure.db import db_manager
 from src.infrastructure.exchanges.models import Interval
 from src.shared.utils import (
     has_first_historical_kline,
@@ -27,11 +27,6 @@ class HistoryProvider():
     with local database caching functionality.
     """
 
-    def __init__(self) -> None:
-        """Initializes the HistoryProvider with DBManager"""
-
-        self.db_manager = DBManager()
-
     def get_market_data(
         self,
         client: BaseExchangeClient,
@@ -39,7 +34,7 @@ class HistoryProvider():
         interval: Interval,
         start: str,
         end: str,
-        feeds: dict | None
+        feeds: dict[str, dict[str, Any]]
     ) -> MarketData:
         """
         Fetches complete market data package:
@@ -110,7 +105,7 @@ class HistoryProvider():
         """
 
         db_name = f'{client.exchange_name.lower()}.db'
-        precision_data = self.db_manager.fetch_one(
+        precision_data = db_manager.fetch_one(
             database_name=db_name,
             table_name='symbol_precisions',
             key_column='symbol',
@@ -124,7 +119,7 @@ class HistoryProvider():
         q_precision = client.market.get_qty_precision(symbol)
 
         if p_precision is not None and q_precision is not None:
-            self.db_manager.save(
+            db_manager.save(
                 database_name=db_name,
                 table_name='symbol_precisions',
                 columns={
@@ -177,12 +172,12 @@ class HistoryProvider():
         request_required = False
         start_req, end_req = start_ms, end_ms
 
-        raw_klines = self.db_manager.fetch_all(db_name, table_name)
+        raw_klines = db_manager.fetch_all(db_name, table_name)
 
         if not raw_klines or len(raw_klines) < 2:
             request_required = True
         elif start_ms < raw_klines[0][0]:
-            first_meta = self.db_manager.fetch_one(
+            first_meta = db_manager.fetch_one(
                 database_name=db_name,
                 table_name='klines_metadata',
                 key_column='klines_key',
@@ -215,7 +210,7 @@ class HistoryProvider():
             if has_realtime_kline(klines):
                 klines = klines[:-1]
 
-            self.db_manager.save(
+            db_manager.save(
                 database_name=db_name,
                 table_name=table_name,
                 columns={
@@ -231,7 +226,7 @@ class HistoryProvider():
             )
 
             if has_first_historical_kline(raw_klines, start_ms):
-                self.db_manager.save(
+                db_manager.save(
                     database_name=db_name,
                     table_name='klines_metadata',
                     columns={
@@ -261,7 +256,7 @@ class HistoryProvider():
         interval: Interval,
         start: int,
         end: int
-    ) -> list:
+    ) -> list[list[float]]:
         """
         Direct exchange API call for klines data with timestamp conversion.
         
@@ -306,7 +301,7 @@ class HistoryProvider():
         self,
         client: BaseExchangeClient,
         symbol: str,
-        feeds: dict,
+        feeds: dict[str, dict[str, Any]],
         main_interval: Interval,
         main_klines: np.ndarray,
         start: str,

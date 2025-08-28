@@ -12,7 +12,8 @@ from . import (
 
 
 class DailyProfitV1(BaseStrategy):
-    # Strategy parameters
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'stop': 0.5,
         'trail_stop': True,
@@ -31,7 +32,8 @@ class DailyProfitV1(BaseStrategy):
         'vwap_close': False,
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'stop': [0.3, 0.5, 0.7],
         'trail_stop': [True, False],
@@ -50,7 +52,28 @@ class DailyProfitV1(BaseStrategy):
         'vwap_close': [True, False],
     }
 
-    # Frontend rendering settings for indicators
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'stop': 'Stop Loss (%)',
+        'trail_stop': 'Trailing Stop',
+        'take_multiplier_1': 'TP Multiplier 1',
+        'take_volume_1': 'TP Volume 1',
+        'take_2': 'Second TP',
+        'take_multiplier_2': 'TP Multiplier 2',
+        'take_volume_2': 'TP Volume 2',
+        'st_atr_length': 'ATR Length',
+        'st_factor': 'ATR Factor',
+        'rsi_length': 'RSI Length',
+        'stoch_length': 'Stoch Length',
+        'stoch_rsi_upper_limit': 'Stoch RSI Upper',
+        'stoch_rsi_lower_limit': 'Stoch RSI Lower',
+        'vwap_zone': 'VWAP Zone',
+        'vwap_close': 'VWAP Close',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'SL': {
             'pane': 0,

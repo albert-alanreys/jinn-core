@@ -12,11 +12,11 @@ from . import (
 
 
 class SisterV1(BaseStrategy):
-    # Strategy parameters
-    # take_type: 0 — 'fixed', 1 — 'trailing'
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'stop': 10.0,
-        'take_type': 1,
+        'take_type': 1,  # take_type: 0 — 'fixed', 1 — 'trailing'
         'take': 10.0,
         'length_entry': 35,
         'ratio_entry': 5.0,
@@ -26,7 +26,8 @@ class SisterV1(BaseStrategy):
         'length_medium_trend': 35,
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'stop': [i / 2 for i in range(1, 21)],
         'take': [i / 2 for i in range(1, 31)],
@@ -38,7 +39,22 @@ class SisterV1(BaseStrategy):
         'length_medium_trend': [i for i in range(25, 135, 5)],
     }
 
-    # Frontend rendering settings for indicators
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'stop': 'Stop Loss (%)',
+        'take_type': 'Take Profit Type',
+        'take': 'Take Profit (%)',
+        'length_entry': 'Entry Length',
+        'ratio_entry': 'Entry Ratio',
+        'length_exit': 'Exit Length',
+        'ratio_exit': 'Exit Ratio',
+        'length_small_trend': 'Small Trend Length',
+        'length_medium_trend': 'Medium Trend Length',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'SL': {
             'pane': 0,

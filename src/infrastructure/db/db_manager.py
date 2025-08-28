@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from os.path import dirname, join
 from sqlite3 import connect
+from typing import Any, Iterator
 
 
 logger = getLogger(__name__)
@@ -14,7 +15,11 @@ class DBManager():
     and saving data, with built-in error handling and logging.
     """
 
-    def fetch_all(self, database_name: str, table_name: str) -> list:
+    def fetch_all(
+        self,
+        database_name: str,
+        table_name: str
+    ) -> list[tuple[Any, ...]]:
         """
         Retrieve all rows from the specified table
         in the given SQLite database.
@@ -26,7 +31,8 @@ class DBManager():
             table_name: Name of the table to fetch data from
 
         Returns:
-            list: A list of rows from the table, or an empty list on failure
+            list[tuple[Any, ...]]:
+                A list of rows from the table, or an empty list on failure
         """
 
         try:
@@ -55,7 +61,7 @@ class DBManager():
         table_name: str,
         key_column: str,
         key_value: str
-    ) -> list:
+    ) -> tuple[Any, ...]:
         """
         Retrieve a single row from the specified table where the key column
         matches the provided key value.
@@ -69,7 +75,8 @@ class DBManager():
             key_value: Value to match in the key column
 
         Returns:
-            list: The matched row as a list, or an empty list on failure
+            tuple[Any, ...]:
+                The matched row as a tuple, or empty tuple if not found
         """
 
         try:
@@ -81,7 +88,7 @@ class DBManager():
                 cursor.execute(query_to_check, (table_name,))
 
                 if not cursor.fetchone():
-                    return []
+                    return ()
 
                 cursor.execute(
                     f'SELECT * FROM "{table_name}" WHERE {key_column} = ?',
@@ -90,7 +97,7 @@ class DBManager():
                 row = cursor.fetchone()
 
                 if row is None:
-                    return []
+                    return ()
                 
                 return row
         except Exception as e:
@@ -98,14 +105,14 @@ class DBManager():
                 f'Failed to load row from {table_name}: '
                 f'{type(e).__name__} - {e}'
             )
-            return []
+            return ()
 
     def save(
         self,
         database_name: str,
         table_name: str,
-        columns: dict,
-        rows: list,
+        columns: dict[str, str],
+        rows: list[tuple[Any, ...]],
         drop: bool
     ) -> None:
         """
@@ -156,7 +163,7 @@ class DBManager():
             )
 
     @contextmanager
-    def _db_session(self, database_name: str):
+    def _db_session(self, database_name: str) -> Iterator[Any]:
         """
         Internal context manager for handling database connections
         and transactions safely.

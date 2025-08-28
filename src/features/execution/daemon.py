@@ -164,7 +164,7 @@ class ExecutionDaemon:
             alert_data = {
                 'context': context_id,
                 'strategy': context['name'],
-                'message': alert.copy(),
+                'content': alert.copy(),
             }
             alert_id = str(hash(f'{context_id}_{time()}'))
             self._alert_registry[alert_id] = alert_data

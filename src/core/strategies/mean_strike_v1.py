@@ -12,7 +12,8 @@ from . import (
 
 
 class MeanStrikeV1(BaseStrategy):
-    # Strategy parameters
+    # --- Strategy Configuration ---
+    # Default parameter values for backtesting and live trading
     params = {
         'position_size':  50,
         'entry_volume_1': 10.0,
@@ -29,7 +30,8 @@ class MeanStrikeV1(BaseStrategy):
         'range_threshold': 30.0,
     }
 
-    # Parameters to be optimized and their possible values
+    # --- Optimization Space ---
+    # Parameter ranges for hyperparameter optimization
     opt_params = {
         'entry_percent_2': [i / 10 for i in range(20, 101)],
         'entry_percent_3': [i / 10 for i in range(50, 151)],
@@ -41,7 +43,26 @@ class MeanStrikeV1(BaseStrategy):
         'range_threshold': [float(i) for i in range(10, 100)],
     }
 
-    # Frontend rendering settings for indicators
+    # --- UI/UX Configuration ---
+    # Human-readable labels for frontend parameter display
+    param_labels = {
+        'position_size': 'Position Size',
+        'entry_volume_1': 'Entry Volume 1 (%)',
+        'entry_volume_2': 'Entry Volume 2 (%)',
+        'entry_volume_3': 'Entry Volume 3 (%)',
+        'entry_volume_4': 'Entry Volume 4 (%)',
+        'entry_percent_2': 'Entry Level 2 (%)',
+        'entry_percent_3': 'Entry Level 3 (%)',
+        'entry_percent_4': 'Entry Level 4 (%)',
+        'take_profit': 'Take Profit (%)',
+        'lookback': 'Lookback Bars',
+        'ma_length': 'MA Length',
+        'mult': 'Multiplier',
+        'range_threshold': 'Range Threshold',
+    }
+
+    # --- Visualization Settings ---
+    # Chart styling configuration for technical indicators
     indicator_options = {
         'EP #2': {
             'pane': 0,

@@ -79,7 +79,7 @@ class ExecutionContextBuilder:
         Update a strategy parameter and rebuild execution context.
 
         Args:
-            context: Existing strategy context package
+            context: Strategy context package
             parameter_name: Name of the parameter to update
             parameter_value: New parameter value
 
@@ -89,7 +89,7 @@ class ExecutionContextBuilder:
         """
 
         strategy = context['strategy']
-        params = strategy.params.copy()
+        params = strategy.all_params
 
         old_value = params[param_name]
         params[param_name] = type(old_value)(param_value)
@@ -172,7 +172,7 @@ class ExecutionContextBuilder:
             'client': client,
             'symbol': config['symbol'],
             'interval': Interval(config['interval']),
-            'feeds': strategy.params.get('feeds'),
+            'feeds': strategy.feeds,
         }
         
         if config['is_live']:
