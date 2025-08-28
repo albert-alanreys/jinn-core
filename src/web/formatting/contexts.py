@@ -45,7 +45,7 @@ def format_execution_contexts(
             'isLive': context['is_live'],
             'minMove': min_move,
             'precision': precision,
-            'params': strategy.all_params,
+            'params': strategy.params,
         }
 
     return result

@@ -114,7 +114,7 @@ class BaseStrategy(ABC):
 
     def __init__(self, params: dict | None = None) -> None:
         """
-        Initialize the trading strategy with a client and parameters.
+        Initialize the trading strategy with parameters.
 
         Args:
             params: Dictionary of parameters
@@ -128,18 +128,6 @@ class BaseStrategy(ABC):
         if params is not None:
             self.params.update(params)
     
-    @property
-    def all_params(self) -> dict[str, bool | int | float]:
-        """Return a copy of all strategy parameters."""
-
-        return self.params.copy()
-    
-    @property
-    def all_labels(self) -> dict[str, str]:
-        """Return a copy of all strategy parameter labels."""
-
-        return {**self.base_param_labels, **self.param_labels}
-
     def init_variables(
         self,
         market_data: dict,
@@ -274,3 +262,15 @@ class BaseStrategy(ABC):
         Must be implemented by concrete strategy classes.
         """
         pass
+
+    @classmethod
+    def get_params(cls) -> dict[str, bool | int | float]:
+        """Return a copy of all strategy parameters."""
+        
+        return {**cls.base_params, **cls.params}
+
+    @classmethod
+    def get_param_labels(cls) -> dict[str, str]:
+        """Return a copy of all strategy parameter labels."""
+
+        return {**cls.base_param_labels, **cls.param_labels}

@@ -56,8 +56,8 @@ def get_strategies() -> Response:
     for strategy_name, strategy_class in strategy_registry.items():
         strategy_data[strategy_name] = {
             'name': strategy_name,
-            'params': strategy_class.all_params,
-            'paramLabels': strategy_class.all_labels,
+            'params': strategy_class.get_params(),
+            'paramLabels': strategy_class.get_param_labels(),
             'indicatorOptions': strategy_class.indicator_options,
         }
     

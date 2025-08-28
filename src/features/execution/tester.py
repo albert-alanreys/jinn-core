@@ -36,7 +36,7 @@ class StrategyTester:
 
         strategy.calculate(market_data)
 
-        initial_capital = strategy.all_params['initial_capital']
+        initial_capital = strategy.params['initial_capital']
         deals_log = strategy.completed_deals_log
 
         all_metrics = self._calculate_all_metrics(initial_capital, deals_log)

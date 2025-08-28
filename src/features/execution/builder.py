@@ -89,7 +89,7 @@ class ExecutionContextBuilder:
         """
 
         strategy = context['strategy']
-        params = strategy.all_params
+        params = strategy.params.copy()
 
         old_value = params[param_name]
         params[param_name] = type(old_value)(param_value)
