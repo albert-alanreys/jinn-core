@@ -14,10 +14,10 @@ if TYPE_CHECKING:
 class ContextStatus(Enum):
     """Strategy context lifecycle status."""
     
-    QUEUED = 'queued'
-    CREATING = 'creating'
-    READY = 'ready'
-    FAILED = 'failed'
+    QUEUED = 'QUEUED'
+    CREATING = 'CREATING'
+    READY = 'READY'
+    FAILED = 'FAILED'
 
 
 class ContextConfig(TypedDict):
