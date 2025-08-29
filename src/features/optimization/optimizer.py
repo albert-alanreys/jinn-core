@@ -330,11 +330,11 @@ class StrategyOptimizer:
         """
         Catastrophic population reduction event.
 
-        With 0.1% probability removes bottom 50% of population
+        With 1% probability removes bottom 50% of population
         to prevent premature convergence and maintain diversity.
         """
 
-        if randint(1, 1000) != 1:
+        if randint(1, 100) != 1:
             return
 
         sorted_population = sorted(
