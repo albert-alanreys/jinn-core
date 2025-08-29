@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 class RealtimeProvider():
     """Provides real-time market data for automated trading."""
 
-    _KLINES_LIMIT = 1000
+    _INITIAL_KLINES_LIMIT = 1000
+    _MAX_KLINES_LIMIT = 50_000
 
     def get_market_data(
         self,
@@ -49,7 +50,7 @@ class RealtimeProvider():
             client.market.get_last_klines(
                 symbol=symbol,
                 interval=interval,
-                limit=self._KLINES_LIMIT
+                limit=self._INITIAL_KLINES_LIMIT
             )
         )[:, :6].astype(float)
 
@@ -181,6 +182,11 @@ class RealtimeProvider():
             )
             main_klines_updated = True
 
+            if new_market_data['klines'].shape[0] > self._MAX_KLINES_LIMIT:
+                new_market_data['klines'] = (
+                    new_market_data['klines'][-self._MAX_KLINES_LIMIT:]
+                )
+
         if original_market_data['feeds']:
             self._update_feeds(
                 context=context,
@@ -207,7 +213,7 @@ class RealtimeProvider():
         Args:
             context: Strategy context package
             original_market_data: Original market data before update
-            new_market_data: Target dict for updated market data
+            new_market_data: Target dictionary for updated market data
             main_klines_updated: Whether the main klines were updated
         """
 
@@ -215,6 +221,7 @@ class RealtimeProvider():
         main_ms = client.market.get_interval_duration(
             original_market_data['interval']
         )
+        main_start_time = new_market_data['klines'][0, 0]
 
         for feed_name, feed_data in (
             original_market_data['feeds'].get('raw_klines', {}).items()
@@ -249,6 +256,13 @@ class RealtimeProvider():
                 )
 
             if main_klines_updated:
+                feed_times = (
+                    new_market_data['feeds']['raw_klines'][feed_name][:, 0]
+                )
+                mask = feed_times >= main_start_time
+                new_market_data['feeds']['raw_klines'][feed_name] = (
+                    new_market_data['feeds']['raw_klines'][feed_name][mask]
+                )
                 self._resample_feed(
                     main_ms=main_ms,
                     feed_ms=feed_ms,
