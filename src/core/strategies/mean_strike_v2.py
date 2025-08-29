@@ -112,8 +112,11 @@ class MeanStrikeV2(BaseStrategy):
     def __init__(self, params: dict | None = None) -> None:
         super().__init__(params)
 
-    def calculate(self, market_data) -> None:
-        super().init_variables(market_data, self.params['grid_size'] + 1)
+    def calculate(self) -> None:
+        # Allow (self.params['grid_size'] + 1) open positions at once
+        self.open_deals_log = np.full(
+            (self.params['grid_size'] + 1, 5), np.nan
+        )
 
         self.grid_prices = np.full(
             (self.params['grid_size'], self.time.shape[0]), np.nan
@@ -1086,7 +1089,7 @@ class MeanStrikeV2(BaseStrategy):
             alert_close_short
         )
 
-    def _trade(self, client: BaseExchangeClient) -> None:
+    def trade(self, client: BaseExchangeClient) -> None:
         # General
         if self.alert_cancel:
             client.trade.cancel_all_orders(self.symbol)

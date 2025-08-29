@@ -89,8 +89,9 @@ class MeanStrikeV1(BaseStrategy):
     def __init__(self, params: dict | None = None) -> None:
         super().__init__(params)
 
-    def calculate(self, market_data) -> None:
-        super().init_variables(market_data, 4)
+    def calculate(self) -> None:
+        # Allow 4 open positions at once
+        self.open_deals_log = np.full((4, 5), np.nan)
 
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
@@ -520,7 +521,7 @@ class MeanStrikeV1(BaseStrategy):
             alert_close_long
         )
     
-    def _trade(self, client: BaseExchangeClient) -> None:
+    def trade(self, client: BaseExchangeClient) -> None:
         if self.alert_close_long:
             client.trade.market_close_long(
                 symbol=self.symbol,

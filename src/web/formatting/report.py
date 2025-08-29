@@ -1,5 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -11,11 +12,15 @@ from .constants import (
     TRADE_TYPE_LABELS
 )
 
+if TYPE_CHECKING:
+    from src.core.strategies import BaseStrategy
+    from src.features.execution.models import Metric, OverviewMetrics
+
 
 def format_overview_metrics(
-    metrics: dict,
-    completed_deals_log: np.ndarray
-) -> dict:
+    strategy: BaseStrategy,
+    metrics: OverviewMetrics
+) -> dict[str, list[str | dict[str, float]]]:
     """
     Formats overview metrics by applying appropriate suffixes
     (e.g., ' USDT', '%') to each value in the 'all' fields
@@ -24,15 +29,14 @@ def format_overview_metrics(
     completed deals and corresponding equity values.
 
     Args:
+        strategy: Initialized strategy instance
         metrics: Dictionary containing:
             - 'primary': List of metric dictionaries
                          with 'title' and 'all' values
             - 'equity': List or array of equity values
-        completed_deals_log: Array of completed deal records
-            used to extract equity timestamps
 
     Returns:
-        dict: Dictionary with:
+        dict[str, list[str | dict[str, float]]]: Dictionary with:
             - 'primary': List of formatted metric strings with suffixes
             - 'equity': List of dicts with 'time' and 'value'
                         for plotting the equity curve
@@ -40,11 +44,16 @@ def format_overview_metrics(
 
     result = {'primary': [], 'equity': []}
 
+    if not hasattr(strategy, 'completed_deals_log'):
+        return result
+    
+    completed_deals_log = strategy.completed_deals_log
+
     if completed_deals_log.size == 0:
         return result
-
+    
     formatted_primary_metrics = []
-
+    
     for metric in metrics['primary']:
         title = metric['title']
         values = metric['all']
@@ -71,80 +80,89 @@ def format_overview_metrics(
     }
 
 
-def format_performance_metrics(metrics: list) -> list:
+def format_performance_metrics(
+    metrics: list[Metric]
+) -> list[dict[str, list[str]]]:
     """
     Formats performance metrics by applying appropriate suffixes
     (e.g., ' USDT', '%') to each value in the 'all', 'long',
     and 'short' fields based on the metric title.
 
     Args:
-        metrics: List of metric dictionaries, each containing 'title',
-                 'all', 'long', and 'short' numeric series
+        metrics: List of performance-related metrics
 
     Returns:
-        list: List of formatted metric dictionaries
-              with suffixed string values
+        list[dict[str, list[str]]]: List of formatted metric
+            dictionaries with suffixed string values
     """
 
     return _format_metrics(metrics)
 
 
-def format_trade_metrics(metrics: list) -> list:
+def format_trade_metrics(
+    metrics: list[Metric]
+) -> list[dict[str, list[str]]]:
     """
     Formats trade-related metrics by applying appropriate suffixes
     (e.g., ' USDT', '%') to each value in the 'all', 'long',
     and 'short' fields based on the metric title.
 
     Args:
-        metrics: List of metric dictionaries, each containing 'title',
-                 'all', 'long', and 'short' numeric series
+        metrics: List of trade execution and quality metrics
 
     Returns:
-        list: List of formatted metric dictionaries
-              with suffixed string values
+        list[dict[str, list[str]]]: List of formatted metric
+            dictionaries with suffixed string values
     """
 
     return _format_metrics(metrics)
 
 
-def format_risk_metrics(metrics: list) -> list:
+def format_risk_metrics(
+    metrics: list[Metric]
+) -> list[dict[str, list[str]]]:
     """
     Formats risk-related metrics by applying appropriate suffixes
     (e.g., ' USDT', '%') to each value in the 'all', 'long',
     and 'short' fields based on the metric title.
 
     Args:
-        metrics: List of metric dictionaries, each containing 'title',
-                 'all', 'long', and 'short' numeric series
+        metrics: List of risk management and volatility metrics
 
     Returns:
-        list: List of formatted metric dictionaries
-              with suffixed string values
+        list[dict[str, list[str]]]: List of formatted metric
+            dictionaries with suffixed string values
     """
 
     return _format_metrics(metrics)
 
 
-def format_trades(
-    completed_deals_log: np.ndarray,
-    open_deals_log: np.ndarray
-) -> list:
+def format_trades(strategy: BaseStrategy) -> list[list[str]]:
     """
     Formats completed and open trades into structured rows
     for tabular display, enriching each trade with signal
     labels, timestamps, and formatted numerical values.
 
     Args:
-        completed_deals_log: 2D array of closed trade data
-        open_deals_log: 2D array of currently open trade data
+        strategy: Initialized strategy instance
 
     Returns:
-        list: List of formatted trade rows,
+        list[list[str]]: List of formatted trade rows,
               each represented as a list of strings
     """
 
-    completed_deals = completed_deals_log[:, :12]
     result = []
+
+    if not hasattr(strategy, 'completed_deals_log'):
+        return result
+    
+    completed_deals_log = strategy.completed_deals_log
+    open_deals_log = strategy.open_deals_log
+
+    if completed_deals_log.size == 0:
+        return result
+
+    completed_deals = completed_deals_log[:, :12]
     num = 1
 
     for deal in completed_deals:
@@ -227,7 +245,7 @@ def format_trades(
     return result
 
 
-def _format_metrics(metrics: list) -> list:
+def _format_metrics(metrics: Metric) -> list[dict[str, list[str]]]:
     """
     Internal function that applies suffix formatting to each metric group.
     It processes the 'all', 'long', and 'short' value lists for each
@@ -242,8 +260,8 @@ def _format_metrics(metrics: list) -> list:
             - 'short': List of values for short trades
 
     Returns:
-        list: List of formatted metric dictionaries
-              with suffixed string values
+        list[dict[str, list[str]]]: List of formatted metric
+            dictionaries with suffixed string values
     """
 
     formatted = []
@@ -261,7 +279,7 @@ def _format_metrics(metrics: list) -> list:
     return formatted
 
 
-def _apply_suffix(title: str, values: list) -> list:
+def _apply_suffix(title: str, values: list[float]) -> list[str]:
     """
     Internal helper that applies suffixes to a list of values
     based on the metric title. If a value is NaN, an empty
@@ -272,8 +290,8 @@ def _apply_suffix(title: str, values: list) -> list:
         values: List of numerical values to be formatted
 
     Returns:
-        list: List of strings, where each numeric value is formatted
-              with its corresponding suffix.
+        list[str]: List of strings, where each numeric value
+                   is formatted with its corresponding suffix
     """
 
     suffixes = METRIC_SUFFIXES.get(title, [])

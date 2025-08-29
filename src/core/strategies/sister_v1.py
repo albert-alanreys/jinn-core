@@ -109,9 +109,7 @@ class SisterV1(BaseStrategy):
     def __init__(self, params: dict | None = None) -> None:
         super().__init__(params)
 
-    def calculate(self, market_data) -> None:
-        super().init_variables(market_data)
-
+    def calculate(self) -> None:
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
@@ -700,7 +698,7 @@ class SisterV1(BaseStrategy):
             alert_short_new_take
         )
 
-    def _trade(self, client: BaseExchangeClient) -> None:
+    def trade(self, client: BaseExchangeClient) -> None:
         if self.alert_cancel:
             client.trade.cancel_all_orders(self.symbol)
 

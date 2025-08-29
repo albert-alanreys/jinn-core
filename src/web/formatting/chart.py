@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
@@ -12,8 +13,12 @@ from .constants import (
     ENTRY_SIGNAL_CODES
 )
 
+if TYPE_CHECKING:
+    from src.core.providers.common.models import MarketData
+    from src.core.strategies import BaseStrategy
 
-def format_klines(klines: np.ndarray) -> list:
+
+def format_klines(klines: np.ndarray) -> list[dict[str, float]]:
     """
     Formats raw klines into a list of dictionaries
     with OHLC data and timestamp.
@@ -22,7 +27,7 @@ def format_klines(klines: np.ndarray) -> list:
         klines: 2D array of klines [timestamp, open, high, low, close]
 
     Returns:
-        list: Formatted klines
+        list[dict[str, float]]: Formatted klines
     """
 
     return [
@@ -36,20 +41,27 @@ def format_klines(klines: np.ndarray) -> list:
     ]
 
 
-def format_indicators(market_data: dict, indicators: dict) -> dict:
+def format_indicators(
+    market_data: MarketData,
+    indicators: dict[str, dict[str, Any]]
+) -> dict[str, list[dict[str, float]]]:
     """
     Formats indicator values and assigns corresponding colors.
 
     Args:
-        market_data: Market data containing klines and price precision
-        indicators: Dictionary of indicators with values and optional colors
+        market_data: Market data package
+        indicators: Dictionary of indicators
 
     Returns:
-        dict: Formatted indicator series
+        dict[str, list[dict[str, float]]]: Formatted indicator series
     """
 
     result = {}
+
     klines = market_data['klines']
+    if klines.size == 0:
+        return result
+
     timestamps = klines[:, 0] * 0.001
 
     for name, indicator in indicators.items():
@@ -104,23 +116,27 @@ def format_indicators(market_data: dict, indicators: dict) -> dict:
     return result
 
 
-def format_deals(
-    completed_deals_log: np.ndarray,
-    open_deals_log: np.ndarray
-) -> list:
+def format_deals(strategy: BaseStrategy) -> list[dict[str, str | float]]:
     """
     Formats completed and open deals into a list of dictionaries.
 
     Args:
-        completed_deals_log: Log of completed deals
-        open_deals_log: Log of currently open deals
+        strategy: Initialized strategy instance
 
     Returns:
-        list: Formatted deals
+        list[dict[str, str | float]]: Formatted deals
     """
 
-    if not completed_deals_log.size and not open_deals_log.size:
-        return []
+    result = []
+
+    if not hasattr(strategy, 'completed_deals_log'):
+        return result
+    
+    completed_deals_log = strategy.completed_deals_log
+    open_deals_log = strategy.open_deals_log
+
+    if completed_deals_log.size == 0 and open_deals_log.size == 0:
+        return result
 
     completed_deals = completed_deals_log.tolist()
     open_deals = list(
@@ -137,9 +153,9 @@ def format_deals(
         n_deal: int,
         time: float,
         size: float,
-        styles_map: dict,
+        styles_map: dict[str, str],
         is_entry: bool
-    ) -> dict:
+    ) -> dict[str, str | float]:
         """Helper to format a deal marker"""
 
         signal_codes = ENTRY_SIGNAL_CODES if is_entry else CLOSE_SIGNAL_CODES

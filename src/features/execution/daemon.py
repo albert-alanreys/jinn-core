@@ -140,7 +140,7 @@ class ExecutionDaemon:
         metrics = self._strategy_tester.test(strategy, market_data)
         context['metrics'] = metrics
 
-        strategy.trade(context['client'])
+        strategy.__trade__(context['client'])
     
     def _process_alerts(
         self,

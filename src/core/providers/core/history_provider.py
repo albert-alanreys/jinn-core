@@ -1,6 +1,5 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from logging import getLogger
 from typing import Any, TYPE_CHECKING
 
 import numpy as np
@@ -16,9 +15,6 @@ from ..common.utils import shrink, stretch
 if TYPE_CHECKING:
     from src.infrastructure.exchanges import BaseExchangeClient
     from ..common.models import MarketData, FeedsData
-
-
-logger = getLogger(__name__)
 
 
 class HistoryProvider():
@@ -74,7 +70,7 @@ class HistoryProvider():
                 start=start,
                 end=end
             )
-            if feeds else {}
+            if feeds and klines.size != 0 else {}
         )
 
         return {
@@ -207,6 +203,10 @@ class HistoryProvider():
                 start=start_req,
                 end=end_req
             )
+
+            if not raw_klines:
+                return np.array([])
+            
             klines = np.array(raw_klines)[:, :6].astype(float)
 
             if has_realtime_kline(klines):
@@ -240,16 +240,8 @@ class HistoryProvider():
                 )
         else:
             klines = np.array(raw_klines)
-
-        klines = klines[(klines[:, 0] >= start_ms) & (klines[:, 0] <= end_ms)]
-
-        if klines.size == 0:
-            raise ValueError(
-                f'No klines available | {client.exchange_name} | '
-                f'{symbol} | {interval.value} | {start} → {end}'
-            )
         
-        return klines
+        return klines[(klines[:, 0] >= start_ms) & (klines[:, 0] <= end_ms)]
 
     def _get_klines_from_exchange(
         self,
@@ -271,15 +263,7 @@ class HistoryProvider():
             
         Returns:
             list: Raw klines data from exchange
-            
-        Raises:
-            ValueError: If no klines available from exchange
         """
-        
-        logger.info(
-            f'Requesting klines | {client.exchange_name} | '
-            f'{symbol} | {interval.value}'
-        )
 
         klines = client.market.get_historical_klines(
             symbol=symbol,
@@ -289,11 +273,8 @@ class HistoryProvider():
         )
 
         if not klines:
-            raise ValueError(
-                f'No klines available | Period: '
-                f'{self._to_str(start)} → {self._to_str(end)}'
-            )
-
+            return []
+        
         return [
             [float(value) for value in kline[:6]]
             for kline in klines

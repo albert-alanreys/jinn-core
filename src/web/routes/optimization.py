@@ -30,9 +30,9 @@ def get_all_contexts() -> Response:
     """
 
     contexts = optimization_service.contexts
-    formatted = format_optimization_contexts(contexts)
+    formatted_contexts = format_optimization_contexts(contexts)
     return Response(
-        response=dumps(formatted),
+        response=dumps(formatted_contexts),
         status=200,
         mimetype='application/json'
     )
@@ -52,9 +52,9 @@ def get_context(context_id: str) -> Response:
     """
 
     context = optimization_service.get_context(context_id)
-    formatted = format_optimization_contexts({context_id: context})
+    formatted_context = format_optimization_contexts({context_id: context})
     return Response(
-        response=dumps(formatted),
+        response=dumps(formatted_context),
         status=200,
         mimetype='application/json'
     )
@@ -126,9 +126,9 @@ def get_all_contexts_status() -> Response:
     """
 
     statuses = optimization_service.statuses
-    formatted = format_contexts_statuses(statuses)
+    formatted_statuses = format_contexts_statuses(statuses)
     return Response(
-        response=dumps(formatted),
+        response=dumps(formatted_statuses),
         status=200,
         mimetype='application/json'
     )

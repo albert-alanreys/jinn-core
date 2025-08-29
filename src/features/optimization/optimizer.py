@@ -215,7 +215,7 @@ class StrategyOptimizer:
         """
 
         strategy = self.strategy_class(sample_dict)
-        strategy.calculate(market_data)
+        strategy.__calculate__(market_data)
 
         score = strategy.completed_deals_log[:, 8].sum()
         return score

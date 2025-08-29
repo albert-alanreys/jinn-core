@@ -30,9 +30,9 @@ def get_all_contexts() -> Response:
     """
 
     contexts = execution_service.contexts
-    formatted = format_execution_contexts(contexts)
+    formatted_contexts = format_execution_contexts(contexts)
     return Response(
-        response=dumps(formatted),
+        response=dumps(formatted_contexts),
         status=200,
         mimetype='application/json'
     )
@@ -70,9 +70,9 @@ def get_context(context_id: str) -> Response:
                 mimetype='application/json'
             )
 
-    formatted = format_execution_contexts({context_id: context})
+    formatted_context = format_execution_contexts({context_id: context})
     return Response(
-        response=dumps(formatted),
+        response=dumps(formatted_context),
         status=200,
         mimetype='application/json'
     )
@@ -177,9 +177,9 @@ def get_all_contexts_status() -> Response:
     """
 
     statuses = execution_service.statuses
-    formatted = format_contexts_statuses(statuses)
+    formatted_statuses = format_contexts_statuses(statuses)
     return Response(
-        response=dumps(formatted),
+        response=dumps(formatted_statuses),
         status=200,
         mimetype='application/json'
     )

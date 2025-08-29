@@ -29,9 +29,9 @@ def get_klines(context_id: str) -> Response:
     """
 
     context = execution_service.get_context(context_id)
-    klines = format_klines(context['market_data']['klines'])
+    formatted_klines = format_klines(context['market_data']['klines'])
     return Response(
-        response=dumps(klines),
+        response=dumps(formatted_klines),
         status=200,
         mimetype='application/json'
     )
@@ -51,12 +51,12 @@ def get_indicators(context_id: str) -> Response:
     """
 
     context = execution_service.get_context(context_id)
-    indicators = format_indicators(
+    formatted_indicators = format_indicators(
         market_data=context['market_data'],
         indicators=context['strategy'].indicators
     )
     return Response(
-        response=dumps(indicators),
+        response=dumps(formatted_indicators),
         status=200,
         mimetype='application/json'
     )
@@ -76,12 +76,9 @@ def get_deals(context_id: str) -> Response:
     """
 
     context = execution_service.get_context(context_id)
-    deals = format_deals(
-        completed_deals_log=context['strategy'].completed_deals_log,
-        open_deals_log=context['strategy'].open_deals_log
-    )
+    formatted_deals = format_deals(context['strategy'])
     return Response(
-        response=dumps(deals),
+        response=dumps(formatted_deals),
         status=200,
         mimetype='application/json'
     )

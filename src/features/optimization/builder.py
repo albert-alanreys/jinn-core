@@ -54,6 +54,9 @@ class OptimizationContextBuilder:
         client = self._get_exchange_client(config['exchange'])
         market_data = self._get_market_data(config, strategy_class, client)
 
+        if market_data['klines'].size == 0:
+            raise ValueError('No klines available for optimization')
+
         return {
             'name': config['strategy'],
             'exchange': config['exchange'],

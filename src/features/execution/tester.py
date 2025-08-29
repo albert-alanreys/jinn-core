@@ -28,25 +28,33 @@ class StrategyTester:
         
         Args:
             strategy: Strategy instance to evaluate
-            market_data: Market data for calculations
+            market_data: Market data package
 
         Returns:
             StrategyMetrics: Complete performance metrics set
         """
 
-        strategy.calculate(market_data)
+        if market_data['klines'].size == 0:
+            return self._get_empty_metrics_structure()
 
-        initial_capital = strategy.params['initial_capital']
-        deals_log = strategy.completed_deals_log
+        try:
+            strategy.__calculate__(market_data)
 
-        all_metrics = self._calculate_all_metrics(initial_capital, deals_log)
+            initial_capital = strategy.params['initial_capital']
+            deals_log = strategy.completed_deals_log
 
-        return {
-            'overview': self._extract_overview_metrics(all_metrics),
-            'performance': self._extract_performance_metrics(all_metrics),
-            'trades': self._extract_trade_metrics(all_metrics),
-            'risk': self._extract_risk_metrics(all_metrics),
-        }
+            all_metrics = self._calculate_all_metrics(
+                initial_capital, deals_log
+            )
+
+            return {
+                'overview': self._extract_overview_metrics(all_metrics),
+                'performance': self._extract_performance_metrics(all_metrics),
+                'trades': self._extract_trade_metrics(all_metrics),
+                'risk': self._extract_risk_metrics(all_metrics),
+            }
+        except Exception:
+            return self._get_empty_metrics_structure()
 
     def _extract_overview_metrics(
         self,
@@ -821,4 +829,22 @@ class StrategyTester:
                 'long': [long_liquidations_number],
                 'short': [short_liquidations_number]
             },
+        }
+    
+    def _get_empty_metrics_structure(self) -> StrategyMetrics:
+        """
+        Create empty metrics when no data or calculation fails.
+        
+        Returns:
+            StrategyMetrics: Empty metrics structure with proper format
+        """
+        
+        return {
+            'overview': {
+                'primary': [],
+                'equity': np.array([])
+            },
+            'performance': [],
+            'trades': [],
+            'risk': []
         }

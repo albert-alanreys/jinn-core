@@ -107,9 +107,7 @@ class DevourerV3(BaseStrategy):
     def __init__(self, params: dict | None = None) -> None:
         super().__init__(params)
 
-    def calculate(self, market_data) -> None:
-        super().init_variables(market_data)
-
+    def calculate(self) -> None:
         self.stop_price = np.full(self.time.shape[0], np.nan)
         self.take_price = np.full(self.time.shape[0], np.nan)
         self.liquidation_price = np.nan
@@ -850,7 +848,7 @@ class DevourerV3(BaseStrategy):
             alert_close_short
         )
 
-    def _trade(self, client: BaseExchangeClient) -> None:
+    def trade(self, client: BaseExchangeClient) -> None:
         if self.alert_cancel:
             client.trade.cancel_all_orders(self.symbol)
 

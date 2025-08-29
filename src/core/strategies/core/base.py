@@ -8,6 +8,7 @@ import numpy as np
 from .utils import order_cache
 
 if TYPE_CHECKING:
+    from src.core.providers.common.models import MarketData
     from src.infrastructure.exchanges import BaseExchangeClient
 
 
@@ -128,37 +129,22 @@ class BaseStrategy(ABC):
         if params is not None:
             self.params.update(params)
     
-    def init_variables(
-        self,
-        market_data: dict,
-        max_open_deals: int = 1
-    ) -> None:
+    def __calculate__(self, market_data: MarketData) -> None:
         """
-        Initialize core strategy variables from market data.
-
-        Sets up:
-        - Deal logs (completed and open)
-        - Position tracking variables
-        - Market data references
-        - Precision parameters
-        - Equity tracking
-
+        Internal method that handles initialization
+        and calls user's calculate method.
+        
+        This method is called by the framework and automatically:
+        1. Initializes all necessary variables from market data
+        2. Calls the user-defined calculate() method
+        
         Args:
-            market_data: Dictionary containing:
-                - symbol: str - Trading symbol
-                - p_precision: float - Price precision step
-                - q_precision: float - Quantity precision step
-                - klines: np.ndarray - OHLCV data with columns:
-                    [time, open, high, low, close, volume]
-                - feeds: dict - Additional data
-            max_open_deals: Maximum number of simultaneously open deals.
-                            Determines number of rows in open_deals_log.
-                            Each deal will have exactly 5 tracking values.
+            market_data: Market data package
         """
 
         # Deal logs
         self.completed_deals_log = np.empty((0, 13), dtype=np.float64)
-        self.open_deals_log = np.full((max_open_deals, 5), np.nan)
+        self.open_deals_log = np.full((1, 5), np.nan)
 
         # Position tracking
         self.position_type = np.nan
@@ -201,22 +187,18 @@ class BaseStrategy(ABC):
         # Strategy parameters
         self.equity = self.params['initial_capital']
 
-    def trade(self, client: BaseExchangeClient) -> None:
+        # Call user's calculate method
+        self.calculate()
+
+    def __trade__(self, client: BaseExchangeClient) -> None:
         """
-        Execute trading strategy with automatic order cache management.
+        Internal method that handles order cache
+        management and calls user's trade method.
         
-        This method handles the complete trading workflow including:
-        - Loading cached order IDs from database
-        - Executing strategy-specific trading logic
-        - Saving updated order IDs back to database
-        
-        The order cache is automatically managed using SQLite database
-        with structure: {exchange_name}.db -> order_identifiers table.
-        Cache key format: {strategy_name}_{symbol}
-        
-        Order cache contains:
-        - stop_ids: List of active stop order identifiers
-        - limit_ids: List of active limit order identifiers
+        This method is called by the framework and automatically:
+        1. Loads cached order IDs from database
+        2. Calls the user-defined trade() method
+        3. Saves updated order IDs back to database
         
         Args:
             client: Exchange client instance
@@ -230,7 +212,7 @@ class BaseStrategy(ABC):
             )
 
         try:
-            self._trade(client)
+            self.trade(client)
         finally:
             order_cache.save_order_cache(
                 strategy=self.__class__.__name__,
@@ -256,7 +238,7 @@ class BaseStrategy(ABC):
         pass
 
     @abstractmethod
-    def _trade(self, client: BaseExchangeClient) -> None:
+    def trade(self, client: BaseExchangeClient) -> None:
         """
         Execute trading logic based on calculated signals.  
         Must be implemented by concrete strategy classes.

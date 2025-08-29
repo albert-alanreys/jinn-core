@@ -31,12 +31,12 @@ def get_overview_metrics(context_id: str) -> Response:
     """
 
     context = execution_service.get_context(context_id)
-    metrics = format_overview_metrics(
-        metrics=context['metrics']['overview'],
-        completed_deals_log=context['strategy'].completed_deals_log
+    formatted_metrics = format_overview_metrics(
+        strategy=context['strategy'],
+        metrics=context['metrics']['overview']
     )
     return Response(
-        response=dumps(metrics),
+        response=dumps(formatted_metrics),
         status=200,
         mimetype='application/json'
     )
@@ -56,11 +56,11 @@ def get_performance_metrics(context_id: str) -> Response:
     """
 
     context = execution_service.get_context(context_id)
-    metrics = format_performance_metrics(
+    formatted_metrics = format_performance_metrics(
         context['metrics']['performance']
     )
     return Response(
-        response=dumps(metrics),
+        response=dumps(formatted_metrics),
         status=200,
         mimetype='application/json'
     )
@@ -80,11 +80,9 @@ def get_trade_metrics(context_id: str) -> Response:
     """
 
     context = execution_service.get_context(context_id)
-    metrics = format_trade_metrics(
-        context['metrics']['trades']
-    )
+    formatted_metrics = format_trade_metrics(context['metrics']['trades'])
     return Response(
-        response=dumps(metrics),
+        response=dumps(formatted_metrics),
         status=200,
         mimetype='application/json'
     )
@@ -104,9 +102,9 @@ def get_risk_metrics(context_id: str) -> Response:
     """
 
     context = execution_service.get_context(context_id)
-    metrics = format_risk_metrics(context['metrics']['risk'])
+    formatted_metrics = format_risk_metrics(context['metrics']['risk'])
     return Response(
-        response=dumps(metrics),
+        response=dumps(formatted_metrics),
         status=200,
         mimetype='application/json'
     )
@@ -126,12 +124,9 @@ def get_trades(context_id: str) -> Response:
     """
 
     context = execution_service.get_context(context_id)
-    trades = format_trades(
-        completed_deals_log=context['strategy'].completed_deals_log,
-        open_deals_log=context['strategy'].open_deals_log
-    )
+    formatted_trades = format_trades(context['strategy'])
     return Response(
-        response=dumps(trades),
+        response=dumps(formatted_trades),
         status=200,
         mimetype='application/json'
     )
