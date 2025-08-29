@@ -192,7 +192,14 @@ class OptimizationService:
             
         Returns:
             ContextStatus: Current context status
+
+        Raises:
+            KeyError: If context doesn't exist
         """
+
+        with self._contexts_lock:
+            if context_id not in self._contexts:
+                raise KeyError(f'Context {context_id} not found')
 
         with self._statuses_lock:
             return self._context_statuses.get(context_id)
