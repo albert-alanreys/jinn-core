@@ -28,16 +28,16 @@ class ExecutionDaemon:
     _ALERTS_LIMIT = 1000
     _MONITOR_INTERVAL = 1.0
     
-    def __init__(self, alert_registry: dict[str, AlertData]) -> None:
+    def __init__(self, alerts: list[AlertData]) -> None:
         """
         Initialize the execution daemon.
         
         Args:
-            alert_registry: Shared alert storage
+            alerts: Shared alert storage
         """
 
         self._contexts: dict[str, StrategyContext] = {}
-        self._alert_registry = alert_registry
+        self._alerts = alerts
 
         self._realtime_provider = RealtimeProvider()
         self._telegram_client = TelegramClient()
@@ -165,9 +165,11 @@ class ExecutionDaemon:
         alerts.clear()
 
         for alert in alerts_to_process:
-            self._alert_registry[str(uuid4())] = {
-                'context': context_id, **alert,
-            }
+            self._alerts.append({
+                'alert_id': str(uuid4()),
+                'context_id': context_id,
+                **alert,
+            })
 
             try:
                 self._telegram_client.send_order_alert(alert)
@@ -179,7 +181,6 @@ class ExecutionDaemon:
     def _cleanup_old_alerts(self) -> None:
         """Remove oldest alerts if registry exceeds the limit."""
 
-        excess = len(self._alert_registry) - self._ALERTS_LIMIT
+        excess = len(self._alerts) - self._ALERTS_LIMIT
         if excess > 0:
-            items = list(self._alert_registry.items())[excess:]
-            self._alert_registry = dict(items)
+            self._alerts = self._alerts[excess:]

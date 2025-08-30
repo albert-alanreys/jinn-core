@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     from src.core.providers import MarketData
     from src.core.strategies import BaseStrategy
     from src.infrastructure.exchanges import BaseExchangeClient
-    from src.infrastructure.exchanges.models import Alert
 
 
 class ContextStatus(Enum):
@@ -37,9 +36,16 @@ class ContextConfig(TypedDict):
 class AlertData(TypedDict):
     """Trading alert notification data."""
     
-    context: str
-    strategy: str
-    message: Alert
+    alert_id: str
+    context_id: str
+    exchange: str
+    type: str
+    status: str
+    side: str
+    symbol: str
+    qty: str
+    price: str
+    time: str
 
 
 class Metric(TypedDict):

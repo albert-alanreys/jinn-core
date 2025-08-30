@@ -32,7 +32,7 @@ class ExecutionService:
 
         self._contexts: dict[str, StrategyContext] = {}
         self._context_statuses: dict[str, ContextStatus] = {}
-        self._alerts: dict[str, AlertData] = {}
+        self._alerts: list[AlertData] = []
 
         self._contexts_lock = RLock()
         self._statuses_lock = RLock()
