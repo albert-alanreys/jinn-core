@@ -229,10 +229,12 @@ class ExecutionService:
         """
 
         with self._alerts_lock:
-            if alert_id not in self._alerts:
-                raise KeyError(f'Alert {alert_id} not found')
-            
-            del self._alerts[alert_id]
+            for i, alert in enumerate(self._alerts):
+                if alert['alert_id'] == alert_id:
+                    del self._alerts[i]
+                    return
+
+            raise KeyError(f'Alert {alert_id} not found')
 
     def _run_monitor_queue(self) -> None:
         """
