@@ -19,4 +19,6 @@ def configure_logging() -> logging.Logger:
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
+    logging.getLogger('waitress.queue').setLevel(logging.ERROR)
+
     return logger
