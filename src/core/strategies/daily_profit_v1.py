@@ -179,14 +179,6 @@ class DailyProfitV1(BaseStrategy):
             volume=self.volume,
         )
 
-        self.vwap_colors = np.empty(self.vwap.shape[0], dtype=np.float64)
-        self.vwap_colors[0] = np.nan
-        self.vwap_colors[1:] = np.where(
-            self.vwap[1:] > self.vwap[:-1],
-            self.vwap_color_1,
-            self.vwap_color_2
-        )
-
         self.vwap_upper_band = (
             self.vwap * (100 + self.params['vwap_zone']) / 100
         )
@@ -266,6 +258,14 @@ class DailyProfitV1(BaseStrategy):
             self.alert_short_new_stop
         )
 
+        vwap_colors = np.empty(self.vwap.shape[0], dtype=np.float64)
+        vwap_colors[0] = np.nan
+        vwap_colors[1:] = np.where(
+            self.vwap[1:] > self.vwap[:-1],
+            self.vwap_color_1,
+            self.vwap_color_2
+        )
+        
         self.indicators = {
             'SL': {
                 'options': self.indicator_options['SL'],
@@ -290,17 +290,17 @@ class DailyProfitV1(BaseStrategy):
             'VWAP': {
                 'options': self.indicator_options['VWAP'],
                 'values': self.vwap,
-                'colors': self.vwap_colors,
+                'colors': vwap_colors,
             },
             'VWAP UB': {
                 'options': self.indicator_options['VWAP UB'],
                 'values': self.vwap_upper_band,
-                'colors': self.vwap_colors,
+                'colors': vwap_colors,
             },
             'VWAP LB': {
                 'options': self.indicator_options['VWAP LB'],
                 'values': self.vwap_lower_band,
-                'colors': self.vwap_colors,
+                'colors': vwap_colors,
             },
         }
 

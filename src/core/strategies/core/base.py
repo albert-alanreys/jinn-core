@@ -222,27 +222,13 @@ class BaseStrategy(ABC):
             )
 
     @abstractmethod
-    def calculate(self, market_data: dict) -> None:
-        """
-        Calculate strategy indicators and signals.  
-        Must be implemented by concrete strategy classes.
-
-        Args:
-            market_data: Dictionary containing market data with structure:
-                - symbol: str
-                - klines: np.ndarray [time, open, high, low, close, volume]
-                - extra_klines: dict
-                - p_precision: float
-                - q_precision: float
-        """
+    def calculate(self) -> None:
+        """Calculate strategy indicators and signals."""
         pass
 
     @abstractmethod
     def trade(self, client: BaseExchangeClient) -> None:
-        """
-        Execute trading logic based on calculated signals.  
-        Must be implemented by concrete strategy classes.
-        """
+        """Execute trading logic based on calculated signals."""
         pass
 
     @classmethod

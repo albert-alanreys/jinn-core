@@ -311,6 +311,7 @@ class ExampleV1(BaseStrategy):
             self.alert_short_new_stop
         )
 
+        # Visualization indicators
         self.indicators = {
             'SL': {
                 'options': self.indicator_options['SL'],

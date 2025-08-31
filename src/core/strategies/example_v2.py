@@ -267,13 +267,6 @@ class ExampleV2(BaseStrategy):
         self.alert_long_new_stop = False
         self.alert_short_new_stop = False
 
-        # Graphics
-        self.volume_colors = np.where(
-            self.close >= self.open,
-            self.volume_color_1,
-            self.volume_color_2
-        )
-
         # Main calculation loop (Numba-optimized)
         (
             self.completed_deals_log,
@@ -347,7 +340,7 @@ class ExampleV2(BaseStrategy):
             self.alert_short_new_stop
         )
 
-        # Indicator Visualization Data
+        # Visualization indicators
         self.indicators = {
             'HTF': {
                 'options': self.indicator_options['HTF'],
@@ -372,7 +365,11 @@ class ExampleV2(BaseStrategy):
             'Volume': {
                 'options': self.indicator_options['Volume'],
                 'values': self.volume,
-                'colors': self.volume_colors,
+                'colors': np.where(
+                    self.close >= self.open,
+                    self.volume_color_1,
+                    self.volume_color_2
+                ),
             },
             '+DI': {
                 'options': self.indicator_options['+DI'],
