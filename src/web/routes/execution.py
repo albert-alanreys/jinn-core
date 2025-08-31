@@ -57,18 +57,19 @@ def get_context(context_id: str) -> Response:
                   Returns an empty JSON object if no updates.
     """
 
-    context = execution_service.get_context(context_id)
-    klines = context['market_data']['klines']
     updated_after = request.args.get('updated_after', type=int)
+    context = execution_service.get_context(context_id)
 
-    if updated_after and klines:
-        last_kline_time = int(klines[-1, 0])
-        if last_kline_time <= updated_after:
-            return Response(
-                response=dumps({}),
-                status=200,
-                mimetype='application/json'
-            )
+    if updated_after:
+        klines = context['market_data']['klines']
+        if klines.shape[0] > 0:
+            last_kline_time = int(klines[-1, 0])
+            if last_kline_time <= updated_after:
+                return Response(
+                    response=dumps({}),
+                    status=200,
+                    mimetype='application/json'
+                )
 
     formatted_context = format_execution_contexts({context_id: context})
     return Response(
