@@ -36,7 +36,7 @@ def get_alerts() -> Response:
             )
             alerts = alerts[index + 1 :]
         except StopIteration:
-            alerts = []
+            pass
     
     if limit and limit > 0:
         alerts = alerts[-limit:]

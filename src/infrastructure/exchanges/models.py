@@ -4,45 +4,25 @@ from typing import TypedDict
 
 
 class Exchange(Enum):
-    """
-    Supported cryptocurrency exchanges.
-    
-    Attributes:
-        BINANCE: Binance exchange
-        BYBIT: Bybit exchange
-    """
+    """Supported cryptocurrency exchanges."""
 
-    BINANCE = 'BINANCE'
-    BYBIT = 'BYBIT'
+    BINANCE = 'Binance'
+    BYBIT = 'Bybit'
 
 
 class Interval(Enum):
-    """
-    Supported kline intervals.
+    """Supported kline intervals."""
     
-    Attributes:
-        MIN_1: 1 minute interval
-        MIN_5: 5 minutes interval
-        MIN_15: 15 minutes interval
-        MIN_30: 30 minutes interval
-        HOUR_1: 1 hour interval
-        HOUR_2: 2 hours interval
-        HOUR_4: 4 hours interval
-        HOUR_6: 6 hours interval
-        HOUR_12: 12 hours interval
-        DAY_1: 1 day interval
-    """
-    
-    MIN_1 = '1m'
-    MIN_5 = '5m'
-    MIN_15 = '15m'
-    MIN_30 = '30m'
-    HOUR_1 = '1h'
-    HOUR_2 = '2h'
-    HOUR_4 = '4h'
-    HOUR_6 = '6h'
-    HOUR_12 = '12h'
-    DAY_1 = '1d'
+    MIN_1 = '1 Min'
+    MIN_5 = '5 Min'
+    MIN_15 = '15 Min'
+    MIN_30 = '30 Min'
+    HOUR_1 = '1 Hour'
+    HOUR_2 = '2 Hours'
+    HOUR_4 = '4 Hours'
+    HOUR_6 = '6 Hours'
+    HOUR_12 = '12 Hours'
+    DAY_1 = '1 Day'
 
 
 class Alert(TypedDict):
