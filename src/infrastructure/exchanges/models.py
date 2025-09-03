@@ -13,10 +13,10 @@ class Exchange(Enum):
 class Interval(Enum):
     """Supported kline intervals."""
     
-    MIN_1 = '1 Minute'
-    MIN_5 = '5 Minutes'
-    MIN_15 = '15 Minutes'
-    MIN_30 = '30 Minutes'
+    MIN_1 = '1 Min'
+    MIN_5 = '5 Mins'
+    MIN_15 = '15 Mins'
+    MIN_30 = '30 Mins'
     HOUR_1 = '1 Hour'
     HOUR_2 = '2 Hours'
     HOUR_4 = '4 Hours'
