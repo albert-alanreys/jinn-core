@@ -110,7 +110,7 @@ class OptimizationService:
         added: list[str] = []
         for context_id, config in configs.items():
             with self._contexts_lock, self._statuses_lock:
-                if context_id in self._context_statuses:
+                if context_id in self._contexts:
                     continue
 
                 self._context_statuses[context_id] = ContextStatus.QUEUED
