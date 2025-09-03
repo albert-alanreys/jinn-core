@@ -222,7 +222,6 @@ class OptimizationService:
                 with self._contexts_lock:
                     self._contexts[context_id] = context
 
-                self._set_status(context_id, ContextStatus.OPTIMIZATION)
                 self._optimization_queue.put((context_id, context))
                 self._opt_event.set()
             except Exception as e:
