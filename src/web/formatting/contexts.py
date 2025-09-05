@@ -31,7 +31,6 @@ def format_execution_contexts(
 
     result = {}
     for context_id, context in contexts.items():
-        strategy = context['strategy']
         market_data = context['market_data']
         min_move = market_data['p_precision']
         precision = (
@@ -47,7 +46,7 @@ def format_execution_contexts(
             'isLive': context['is_live'],
             'minMove': min_move,
             'precision': precision,
-            'params': strategy.params,
+            'params': context['strategy'].params,
         }
 
     return result

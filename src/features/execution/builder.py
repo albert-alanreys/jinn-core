@@ -62,7 +62,7 @@ class ExecutionContextBuilder:
         return {
             'name': config['strategy'],
             'exchange': config['exchange'],
-            'is_live': config['is_live'],
+            'is_live': self._is_live(config),
             'strategy': strategy,
             'client': client,
             'market_data': market_data,
@@ -175,7 +175,7 @@ class ExecutionContextBuilder:
             'feeds': strategy.feeds,
         }
         
-        if config['is_live']:
+        if self._is_live(config):
             return self._realtime_provider.get_market_data(**common_params)
         else:
             return self._history_provider.get_market_data(
@@ -183,3 +183,20 @@ class ExecutionContextBuilder:
                 end=config['end'],
                 **common_params
             )
+    
+    def _is_live(self, config: ContextConfig) -> bool:
+        """
+        Determine execution mode from configuration.
+
+        Returns True when no backtest boundaries are defined.
+        Returns False when 'start' or 'end' fields are present,
+        indicating backtest execution.
+        
+        Args:
+            config: Strategy context configuration package
+
+        Returns:
+            bool: Execution mode flag (True for live, False for backtest)
+        """
+
+        return not (config.get('start') or config.get('end'))

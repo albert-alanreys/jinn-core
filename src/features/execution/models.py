@@ -26,7 +26,6 @@ class ContextConfig(TypedDict):
     symbol: str
     interval: str
     exchange: str
-    is_live: bool
     params: dict[str, bool | int | float]
 
     start: NotRequired[str]
