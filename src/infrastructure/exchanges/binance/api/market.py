@@ -71,7 +71,7 @@ class MarketClient(BaseBinanceClient):
                 f'Failed to request data | Binance | {symbol} | '
                 f'{interval.value} | {type(e).__name__} - {e}'
             )
-            return []
+            raise
 
     def get_last_klines(
         self,
@@ -104,7 +104,7 @@ class MarketClient(BaseBinanceClient):
                 f'Failed to request data | Binance | {symbol} | '
                 f'{interval.value} | {type(e).__name__} - {e}'
             )
-            return []
+            raise
 
     @lru_cache
     def get_price_precision(self, symbol: str) -> float:
@@ -116,6 +116,7 @@ class MarketClient(BaseBinanceClient):
                 f'Failed to get price precision for {symbol} | '
                 f'{type(e).__name__} - {e}'
             )
+            raise
 
     @lru_cache
     def get_qty_precision(self, symbol: str) -> float:
@@ -127,6 +128,7 @@ class MarketClient(BaseBinanceClient):
                 f'Failed to get qty precision for {symbol} | '
                 f'{type(e).__name__} - {e}'
             )
+            raise
 
     def get_tickers(self, symbol: str) -> dict:
         url = f'{self.BASE_ENDPOINT}/fapi/v1/premiumIndex'
