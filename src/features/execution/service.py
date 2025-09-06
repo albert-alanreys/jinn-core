@@ -274,7 +274,7 @@ class ExecutionService:
         try:
             context = self._context_builder.create(config)
 
-            if config['is_live']:
+            if context['is_live']:
                 self._execution_daemon.add_context(context_id, context)
 
             with self._contexts_lock:
