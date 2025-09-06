@@ -194,15 +194,16 @@ class OptimizationService:
             ContextStatus: Current context status
 
         Raises:
-            KeyError: If context doesn't exist
+            KeyError: If the context status doesn't exist
         """
 
         with self._contexts_lock:
-            if context_id not in self._contexts:
-                raise KeyError(f'Context {context_id} not found')
-
-        with self._statuses_lock:
-            return self._context_statuses.get(context_id)
+            status = self._context_statuses.get(context_id)
+            
+            if status is None:
+                raise KeyError(f'Context status for {context_id} not found')
+            
+            return status
     
     def _run_monitor_config_queue(self) -> None:
         while True:
