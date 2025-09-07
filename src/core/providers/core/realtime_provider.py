@@ -44,7 +44,7 @@ class RealtimeProvider():
         """
 
         p_precision = client.market.get_price_precision(symbol)
-        q_precision = client.market.get_qty_precision(symbol)   
+        q_precision = client.market.get_qty_precision(symbol) 
 
         klines = np.array(
             client.market.get_last_klines(

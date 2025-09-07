@@ -225,12 +225,9 @@ class OptimizationService:
 
                 self._optimization_queue.put((context_id, context))
                 self._opt_event.set()
-            except Exception as e:
+            except Exception:
                 self._set_status(context_id, ContextStatus.FAILED)
-                logger.error(
-                    f'Failed to create context {context_id}: '
-                    f'{type(e).__name__} - {e}'
-                )
+                logger.exception(f'Failed to create context {context_id}')
 
     def _run_monitor_optimization_queue(self) -> None:
         while True:

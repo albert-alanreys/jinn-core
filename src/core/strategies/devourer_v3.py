@@ -15,7 +15,7 @@ class DevourerV3(BaseStrategy):
     # --- Strategy Configuration ---
     # Default parameter values for backtesting and live trading
     params = {
-        'position_size': 5.0,
+        'position_size': 90.0,
         'stop_atr_p2': 0.5,
         'stop_atr_p3': 1.0,
         'take_atr_p3': 3.0,

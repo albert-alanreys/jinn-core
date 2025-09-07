@@ -282,12 +282,9 @@ class ExecutionService:
                 self._contexts[context_id] = context
 
             self._set_status(context_id, ContextStatus.READY)
-        except Exception as e:
+        except Exception:
             self._set_status(context_id, ContextStatus.FAILED)
-            logger.error(
-                f'Failed to create context {context_id}: '
-                f'{type(e).__name__} - {e}'
-            )
+            logger.exception(f'Failed to create context {context_id}')
     
     def _set_status(self, context_id: str, status: ContextStatus) -> None:
         """Update context status."""
