@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from src.core.strategies import strategy_registry
+
 if TYPE_CHECKING:
     from src.features.execution.models import (
         StrategyContext as ExecutionContext,
@@ -76,7 +78,10 @@ def format_optimization_contexts(
             'exchange': context['exchange'],
             'start': market_data['start'],
             'end': market_data['end'],
-            'params': context['optimized_params'],
+            'params': {
+                **strategy_registry[context['name']].get_params(),
+                **context['optimized_params'],
+            },
         }
 
     return result

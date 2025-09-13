@@ -1,0 +1,6 @@
+*.py
+
+!example_v1.py
+!example_v2.py
+
+!__init__.py
