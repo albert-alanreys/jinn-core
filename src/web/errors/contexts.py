@@ -36,6 +36,7 @@ def with_context_error_handling(f: Callable) -> Callable:
                 status=404
             )
         except (TypeError, ValueError):
+            logger.exception('An unexpected server error occurred')
             return Response(
                 dumps({
                     'status': 'error',

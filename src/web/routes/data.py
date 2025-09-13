@@ -52,7 +52,6 @@ def get_strategies() -> Response:
     """
     
     strategy_data = {}
-    
     for strategy_name, strategy_class in strategy_registry.items():
         strategy_data[strategy_name] = {
             'name': strategy_name,

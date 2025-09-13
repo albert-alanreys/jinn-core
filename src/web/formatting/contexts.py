@@ -71,6 +71,17 @@ def format_optimization_contexts(
     for context_id, context in contexts.items():
         market_data = context['market_data']
 
+        base_params = strategy_registry[context['name']].get_params().copy()
+        optimized_sets = context['optimized_params']
+
+        if not optimized_sets:
+            params = [base_params]
+        else:
+            params = [
+                {**base_params, **opt}
+                for opt in optimized_sets
+            ]
+
         result[context_id] = {
             'strategy': context['name'],
             'symbol': market_data['symbol'],
@@ -78,10 +89,7 @@ def format_optimization_contexts(
             'exchange': context['exchange'],
             'start': market_data['start'],
             'end': market_data['end'],
-            'params': {
-                **strategy_registry[context['name']].get_params(),
-                **context['optimized_params'],
-            },
+            'params': params,
         }
 
     return result
