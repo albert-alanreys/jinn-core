@@ -7,7 +7,7 @@ from . import (
     Interval,
     adjust,
     colors,
-    quantklines,
+    quanta,
     update_completed_deals_log
 )
 
@@ -126,11 +126,11 @@ class ExampleV2(BaseStrategy):
         self.qty_entry = np.full(4, np.nan)
 
         # Technical indicators
-        self.lowest = quantklines.lowest(
+        self.lowest = quanta.lowest(
             source=np.roll(self.low, 1),
             length=self.params['lookback']
         )
-        self.sma = quantklines.sma(
+        self.sma = quanta.sma(
             source=(self.high - self.low), 
             length=self.params['ma_length']
         )

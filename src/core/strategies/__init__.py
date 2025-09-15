@@ -10,7 +10,7 @@ from src.shared.utils import adjust
 from .core import (
     BaseStrategy,
     colors,
-    quantklines,
+    quanta,
     update_completed_deals_log
 )
 

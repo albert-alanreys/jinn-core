@@ -6,7 +6,7 @@ from . import (
     BaseExchangeClient,
     adjust,
     colors,
-    quantklines,
+    quanta,
     update_completed_deals_log
 )
 
@@ -194,28 +194,28 @@ class ExampleV1(BaseStrategy):
         self.take_quantities = np.full(5, np.nan)
 
         # Technical indicators
-        self.dst = quantklines.dst(
+        self.dst = quanta.dst(
             high=self.high,
             low=self.low,
             close=self.close,
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.upper_band_change = quantklines.change(
+        self.upper_band_change = quanta.change(
             source=self.dst[0],
             length=1
         )
-        self.lower_band_change = quantklines.change(
+        self.lower_band_change = quanta.change(
             source=self.dst[1],
             length=1
         )
-        self.rsi = quantklines.rsi(
+        self.rsi = quanta.rsi(
             source=self.close,
             length=self.params['rsi_length']
         )
 
         if self.params['bb_filter']:
-            self.bb_rsi = quantklines.bb(
+            self.bb_rsi = quanta.bb(
                 source=self.rsi,
                 length=self.params['ma_length'],
                 mult=self.params['bb_mult']
@@ -223,7 +223,7 @@ class ExampleV1(BaseStrategy):
         else:
             self.bb_rsi = np.full(self.time.shape[0], np.nan)
 
-        self.dmi = quantklines.dmi(
+        self.dmi = quanta.dmi(
             high=self.high,
             low=self.low,
             close=self.close,
