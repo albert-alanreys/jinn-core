@@ -3,7 +3,6 @@ import numba as nb
 
 from . import (
     BaseStrategy,
-    BaseExchangeClient,
     adjust,
     colors,
     quanta,
@@ -916,32 +915,32 @@ class ExampleV1(BaseStrategy):
             alert_short_new_stop
         )
 
-    def trade(self, client: BaseExchangeClient) -> None:
+    def trade(self) -> None:
         # Cancel all orders if needed
         if self.alert_cancel:
-            client.trade.cancel_all_orders(self.symbol)
+            self.client.trade.cancel_all_orders(self.symbol)
 
          # Check order status
-        self.order_ids['stop_ids'] = client.trade.check_stop_orders(
+        self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['stop_ids']
         )
-        self.order_ids['limit_ids'] = client.trade.check_limit_orders(
+        self.order_ids['limit_ids'] = self.client.trade.check_limit_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
         # Update stop loss
         if self.alert_long_new_stop:
-            client.trade.cancel_stop_orders(
+            self.client.trade.cancel_stop_orders(
                 symbol=self.symbol,
                 side='sell'
             )
-            self.order_ids['stop_ids'] = client.trade.check_stop_orders(
+            self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
             )
-            order_id = client.trade.market_stop_close_long(
+            order_id = self.client.trade.market_stop_close_long(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
@@ -952,15 +951,15 @@ class ExampleV1(BaseStrategy):
                 self.order_ids['stop_ids'].append(order_id)
         
         if self.alert_short_new_stop:
-            client.trade.cancel_stop_orders(
+            self.client.trade.cancel_stop_orders(
                 symbol=self.symbol,
                 side='buy'
             )
-            self.order_ids['stop_ids'] = client.trade.check_stop_orders(
+            self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
             )
-            order_id = client.trade.market_stop_close_short(
+            order_id = self.client.trade.market_stop_close_short(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
@@ -972,7 +971,7 @@ class ExampleV1(BaseStrategy):
 
         # Open long position
         if self.alert_open_long:
-            client.trade.market_open_long(
+            self.client.trade.market_open_long(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size']}'
@@ -984,7 +983,7 @@ class ExampleV1(BaseStrategy):
                 leverage=self.params['leverage'],
                 hedge=False
             )
-            order_id = client.trade.market_stop_close_long(
+            order_id = self.client.trade.market_stop_close_long(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1],
@@ -994,7 +993,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_long(
+            order_id = self.client.trade.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.take_volumes[0]}%',
                 price=self.take_prices[0, -1],
@@ -1004,7 +1003,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_long(
+            order_id = self.client.trade.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.take_volumes[1]}%',
                 price=self.take_prices[1, -1],
@@ -1014,7 +1013,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_long(
+            order_id = self.client.trade.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_prices[2, -1],
@@ -1025,7 +1024,7 @@ class ExampleV1(BaseStrategy):
                 self.order_ids['limit_ids'].append(order_id)
 
         if self.alert_open_short:
-            client.trade.market_open_short(
+            self.client.trade.market_open_short(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size']}'
@@ -1037,7 +1036,7 @@ class ExampleV1(BaseStrategy):
                 leverage=self.params['leverage'],
                 hedge=False
             )
-            order_id = client.trade.market_stop_close_short(
+            order_id = self.client.trade.market_stop_close_short(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1],
@@ -1047,7 +1046,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_short(
+            order_id = self.client.trade.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.take_volumes[0]}%',
                 price=self.take_prices[0, -1],
@@ -1057,7 +1056,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_short(
+            order_id = self.client.trade.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.take_volumes[1]}%',
                 price=self.take_prices[1, -1],
@@ -1067,7 +1066,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_short(
+            order_id = self.client.trade.limit_close_short(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_prices[2, -1],

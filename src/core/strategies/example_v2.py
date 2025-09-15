@@ -3,7 +3,6 @@ import numba as nb
 
 from . import (
     BaseStrategy,
-    BaseExchangeClient,
     Interval,
     adjust,
     colors,
@@ -553,28 +552,30 @@ class ExampleV2(BaseStrategy):
             alert_close_long
         )
     
-    def trade(self, client: BaseExchangeClient) -> None:
+    def trade(self) -> None:
         if self.alert_close_long:
-            client.trade.market_close_long(
+            self.client.trade.market_close_long(
                 symbol=self.symbol,
                 size='100%',
                 hedge=False
             )
-            client.trade.cancel_all_orders(self.symbol)
+            self.client.trade.cancel_all_orders(self.symbol)
 
-        self.order_ids['limit_ids'] = client.trade.check_limit_orders(
+        self.order_ids['limit_ids'] = self.client.trade.check_limit_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
         if self.alert_open_long:
-            client.trade.cancel_all_orders(self.symbol)
-            self.order_ids['limit_ids'] = client.trade.check_limit_orders(
-                symbol=self.symbol,
-                order_ids=self.order_ids['limit_ids']
+            self.client.trade.cancel_all_orders(self.symbol)
+            self.order_ids['limit_ids'] = (
+                self.client.trade.check_limit_orders(
+                    symbol=self.symbol,
+                    order_ids=self.order_ids['limit_ids']
+                )
             )
 
-            client.trade.market_open_long(
+            self.client.trade.market_open_long(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size'] *
@@ -588,7 +589,7 @@ class ExampleV2(BaseStrategy):
                 hedge=False
             )
 
-            order_id = client.trade.limit_open_long(
+            order_id = self.client.trade.limit_open_long(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size'] *
@@ -606,7 +607,7 @@ class ExampleV2(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_open_long(
+            order_id = self.client.trade.limit_open_long(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size'] *
@@ -624,7 +625,7 @@ class ExampleV2(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_open_long(
+            order_id = self.client.trade.limit_open_long(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size'] *
