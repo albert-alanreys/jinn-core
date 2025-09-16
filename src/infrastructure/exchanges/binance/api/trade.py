@@ -59,11 +59,10 @@ class TradeClient(BaseBinanceClient):
             position: Position client instance
         """
 
-        super().__init__()
+        super().__init__(account.api_key, account.api_secret)
 
-        self.account = account
-        self.market = market
-        self.position = position
+        self._market = market
+        self._position = position
 
         self.alerts: list[Alert] = []
 
@@ -77,19 +76,19 @@ class TradeClient(BaseBinanceClient):
     ) -> None:
         try:
             if hedge:
-                self.position.switch_position_mode(True)
+                self._position.switch_position_mode(True)
             else:
-                self.position.switch_position_mode(False)
+                self._position.switch_position_mode(False)
 
             match margin:
                 case 'cross':
-                    self.position.switch_margin_mode(symbol, 'CROSSED')
+                    self._position.switch_margin_mode(symbol, 'CROSSED')
                 case 'isolated':
-                    self.position.switch_margin_mode(symbol, 'ISOLATED')
+                    self._position.switch_margin_mode(symbol, 'ISOLATED')
 
-            self.position.set_leverage(symbol, leverage)
+            self._position.set_leverage(symbol, leverage)
 
-            qty = self.position.get_quantity_to_open(
+            qty = self._position.get_quantity_to_open(
                 symbol=symbol,
                 size=size,
                 leverage=leverage
@@ -151,19 +150,19 @@ class TradeClient(BaseBinanceClient):
     ) -> None:
         try:
             if hedge:
-                self.position.switch_position_mode(True)
+                self._position.switch_position_mode(True)
             else:
-                self.position.switch_position_mode(False)
+                self._position.switch_position_mode(False)
 
             match margin:
                 case 'cross':
-                    self.position.switch_margin_mode(symbol, 'CROSSED')
+                    self._position.switch_margin_mode(symbol, 'CROSSED')
                 case 'isolated':
-                    self.position.switch_margin_mode(symbol, 'ISOLATED')
+                    self._position.switch_margin_mode(symbol, 'ISOLATED')
 
-            self.position.set_leverage(symbol, leverage)
+            self._position.set_leverage(symbol, leverage)
 
-            qty = self.position.get_quantity_to_open(
+            qty = self._position.get_quantity_to_open(
                 symbol=symbol,
                 size=size,
                 leverage=leverage
@@ -217,7 +216,7 @@ class TradeClient(BaseBinanceClient):
 
     def market_close_long(self, symbol: str, size: str, hedge: bool) -> None:
         try:
-            qty = self.position.get_quantity_to_close(
+            qty = self._position.get_quantity_to_close(
                 side='LONG',
                 symbol=symbol,
                 size=size,
@@ -274,7 +273,7 @@ class TradeClient(BaseBinanceClient):
 
     def market_close_short(self, symbol: str, size: str, hedge: bool) -> None:
         try:
-            qty = self.position.get_quantity_to_close(
+            qty = self._position.get_quantity_to_close(
                 side='SHORT',
                 symbol=symbol,
                 size=size,
@@ -337,10 +336,10 @@ class TradeClient(BaseBinanceClient):
         hedge: bool
     ) -> int:
         try:
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self._market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
-            qty = self.position.get_quantity_to_close(
+            qty = self._position.get_quantity_to_close(
                 side='LONG',
                 symbol=symbol,
                 size=size,
@@ -407,10 +406,10 @@ class TradeClient(BaseBinanceClient):
         hedge: bool
     ) -> int:
         try:
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self._market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
-            qty = self.position.get_quantity_to_close(
+            qty = self._position.get_quantity_to_close(
                 side='SHORT',
                 symbol=symbol,
                 size=size,
@@ -480,22 +479,22 @@ class TradeClient(BaseBinanceClient):
     ) -> int:
         try:
             if hedge:
-                self.position.switch_position_mode(True)
+                self._position.switch_position_mode(True)
             else:
-                self.position.switch_position_mode(False)
+                self._position.switch_position_mode(False)
 
             match margin:
                 case 'cross':
-                    self.position.switch_margin_mode(symbol, 'CROSSED')
+                    self._position.switch_margin_mode(symbol, 'CROSSED')
                 case 'isolated':
-                    self.position.switch_margin_mode(symbol, 'ISOLATED')
+                    self._position.switch_margin_mode(symbol, 'ISOLATED')
 
-            self.position.set_leverage(symbol, leverage)
+            self._position.set_leverage(symbol, leverage)
 
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self._market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
-            qty = self.position.get_quantity_to_open(
+            qty = self._position.get_quantity_to_open(
                 symbol=symbol,
                 size=size,
                 leverage=leverage,
@@ -563,22 +562,22 @@ class TradeClient(BaseBinanceClient):
     ) -> int:
         try:
             if hedge:
-                self.position.switch_position_mode(True)
+                self._position.switch_position_mode(True)
             else:
-                self.position.switch_position_mode(False)
+                self._position.switch_position_mode(False)
 
             match margin:
                 case 'cross':
-                    self.position.switch_margin_mode(symbol, 'CROSSED')
+                    self._position.switch_margin_mode(symbol, 'CROSSED')
                 case 'isolated':
-                    self.position.switch_margin_mode(symbol, 'ISOLATED')
+                    self._position.switch_margin_mode(symbol, 'ISOLATED')
 
-            self.position.set_leverage(symbol, leverage)
+            self._position.set_leverage(symbol, leverage)
 
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self._market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
-            qty = self.position.get_quantity_to_open(
+            qty = self._position.get_quantity_to_open(
                 symbol=symbol,
                 size=size,
                 leverage=leverage,
@@ -643,10 +642,10 @@ class TradeClient(BaseBinanceClient):
         hedge: bool
     ) -> int:
         try:
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self._market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
-            qty = self.position.get_quantity_to_close(
+            qty = self._position.get_quantity_to_close(
                 side='LONG',
                 symbol=symbol,
                 size=size,
@@ -715,10 +714,10 @@ class TradeClient(BaseBinanceClient):
         hedge: bool
     ) -> int:
         try:
-            p_precision = self.market.get_price_precision(symbol)
+            p_precision = self._market.get_price_precision(symbol)
             adjusted_price = adjust(price, p_precision)
 
-            qty = self.position.get_quantity_to_close(
+            qty = self._position.get_quantity_to_close(
                 side='SHORT',
                 symbol=symbol,
                 size=size,

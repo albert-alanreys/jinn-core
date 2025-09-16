@@ -1,7 +1,6 @@
 from __future__ import annotations
 from hashlib import sha256
 from hmac import new
-from os import getenv
 from time import time
 
 from src.infrastructure.transport import HttpClient
@@ -17,22 +16,18 @@ class BaseBinanceClient(HttpClient):
 
     BASE_ENDPOINT = 'https://fapi.binance.com'
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str, api_secret: str) -> None:
         """
-        Initialize base client with API credentials
-        from environment variables.
-
-        Reads the following environment variables:
-        - BINANCE_API_KEY: API key for Binance authentication
-        - BINANCE_API_SECRET: API secret for request signing
+        Initialize base client with API credentials.  
+        Stores credentials for use in request headers and signing.
         
-        Initializes:
-        - api_key: Stores the Binance API key
-        - api_secret: Stores the Binance API secret
+        Args:
+            api_key: Binance API key for authentication
+            api_secret: Binance API secret for request signing
         """
 
-        self.api_key = getenv('BINANCE_API_KEY')
-        self.api_secret = getenv('BINANCE_API_SECRET')
+        self.api_key = api_key
+        self.api_secret = api_secret
 
     def build_signed_request(self, params: dict) -> tuple:
         """

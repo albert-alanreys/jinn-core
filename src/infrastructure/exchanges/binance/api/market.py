@@ -3,9 +3,13 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from logging import getLogger
 from time import time
+from typing import TYPE_CHECKING
 
 from src.infrastructure.exchanges.models import Interval
 from .base import BaseBinanceClient
+
+if TYPE_CHECKING:
+    from .account import AccountClient
 
 
 logger = getLogger(__name__)
@@ -45,10 +49,10 @@ class MarketClient(BaseBinanceClient):
     }
     _MAX_WORKERS = 30
 
-    def __init__(self) -> None:
+    def __init__(self, account: AccountClient) -> None:
         """Initialize market client with base client functionality."""
 
-        super().__init__()
+        super().__init__(account.api_key, account.api_secret)
 
     def get_historical_klines(
         self,

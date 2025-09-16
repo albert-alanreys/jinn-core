@@ -31,10 +31,10 @@ class PositionClient(BaseBybitClient):
             market: Market client instance
         """
 
-        super().__init__()
+        super().__init__(account.api_key, account.api_secret)
 
-        self.account = account
-        self.market = market
+        self._account = account
+        self._market = market
 
     def switch_position_mode(self, symbol: str, mode: int) -> dict:
         url = f'{self.BASE_ENDPOINT}/v5/position/switch-mode'
@@ -85,10 +85,10 @@ class PositionClient(BaseBybitClient):
         effective_price = price
 
         if price is None:
-            market_data = self.market.get_tickers(symbol)['result']['list'][0]
+            market_data = self._market.get_tickers(symbol)['result']['list'][0]
             effective_price = float(market_data['lastPrice'])
 
-        wallet_data = self.account.get_wallet_balance()['result']['list']
+        wallet_data = self._account.get_wallet_balance()['result']['list']
         balance = float(wallet_data[0]['coin'][0]['walletBalance'])
 
         if size.endswith('%'):
@@ -98,7 +98,7 @@ class PositionClient(BaseBybitClient):
             size_val = float(size.rstrip('u'))
             qty = leverage * size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(symbol)
+        q_precision = self._market.get_qty_precision(symbol)
         return adjust(qty, q_precision)
 
     def get_quantity_to_close(
@@ -119,13 +119,13 @@ class PositionClient(BaseBybitClient):
 
             if price is None:
                 market_data = (
-                    self.market.get_tickers(symbol)['result']['list'][0]
+                    self._market.get_tickers(symbol)['result']['list'][0]
                 )
                 effective_price = float(market_data['lastPrice'])
 
             qty = size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(symbol)
+        q_precision = self._market.get_qty_precision(symbol)
         return adjust(qty, q_precision)
 
     def _get_position_size(self, side: str, symbol: str) -> float:
