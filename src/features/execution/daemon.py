@@ -163,7 +163,7 @@ class ExecutionDaemon:
                 all_alerts.extend(alerts.copy())
                 alerts.clear()
 
-        if not alerts:
+        if not all_alerts:
             return
 
         for alert in all_alerts:
