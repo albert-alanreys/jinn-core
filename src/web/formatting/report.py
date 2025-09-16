@@ -208,9 +208,8 @@ def format_trades(strategy: BaseStrategy) -> list[list[str]]:
     if np.all(np.isnan(open_deals_log)):
         return result
 
-    open_deals = open_deals_log.reshape((-1, 5))
-    mask = ~np.isnan(open_deals).any(axis=1)
-    open_deals = open_deals[mask]
+    mask = ~np.isnan(open_deals_log).any(axis=1)
+    open_deals = open_deals_log[mask]
 
     for deal in open_deals:
         code = deal[1] - (deal[1] % 100)
