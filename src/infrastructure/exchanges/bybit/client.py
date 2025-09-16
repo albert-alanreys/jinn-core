@@ -22,16 +22,20 @@ class BybitClient(BaseExchangeClient):
     allow direct access to all subclient methods.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str = '', api_secret: str = '') -> None:
         """
         Initialize Bybit client with all subclients.
-        
+
         Creates instances of all required clients and establishes
         dependencies between them for seamless operation.
+
+        Args:
+            api_key: Bybit API key for authentication
+            api_secret: Bybit API secret for request signing
         """
 
-        self._account_client = AccountClient()
-        self._market_client = MarketClient()
+        self._account_client = AccountClient(api_key, api_secret)
+        self._market_client = MarketClient(self._account_client)
         self._position_client = PositionClient(
             account=self._account_client,
             market=self._market_client

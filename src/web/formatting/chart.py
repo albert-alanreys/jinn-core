@@ -71,36 +71,38 @@ def format_indicators(
         colors = np.full(values.shape, 'transparent', dtype=object)
         color_data = indicator.get('colors') 
 
+        valid_mask = ~np.isnan(values)
+
         if color_data is None:
             r, g, b = decode_rgb(indicator['options']['color'])
-            valid_mask = ~np.isnan(values)
             colors[valid_mask] = f'rgb({r}, {g}, {b})'
-        else:
-            valid_mask = ~np.isnan(values)
-
-            if np.any(valid_mask):
-                rgb = decode_rgb_vectorized(
-                    color_data[valid_mask].astype(np.uint32).reshape(-1, 1),
-                    np.empty(
-                        (np.count_nonzero(valid_mask), 3),
-                        dtype=np.uint8
-                    )
+        elif np.any(valid_mask):
+            valid_colors = color_data[valid_mask]
+            valid_colors = (
+                np.nan_to_num(valid_colors, nan=0).astype(np.uint32)
+            )
+            rgb = decode_rgb_vectorized(
+                valid_colors.reshape(-1, 1),
+                np.empty(
+                    (np.count_nonzero(valid_mask), 3),
+                    dtype=np.uint8
                 )
-                parts = [
-                    'rgb(',
-                    rgb[:, 0].astype(str),
-                    ', ',
-                    rgb[:, 1].astype(str),
-                    ', ',
-                    rgb[:, 2].astype(str),
-                    ')'
-                ]
-                colors[valid_mask] = np.char.add(parts[0], 
-                    np.char.add(parts[1], 
-                    np.char.add(parts[2], 
-                    np.char.add(parts[3], 
-                    np.char.add(parts[4], 
-                    np.char.add(parts[5], parts[6]))))))
+            )
+            parts = [
+                'rgb(',
+                rgb[:, 0].astype(str),
+                ', ',
+                rgb[:, 1].astype(str),
+                ', ',
+                rgb[:, 2].astype(str),
+                ')'
+            ]
+            colors[valid_mask] = np.char.add(parts[0], 
+                np.char.add(parts[1], 
+                np.char.add(parts[2], 
+                np.char.add(parts[3], 
+                np.char.add(parts[4], 
+                np.char.add(parts[5], parts[6]))))))
 
         is_first_nan = np.isnan(values) & ~np.isnan(np.roll(values, 1))
         values[is_first_nan] = np.roll(values, 1)[is_first_nan]

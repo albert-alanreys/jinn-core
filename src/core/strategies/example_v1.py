@@ -3,11 +3,10 @@ import numba as nb
 
 from . import (
     BaseStrategy,
-    BaseExchangeClient,
     adjust,
     colors,
-    quantklines,
-    update_completed_deals_log
+    quanta,
+    logs
 )
 
 
@@ -194,28 +193,28 @@ class ExampleV1(BaseStrategy):
         self.take_quantities = np.full(5, np.nan)
 
         # Technical indicators
-        self.dst = quantklines.dst(
+        self.dst = quanta.dst(
             high=self.high,
             low=self.low,
             close=self.close,
             factor=self.params['st_factor'],
             atr_length=self.params['st_atr_period']
         )
-        self.upper_band_change = quantklines.change(
+        self.upper_band_change = quanta.change(
             source=self.dst[0],
             length=1
         )
-        self.lower_band_change = quantklines.change(
+        self.lower_band_change = quanta.change(
             source=self.dst[1],
             length=1
         )
-        self.rsi = quantklines.rsi(
+        self.rsi = quanta.rsi(
             source=self.close,
             length=self.params['rsi_length']
         )
 
         if self.params['bb_filter']:
-            self.bb_rsi = quantklines.bb(
+            self.bb_rsi = quanta.bb(
                 source=self.rsi,
                 length=self.params['ma_length'],
                 mult=self.params['bb_mult']
@@ -223,7 +222,7 @@ class ExampleV1(BaseStrategy):
         else:
             self.bb_rsi = np.full(self.time.shape[0], np.nan)
 
-        self.dmi = quantklines.dmi(
+        self.dmi = quanta.dmi(
             high=self.high,
             low=self.low,
             close=self.close,
@@ -419,7 +418,7 @@ class ExampleV1(BaseStrategy):
 
             # Check of liquidation
             if (position_type == 0 and low[i] <= liquidation_price):
-                completed_deals_log, pnl = update_completed_deals_log(
+                completed_deals_log, pnl = logs.close(
                     completed_deals_log,
                     commission,
                     position_type,
@@ -435,7 +434,7 @@ class ExampleV1(BaseStrategy):
                 equity += pnl
 
                 # Reset variables
-                open_deals_log[:] = np.nan
+                open_deals_log = logs.clear(open_deals_log)
                 position_type = np.nan
                 order_signal = np.nan
                 order_date = np.nan
@@ -449,7 +448,7 @@ class ExampleV1(BaseStrategy):
                 alert_cancel = True
 
             if (position_type == 1 and high[i] >= liquidation_price):
-                completed_deals_log, pnl = update_completed_deals_log(
+                completed_deals_log, pnl = logs.close(
                     completed_deals_log,
                     commission,
                     position_type,
@@ -464,7 +463,7 @@ class ExampleV1(BaseStrategy):
                 )
                 equity += pnl
 
-                open_deals_log[:] = np.nan
+                open_deals_log = logs.clear(open_deals_log)
                 position_type = np.nan
                 order_signal = np.nan
                 order_date = np.nan
@@ -482,7 +481,7 @@ class ExampleV1(BaseStrategy):
                 # Stop loss check
                 if low[i] <= stop_price[i]:
                     # Close position and log deal
-                    completed_deals_log, pnl = update_completed_deals_log(
+                    completed_deals_log, pnl = logs.close(
                         completed_deals_log,
                         commission,
                         position_type,
@@ -497,7 +496,7 @@ class ExampleV1(BaseStrategy):
                     )
                     equity += pnl
 
-                    open_deals_log[:] = np.nan
+                    open_deals_log = logs.clear(open_deals_log)
                     position_type = np.nan
                     order_signal = np.nan
                     order_date = np.nan
@@ -543,7 +542,7 @@ class ExampleV1(BaseStrategy):
                     not np.isnan(take_prices[0, i]) and
                     high[i] >= take_prices[0, i]
                 ):
-                    completed_deals_log, pnl = update_completed_deals_log(
+                    completed_deals_log, pnl = logs.close(
                         completed_deals_log,
                         commission,
                         position_type,
@@ -559,7 +558,9 @@ class ExampleV1(BaseStrategy):
                     equity += pnl
 
                     order_size = round(order_size - take_quantities[0], 8)
-                    open_deals_log[0][4] = order_size
+                    open_deals_log = logs.resize(
+                        open_deals_log, 0, order_size
+                    )
                     take_prices[0, i] = np.nan
                     take_quantities[0] = np.nan
 
@@ -567,7 +568,7 @@ class ExampleV1(BaseStrategy):
                     not np.isnan(take_prices[1, i]) and
                     high[i] >= take_prices[1, i]
                 ):
-                    completed_deals_log, pnl = update_completed_deals_log(
+                    completed_deals_log, pnl = logs.close(
                         completed_deals_log,
                         commission,
                         position_type,
@@ -583,7 +584,9 @@ class ExampleV1(BaseStrategy):
                     equity += pnl
 
                     order_size = round(order_size - take_quantities[1], 8)
-                    open_deals_log[0][4] = order_size
+                    open_deals_log = logs.resize(
+                        open_deals_log, 0, order_size
+                    )
                     take_prices[1, i] = np.nan
                     take_quantities[1] = np.nan
 
@@ -591,7 +594,7 @@ class ExampleV1(BaseStrategy):
                     not np.isnan(take_prices[2, i]) and
                     high[i] >= take_prices[2, i]
                 ):
-                    completed_deals_log, pnl = update_completed_deals_log(
+                    completed_deals_log, pnl = logs.close(
                         completed_deals_log,
                         commission,
                         position_type,
@@ -606,7 +609,7 @@ class ExampleV1(BaseStrategy):
                     )
                     equity += pnl
 
-                    open_deals_log[:] = np.nan
+                    open_deals_log = logs.clear(open_deals_log)
                     position_type = np.nan
                     order_signal = np.nan
                     order_date = np.nan
@@ -685,18 +688,22 @@ class ExampleV1(BaseStrategy):
                 take_quantities[2] = adjust(
                     order_size * take_volumes[2] / 100, q_precision
                 )
-                open_deals_log[0] = np.array(
-                    [
-                        position_type, order_signal, order_date,
-                        order_price, order_size
-                    ]
+
+                open_deals_log = logs.open(
+                    open_deals_log,
+                    position_type,
+                    order_signal,
+                    order_date,
+                    order_price,
+                    order_size
                 )
+                
                 alert_open_long = True
 
             # Short position management
             if position_type == 1:
                 if high[i] >= stop_price[i]:
-                    completed_deals_log, pnl = update_completed_deals_log(
+                    completed_deals_log, pnl = logs.close(
                         completed_deals_log,
                         commission,
                         position_type,
@@ -711,7 +718,7 @@ class ExampleV1(BaseStrategy):
                     )
                     equity += pnl
 
-                    open_deals_log[:] = np.nan
+                    open_deals_log = logs.clear(open_deals_log)
                     position_type = np.nan
                     order_signal = np.nan
                     order_date = np.nan
@@ -756,7 +763,7 @@ class ExampleV1(BaseStrategy):
                     not np.isnan(take_prices[0, i]) and
                     low[i] <= take_prices[0, i]
                 ):
-                    completed_deals_log, pnl = update_completed_deals_log(
+                    completed_deals_log, pnl = logs.close(
                         completed_deals_log,
                         commission,
                         position_type,
@@ -772,7 +779,9 @@ class ExampleV1(BaseStrategy):
                     equity += pnl
 
                     order_size = round(order_size - take_quantities[0], 8)
-                    open_deals_log[0][4] = order_size
+                    open_deals_log = logs.resize(
+                        open_deals_log, 0, order_size
+                    )
                     take_prices[0, i] = np.nan
                     take_quantities[0] = np.nan
 
@@ -780,7 +789,7 @@ class ExampleV1(BaseStrategy):
                     not np.isnan(take_prices[1, i]) and
                     low[i] <= take_prices[1, i]
                 ):
-                    completed_deals_log, pnl = update_completed_deals_log(
+                    completed_deals_log, pnl = logs.close(
                         completed_deals_log,
                         commission,
                         position_type,
@@ -796,7 +805,9 @@ class ExampleV1(BaseStrategy):
                     equity += pnl
 
                     order_size = round(order_size - take_quantities[1], 8)
-                    open_deals_log[0][4] = order_size
+                    open_deals_log = logs.resize(
+                        open_deals_log, 0, order_size
+                    )
                     take_prices[1, i] = np.nan
                     take_quantities[1] = np.nan         
 
@@ -804,7 +815,7 @@ class ExampleV1(BaseStrategy):
                     not np.isnan(take_prices[2, i]) and
                     low[i] <= take_prices[2, i]
                 ):
-                    completed_deals_log, pnl = update_completed_deals_log(
+                    completed_deals_log, pnl = logs.close(
                         completed_deals_log,
                         commission,
                         position_type,
@@ -819,7 +830,7 @@ class ExampleV1(BaseStrategy):
                     )
                     equity += pnl
 
-                    open_deals_log[:] = np.nan
+                    open_deals_log = logs.clear(open_deals_log)
                     position_type = np.nan
                     order_signal = np.nan
                     order_date = np.nan
@@ -896,12 +907,16 @@ class ExampleV1(BaseStrategy):
                 take_quantities[2] = adjust(
                     order_size * take_volumes[2] / 100, q_precision
                 )
-                open_deals_log[0] = np.array(
-                    [
-                        position_type, order_signal, order_date,
-                        order_price, order_size
-                    ]
+                
+                open_deals_log = logs.open(
+                    open_deals_log,
+                    position_type,
+                    order_signal,
+                    order_date,
+                    order_price,
+                    order_size
                 )
+
                 alert_open_short = True
 
         return (
@@ -916,32 +931,32 @@ class ExampleV1(BaseStrategy):
             alert_short_new_stop
         )
 
-    def trade(self, client: BaseExchangeClient) -> None:
+    def trade(self) -> None:
         # Cancel all orders if needed
         if self.alert_cancel:
-            client.trade.cancel_all_orders(self.symbol)
+            self.client.trade.cancel_all_orders(self.symbol)
 
          # Check order status
-        self.order_ids['stop_ids'] = client.trade.check_stop_orders(
+        self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['stop_ids']
         )
-        self.order_ids['limit_ids'] = client.trade.check_limit_orders(
+        self.order_ids['limit_ids'] = self.client.trade.check_limit_orders(
             symbol=self.symbol,
             order_ids=self.order_ids['limit_ids']
         )
 
         # Update stop loss
         if self.alert_long_new_stop:
-            client.trade.cancel_stop_orders(
+            self.client.trade.cancel_stop_orders(
                 symbol=self.symbol,
                 side='sell'
             )
-            self.order_ids['stop_ids'] = client.trade.check_stop_orders(
+            self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
             )
-            order_id = client.trade.market_stop_close_long(
+            order_id = self.client.trade.market_stop_close_long(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
@@ -952,15 +967,15 @@ class ExampleV1(BaseStrategy):
                 self.order_ids['stop_ids'].append(order_id)
         
         if self.alert_short_new_stop:
-            client.trade.cancel_stop_orders(
+            self.client.trade.cancel_stop_orders(
                 symbol=self.symbol,
                 side='buy'
             )
-            self.order_ids['stop_ids'] = client.trade.check_stop_orders(
+            self.order_ids['stop_ids'] = self.client.trade.check_stop_orders(
                 symbol=self.symbol,
                 order_ids=self.order_ids['stop_ids']
             )
-            order_id = client.trade.market_stop_close_short(
+            order_id = self.client.trade.market_stop_close_short(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1], 
@@ -972,7 +987,7 @@ class ExampleV1(BaseStrategy):
 
         # Open long position
         if self.alert_open_long:
-            client.trade.market_open_long(
+            self.client.trade.market_open_long(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size']}'
@@ -984,7 +999,7 @@ class ExampleV1(BaseStrategy):
                 leverage=self.params['leverage'],
                 hedge=False
             )
-            order_id = client.trade.market_stop_close_long(
+            order_id = self.client.trade.market_stop_close_long(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1],
@@ -994,7 +1009,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_long(
+            order_id = self.client.trade.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.take_volumes[0]}%',
                 price=self.take_prices[0, -1],
@@ -1004,7 +1019,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_long(
+            order_id = self.client.trade.limit_close_long(
                 symbol=self.symbol,
                 size=f'{self.take_volumes[1]}%',
                 price=self.take_prices[1, -1],
@@ -1014,7 +1029,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_long(
+            order_id = self.client.trade.limit_close_long(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_prices[2, -1],
@@ -1025,7 +1040,7 @@ class ExampleV1(BaseStrategy):
                 self.order_ids['limit_ids'].append(order_id)
 
         if self.alert_open_short:
-            client.trade.market_open_short(
+            self.client.trade.market_open_short(
                 symbol=self.symbol,
                 size=(
                     f'{self.params['position_size']}'
@@ -1037,7 +1052,7 @@ class ExampleV1(BaseStrategy):
                 leverage=self.params['leverage'],
                 hedge=False
             )
-            order_id = client.trade.market_stop_close_short(
+            order_id = self.client.trade.market_stop_close_short(
                 symbol=self.symbol, 
                 size='100%', 
                 price=self.stop_price[-1],
@@ -1047,7 +1062,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['stop_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_short(
+            order_id = self.client.trade.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.take_volumes[0]}%',
                 price=self.take_prices[0, -1],
@@ -1057,7 +1072,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_short(
+            order_id = self.client.trade.limit_close_short(
                 symbol=self.symbol,
                 size=f'{self.take_volumes[1]}%',
                 price=self.take_prices[1, -1],
@@ -1067,7 +1082,7 @@ class ExampleV1(BaseStrategy):
             if order_id:
                 self.order_ids['limit_ids'].append(order_id)
 
-            order_id = client.trade.limit_close_short(
+            order_id = self.client.trade.limit_close_short(
                 symbol=self.symbol,
                 size='100%',
                 price=self.take_prices[2, -1],

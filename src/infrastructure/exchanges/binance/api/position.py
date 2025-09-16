@@ -31,10 +31,10 @@ class PositionClient(BaseBinanceClient):
             market: Market client instance
         """
 
-        super().__init__()
+        super().__init__(account.api_key, account.api_secret)
 
-        self.account = account
-        self.market = market
+        self._account = account
+        self._market = market
 
     def switch_position_mode(self, mode: bool) -> dict:
         url = f'{self.BASE_ENDPOINT}/fapi/v1/positionSide/dual'
@@ -64,10 +64,10 @@ class PositionClient(BaseBinanceClient):
         effective_price = price
 
         if price is None:
-            market_data = self.market.get_tickers(symbol)
+            market_data = self._market.get_tickers(symbol)
             effective_price = float(market_data['markPrice'])
 
-        balance_info = self.account.get_wallet_balance()['assets']
+        balance_info = self._account.get_wallet_balance()['assets']
         balance = float(
             next(
                 filter(
@@ -84,7 +84,7 @@ class PositionClient(BaseBinanceClient):
             size_val = float(size.rstrip('u'))
             qty = leverage * size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(symbol)
+        q_precision = self._market.get_qty_precision(symbol)
         return adjust(qty, q_precision)
 
     def get_quantity_to_close(
@@ -105,12 +105,12 @@ class PositionClient(BaseBinanceClient):
             effective_price = price
 
             if price is None:
-                market_data = self.market.get_tickers(symbol)
+                market_data = self._market.get_tickers(symbol)
                 effective_price = float(market_data['markPrice'])
 
             qty = size_val / effective_price
 
-        q_precision = self.market.get_qty_precision(symbol)
+        q_precision = self._market.get_qty_precision(symbol)
         return adjust(qty, q_precision)
 
     def _get_position_size(

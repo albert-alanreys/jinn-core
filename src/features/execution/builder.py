@@ -1,5 +1,6 @@
 from __future__ import annotations
 from logging import getLogger
+from os import getenv
 from typing import TYPE_CHECKING
 
 from src.core.providers import HistoryProvider, RealtimeProvider
@@ -34,13 +35,11 @@ class ExecutionContextBuilder:
 
         self._history_provider = HistoryProvider()
         self._realtime_provider = RealtimeProvider()
-        self._binance_client = BinanceClient()
-        self._bybit_client = BybitClient()
         self._strategy_tester = StrategyTester()
         
         self._exchange_clients: dict[str, BaseExchangeClient] = {
-            Exchange.BINANCE.value: self._binance_client,
-            Exchange.BYBIT.value: self._bybit_client,
+            Exchange.BINANCE.value: BinanceClient,
+            Exchange.BYBIT.value: BybitClient,
         }
     
     def create(self, config: ContextConfig) -> StrategyContext:
@@ -55,8 +54,8 @@ class ExecutionContextBuilder:
         """
 
         strategy = self._create_strategy(config)
-        client = self._get_exchange_client(config['exchange'])
-        market_data = self._get_market_data(config, strategy, client)
+        clients = self._get_exchange_clients(config['exchange'])
+        market_data = self._get_market_data(config, strategy, clients[0])
         metrics = self._strategy_tester.test(strategy, market_data)
 
         return {
@@ -64,7 +63,7 @@ class ExecutionContextBuilder:
             'exchange': config['exchange'],
             'is_live': self._is_live(config),
             'strategy': strategy,
-            'client': client,
+            'clients': clients,
             'market_data': market_data,
             'metrics': metrics,
         }
@@ -128,24 +127,49 @@ class ExecutionContextBuilder:
         strategy_class = strategy_registry[strategy_name]
         return strategy_class(config['params'])
     
-    def _get_exchange_client(self, exchange: str) -> BaseExchangeClient:
+    def _get_exchange_clients(self, exchange: str) -> list[BaseExchangeClient]:
         """
-        Get the client for the given exchange name.
+        Get multiple client instances for the given exchange name.
+        
+        If no API keys are configured, returns a single client
+        with empty credentials for market data access only.
         
         Args:
-            exchange: Exchange name
-            
+            exchange: Exchange name to get clients for
+                
         Returns:
-            BaseExchangeClient: Exchange client instance
-            
+            list[BaseExchangeClient]: List of exchange client instances
+            (returns one empty client if no credentials provided)
+                
         Raises:
             ValueError: If the exchange is not supported
         """
-
+        
         if exchange not in self._exchange_clients:
             raise ValueError(f'Unsupported exchange: {exchange}')
         
-        return self._exchange_clients[exchange]
+        api_keys_str = getenv(f'{exchange.upper()}_API_KEYS', '')
+        api_secrets_str = getenv(f'{exchange.upper()}_API_SECRETS', '')
+        
+        api_keys = [
+            k.strip() for k in api_keys_str.split(',') if k.strip()
+        ]
+        api_secrets = [
+            s.strip() for s in api_secrets_str.split(',') if s.strip()
+        ]
+        
+        if not api_keys and not api_secrets:
+            client_class = self._exchange_clients[exchange]
+            return [client_class()]
+        
+        if len(api_keys) != len(api_secrets):
+            raise ValueError(
+                f'Mismatch in number of API keys and secrets for {exchange}: '
+                f'{len(api_keys)} keys vs {len(api_secrets)} secrets'
+            )
+        
+        client_class = self._exchange_clients[exchange]
+        return [client_class(k, s) for k, s in zip(api_keys, api_secrets)]
     
     def _get_market_data(
         self,

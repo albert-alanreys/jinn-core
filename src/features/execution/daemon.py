@@ -135,12 +135,12 @@ class ExecutionDaemon:
         """
 
         strategy = context['strategy']
-        market_data = context['market_data']
 
-        metrics = self._strategy_tester.test(strategy, market_data)
+        metrics = self._strategy_tester.test(strategy, context['market_data'])
         context['metrics'] = metrics
 
-        strategy.__trade__(context['client'])
+        for client in  context['clients']:
+            strategy.__trade__(client)
     
     def _process_alerts(
         self,
@@ -156,15 +156,17 @@ class ExecutionDaemon:
             context: Strategy execution context
         """
 
-        alerts = context['client'].trade.alerts
-        
-        if not alerts:
-            return
-        
-        alerts_to_process = alerts.copy()
-        alerts.clear()
+        all_alerts = []
+        for client in context['clients']:
+            alerts = client.trade.alerts
+            if alerts:
+                all_alerts.extend(alerts.copy())
+                alerts.clear()
 
-        for alert in alerts_to_process:
+        if not all_alerts:
+            return
+
+        for alert in all_alerts:
             self._alerts.append({
                 'alert_id': str(uuid4()),
                 'context_id': context_id,

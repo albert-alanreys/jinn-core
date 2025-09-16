@@ -79,6 +79,6 @@ class StrategyContext(TypedDict):
     exchange: str
     is_live: bool
     strategy: BaseStrategy
-    client: BaseExchangeClient
+    clients: list[BaseExchangeClient]
     market_data: MarketData
     metrics: StrategyMetrics

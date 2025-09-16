@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import numba as nb
 
 if TYPE_CHECKING:
     from src.core.providers import MarketData
@@ -40,11 +41,9 @@ class StrategyTester:
         try:
             strategy.__calculate__(market_data)
 
-            initial_capital = strategy.params['initial_capital']
-            deals_log = strategy.completed_deals_log
-
             all_metrics = self._calculate_all_metrics(
-                initial_capital, deals_log
+                initial_capital=strategy.params['initial_capital'],
+                deals_log=strategy.completed_deals_log
             )
 
             return {
@@ -53,7 +52,8 @@ class StrategyTester:
                 'trades': self._extract_trade_metrics(all_metrics),
                 'risk': self._extract_risk_metrics(all_metrics),
             }
-        except Exception:
+        except Exception as e:
+            print(e)
             return self._get_empty_metrics_structure()
 
     def _extract_overview_metrics(
@@ -181,500 +181,194 @@ class StrategyTester:
             dict: Complete metrics dictionary with categorized data
         """
 
-        def _mean(array: np.ndarray) -> float:
-            return round(array.mean(), 2) if array.shape[0] else np.nan
-
-        log_col_0 = deals_log[:, 0]
-        log_col_2 = deals_log[:, 2]
-        log_col_7 = deals_log[:, 7]
-        log_col_8 = deals_log[:, 8]
-        log_col_9 = deals_log[:, 9]
-        log_col_12 = deals_log[:, 12]
-
-        long_mask = log_col_0 == 0
-        short_mask = log_col_0 == 1
-
-        win_mask = log_col_8 > 0
-        win_mask_pct = log_col_8 > 0
-
-        loss_mask = ~win_mask
-        loss_mask_pct = ~win_mask_pct
-
-        # Equity
-        equity = np.empty(log_col_8.shape[0] + 1, dtype=np.float64)
-        equity[0] = initial_capital
-        equity[1:] = log_col_8
-        equity = equity.cumsum()[1:]
-
-        # Gross Profit
-        all_gross_profit = round(log_col_8[win_mask].sum(), 2)
-        all_gross_profit_pct = round(
-            all_gross_profit / initial_capital * 100, 2
+        def _fmt2(x):
+            return np.round(x, 2) if not np.isnan(x) else np.nan
+        
+        def _fmt3(x):
+            return np.round(x, 3) if not np.isnan(x) else np.nan
+        
+        # Calculate all metrics using numba-optimized function
+        metrics_data = self._calculate_metrics(
+            initial_capital, deals_log
         )
+        
+        # Unpack the results tuple
+        (
+            equity,
 
-        long_gross_profit = round(
-            log_col_8[win_mask & long_mask].sum(),
-            2
-        )
-        long_gross_profit_pct = round(
-            long_gross_profit / initial_capital * 100,
-            2
-        )
+            # Gross Profit data
+            all_gross_profit,
+            all_gross_profit_pct,
+            long_gross_profit,
+            long_gross_profit_pct,
+            short_gross_profit,
+            short_gross_profit_pct,
 
-        short_gross_profit = round(
-            log_col_8[win_mask & short_mask].sum(),
-            2
-        )
-        short_gross_profit_pct = round(
-            short_gross_profit / initial_capital * 100,
-            2
-        )
+            # Gross Loss data
+            all_gross_loss,
+            all_gross_loss_pct,
+            long_gross_loss,
+            long_gross_loss_pct,
+            short_gross_loss,
+            short_gross_loss_pct,
 
-        # Gross Loss
-        all_gross_loss = round(abs(log_col_8[loss_mask].sum()), 2)
-        all_gross_loss_pct = round(
-            all_gross_loss / initial_capital * 100, 2
-        )
+            # Net Profit data
+            all_net_profit,
+            all_net_profit_pct,
+            long_net_profit,
+            long_net_profit_pct,
+            short_net_profit,
+            short_net_profit_pct,
 
-        long_gross_loss = round(
-            abs(log_col_8[loss_mask & long_mask].sum()),
-            2
-        )
-        long_gross_loss_pct = round(
-            long_gross_loss / initial_capital * 100,
-            2
-        )
+            # Profit Factor data
+            all_profit_factor,
+            long_profit_factor,
+            short_profit_factor,
 
-        short_gross_loss = round(
-            abs(log_col_8[loss_mask & short_mask].sum()),
-            2
-        )
-        short_gross_loss_pct = round(
-            short_gross_loss / initial_capital * 100,
-            2
-        )
+            # Commission data
+            all_commission_paid,
+            long_commission_paid,
+            short_commission_paid,
 
-        # Net Profit
-        all_net_profit = round(all_gross_profit - all_gross_loss, 2)
-        all_net_profit_pct = round(
-            all_net_profit / initial_capital * 100,
-            2
-        )
+            # Max Order Size data
+            all_max_order_size,
+            long_max_order_size,
+            short_max_order_size,
 
-        long_net_profit = round(long_gross_profit - long_gross_loss, 2)
-        long_net_profit_pct = round(
-            long_net_profit / initial_capital * 100,
-            2
-        )
+            # Trade counts
+            all_total_closed_trades,
+            long_total_closed_trades,
+            short_total_closed_trades,
+            all_number_winning_trades,
+            long_number_winning_trades,
+            short_number_winning_trades,
+            all_number_losing_trades,
+            long_number_losing_trades,
+            short_number_losing_trades,
 
-        short_net_profit = round(short_gross_profit - short_gross_loss, 2)
-        short_net_profit_pct = round(
-            short_net_profit / initial_capital * 100,
-            2
-        )
+            # Percentages and averages
+            all_percent_profitable,
+            long_percent_profitable,
+            short_percent_profitable,
+            all_avg_trade,
+            all_avg_trade_pct,
+            long_avg_trade,
+            long_avg_trade_pct,
+            short_avg_trade,
+            short_avg_trade_pct,
+            all_avg_winning_trade,
+            all_avg_winning_trade_pct,
+            long_avg_winning_trade,
+            long_avg_winning_trade_pct,
+            short_avg_winning_trade,
+            short_avg_winning_trade_pct,
+            all_avg_losing_trade,
+            all_avg_losing_trade_pct,
+            long_avg_losing_trade,
+            long_avg_losing_trade_pct,
+            short_avg_losing_trade,
+            short_avg_losing_trade_pct,
 
-        # Profit Factor
-        if all_gross_loss != 0:
-            all_profit_factor = round(
-                all_gross_profit / all_gross_loss,
-                3
-            )
-        else:
-            all_profit_factor = np.nan
+            # Ratios
+            all_ratio_avg_win_loss,
+            long_ratio_avg_win_loss,
+            short_ratio_avg_win_loss,
 
-        if long_gross_loss != 0:
-            long_profit_factor =  round(
-                long_gross_profit / long_gross_loss,
-                3
-            )
-        else:
-            long_profit_factor = np.nan
+            # Largest trades
+            all_largest_winning_trade,
+            all_largest_winning_trade_pct,
+            long_largest_winning_trade,
+            long_largest_winning_trade_pct,
+            short_largest_winning_trade,
+            short_largest_winning_trade_pct,
+            all_largest_losing_trade,
+            all_largest_losing_trade_pct,
+            long_largest_losing_trade,
+            long_largest_losing_trade_pct,
+            short_largest_losing_trade,
+            short_largest_losing_trade_pct,
 
-        if short_gross_loss != 0:
-            short_profit_factor = round(
-                short_gross_profit / short_gross_loss,
-                3
-            )
-        else:
-            short_profit_factor = np.nan
+            # Risk metrics
+            all_max_runup,
+            all_max_runup_pct,
+            all_max_drawdown,
+            all_max_drawdown_pct,
+            all_recovery_factor,
+            all_sharpe_ratio,
+            all_sortino_ratio,
+            all_skew,
 
-        # Commission Paid
-        all_commission_paid = round(log_col_12.sum(), 2)
-        long_commission_paid = round(log_col_12[long_mask].sum(), 2)
-        short_commission_paid = round(log_col_12[short_mask].sum(), 2)
+            # Liquidations
+            all_liquidations_number,
+            long_liquidations_number,
+            short_liquidations_number
+        ) = metrics_data
 
-        # Max Order Size
-        all_max__order_size = (
-            np.max(log_col_7)
-            if log_col_7.shape[0] > 0
-            else np.nan
-        )
-        long_max__order_size = (
-            np.max(log_col_7[long_mask])
-            if log_col_7[long_mask].shape[0] > 0
-            else np.nan
-        )
-        short_max__order_size = (
-            np.max(log_col_7[short_mask])
-            if log_col_7[short_mask].shape[0] > 0
-            else np.nan
-        )
-
-        # Total Closed Trades
-        all_total_closed_trades = deals_log.shape[0]
-        long_total_closed_trades = deals_log[long_mask].shape[0]
-        short_total_closed_trades = deals_log[short_mask].shape[0]
-
-        # Number of Winning Trades
-        all_number_winning_trades = deals_log[win_mask].shape[0]
-        long_number_winning_trades = deals_log[win_mask & long_mask].shape[0]
-        short_number_winning_trades = deals_log[win_mask & short_mask].shape[0]
-
-        # Number of Losing Trades
-        all_number_losing_trades = deals_log[loss_mask].shape[0]
-        long_number_losing_trades = deals_log[loss_mask & long_mask].shape[0]
-        short_number_losing_trades = deals_log[loss_mask & short_mask].shape[0]
-
-        # Winning Trade Percentage
-        try:
-            all_percent_profitable = round(
-                all_number_winning_trades / 
-                    all_total_closed_trades * 100,
-                2
-            )
-        except Exception:
-            all_percent_profitable = np.nan
-
-        try:
-            long_percent_profitable = round(
-                long_number_winning_trades / 
-                    long_total_closed_trades * 100,
-                2
-            )
-        except Exception:
-            long_percent_profitable = np.nan
-
-        try:
-            short_percent_profitable = round(
-                short_number_winning_trades / 
-                    short_total_closed_trades * 100,
-                2
-            )
-        except Exception:
-            short_percent_profitable = np.nan
-
-        # Average per Trade
-        all_avg_trade = _mean(log_col_8)
-        all_avg_trade_pct = _mean(log_col_9)
-
-        long_avg_trade = _mean(log_col_8[long_mask])
-        long_avg_trade_pct = _mean(log_col_9[long_mask])
-
-        short_avg_trade = _mean(log_col_8[short_mask])
-        short_avg_trade_pct = _mean(log_col_9[short_mask])
-
-        # Average Profit per Trade
-        all_avg_winning_trade = _mean(log_col_8[win_mask])
-        all_avg_winning_trade_pct = _mean(log_col_9[win_mask_pct])
-
-        long_avg_winning_trade = _mean(
-            log_col_8[win_mask & long_mask]
-        )
-        long_avg_winning_trade_pct = _mean(
-            log_col_9[(win_mask_pct) & long_mask]
-        )
-
-        short_avg_winning_trade = _mean(
-            log_col_8[win_mask & short_mask]
-        )
-        short_avg_winning_trade_pct = _mean(
-            log_col_9[(win_mask_pct) & short_mask]
-        )
-
-        # Average Loss per Trade
-        all_avg_losing_trade = abs(_mean(log_col_8[loss_mask]))
-        all_avg_losing_trade_pct = abs(_mean(log_col_9[loss_mask_pct]))
-
-        long_avg_losing_trade = abs(
-            _mean(log_col_8[loss_mask & long_mask])
-        )
-        long_avg_losing_trade_pct = abs(
-            _mean(log_col_9[(loss_mask_pct) & long_mask])
-        )
-
-        short_avg_losing_trade = abs(
-            _mean(log_col_8[loss_mask & short_mask])
-        )
-        short_avg_losing_trade_pct = abs(
-            _mean(log_col_9[(loss_mask_pct) & short_mask])
-        )
-
-        # Average Win / Average Loss Ratio
-        all_ratio_avg_win_loss = round(
-            all_avg_winning_trade / all_avg_losing_trade,
-            3
-        )
-        long_ratio_avg_win_loss = round(
-            long_avg_winning_trade / long_avg_losing_trade,
-            3
-        )
-        short_ratio_avg_win_loss = round(
-            short_avg_winning_trade / short_avg_losing_trade,
-            3
-        )
-
-        # Largest Winning Trade
-        all_largest_winning_trade = np.nan
-        all_largest_winning_trade_pct = np.nan
-
-        try:
-            all_largest_winning_trade = round(log_col_8.max(), 2)
-            all_largest_winning_trade_pct = round(log_col_9.max(), 2)
-        except Exception:
-            pass
-
-        long_largest_winning_trade = np.nan
-        long_largest_winning_trade_pct = np.nan
-
-        try:
-            long_largest_winning_trade = round(
-                log_col_8[long_mask].max(),
-                2
-            )
-            long_largest_winning_trade_pct = round(
-                log_col_9[long_mask].max(),
-                2
-            )
-        except Exception:
-            pass
-
-        short_largest_winning_trade = np.nan
-        short_largest_winning_trade_pct = np.nan
-
-        try:
-            short_largest_winning_trade = round(
-                log_col_8[short_mask].max(),
-                2
-            )
-            short_largest_winning_trade_pct = round(
-                log_col_9[short_mask].max(),
-                2
-            )
-        except Exception:
-            pass
-
-        # Largest Losing Trade
-        all_largest_losing_trade = np.nan
-        all_largest_losing_trade_pct = np.nan
-
-        try:
-            all_largest_losing_trade = round(abs(log_col_8.min()), 2)
-            all_largest_losing_trade_pct = round(abs(log_col_9.min()), 2)
-        except Exception:
-            pass
-
-        long_largest_losing_trade = np.nan
-        long_largest_losing_trade_pct = np.nan  
-
-        try:
-            long_largest_losing_trade = round(
-                abs(log_col_8[long_mask].min()),
-                2
-            )
-            long_largest_losing_trade_pct = round(
-                abs(log_col_9[long_mask].min()),
-                2
-            )
-        except Exception:
-            pass
-
-        short_largest_losing_trade = np.nan
-        short_largest_losing_trade_pct = np.nan
-
-        try:
-            short_largest_losing_trade = round(
-                abs(log_col_8[short_mask].min()),
-                2
-            )
-            short_largest_losing_trade_pct = round(
-                abs(log_col_9[short_mask].min()),
-                2
-            )
-        except Exception:
-            pass
-
-        # Max Equity Run-Up
-        try:
-            equity = np.concatenate(
-                (np.array([initial_capital]), log_col_8)
-            ).cumsum()
-
-            min_equity = equity[0]
-            all_max_runup = 0.0
-            all_max_runup_pct = 0.0
-
-            for i in range(1, equity.shape[0]):
-                if equity[i] < min_equity:
-                    min_equity = equity[i]
-
-                if equity[i] > equity[i - 1]:
-                    runup = equity[i] - min_equity
-                    runup_pct = (equity[i] / min_equity - 1) * 100
-
-                    if runup > all_max_runup:
-                        all_max_runup = round(runup, 2)
-
-                    if runup_pct > all_max_runup_pct:
-                        all_max_runup_pct = round(runup_pct, 2)
-
-        except Exception:
-            all_max_runup = 0.0
-            all_max_runup_pct = 0.0
-
-        # Max drawdown
-        try:
-            equity = np.concatenate(
-                (np.array([initial_capital]), log_col_8)
-            ).cumsum()
-            max_equity = equity[0]
-            all_max_drawdown = 0.0
-            all_max_drawdown_pct = 0.0
-
-            for i in range(1, equity.shape[0]):
-                if equity[i] > max_equity:
-                    max_equity = equity[i]
-
-                if equity[i] < equity[i - 1]:
-                    min_equity = equity[i]
-                    drawdown = max_equity - min_equity
-                    drawdown_per = -(min_equity / max_equity - 1) * 100
-
-                    if drawdown > all_max_drawdown:
-                        all_max_drawdown = round(drawdown, 2)
-
-                    if drawdown_per > all_max_drawdown_pct:
-                        all_max_drawdown_pct = round(drawdown_per, 2)
-        except Exception:
-            all_max_drawdown = 0.0
-            all_max_drawdown_pct = 0.0
-
-        # Recovery Factor
-        if all_max_drawdown > 0:
-            all_recovery_factor = round(
-                all_net_profit / all_max_drawdown,
-                3
-            )
-        else:
-            all_recovery_factor = np.nan
-
-        # Sharpe Ratio
-        if len(log_col_9) == 0 or np.any(np.isnan(log_col_9)):
-            all_sharpe_ratio = np.nan
-        else:
-            excess_std = np.std(log_col_9)
-            
-            if excess_std == 0 or np.isnan(excess_std):
-                all_sharpe_ratio = np.nan
-            else:
-                sharpe_avg_return = _mean(log_col_9)
-                all_sharpe_ratio = round(sharpe_avg_return / excess_std, 3)
-
-        # Sortino ratio
-        denominator = _mean(log_col_9[loss_mask_pct] ** 2) ** 0.5
-
-        if denominator == 0 or np.isnan(denominator):
-            all_sortino_ratio = np.nan 
-        else:
-            all_sortino_ratio = round(all_avg_trade_pct / denominator, 3)
-
-        # Skewness
-        if log_col_9.shape[0] < 3:
-            all_skew = np.nan
-        else:
-            mean = log_col_9.mean()
-            std = log_col_9.std()
-
-            if std == 0 or np.isnan(std):
-                all_skew = np.nan
-            else:
-                all_skew = round(
-                    np.sum(
-                        ((log_col_9 - mean) / std) ** 3
-                    ) / log_col_9.shape[0],
-                    3
-                )
-
-        # Number of Liquidations
-        long_liquidations_number = log_col_2[log_col_2 == 700].shape[0]
-        short_liquidations_number = log_col_2[log_col_2 == 800].shape[0]
-        all_liquidations_number = (
-            long_liquidations_number + short_liquidations_number
-        )
-
+        # Aggregate metrics into structured dictionary
         return {
             'equity': equity,
             'Gross Profit': {
                 'title': 'Gross Profit',
                 'all': [
-                    all_gross_profit,
-                    all_gross_profit_pct
+                    _fmt2(all_gross_profit),
+                    _fmt2(all_gross_profit_pct)
                 ],
                 'long': [
-                    long_gross_profit,
-                    long_gross_profit_pct
+                    _fmt2(long_gross_profit),
+                    _fmt2(long_gross_profit_pct)
                 ],
                 'short': [
-                    short_gross_profit,
-                    short_gross_profit_pct
+                    _fmt2(short_gross_profit),
+                    _fmt2(short_gross_profit_pct)
                 ]
             },
             'Gross Loss': {
                 'title': 'Gross Loss',
                 'all': [
-                    all_gross_loss,
-                    all_gross_loss_pct
+                    _fmt2(all_gross_loss),
+                    _fmt2(all_gross_loss_pct)
                 ],
                 'long': [
-                    long_gross_loss,
-                    long_gross_loss_pct
+                    _fmt2(long_gross_loss),
+                    _fmt2(long_gross_loss_pct)
                 ],
                 'short': [
-                    short_gross_loss,
-                    short_gross_loss_pct
+                    _fmt2(short_gross_loss),
+                    _fmt2(short_gross_loss_pct)
                 ]
             },
             'Net Profit': {
                 'title': 'Net Profit',
                 'all': [
-                    all_net_profit,
-                    all_net_profit_pct
+                    _fmt2(all_net_profit),
+                    _fmt2(all_net_profit_pct)
                 ],
                 'long': [
-                    long_net_profit,
-                    long_net_profit_pct
+                    _fmt2(long_net_profit),
+                    _fmt2(long_net_profit_pct)
                 ],
                 'short': [
-                    short_net_profit,
-                    short_net_profit_pct
+                    _fmt2(short_net_profit),
+                    _fmt2(short_net_profit_pct)
                 ]
             },
             'Profit Factor': {
                 'title': 'Profit Factor',
-                'all': [all_profit_factor],
-                'long': [long_profit_factor],
-                'short': [short_profit_factor]
+                'all': [_fmt3(all_profit_factor)],
+                'long': [_fmt3(long_profit_factor)],
+                'short': [_fmt3(short_profit_factor)]
             },
             'Commission Paid': {
                 'title': 'Commission Paid',
-                'all': [all_commission_paid],
-                'long': [long_commission_paid],
-                'short': [short_commission_paid]
+                'all': [_fmt2(all_commission_paid)],
+                'long': [_fmt2(long_commission_paid)],
+                'short': [_fmt2(short_commission_paid)]
             },
             'Max Order Size': {
                 'title': 'Max Order Size',
-                'all': [all_max__order_size],
-                'long': [long_max__order_size],
-                'short': [short_max__order_size]
+                'all': [all_max_order_size],
+                'long': [long_max_order_size],
+                'short': [short_max_order_size]
             },
             'Total Closed Trades': {
                 'title': 'Total Closed Trades',
@@ -696,96 +390,96 @@ class StrategyTester:
             },
             'Winning Trade Percentage': {
                 'title': 'Winning Trade Percentage',
-                'all': [all_percent_profitable],
-                'long': [long_percent_profitable],
-                'short': [short_percent_profitable]
+                'all': [_fmt2(all_percent_profitable)],
+                'long': [_fmt2(long_percent_profitable)],
+                'short': [_fmt2(short_percent_profitable)]
             },
             'Average per Trade': {
                 'title': 'Average per Trade',
                 'all': [
-                    all_avg_trade,
-                    all_avg_trade_pct
+                    _fmt2(all_avg_trade),
+                    _fmt2(all_avg_trade_pct)
                 ],
                 'long': [
-                    long_avg_trade,
-                    long_avg_trade_pct
+                    _fmt2(long_avg_trade),
+                    _fmt2(long_avg_trade_pct)
                 ],
                 'short': [
-                    short_avg_trade,
-                    short_avg_trade_pct
+                    _fmt2(short_avg_trade),
+                    _fmt2(short_avg_trade_pct)
                 ]
             },
             'Average Profit per Trade': {
                 'title': 'Average Profit per Trade',
                 'all': [
-                    all_avg_winning_trade,
-                    all_avg_winning_trade_pct
+                    _fmt2(all_avg_winning_trade),
+                    _fmt2(all_avg_winning_trade_pct)
                 ],
                 'long': [
-                    long_avg_winning_trade,
-                    long_avg_winning_trade_pct
+                    _fmt2(long_avg_winning_trade),
+                    _fmt2(long_avg_winning_trade_pct)
                 ],
                 'short': [
-                    short_avg_winning_trade,
-                    short_avg_winning_trade_pct
+                    _fmt2(short_avg_winning_trade),
+                    _fmt2(short_avg_winning_trade_pct)
                 ]
             },
             'Average Loss per Trade': {
                 'title': 'Average Loss per Trade',
                 'all': [
-                    all_avg_losing_trade,
-                    all_avg_losing_trade_pct
+                    _fmt2(all_avg_losing_trade),
+                    _fmt2(all_avg_losing_trade_pct)
                 ],
                 'long': [
-                    long_avg_losing_trade,
-                    long_avg_losing_trade_pct
+                    _fmt2(long_avg_losing_trade),
+                    _fmt2(long_avg_losing_trade_pct)
                 ],
                 'short': [
-                    short_avg_losing_trade,
-                    short_avg_losing_trade_pct
+                    _fmt2(short_avg_losing_trade),
+                    _fmt2(short_avg_losing_trade_pct)
                 ]
             },
             'Average Win / Average Loss Ratio': {
                 'title': 'Average Win / Average Loss Ratio',
-                'all': [all_ratio_avg_win_loss],
-                'long': [long_ratio_avg_win_loss],
-                'short': [short_ratio_avg_win_loss]
+                'all': [_fmt2(all_ratio_avg_win_loss)],
+                'long': [_fmt2(long_ratio_avg_win_loss)],
+                'short': [_fmt2(short_ratio_avg_win_loss)]
             },
             'Largest Winning Trade': {
                 'title': 'Largest Winning Trade',
                 'all': [
-                    all_largest_winning_trade,
-                    all_largest_winning_trade_pct
+                    _fmt2(all_largest_winning_trade),
+                    _fmt2(all_largest_winning_trade_pct)
                 ],
                 'long': [
-                    long_largest_winning_trade,
-                    long_largest_winning_trade_pct
+                    _fmt2(long_largest_winning_trade),
+                    _fmt2(long_largest_winning_trade_pct)
                 ],
                 'short': [
-                    short_largest_winning_trade,
-                    short_largest_winning_trade_pct
+                    _fmt2(short_largest_winning_trade),
+                    _fmt2(short_largest_winning_trade_pct)
                 ]
             },
             'Largest Losing Trade': {
                 'title': 'Largest Losing Trade',
                 'all': [
-                    all_largest_losing_trade,
-                    all_largest_losing_trade_pct
+                    _fmt2(all_largest_losing_trade),
+                    _fmt2(all_largest_losing_trade_pct)
                 ],
                 'long': [
-                    long_largest_losing_trade,
-                    long_largest_losing_trade_pct
+                    _fmt2(long_largest_losing_trade),
+                    _fmt2(long_largest_losing_trade_pct)
                 ],
                 'short': [
-                    short_largest_losing_trade,
-                    short_largest_losing_trade_pct
+                    _fmt2(short_largest_losing_trade),
+                    _fmt2(short_largest_losing_trade_pct)
                 ]
             },
             'Max Equity Run-Up': {
                 'title': 'Max Equity Run-Up',
                 'all': [
-                    all_max_runup,
-                    all_max_runup_pct
+                    _fmt2(all_max_runup),
+                    _fmt2(all_max_runup_pct)
                 ],
                 'long': [],
                 'short': [] 
@@ -793,33 +487,33 @@ class StrategyTester:
             'Max Equity Drawdown': {
                 'title': 'Max Equity Drawdown',
                 'all': [
-                    all_max_drawdown,
-                    all_max_drawdown_pct
+                    _fmt2(all_max_drawdown),
+                    _fmt2(all_max_drawdown_pct)
                 ],
                 'long': [],
                 'short': []
             },
             'Recovery Factor': {
                 'title': 'Recovery Factor',
-                'all': [all_recovery_factor],
+                'all': [_fmt3(all_recovery_factor)],
                 'long': [],
                 'short': []
             },
             'Sharpe Ratio': {
                 'title': 'Sharpe Ratio',
-                'all': [all_sharpe_ratio],
+                'all': [_fmt3(all_sharpe_ratio)],
                 'long': [],
                 'short': []
             },
             'Sortino Ratio': {
                 'title': 'Sortino Ratio',
-                'all': [all_sortino_ratio],
+                'all': [_fmt3(all_sortino_ratio)],
                 'long': [],
                 'short': []
             },
             'Skewness': {
                 'title': 'Skewness',
-                'all': [all_skew],
+                'all': [_fmt3(all_skew)],
                 'long': [],
                 'short': []
             },
@@ -830,6 +524,599 @@ class StrategyTester:
                 'short': [short_liquidations_number]
             },
         }
+
+    @staticmethod
+    @nb.njit(cache=True, nogil=True)
+    def _calculate_metrics(
+        initial_capital: float,
+        deals_log: np.ndarray
+    ) -> tuple:
+        """
+        JIT-compiled function to calculate all metrics from deal logs.
+        
+        Args:
+            initial_capital: Starting capital amount
+            deals_log: Array of completed trades with structured columns
+            
+        Returns:
+            tuple: All calculated metrics as numeric values
+        """
+
+        if deals_log.shape[0] == 0:
+            # Return empty/default values for all metrics
+            equity = np.array([initial_capital], dtype=np.float64)
+            nan_val = np.nan
+            zero_val = 0.0
+            
+            return (
+                equity,
+                # Gross Profit
+                zero_val, zero_val, zero_val, zero_val, zero_val, zero_val,
+                # Gross Loss  
+                zero_val, zero_val, zero_val, zero_val, zero_val, zero_val,
+                # Net Profit
+                zero_val, zero_val, zero_val, zero_val, zero_val, zero_val,
+                # Profit Factor
+                nan_val, nan_val, nan_val,
+                # Commission
+                zero_val, zero_val, zero_val,
+                # Max Order Size
+                nan_val, nan_val, nan_val,
+                # Trade counts
+                0, 0, 0, 0, 0, 0, 0, 0, 0,
+                # Percentages and averages
+                nan_val, nan_val, nan_val,
+                nan_val, nan_val, nan_val, nan_val, nan_val, nan_val,
+                nan_val, nan_val, nan_val, nan_val, nan_val, nan_val,
+                nan_val, nan_val, nan_val, nan_val, nan_val, nan_val,
+                # Ratios
+                nan_val, nan_val, nan_val,
+                # Largest trades
+                nan_val, nan_val, nan_val, nan_val, nan_val, nan_val,
+                nan_val, nan_val, nan_val, nan_val, nan_val, nan_val,
+                # Risk metrics
+                zero_val, zero_val, zero_val, zero_val,
+                nan_val, nan_val, nan_val, nan_val,
+                # Liquidations
+                0, 0, 0
+            )
+
+        # Extract columns
+        log_col_0 = deals_log[:, 0]    # direction
+        log_col_2 = deals_log[:, 2]    # exit signal
+        log_col_7 = deals_log[:, 7]    # position size
+        log_col_8 = deals_log[:, 8]    # P&L currency
+        log_col_9 = deals_log[:, 9]    # P&L percentage
+        log_col_12 = deals_log[:, 12]  # commission
+
+        # Create masks
+        long_mask = log_col_0 == 0
+        short_mask = log_col_0 == 1
+        win_mask = log_col_8 > 0
+        loss_mask = log_col_8 <= 0
+
+        # Equity calculation
+        equity = np.empty(log_col_8.shape[0] + 1, dtype=np.float64)
+        equity[0] = initial_capital
+        equity[1:] = log_col_8
+        equity = np.cumsum(equity)
+
+        # Gross Profit calculations
+        win_pnl = log_col_8[win_mask]
+        all_gross_profit = (
+            np.sum(win_pnl)
+            if win_pnl.shape[0] > 0 else 0.0
+        )
+        all_gross_profit_pct = (
+            (all_gross_profit / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        long_win_pnl = log_col_8[win_mask & long_mask]
+        long_gross_profit = (
+            np.sum(long_win_pnl)
+            if long_win_pnl.shape[0] > 0 else 0.0
+        )
+        long_gross_profit_pct = (
+            (long_gross_profit / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        short_win_pnl = log_col_8[win_mask & short_mask]
+        short_gross_profit = (
+            np.sum(short_win_pnl)
+            if short_win_pnl.shape[0] > 0 else 0.0
+        )
+        short_gross_profit_pct = (
+            (short_gross_profit / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        # Gross Loss calculations  
+        loss_pnl = log_col_8[loss_mask]
+        all_gross_loss = (
+            abs(np.sum(loss_pnl))
+            if loss_pnl.shape[0] > 0 else 0.0
+        )
+        all_gross_loss_pct = (
+            (all_gross_loss / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        long_loss_pnl = log_col_8[loss_mask & long_mask]
+        long_gross_loss = (
+            abs(np.sum(long_loss_pnl))
+            if long_loss_pnl.shape[0] > 0 else 0.0
+        )
+        long_gross_loss_pct = (
+            (long_gross_loss / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        short_loss_pnl = log_col_8[loss_mask & short_mask]
+        short_gross_loss = (
+            abs(np.sum(short_loss_pnl))
+            if short_loss_pnl.shape[0] > 0 else 0.0
+        )
+        short_gross_loss_pct = (
+            (short_gross_loss / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        # Net Profit calculations
+        all_net_profit = all_gross_profit - all_gross_loss
+        all_net_profit_pct = (
+            (all_net_profit / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        long_net_profit = long_gross_profit - long_gross_loss
+        long_net_profit_pct = (
+            (long_net_profit / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        short_net_profit = short_gross_profit - short_gross_loss
+        short_net_profit_pct = (
+            (short_net_profit / initial_capital * 100.0)
+            if initial_capital != 0 else 0.0
+        )
+
+        # Profit Factor calculations
+        all_profit_factor = (
+            (all_gross_profit / all_gross_loss)
+            if all_gross_loss != 0 else np.nan
+        )
+        long_profit_factor = (
+            (long_gross_profit / long_gross_loss)
+            if long_gross_loss != 0 else np.nan
+        )
+        short_profit_factor = (
+            (short_gross_profit / short_gross_loss)
+            if short_gross_loss != 0 else np.nan
+        )
+
+        # Commission calculations
+        all_commission_paid = np.sum(log_col_12)
+        long_commission_paid = np.sum(log_col_12[long_mask])
+        short_commission_paid = np.sum(log_col_12[short_mask])
+
+        # Max Order Size calculations
+        all_max_order_size = (
+            np.max(log_col_7)
+            if log_col_7.shape[0] > 0 else np.nan
+        )
+        long_max_order_size = (
+            np.max(log_col_7[long_mask])
+            if np.sum(long_mask) > 0 else np.nan
+        )
+        short_max_order_size = (
+            np.max(log_col_7[short_mask])
+            if np.sum(short_mask) > 0 else np.nan
+        )
+
+        # Trade count calculations
+        all_total_closed_trades = deals_log.shape[0]
+        long_total_closed_trades = np.sum(long_mask)
+        short_total_closed_trades = np.sum(short_mask)
+
+        all_number_winning_trades = np.sum(win_mask)
+        long_number_winning_trades = np.sum(win_mask & long_mask)
+        short_number_winning_trades = np.sum(win_mask & short_mask)
+
+        all_number_losing_trades = np.sum(loss_mask)
+        long_number_losing_trades = np.sum(loss_mask & long_mask)
+        short_number_losing_trades = np.sum(loss_mask & short_mask)
+
+        # Winning percentage calculations
+        all_percent_profitable = (
+            (all_number_winning_trades / all_total_closed_trades * 100.0)
+            if all_total_closed_trades > 0 else np.nan
+        )
+        long_percent_profitable = (
+            (long_number_winning_trades / long_total_closed_trades * 100.0)
+            if long_total_closed_trades > 0 else np.nan
+        )
+        short_percent_profitable = (
+            (short_number_winning_trades / short_total_closed_trades * 100.0)
+            if short_total_closed_trades > 0 else np.nan
+        )
+
+        # Average trade calculations
+        all_avg_trade = (
+            np.mean(log_col_8)
+            if log_col_8.shape[0] > 0 else np.nan
+        )
+        all_avg_trade_pct = (
+            np.mean(log_col_9)
+            if log_col_9.shape[0] > 0 else np.nan
+        )
+
+        long_pnl_8 = log_col_8[long_mask]
+        long_pnl_9 = log_col_9[long_mask]
+        long_avg_trade = (
+            np.mean(long_pnl_8)
+            if long_pnl_8.shape[0] > 0 else np.nan
+        )
+        long_avg_trade_pct = (
+            np.mean(long_pnl_9)
+            if long_pnl_9.shape[0] > 0 else np.nan
+        )
+
+        short_pnl_8 = log_col_8[short_mask]
+        short_pnl_9 = log_col_9[short_mask]
+        short_avg_trade = (
+            np.mean(short_pnl_8)
+            if short_pnl_8.shape[0] > 0 else np.nan
+        )
+        short_avg_trade_pct = (
+            np.mean(short_pnl_9)
+            if short_pnl_9.shape[0] > 0 else np.nan
+        )
+
+        # Average winning trade calculations
+        win_pnl_8 = log_col_8[win_mask]
+        win_pnl_9 = log_col_9[win_mask]
+        all_avg_winning_trade = (
+            np.mean(win_pnl_8)
+            if win_pnl_8.shape[0] > 0 else np.nan
+        )
+        all_avg_winning_trade_pct = (
+            np.mean(win_pnl_9)
+            if win_pnl_9.shape[0] > 0 else np.nan
+        )
+
+        long_win_pnl_8 = log_col_8[win_mask & long_mask]
+        long_win_pnl_9 = log_col_9[win_mask & long_mask]
+        long_avg_winning_trade = (
+            np.mean(long_win_pnl_8)
+            if long_win_pnl_8.shape[0] > 0 else np.nan
+        )
+        long_avg_winning_trade_pct = (
+            np.mean(long_win_pnl_9)
+            if long_win_pnl_9.shape[0] > 0 else np.nan
+        )
+
+        short_win_pnl_8 = log_col_8[win_mask & short_mask]
+        short_win_pnl_9 = log_col_9[win_mask & short_mask]
+        short_avg_winning_trade = (
+            np.mean(short_win_pnl_8)
+            if short_win_pnl_8.shape[0] > 0 else np.nan
+        )
+        short_avg_winning_trade_pct = (
+            np.mean(short_win_pnl_9)
+            if short_win_pnl_9.shape[0] > 0 else np.nan
+        )
+
+        # Average losing trade calculations
+        loss_pnl_8 = log_col_8[loss_mask]
+        loss_pnl_9 = log_col_9[loss_mask]
+        all_avg_losing_trade = (
+            abs(np.mean(loss_pnl_8))
+            if loss_pnl_8.shape[0] > 0 else np.nan
+        )
+        all_avg_losing_trade_pct = (
+            abs(np.mean(loss_pnl_9))
+            if loss_pnl_9.shape[0] > 0 else np.nan
+        )
+
+        long_loss_pnl_8 = log_col_8[loss_mask & long_mask]
+        long_loss_pnl_9 = log_col_9[loss_mask & long_mask]
+        long_avg_losing_trade = (
+            abs(np.mean(long_loss_pnl_8))
+            if long_loss_pnl_8.shape[0] > 0 else np.nan
+        )
+        long_avg_losing_trade_pct = (
+            abs(np.mean(long_loss_pnl_9))
+            if long_loss_pnl_9.shape[0] > 0 else np.nan
+        )
+
+        short_loss_pnl_8 = log_col_8[loss_mask & short_mask]
+        short_loss_pnl_9 = log_col_9[loss_mask & short_mask]
+        short_avg_losing_trade = (
+            abs(np.mean(short_loss_pnl_8))
+            if short_loss_pnl_8.shape[0] > 0 else np.nan
+        )
+        short_avg_losing_trade_pct = (
+            abs(np.mean(short_loss_pnl_9))
+            if short_loss_pnl_9.shape[0] > 0 else np.nan
+        )
+
+        # Win/Loss ratio calculations
+        all_ratio_avg_win_loss = (
+            (all_avg_winning_trade / all_avg_losing_trade)
+            if (
+                not np.isnan(all_avg_winning_trade) and
+                not np.isnan(all_avg_losing_trade) and
+                all_avg_losing_trade != 0
+            )
+            else np.nan
+        )
+        long_ratio_avg_win_loss = (
+            (long_avg_winning_trade / long_avg_losing_trade)
+            if (
+                not np.isnan(long_avg_winning_trade) and
+                not np.isnan(long_avg_losing_trade) and
+                long_avg_losing_trade != 0
+            )
+            else np.nan
+        )
+        short_ratio_avg_win_loss = (
+            (short_avg_winning_trade / short_avg_losing_trade)
+            if (
+                not np.isnan(short_avg_winning_trade) and
+                not np.isnan(short_avg_losing_trade) and
+                short_avg_losing_trade != 0
+            )
+            else np.nan
+        )
+
+        # Largest winning trade calculations
+        all_largest_winning_trade = (
+            np.max(log_col_8)
+            if log_col_8.shape[0] > 0 else np.nan
+        )
+        all_largest_winning_trade_pct = (
+            np.max(log_col_9)
+            if log_col_9.shape[0] > 0 else np.nan
+        )
+
+        long_largest_winning_trade = (
+            np.max(log_col_8[long_mask])
+            if np.sum(long_mask) > 0 else np.nan
+        )
+        long_largest_winning_trade_pct = (
+            np.max(log_col_9[long_mask])
+            if np.sum(long_mask) > 0 else np.nan
+        )
+
+        short_largest_winning_trade = (
+            np.max(log_col_8[short_mask])
+            if np.sum(short_mask) > 0 else np.nan
+        )
+        short_largest_winning_trade_pct = (
+            np.max(log_col_9[short_mask])
+            if np.sum(short_mask) > 0 else np.nan
+        )
+
+        # Largest losing trade calculations
+        all_largest_losing_trade = (
+            abs(np.min(log_col_8))
+            if log_col_8.shape[0] > 0 else np.nan
+        )
+        all_largest_losing_trade_pct = (
+            abs(np.min(log_col_9))
+            if log_col_9.shape[0] > 0 else np.nan
+        )
+
+        long_largest_losing_trade = (
+            abs(np.min(log_col_8[long_mask]))
+            if np.sum(long_mask) > 0 else np.nan
+        )
+        long_largest_losing_trade_pct = (
+            abs(np.min(log_col_9[long_mask]))
+            if np.sum(long_mask) > 0 else np.nan
+        )
+
+        short_largest_losing_trade = (
+            abs(np.min(log_col_8[short_mask]))
+            if np.sum(short_mask) > 0 else np.nan
+        )
+        short_largest_losing_trade_pct = (
+            abs(np.min(log_col_9[short_mask]))
+            if np.sum(short_mask) > 0 else np.nan
+        )
+
+        # Max Equity Run-Up
+        min_equity = equity[0]
+        all_max_runup = 0.0
+        all_max_runup_pct = 0.0
+        for i in range(1, equity.shape[0]):
+            if equity[i] < min_equity:
+                min_equity = equity[i]
+            if equity[i] > equity[i - 1]:
+                runup = equity[i] - min_equity
+                runup_pct = (equity[i] / min_equity - 1.0) * 100.0
+                if runup > all_max_runup:
+                    all_max_runup = runup
+                if runup_pct > all_max_runup_pct:
+                    all_max_runup_pct = runup_pct
+
+        # Max Equity Drawdown
+        max_equity = equity[0]
+        all_max_drawdown = 0.0
+        all_max_drawdown_pct = 0.0
+        for i in range(1, equity.shape[0]):
+            if equity[i] > max_equity:
+                max_equity = equity[i]
+            if equity[i] < equity[i - 1]:
+                min_eq = equity[i]
+                drawdown = max_equity - min_eq
+                drawdown_pct = -(min_eq / max_equity - 1.0) * 100.0
+                if drawdown > all_max_drawdown:
+                    all_max_drawdown = drawdown
+                if drawdown_pct > all_max_drawdown_pct:
+                    all_max_drawdown_pct = drawdown_pct
+
+        # Recovery Factor
+        all_recovery_factor = (
+            (all_net_profit / all_max_drawdown)
+            if all_max_drawdown > 0 else np.nan
+        )
+
+        # Sharpe Ratio
+        if log_col_9.shape[0] == 0 or np.any(np.isnan(log_col_9)):
+            all_sharpe_ratio = np.nan
+        else:
+            excess_std = np.std(log_col_9)
+            if excess_std == 0 or np.isnan(excess_std):
+                all_sharpe_ratio = np.nan
+            else:
+                sharpe_avg_return = np.mean(log_col_9)
+                all_sharpe_ratio = sharpe_avg_return / excess_std
+
+        # Sortino Ratio
+        neg_returns = log_col_9[loss_mask]
+        denom = (
+            np.sqrt(np.mean(neg_returns ** 2))
+            if neg_returns.shape[0] > 0 else np.nan
+        )
+        if denom == 0 or np.isnan(denom):
+            all_sortino_ratio = np.nan
+        else:
+            all_sortino_ratio = all_avg_trade_pct / denom
+
+        # Skewness
+        if log_col_9.shape[0] < 3:
+            all_skew = np.nan
+        else:
+            mean_r = np.mean(log_col_9)
+            std_r = np.std(log_col_9)
+            if std_r == 0 or np.isnan(std_r):
+                all_skew = np.nan
+            else:
+                all_skew = (
+                    np.sum(((log_col_9 - mean_r) / std_r) ** 3)
+                    / log_col_9.shape[0]
+                )
+
+        # Liquidations
+        long_liquidations_number = np.sum(log_col_2 == 700)
+        short_liquidations_number = np.sum(log_col_2 == 800)
+        all_liquidations_number = (
+            long_liquidations_number + short_liquidations_number
+        )
+
+        return (
+            equity,
+
+            # Gross Profit
+            all_gross_profit,
+            all_gross_profit_pct,
+            long_gross_profit,
+            long_gross_profit_pct,
+            short_gross_profit,
+            short_gross_profit_pct,
+
+            # Gross Loss
+            all_gross_loss,
+            all_gross_loss_pct,
+            long_gross_loss,
+            long_gross_loss_pct,
+            short_gross_loss,
+            short_gross_loss_pct,
+
+            # Net Profit
+            all_net_profit,
+            all_net_profit_pct,
+            long_net_profit,
+            long_net_profit_pct,
+            short_net_profit,
+            short_net_profit_pct,
+
+            # Profit Factor
+            all_profit_factor,
+            long_profit_factor,
+            short_profit_factor,
+
+            # Commission
+            all_commission_paid,
+            long_commission_paid,
+            short_commission_paid,
+
+            # Max Order Size
+            all_max_order_size,
+            long_max_order_size,
+            short_max_order_size,
+
+            # Trade counts
+            all_total_closed_trades,
+            long_total_closed_trades,
+            short_total_closed_trades,
+            all_number_winning_trades,
+            long_number_winning_trades,
+            short_number_winning_trades,
+            all_number_losing_trades,
+            long_number_losing_trades,
+            short_number_losing_trades,
+
+            # Percentages and averages
+            all_percent_profitable,
+            long_percent_profitable,
+            short_percent_profitable,
+            all_avg_trade,
+            all_avg_trade_pct,
+            long_avg_trade,
+            long_avg_trade_pct,
+            short_avg_trade,
+            short_avg_trade_pct,
+            all_avg_winning_trade,
+            all_avg_winning_trade_pct,
+            long_avg_winning_trade,
+            long_avg_winning_trade_pct,
+            short_avg_winning_trade,
+            short_avg_winning_trade_pct,
+            all_avg_losing_trade,
+            all_avg_losing_trade_pct,
+            long_avg_losing_trade,
+            long_avg_losing_trade_pct,
+            short_avg_losing_trade,
+            short_avg_losing_trade_pct,
+
+            # Ratios
+            all_ratio_avg_win_loss,
+            long_ratio_avg_win_loss,
+            short_ratio_avg_win_loss,
+
+            # Largest trades
+            all_largest_winning_trade,
+            all_largest_winning_trade_pct,
+            long_largest_winning_trade,
+            long_largest_winning_trade_pct,
+            short_largest_winning_trade,
+            short_largest_winning_trade_pct,
+            all_largest_losing_trade,
+            all_largest_losing_trade_pct,
+            long_largest_losing_trade,
+            long_largest_losing_trade_pct,
+            short_largest_losing_trade,
+            short_largest_losing_trade_pct,
+
+            # Risk metrics
+            all_max_runup,
+            all_max_runup_pct,
+            all_max_drawdown,
+            all_max_drawdown_pct,
+            all_recovery_factor,
+            all_sharpe_ratio,
+            all_sortino_ratio,
+            all_skew,
+
+            # Liquidations
+            all_liquidations_number,
+            long_liquidations_number,
+            short_liquidations_number
+        )
     
     def _get_empty_metrics_structure(self) -> StrategyMetrics:
         """

@@ -2,7 +2,6 @@ from __future__ import annotations
 from hashlib import sha256
 from hmac import new
 from json import dumps
-from os import getenv
 from time import time
 
 from src.infrastructure.transport import HttpClient
@@ -18,22 +17,18 @@ class BaseBybitClient(HttpClient):
 
     BASE_ENDPOINT = 'https://api.bybit.com'
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str, api_secret: str) -> None:
         """
-        Initialize base client with credentials
-        from environment variables.
+        Initialize base client with API credentials.  
+        Stores credentials for use in request headers and signing.
         
-        Reads the following environment variables:
-        - BYBIT_API_KEY: API key for ByBit authentication
-        - BYBIT_API_SECRET: API secret for request signing
-        
-        Initializes:
-        - api_key: Stores the ByBit API key
-        - api_secret: Stores the ByBit API secret
+        Args:
+            api_key: Bybit API key for authentication
+            api_secret: Bybit API secret for request signing
         """
 
-        self.api_key = getenv('BYBIT_API_KEY')
-        self.api_secret = getenv('BYBIT_API_SECRET')
+        self.api_key = api_key
+        self.api_secret = api_secret
 
     def get_headers(self, params: dict, method: str) -> dict:
         """

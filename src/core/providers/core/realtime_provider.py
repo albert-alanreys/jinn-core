@@ -174,7 +174,7 @@ class RealtimeProvider():
 
         if not has_last_historical_kline(original_market_data['klines']):
             new_market_data['klines'] = self._append_last_kline(
-                client=context['client'],
+                client=context['clients'][0],
                 symbol=original_market_data['symbol'],
                 interval=original_market_data['interval'],
                 klines=original_market_data['klines']
@@ -217,7 +217,7 @@ class RealtimeProvider():
             main_klines_updated: Whether the main klines were updated
         """
 
-        client = context['client']
+        client = context['clients'][0]
         main_ms = client.market.get_interval_duration(
             original_market_data['interval']
         )
