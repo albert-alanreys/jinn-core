@@ -3,7 +3,6 @@ from importlib import import_module
 from inspect import getmembers, isclass
 from pkgutil import iter_modules
 
-from src.infrastructure.exchanges import BaseExchangeClient
 from src.infrastructure.exchanges.models import Interval
 from src.shared.utils import adjust
 
@@ -11,13 +10,7 @@ from .core import (
     BaseStrategy,
     colors,
     quanta,
-    update_completed_deals_log,
-    update_open_deals_log,
-    remove_open_deal,
-    clear_open_deals_log,
-    calculate_avg_entry_price,
-    calculate_total_position_size,
-    count_open_deals
+    logs
 )
 
 

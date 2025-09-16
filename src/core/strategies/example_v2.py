@@ -7,7 +7,7 @@ from . import (
     adjust,
     colors,
     quanta,
-    update_completed_deals_log
+    logs
 )
 
 
@@ -103,9 +103,6 @@ class ExampleV2(BaseStrategy):
         super().__init__(params)
 
     def calculate(self) -> None:
-        # Allow 4 open positions at once
-        self.open_deals_log = np.full((4, 5), np.nan)
-
         # Entry price levels
         self.entry_price_2 = np.full(self.time.shape[0], np.nan)
         self.entry_price_3 = np.full(self.time.shape[0], np.nan)
@@ -269,26 +266,26 @@ class ExampleV2(BaseStrategy):
             alert_open_long = False
             alert_close_long = False
 
-            # Check of liquidation
-            if (position_type == 0 and low[i] <= liquidation_price):
-                for deal in open_deals_log:
-                    if not np.isnan(deal[0]):
-                        completed_deals_log, pnl = update_completed_deals_log(
+            # Check liquidation
+            if position_type == 0 and low[i] <= liquidation_price:
+                for idx in range(open_deals_log.shape[0]):
+                    if not np.isnan(open_deals_log[idx, 0]):
+                        completed_deals_log, pnl = logs.close(
                             completed_deals_log,
                             commission,
-                            deal[0],
-                            deal[1],
+                            open_deals_log[idx, 0],
+                            open_deals_log[idx, 1],
                             700,
-                            deal[2],
+                            open_deals_log[idx, 2],
                             time[i],
-                            deal[3],
+                            open_deals_log[idx, 3],
                             liquidation_price,
-                            deal[4],
+                            open_deals_log[idx, 4],
                             initial_capital
                         )
                         equity += pnl
 
-                open_deals_log[:] = np.nan
+                open_deals_log = logs.clear(open_deals_log)
                 qty_entry[:] = np.nan
                 position_type = np.nan
                 order_signal = np.nan
@@ -308,27 +305,24 @@ class ExampleV2(BaseStrategy):
                         not np.isnan(take_price[i]) and
                         high[i] >= take_price[i]
                     ):
-                        for deal in open_deals_log:
-                            if not np.isnan(deal[0]):
-                                (
-                                    completed_deals_log,
-                                    pnl,
-                                ) = update_completed_deals_log(
+                        for idx in range(open_deals_log.shape[0]):
+                            if not np.isnan(open_deals_log[idx, 0]):
+                                completed_deals_log, pnl = logs.close(
                                     completed_deals_log,
                                     commission,
-                                    deal[0],
-                                    deal[1],
+                                    open_deals_log[idx, 0],
+                                    open_deals_log[idx, 1],
                                     100,
-                                    deal[2],
+                                    open_deals_log[idx, 2],
                                     time[i],
-                                    deal[3],
+                                    open_deals_log[idx, 3],
                                     close[i],
-                                    deal[4],
+                                    open_deals_log[idx, 4],
                                     initial_capital
                                 )
                                 equity += pnl
 
-                        open_deals_log[:] = np.nan
+                        open_deals_log = logs.clear(open_deals_log)
                         qty_entry[:] = np.nan
                         position_type = np.nan
                         order_signal = np.nan
@@ -349,24 +343,25 @@ class ExampleV2(BaseStrategy):
                     order_price = entry_price_2[i]
                     order_date = time[i]
 
-                    open_deals_log[1] = np.array(
-                        [
-                            position_type, order_signal, order_date,
-                            order_price, qty_entry[1]
-                        ]
+                    open_deals_log = logs.open(
+                        open_deals_log,
+                        position_type,
+                        order_signal,
+                        order_date,
+                        order_price,
+                        qty_entry[1]
                     )
 
-                    avg_entry_price = np.nansum(
-                        open_deals_log[:2, 3] * open_deals_log[:2, 4]
-                    ) / np.nansum(open_deals_log[:2, 4])
-                    liquidation_price = adjust(
-                        avg_entry_price * (1 - (1 / leverage)),
-                        p_precision
-                    )
-                    take_price[i] = adjust(
-                        avg_entry_price * (100 + take_profit) / 100,
-                        p_precision
-                    )
+                    avg_entry_price = logs.avg_price(open_deals_log)
+                    if not np.isnan(avg_entry_price):
+                        liquidation_price = adjust(
+                            avg_entry_price * (1 - (1 / leverage)),
+                            p_precision
+                        )
+                        take_price[i] = adjust(
+                            avg_entry_price * (100 + take_profit) / 100,
+                            p_precision
+                        )
 
                     entry_price_2[i] = np.nan
 
@@ -378,24 +373,25 @@ class ExampleV2(BaseStrategy):
                     order_price = entry_price_3[i]
                     order_date = time[i]
 
-                    open_deals_log[2] = np.array(
-                        [
-                            position_type, order_signal, order_date,
-                            order_price, qty_entry[2]
-                        ]
+                    open_deals_log = logs.open(
+                        open_deals_log,
+                        position_type,
+                        order_signal,
+                        order_date,
+                        order_price,
+                        qty_entry[2]
                     )
 
-                    avg_entry_price = np.nansum(
-                        open_deals_log[:3, 3] * open_deals_log[:3, 4]
-                    ) / np.nansum(open_deals_log[:3, 4])
-                    liquidation_price = adjust(
-                        avg_entry_price * (1 - (1 / leverage)),
-                        p_precision
-                    )
-                    take_price[i] = adjust(
-                        avg_entry_price * (100 + take_profit) / 100,
-                        p_precision
-                    )
+                    avg_entry_price = logs.avg_price(open_deals_log)
+                    if not np.isnan(avg_entry_price):
+                        liquidation_price = adjust(
+                            avg_entry_price * (1 - (1 / leverage)),
+                            p_precision
+                        )
+                        take_price[i] = adjust(
+                            avg_entry_price * (100 + take_profit) / 100,
+                            p_precision
+                        )
 
                     entry_price_3[i] = np.nan
 
@@ -407,24 +403,25 @@ class ExampleV2(BaseStrategy):
                     order_price = entry_price_4[i]
                     order_date = time[i]
 
-                    open_deals_log[3] = np.array(
-                        [
-                            position_type, order_signal, order_date,
-                            order_price, qty_entry[3]
-                        ]
+                    open_deals_log = logs.open(
+                        open_deals_log,
+                        position_type,
+                        order_signal,
+                        order_date,
+                        order_price,
+                        qty_entry[3]
                     )
 
-                    avg_entry_price = np.nansum(
-                        open_deals_log[:, 3] * open_deals_log[:, 4]
-                    ) / np.nansum(open_deals_log[:, 4])
-                    liquidation_price = adjust(
-                        avg_entry_price * (1 - (1 / leverage)),
-                        p_precision
-                    )
-                    take_price[i] = adjust(
-                        avg_entry_price * (100 + take_profit) / 100,
-                        p_precision
-                    )
+                    avg_entry_price = logs.avg_price(open_deals_log)
+                    if not np.isnan(avg_entry_price):
+                        liquidation_price = adjust(
+                            avg_entry_price * (1 - (1 / leverage)),
+                            p_precision
+                        )
+                        take_price[i] = adjust(
+                            avg_entry_price * (100 + take_profit) / 100,
+                            p_precision
+                        )
 
                     entry_price_4[i] = np.nan
 
@@ -433,27 +430,24 @@ class ExampleV2(BaseStrategy):
                         not np.isnan(take_price[i]) and
                         high[i] >= take_price[i]
                     ):
-                        for deal in open_deals_log:
-                            if not np.isnan(deal[0]):
-                                (
-                                    completed_deals_log,
-                                    pnl,
-                                ) = update_completed_deals_log(
+                        for idx in range(open_deals_log.shape[0]):
+                            if not np.isnan(open_deals_log[idx, 0]):
+                                completed_deals_log, pnl = logs.close(
                                     completed_deals_log,
                                     commission,
-                                    deal[0],
-                                    deal[1],
+                                    open_deals_log[idx, 0],
+                                    open_deals_log[idx, 1],
                                     100,
-                                    deal[2],
+                                    open_deals_log[idx, 2],
                                     time[i],
-                                    deal[3],
+                                    open_deals_log[idx, 3],
                                     close[i],
-                                    deal[4],
+                                    open_deals_log[idx, 4],
                                     initial_capital
                                 )
                                 equity += pnl
 
-                        open_deals_log[:] = np.nan
+                        open_deals_log = logs.clear(open_deals_log)
                         qty_entry[:] = np.nan
                         position_type = np.nan
                         order_signal = np.nan
@@ -533,12 +527,15 @@ class ExampleV2(BaseStrategy):
                 if np.any(qty_entry == 0):
                     break
 
-                open_deals_log[0] = np.array(
-                    [
-                        position_type, order_signal, order_date,
-                        order_price, qty_entry[0]
-                    ]
+                open_deals_log = logs.open(
+                    open_deals_log,
+                    position_type,
+                    order_signal,
+                    order_date,
+                    order_price,
+                    qty_entry[0]
                 )
+
                 alert_open_long = True
 
         return (

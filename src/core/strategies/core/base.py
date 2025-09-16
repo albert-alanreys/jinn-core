@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .utils import order_cache
+from .utils import cache
 
 if TYPE_CHECKING:
     from src.core.providers.common.models import MarketData
@@ -207,7 +207,7 @@ class BaseStrategy(ABC):
         self.client = client
 
         if not hasattr(self, 'order_ids'):
-            self.order_ids = order_cache.load_order_cache(
+            self.order_ids = cache.load_orders(
                 strategy=self.__class__.__name__,
                 exchange=self.client.exchange_name,
                 symbol=self.symbol
@@ -216,7 +216,7 @@ class BaseStrategy(ABC):
         try:
             self.trade()
         finally:
-            order_cache.save_order_cache(
+            cache.save_orders(
                 strategy=self.__class__.__name__,
                 exchange=self.client.exchange_name,
                 symbol=self.symbol,
