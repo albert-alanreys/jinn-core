@@ -4,3 +4,6 @@
 !example_v2.py
 
 !__init__.py
+
+!core/
+!core/**/*.py
