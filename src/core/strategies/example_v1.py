@@ -121,7 +121,7 @@ class ExampleV1(BaseStrategy):
     }
 
     # --- Visualization Settings ---
-    # Chart styling configuration for technical indicators
+    # Visualization Settings for technical indicators
     indicator_options = {
         'SL': {
             'pane': 0,

@@ -107,10 +107,10 @@ class BaseStrategy(ABC):
     }
     param_labels = {}
 
-    # Chart styling configuration for technical indicators
+    # Visualization Settings
     indicator_options = {}
 
-    # Indicator Visualization Data
+    # Visualization Data
     indicators = {}
 
     def __init__(self, params: dict | None = None) -> None:

@@ -62,7 +62,7 @@ class ExampleV2(BaseStrategy):
     }
 
     # --- Visualization Settings ---
-    # Chart styling configuration for technical indicators
+    # Visualization Settings for technical indicators
     indicator_options = {
         'HTF': {
             'pane': 0,
