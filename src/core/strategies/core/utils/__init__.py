@@ -1,2 +1,2 @@
 from . import cache
-from . import logs
+from . import log

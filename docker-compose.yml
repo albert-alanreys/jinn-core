@@ -1,0 +1,13 @@
+services:
+  jinn:
+    build: .
+    image: jinn:latest
+    ports:
+      - '1001:1001'
+    volumes:
+      - ./src:/app/src
+      - ./.env:/app/.env
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped

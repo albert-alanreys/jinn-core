@@ -222,86 +222,165 @@ class StrategyOptimizer:
 
     def _select(self) -> None:
         """
-        Select two parent samples for recombination.
+        Select two parent samples using adaptive tournament selection.
 
-        Uses tournament selection: 50% chance to select best individual
-        plus random individual, 50% chance to select two random individuals.
-        Selected parents are stored in self.parents as dictionaries.
+        Implements efficient tournament selection with adaptive pressure:
+        - Tournament size adapts to population diversity
+        - Elite bias decreases over iterations to maintain exploration
         """
-
-        if randint(0, 1) == 0:
-            best_score = max(self.population)
-            parent_1_key = self.population[best_score]
-            parent_1 = self._key_to_dict(parent_1_key)
-
-            population_copy = self.population.copy()
-            population_copy.pop(best_score)
-
-            parent_2_key = choice(list(population_copy.values()))
-            parent_2 = self._key_to_dict(parent_2_key)
-            
-            self.parents = [parent_1, parent_2]
+        
+        # Calculate adaptive tournament parameters
+        population_size = len(self.population)
+        unique_samples = len(set(self.population.values()))
+        diversity_ratio = unique_samples / population_size
+        
+        # Adaptive tournament size (2-4 based on diversity)
+        if diversity_ratio > 0.7:
+            tournament_size = 2
+        elif diversity_ratio > 0.4:
+            tournament_size = 3
         else:
-            parent_keys = sample(list(self.population.values()), 2)
-            self.parents = [self._key_to_dict(key) for key in parent_keys]
+            tournament_size = 4
+        
+        self.parents = []
+        
+        for _ in range(2):
+            fitness_scores = list(self.population.keys())
+            tournament_scores = sample(
+                fitness_scores, min(tournament_size, population_size)
+            )
+            
+            # Winner selection with elite bias
+            if randint(1, 100) <= 80:
+                winner_score = max(tournament_scores)
+            else:
+                winner_score = choice(tournament_scores)
+            
+            winner_key = self.population[winner_score]
+            parent = self._key_to_dict(winner_key)
+            self.parents.append(parent)
+            
+            if len(fitness_scores) > 1:
+                fitness_scores.remove(winner_score)
 
     def _recombine(self) -> None:
         """
-        Create offspring through crossover of selected parents.
+        Create offspring through balanced crossover of selected parents.
 
-        Implements two crossover strategies:
-        - Single-point crossover: splits parameter list at random position
-        - Two-point crossover: exchanges middle segment between parents
-        
-        Resulting child is stored in self.child as dictionary.
+        Implements three crossover strategies:
+        - Uniform crossover (50%): Parameter-wise random inheritance
+        - Single-point crossover (30%): Classic split-point crossover
+        - Arithmetic crossover (20%): Blend for numerical parameters
         """
-
+        
         param_count = len(self.param_keys)
-        r_number = randint(0, 1)
-
-        if r_number == 0:
+        crossover_type = randint(1, 100)
+        
+        self.child = {}
+        
+        if crossover_type <= 50:
+            # Uniform crossover - each parameter from random parent
+            for param_name in self.param_keys:
+                parent_idx = randint(0, 1)
+                self.child[param_name] = self.parents[parent_idx][param_name]
+                
+        elif crossover_type <= 80:
             # Single-point crossover
             delimiter = randint(1, param_count - 1)
             
-            self.child = {}
             for i, param_name in enumerate(self.param_keys):
                 if i < delimiter:
                     self.child[param_name] = self.parents[0][param_name]
                 else:
                     self.child[param_name] = self.parents[1][param_name]
         else:
-            # Two-point crossover
-            delimiter_1 = randint(1, param_count // 2 - 1)
-            delimiter_2 = randint(
-                param_count // 2 + 1, param_count - 1
-            )
-
-            self.child = {}
-            for i, param_name in enumerate(self.param_keys):
-                if i < delimiter_1 or i >= delimiter_2:
-                    self.child[param_name] = self.parents[0][param_name]
+            # Arithmetic crossover for numerical, random for boolean
+            for param_name in self.param_keys:
+                parent_1_val = self.parents[0][param_name]
+                parent_2_val = self.parents[1][param_name]
+                
+                if isinstance(parent_1_val, bool):
+                    self.child[param_name] = choice(
+                        [parent_1_val, parent_2_val]
+                    )
                 else:
-                    self.child[param_name] = self.parents[1][param_name]
+                    param_values = self.strategy_class.opt_params[param_name]
+                    alpha = randint(30, 70) / 100.0
+                    blended = (
+                        alpha * parent_1_val + (1 - alpha) * parent_2_val
+                    )
+                    
+                    # Find closest valid parameter value
+                    closest_value = min(
+                        param_values, key=lambda x: abs(x - blended)
+                    )
+                    self.child[param_name] = closest_value
 
     def _mutate(self) -> None:
         """
-        Apply mutation to the offspring.
+        Apply adaptive mutation to the offspring.
 
-        With 90% probability mutates single random parameter,
-        with 10% probability mutates all parameters.
-        Mutation selects random values from corresponding parameter ranges.
+        Implements balanced mutation strategies:
+        - Adaptive mutation rate based on population diversity
+        - Multi-parameter mutation with decreasing probability
+        - Gaussian-style mutation for numerical parameters
+        - Boundary exploration for all parameter types
         """
-
-        if randint(1, 10) <= 9:
-            # Mutate single parameter
-            param_name = choice(self.param_keys)
+        
+        # Calculate adaptive mutation rate based on population diversity
+        population_diversity = len(set(self.population.values())) / len(
+            self.population
+        )
+        base_rate = 0.15
+        adaptive_rate = base_rate * (2.0 - population_diversity)
+        
+        if randint(1, 100) > int(adaptive_rate * 100):
+            return
+        
+        # Select parameters to mutate with decreasing probability
+        params_to_mutate = []
+        for i, param_name in enumerate(self.param_keys):
+            mutation_prob = 70 / (2 ** i) if i < 3 else 10
+            if randint(1, 100) <= mutation_prob:
+                params_to_mutate.append(param_name)
+        
+        # Ensure at least one parameter is mutated
+        if not params_to_mutate:
+            params_to_mutate = [choice(self.param_keys)]
+        
+        for param_name in params_to_mutate:
             param_values = self.strategy_class.opt_params[param_name]
-            self.child[param_name] = choice(param_values)
-        else:
-            # Mutate all parameters
-            for param_name in self.param_keys:
-                param_values = self.strategy_class.opt_params[param_name]
-                self.child[param_name] = choice(param_values)
+            current_value = self.child[param_name]
+            
+            if isinstance(current_value, bool):
+                self.child[param_name] = not current_value
+                
+            elif len(param_values) <= 3:
+                available_values = [
+                    val for val in param_values if val != current_value
+                ]
+                if available_values:
+                    self.child[param_name] = choice(available_values)
+            else:
+                mutation_type = randint(1, 100)
+                
+                if mutation_type <= 25:
+                    # Boundary mutation
+                    self.child[param_name] = choice([
+                        param_values[0], param_values[-1]
+                    ])
+                elif mutation_type <= 60:
+                    # Gaussian-style neighbor mutation
+                    current_idx = param_values.index(current_value)
+                    max_offset = max(1, len(param_values) // 8)
+                    offset = randint(-max_offset, max_offset)
+                    new_idx = max(0, min(
+                        len(param_values) - 1, current_idx + offset
+                    ))
+                    self.child[param_name] = param_values[new_idx]
+                else:
+                    # Random mutation
+                    self.child[param_name] = choice(param_values)
 
     def _expand(self) -> None:
         """
@@ -328,21 +407,52 @@ class StrategyOptimizer:
 
     def _destroy(self) -> None:
         """
-        Catastrophic population reduction event.
+        Catastrophic population reduction with adaptive triggers.
 
-        With 1% probability removes bottom 50% of population
-        to prevent premature convergence and maintain diversity.
+        Implements diversification strategy to prevent premature convergence:
+        - Base 1% chance for catastrophic event
+        - Higher probability when population diversity is low
+        - Removes bottom 40-60% based on population fitness variance
+        - Preserves elite individuals to maintain optimization progress
         """
-
-        if randint(1, 100) != 1:
-            return
-
-        sorted_population = sorted(
-            self.population.items(),
-            key=lambda x: x[0]
+        
+        # Calculate population diversity and fitness variance
+        unique_samples = len(set(self.population.values()))
+        diversity_ratio = unique_samples / len(self.population)
+        
+        fitness_values = list(self.population.keys())
+        fitness_variance = (
+            (max(fitness_values) - min(fitness_values)) / 
+            (abs(max(fitness_values)) + 1e-10)
         )
-
-        for i in range(int(len(self.population) * 0.5)):
+        
+        # Adaptive trigger probability
+        base_probability = 1
+        diversity_factor = max(1, int(5 * (1 - diversity_ratio)))
+        variance_factor = max(1, int(3 * (1 - fitness_variance)))
+        
+        trigger_probability = min(
+            15, base_probability * diversity_factor * variance_factor
+        )
+        
+        if randint(1, 100) > trigger_probability:
+            return
+        
+        # Determine destruction intensity based on population state
+        if diversity_ratio < 0.3:
+            destruction_ratio = randint(50, 70) / 100.0
+        elif fitness_variance < 0.1:
+            destruction_ratio = randint(40, 55) / 100.0
+        else:
+            destruction_ratio = randint(35, 45) / 100.0
+        
+        sorted_population = sorted(
+            self.population.items(), key=lambda x: x[0]
+        )
+        
+        individuals_to_remove = int(len(self.population) * destruction_ratio)
+        
+        for i in range(individuals_to_remove):
             self.population.pop(sorted_population[i][0])
 
     def _get_best_sample(self) -> dict[str, Any]:

@@ -10,7 +10,7 @@ from .core import (
     BaseStrategy,
     colors,
     quanta,
-    logs
+    log
 )
 
 

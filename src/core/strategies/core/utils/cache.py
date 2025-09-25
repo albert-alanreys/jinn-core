@@ -1,7 +1,7 @@
 from __future__ import annotations
 from logging import getLogger
 
-from src.infrastructure.db import db_manager
+from src.infrastructure.storage import db_manager
 
 
 logger = getLogger(__name__)
