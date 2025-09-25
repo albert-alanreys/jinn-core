@@ -271,8 +271,6 @@ class StrategyOptimizer:
         - Uniform crossover (50%): Parameter-wise random inheritance
         - Single-point crossover (30%): Classic split-point crossover
         - Arithmetic crossover (20%): Blend for numerical parameters
-        
-        Resulting child is stored in self.child as dictionary.
         """
         
         param_count = len(self.param_keys)

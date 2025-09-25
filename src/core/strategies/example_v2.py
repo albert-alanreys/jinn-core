@@ -67,27 +67,27 @@ class ExampleV2(BaseStrategy):
         'HTF': {
             'pane': 0,
             'type': 'line',
-            'color': colors.CRIMSON,
+            'color': colors.RED_600,
         },
         'EP #2': {
             'pane': 0,
             'type': 'line',
-            'color': colors.INDIGO,
+            'color': colors.PURPLE_900,
         },
         'EP #3': {
             'pane': 0,
             'type': 'line',
-            'color': colors.INDIGO,
+            'color': colors.PURPLE_900,
         },
         'EP #4': {
             'pane': 0,
             'type': 'line',
-            'color': colors.INDIGO,
+            'color': colors.PURPLE_900,
         },
         'TP': {
             'pane': 0,
             'type': 'line',
-            'color': colors.FOREST_GREEN,
+            'color': colors.GREEN_800,
         },
     }
 

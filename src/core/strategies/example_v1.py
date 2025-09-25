@@ -126,39 +126,39 @@ class ExampleV1(BaseStrategy):
         'SL': {
             'pane': 0,
             'type': 'line',
-            'color': colors.CRIMSON,
+            'color': colors.RED_600,
         },
         'TP #1': {
             'pane': 0,
             'type': 'line',
-            'color': colors.GREEN,
+            'color': colors.GREEN_600,
         },
         'TP #2': {
             'pane': 0,
             'type': 'line',
-            'color': colors.GREEN,
+            'color': colors.GREEN_600,
         },
         'TP #3': {
             'pane': 0,
             'type': 'line',
-            'color': colors.GREEN,
+            'color': colors.GREEN_600,
         },
         '+DI': {
             'pane': 1,
             'type': 'line',
-            'color': colors.GREEN,
+            'color': colors.GREEN_600,
             'lineWidth': 1,
         },
         '-DI': {
             'pane': 1,
             'type': 'line',
-            'color': colors.CRIMSON,
+            'color': colors.RED_600,
             'lineWidth': 1,
         },
         'ADX': {
             'pane': 1,
             'type': 'line',
-            'color': colors.DEEP_SKY_BLUE,
+            'color': colors.SKY_500,
             'lineWidth': 1,
         },
     }
