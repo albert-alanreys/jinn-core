@@ -163,9 +163,6 @@ class ExampleV1(BaseStrategy):
         },
     }
 
-    def __init__(self, params: dict | None = None) -> None:
-        super().__init__(params)
-
     def calculate(self) -> None:
         # Exit price levels
         self.stop_price = np.full(self.time.shape[0], np.nan)

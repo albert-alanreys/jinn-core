@@ -99,9 +99,6 @@ class ExampleV2(BaseStrategy):
         },
     }
 
-    def __init__(self, params: dict | None = None) -> None:
-        super().__init__(params)
-
     def calculate(self) -> None:
         # Entry price levels
         self.entry_price_2 = np.full(self.time.shape[0], np.nan)
