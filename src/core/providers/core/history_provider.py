@@ -4,8 +4,8 @@ from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
-from src.infrastructure.db import db_manager
 from src.infrastructure.exchanges.models import Interval
+from src.infrastructure.storage import db_manager
 from src.shared.utils import (
     has_first_historical_kline,
     has_realtime_kline
