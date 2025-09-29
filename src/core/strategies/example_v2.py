@@ -89,6 +89,10 @@ class ExampleV2(BaseStrategy):
             'type': 'line',
             'color': colors.GREEN_800,
         },
+        'Volume': {
+            'pane': 1,
+            'type': 'histogram',
+        },
     }
 
     # --- Data Feed Configuration ---
@@ -98,6 +102,9 @@ class ExampleV2(BaseStrategy):
             'HTF': ['symbol', Interval.DAY_1],
         },
     }
+
+    volume_color_1 = colors.TEAL_700
+    volume_color_2 = colors.RED_500
 
     def calculate(self) -> None:
         # Entry price levels
@@ -209,6 +216,15 @@ class ExampleV2(BaseStrategy):
             'TP': {
                 'options': self.indicator_options['TP'],
                 'values': self.take_price,
+            },
+            'Volume': {
+                'options': self.indicator_options['Volume'],
+                'values': self.volume,
+                'colors': np.where(
+                    self.close >= self.open,
+                    self.volume_color_1,
+                    self.volume_color_2
+                ),
             },
         }
 
