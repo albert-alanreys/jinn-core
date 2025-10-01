@@ -38,23 +38,19 @@ class StrategyTester:
         if market_data['klines'].size == 0:
             return self._get_empty_metrics_structure()
 
-        try:
-            strategy.__calculate__(market_data)
+        strategy.__calculate__(market_data)
 
-            all_metrics = self._calculate_all_metrics(
-                initial_capital=strategy.params['initial_capital'],
-                deals_log=strategy.completed_deals_log
-            )
+        all_metrics = self._calculate_all_metrics(
+            initial_capital=strategy.params['initial_capital'],
+            deals_log=strategy.completed_deals_log
+        )
 
-            return {
-                'overview': self._extract_overview_metrics(all_metrics),
-                'performance': self._extract_performance_metrics(all_metrics),
-                'trades': self._extract_trade_metrics(all_metrics),
-                'risk': self._extract_risk_metrics(all_metrics),
-            }
-        except Exception as e:
-            print(e)
-            return self._get_empty_metrics_structure()
+        return {
+            'overview': self._extract_overview_metrics(all_metrics),
+            'performance': self._extract_performance_metrics(all_metrics),
+            'trades': self._extract_trade_metrics(all_metrics),
+            'risk': self._extract_risk_metrics(all_metrics),
+        }
 
     def _extract_overview_metrics(
         self,
@@ -1120,7 +1116,7 @@ class StrategyTester:
     
     def _get_empty_metrics_structure(self) -> StrategyMetrics:
         """
-        Create empty metrics when no data or calculation fails.
+        Create empty metrics when no data.
         
         Returns:
             StrategyMetrics: Empty metrics structure with proper format

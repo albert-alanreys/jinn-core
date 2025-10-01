@@ -64,7 +64,7 @@ class ExecutionService:
             return self._context_statuses.copy()
     
     @property
-    def alerts(self) -> dict[str, AlertData]:
+    def alerts(self) -> list[AlertData]:
         """Return a copy of all active alerts."""
 
         with self._alerts_lock:
