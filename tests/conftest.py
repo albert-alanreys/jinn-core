@@ -23,25 +23,24 @@ if TYPE_CHECKING:
 
 
 def pytest_addoption(parser):
-    parser.addoption(
-        '--mode',
-        action='store',
-        choices=[mode.name[0].lower() for mode in Mode],
-        help=(
-            'Choose test mode: '
-            'o=optimization, b=backtesting, l=live trading, f=full pipeline'
-        )
-    )
+    """Add custom command-line options for pytest."""
 
-    parser.addoption(
-        '--strategy',
-        action='store',
-        default=None,
-        help='Run tests only for a specific strategy by name'
-    )
+    parser.addoption('--mode', action='store')
+    parser.addoption('--strategy', action='store')
 
 
 def pytest_collection_modifyitems(config, items):
+    """
+    Filter test items based on selected mode.
+    
+    Deselects tests that don't match the specified mode
+    by checking if mode value appears in test name.
+    
+    Args:
+        config: Pytest configuration object
+        items: Collection of test items to filter
+    """
+
     mode = config.getoption('--mode')
     
     if not mode:
@@ -62,12 +61,35 @@ def pytest_collection_modifyitems(config, items):
 
 
 @fixture(scope='session')
-def strategy_name(pytestconfig):
+def strategy_name(pytestconfig) -> str | None:
+    """
+    Retrieve strategy name from command-line options.
+    
+    Args:
+        pytestconfig: Pytest configuration object
+    
+    Returns:
+        str | None: Strategy name if provided, None otherwise
+    """
+
     return pytestconfig.getoption('strategy')
 
 
 @fixture(scope='session')
 def backtesting_config(strategy_name) -> ExecutionContextConfig:
+    """
+    Create backtesting configuration for execution tests.
+    
+    Args:
+        strategy_name: Name of the strategy to test
+        
+    Returns:
+        ExecutionContextConfig: Configuration for backtesting context
+        
+    Raises:
+        KeyError: If specified strategy is not found in registry
+    """
+
     config = backtesting_config_template.copy()
 
     if strategy_name:
@@ -86,6 +108,19 @@ def backtesting_config(strategy_name) -> ExecutionContextConfig:
 
 @fixture(scope='session')
 def optimization_config(strategy_name) -> OptimizationContextConfig:
+    """
+    Create optimization configuration for optimization tests.
+    
+    Args:
+        strategy_name: Name of the strategy to optimize
+        
+    Returns:
+        OptimizationContextConfig: Configuration for optimization context
+        
+    Raises:
+        KeyError: If specified strategy is not found in registry
+    """
+
     config = optimization_config_template.copy()
 
     if strategy_name not in strategy_registry:
@@ -97,9 +132,23 @@ def optimization_config(strategy_name) -> OptimizationContextConfig:
 
 @fixture(scope='session')
 def execution_service() -> ExecutionService:
+    """
+    Create execution service instance for testing.
+    
+    Returns:
+        ExecutionService: Service for backtesting and live execution
+    """
+
     return ExecutionService()
 
 
 @fixture(scope='session')
 def optimization_service() -> OptimizationService:
+    """
+    Create optimization service instance for testing.
+    
+    Returns:
+        OptimizationService: Service for strategy parameter optimization
+    """
+
     return OptimizationService()
