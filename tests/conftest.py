@@ -33,8 +33,8 @@ def pytest_collection_modifyitems(config, items):
     """
     Filter test items based on selected mode.
     
-    Deselects tests that don't match the specified mode
-    by checking if mode value appears in test name.
+    In full_pipeline mode, both backtesting and optimization tests run.
+    In specific modes, only matching tests are selected.
     
     Args:
         config: Pytest configuration object
@@ -47,13 +47,20 @@ def pytest_collection_modifyitems(config, items):
         return
     
     mode_enum = Mode.from_short(mode)
-    selected, deselected = [], []
-
-    for item in items:
-        if mode_enum.value in item.name.lower():
-            selected.append(item)
-        else:
-            deselected.append(item)
+    
+    if mode_enum == Mode.FULL_PIPELINE:
+        selected = [
+            item for item in items 
+            if 'backtesting' in item.name.lower() or
+                'optimization' in item.name.lower()
+        ]
+        deselected = [item for item in items if item not in selected]
+    else:
+        selected = [
+            item for item in items 
+            if mode_enum.value in item.name.lower()
+        ]
+        deselected = [item for item in items if item not in selected]
 
     if deselected:
         config.hook.pytest_deselected(items=deselected)
