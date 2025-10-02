@@ -61,8 +61,8 @@ def configure_app(app: Flask) -> None:
     """
 
     app.config.update({
-        'PORT': int(getenv('SERVER_PORT', 5000)),
-        'BASE_URL': getenv('BASE_URL', 'http://127.0.0.1'),
+        'PORT': int(getenv('SERVER_PORT', 1001)),
+        'BASE_URL': getenv('BASE_URL'),
     })
 
 
