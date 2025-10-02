@@ -30,16 +30,6 @@ class ExampleV1(BaseStrategy):
         'st_factor': 24.6,
         'st_upper_band': 5.8,
         'st_lower_band': 2.9,
-        'rsi_length': 6,
-        'rsi_long_upper_limit': 29.0,
-        'rsi_long_lower_limit': 28.0,
-        'rsi_short_upper_limit': 69.0,
-        'rsi_short_lower_limit': 58.0,
-        'bb_filter': False,
-        'ma_length': 22,
-        'bb_mult': 2.7,
-        'bb_long_limit': 24.0,
-        'bb_short_limit': 67.0,
         'adx_filter': False,
         'adx_length': 6,
         'di_length': 14,
@@ -63,16 +53,6 @@ class ExampleV1(BaseStrategy):
         'st_factor': [i / 100 for i in range(1000, 2501, 5)],
         'st_upper_band': [i / 10 for i in range(39, 69)],
         'st_lower_band': [i / 10 for i in range(11, 37)],
-        'rsi_length': [i for i in range(3, 22)],
-        'rsi_long_upper_limit': [float(i) for i in range(29, 51)],
-        'rsi_long_lower_limit': [float(i) for i in range(1, 29)],
-        'rsi_short_upper_limit': [float(i) for i in range(69, 101)],
-        'rsi_short_lower_limit': [float(i) for i in range(50, 69)],
-        'bb_filter': [True, False],
-        'ma_length': [i for i in range(3, 26)],
-        'bb_mult': [i / 10 for i in range(11, 31)],
-        'bb_long_limit': [float(i) for i in range(20, 51)],
-        'bb_short_limit': [float(i) for i in range(50, 81)],
         'adx_filter': [False, True],
         'adx_length': [i for i in range(1, 21)],
         'di_length': [i for i in range(1, 21)],
@@ -101,16 +81,6 @@ class ExampleV1(BaseStrategy):
         'st_factor': 'ST Factor',
         'st_upper_band': 'ST Upper Band',
         'st_lower_band': 'ST Lower Band',
-        'rsi_length': 'RSI Length',
-        'rsi_long_upper_limit': 'RSI Long Upper',
-        'rsi_long_lower_limit': 'RSI Long Lower',
-        'rsi_short_upper_limit': 'RSI Short Upper',
-        'rsi_short_lower_limit': 'RSI Short Lower',
-        'bb_filter': 'BB Filter',
-        'ma_length': 'MA Length',
-        'bb_mult': 'BB Multiplier',
-        'bb_long_limit': 'BB Long Limit',
-        'bb_short_limit': 'BB Short Limit',
         'adx_filter': 'ADX Filter',
         'adx_length': 'ADX Length',
         'di_length': 'DI Length',
@@ -205,19 +175,6 @@ class ExampleV1(BaseStrategy):
             source=self.dst[1],
             length=1
         )
-        self.rsi = quanta.rsi(
-            source=self.close,
-            length=self.params['rsi_length']
-        )
-
-        if self.params['bb_filter']:
-            self.bb_rsi = quanta.bb(
-                source=self.rsi,
-                length=self.params['ma_length'],
-                mult=self.params['bb_mult']
-            )
-        else:
-            self.bb_rsi = np.full(self.time.shape[0], np.nan)
 
         self.dmi = quanta.dmi(
             high=self.high,
@@ -259,13 +216,6 @@ class ExampleV1(BaseStrategy):
             self.params['trail_percent'],
             self.params['st_upper_band'],
             self.params['st_lower_band'],
-            self.params['rsi_long_upper_limit'],
-            self.params['rsi_long_lower_limit'],
-            self.params['rsi_short_upper_limit'],
-            self.params['rsi_short_lower_limit'],
-            self.params['bb_filter'],
-            self.params['bb_long_limit'],
-            self.params['bb_short_limit'],
             self.params['adx_filter'],
             self.params['adx_long_upper_limit'],
             self.params['adx_long_lower_limit'],
@@ -296,9 +246,6 @@ class ExampleV1(BaseStrategy):
             self.dst[1],
             self.upper_band_change,
             self.lower_band_change,
-            self.rsi,
-            self.bb_rsi[1] if self.params['bb_filter'] else self.bb_rsi,
-            self.bb_rsi[2] if self.params['bb_filter'] else self.bb_rsi,
             self.adx,
             self.alert_cancel,
             self.alert_open_long,
@@ -355,13 +302,6 @@ class ExampleV1(BaseStrategy):
         trail_percent: float,
         st_upper_band: float,
         st_lower_band: float,
-        rsi_long_upper_limit: float,
-        rsi_long_lower_limit: float,
-        rsi_short_upper_limit: float,
-        rsi_short_lower_limit: float,
-        bb_filter: bool,
-        bb_long_limit: float,
-        bb_short_limit: float,
         adx_filter: bool,
         adx_long_upper_limit: float,
         adx_long_lower_limit: float,
@@ -392,9 +332,6 @@ class ExampleV1(BaseStrategy):
         dst_lower_band: np.ndarray,
         upper_band_change: np.ndarray,
         lower_band_change: np.ndarray,
-        rsi: np.ndarray,
-        bb_rsi_upper: np.ndarray,
-        bb_rsi_lower: np.ndarray,
         adx: np.ndarray,
         alert_cancel: bool,
         alert_open_long: bool,
@@ -622,11 +559,7 @@ class ExampleV1(BaseStrategy):
             entry_long = (
                 (close[i] / dst_lower_band[i] - 1) * 100 > st_lower_band and
                 (close[i] / dst_lower_band[i] - 1) * 100 < st_upper_band and
-                rsi[i] < rsi_long_upper_limit and
-                rsi[i] > rsi_long_lower_limit and
                 np.isnan(position_type) and
-                (bb_rsi_upper[i] < bb_long_limit
-                    if bb_filter else True) and
                 (adx[i] < adx_long_upper_limit and
                     adx[i] > adx_long_lower_limit
                     if adx_filter else True) and
@@ -842,11 +775,7 @@ class ExampleV1(BaseStrategy):
             entry_short = (
                 (dst_upper_band[i] / close[i] - 1) * 100 > st_lower_band and
                 (dst_upper_band[i] / close[i] - 1) * 100 < st_upper_band and
-                rsi[i] < rsi_short_upper_limit and
-                rsi[i] > rsi_short_lower_limit and
                 np.isnan(position_type) and
-                (bb_rsi_lower[i] > bb_short_limit
-                    if bb_filter else True) and
                 (adx[i] < adx_short_upper_limit and
                     adx[i] > adx_short_lower_limit
                     if adx_filter else True) and

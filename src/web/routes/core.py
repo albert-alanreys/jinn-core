@@ -1,7 +1,6 @@
 from __future__ import annotations
-from os import getenv
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, current_app
 
 
 core_bp = Blueprint('core', __name__)
@@ -37,10 +36,7 @@ def _get_server_url(default_host: str = 'http://127.0.0.1') -> str:
         str: Fully qualified server URL
     """
 
-    base_url = getenv('BASE_URL')
-    port = getenv('SERVER_PORT', '1001')
+    base_url = current_app.config['BASE_URL']
+    port = current_app.config['PORT']
 
-    if base_url:
-        return base_url
-
-    return f'{default_host}:{port}'
+    return base_url if base_url else f'{default_host}:{port}'
