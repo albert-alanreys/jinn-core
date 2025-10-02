@@ -28,6 +28,7 @@ class ExampleV2(BaseStrategy):
         'ma_length': 20,
         'mult': 2.0,
         'range_threshold': 30.0,
+        'volume_ema_length': 20,
     }
 
     # --- Optimization Space ---
@@ -41,6 +42,7 @@ class ExampleV2(BaseStrategy):
         'ma_length': [i for i in range(10, 101)],
         'mult': [i / 10 for i in range(10, 31)],
         'range_threshold': [float(i) for i in range(10, 100)],
+        'volume_ema_length': [i for i in range(5, 101)],
     }
 
     # --- UI/UX Configuration ---
@@ -59,6 +61,7 @@ class ExampleV2(BaseStrategy):
         'ma_length': 'MA Length',
         'mult': 'Multiplier',
         'range_threshold': 'Range Threshold',
+        'volume_ema_length': 'Volume EMA Length',
     }
 
     # --- Visualization Settings ---
@@ -92,6 +95,11 @@ class ExampleV2(BaseStrategy):
         'Volume': {
             'pane': 1,
             'type': 'histogram',
+        },
+        'Volume EMA': {
+            'pane': 1,
+            'type': 'line',
+            'color': colors.ORANGE_500,
         },
     }
 
@@ -134,6 +142,10 @@ class ExampleV2(BaseStrategy):
             source=(self.high - self.low), 
             length=self.params['ma_length']
         )
+        self.volume_ema = quanta.ema(
+            source=self.volume,
+            length=self.params['volume_ema_length']
+        )
 
         # Additional market data
         self.htf_close = np.full(self.time.shape[0], np.nan)
@@ -174,6 +186,7 @@ class ExampleV2(BaseStrategy):
             self.high,
             self.low,
             self.close,
+            self.volume,
             self.equity,
             self.completed_deals_log,
             self.open_deals_log,
@@ -191,6 +204,8 @@ class ExampleV2(BaseStrategy):
             self.entry_volumes,
             self.lowest,
             self.sma,
+            self.volume_ema,
+            self.htf_close,
             self.alert_open_long,
             self.alert_close_long
         )
@@ -226,6 +241,10 @@ class ExampleV2(BaseStrategy):
                     self.volume_color_2
                 ),
             },
+            'Volume EMA': {
+                'options': self.indicator_options['Volume EMA'],
+                'values': self.volume_ema,
+            },
         }
 
     @staticmethod
@@ -249,6 +268,7 @@ class ExampleV2(BaseStrategy):
         high: np.ndarray,
         low: np.ndarray,
         close: np.ndarray,
+        volume: np.ndarray,
         equity: float,
         completed_deals_log: np.ndarray,
         open_deals_log: np.ndarray,
@@ -266,6 +286,8 @@ class ExampleV2(BaseStrategy):
         entry_volumes: np.ndarray,
         lowest: np.ndarray,
         sma: np.ndarray,
+        volume_ema: np.ndarray,
+        htf_close: np.ndarray,
         alert_open_long: bool,
         alert_close_long: bool
     ) -> tuple:
@@ -478,6 +500,8 @@ class ExampleV2(BaseStrategy):
                 low[i] < lowest[i] and
                 close[i] >= high[i] - (high[i] - low[i]) 
                     * range_threshold / 100 and
+                volume[i] > volume_ema[i] and
+                close[i] < htf_close[i] and
                 np.isnan(order_size)  
             )
 
