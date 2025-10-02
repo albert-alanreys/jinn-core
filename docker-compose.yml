@@ -10,4 +10,5 @@ services:
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
-    restart: unless-stopped
+    tty: true
+    stdin_open: true

@@ -25,5 +25,5 @@ EXPOSE 1001
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# 9. Default command to run the application
-CMD ["python", "run.py"]
+# 9. Default command to run container interactively
+CMD ["bash"]
