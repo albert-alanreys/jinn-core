@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from dotenv import load_dotenv
 from pytest import fixture
 
 from src.core.strategies import strategy_registry
@@ -65,6 +66,13 @@ def pytest_collection_modifyitems(config, items):
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = selected
+
+
+@fixture(scope='session', autouse=True)
+def load_environment_variables():
+    """Automatically load environment variables."""
+
+    load_dotenv()
 
 
 @fixture(scope='session')
