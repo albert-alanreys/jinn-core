@@ -334,7 +334,7 @@ class StrategyOptimizer:
         population_diversity = len(set(self.population.values())) / len(
             self.population
         )
-        base_rate = 0.15
+        base_rate = 0.5
         adaptive_rate = base_rate * (2.0 - population_diversity)
         
         if randint(1, 100) > int(adaptive_rate * 100):
