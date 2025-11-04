@@ -243,25 +243,28 @@ class StrategyOptimizer:
             tournament_size = 4
         
         self.parents = []
+        available_individuals = list(self.population.items())
         
         for _ in range(2):
-            fitness_scores = list(self.population.keys())
-            tournament_scores = sample(
-                fitness_scores, min(tournament_size, population_size)
-            )
+            if len(available_individuals) < tournament_size:
+                tournament_pool = available_individuals.copy()
+            else:
+                tournament_pool = sample(
+                    available_individuals, tournament_size
+                )
             
             # Winner selection with elite bias
             if randint(1, 100) <= 80:
-                winner_score = max(tournament_scores)
+                winner_fitness, winner_key = max(
+                    tournament_pool, key=lambda x: x[0]
+                )
             else:
-                winner_score = choice(tournament_scores)
+                winner_fitness, winner_key = choice(tournament_pool)
             
-            winner_key = self.population[winner_score]
             parent = self._key_to_dict(winner_key)
             self.parents.append(parent)
             
-            if len(fitness_scores) > 1:
-                fitness_scores.remove(winner_score)
+            available_individuals.remove((winner_fitness, winner_key))
 
     def _recombine(self) -> None:
         """
