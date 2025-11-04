@@ -129,14 +129,19 @@ class StrategyOptimizer:
         using multiple sampling methods.
 
         Uses a diversified approach:
+        - Latin Hypercube Sampling (50%): Space-filling statistical sampling
         - Random sampling (30%): Random selection from parameter ranges
-        - Latin Hypercube Sampling (40%): Space-filling statistical sampling 
-        - Extreme values (20%): Combinations of min/max parameter values
-        - Random fill (remaining): Additional random samples if needed
+        - Extreme values (20%): Boundary parameter values
         """
 
         population = []
         opt_params = self.strategy_class.opt_params
+
+        # Latin Hypercube Sampling (50%)
+        lhs_count = int(self.config.population_size * 0.5)
+        population.extend(
+            latin_hypercube_sampling(opt_params, lhs_count)
+        )
 
         # Random sampling (30%)
         random_count = int(self.config.population_size * 0.3)
@@ -146,12 +151,6 @@ class StrategyOptimizer:
                 for param_name, param_values in opt_params.items()
             })
 
-        # Latin Hypercube Sampling (40%)
-        lhs_count = int(self.config.population_size * 0.4)
-        population.extend(
-            latin_hypercube_sampling(opt_params, lhs_count)
-        )
-
         # Extreme values (20%)
         extreme_count = int(self.config.population_size * 0.2)
         for _ in range(extreme_count):
@@ -160,13 +159,6 @@ class StrategyOptimizer:
                 for param_name, param_values in opt_params.items()
             }
             population.append(individual)
-
-        # Fill remaining with random samples if needed
-        while len(population) < self.config.population_size:
-            population.append({
-                param_name: choice(param_values)
-                for param_name, param_values in opt_params.items()
-            })
 
         # Evaluate and add to population
         for individual in population:
