@@ -221,7 +221,6 @@ class StrategyOptimizer:
                     available_individuals, tournament_size
                 )
             
-            # Winner selection with elite bias
             if randint(1, 100) <= 80:
                 winner_fitness, winner_params = max(
                     tournament_pool, key=lambda x: x[0]
@@ -289,13 +288,15 @@ class StrategyOptimizer:
 
     def _mutate(self) -> None:
         """
-        Apply adaptive mutation to the offspring.
+        Apply mutation to the offspring.
 
-        Implements balanced mutation strategies:
-        - Adaptive mutation rate based on population diversity
-        - Multi-parameter mutation with decreasing probability
+        Implements mutation strategies:
+        - Overall mutation applied probabilistically based on population diversity
+        - Each selected parameter mutates with 20% chance
+        - Ensures at least one parameter is mutated
         - Gaussian-style mutation for numerical parameters
         - Boundary exploration for all parameter types
+        - Simple discrete mutation for small sets of values
         """
         
         # Calculate adaptive mutation rate based on population diversity
@@ -313,11 +314,9 @@ class StrategyOptimizer:
         param_keys = list(self.strategy_class.opt_params.keys())
         
         # Select parameters to mutate with decreasing probability
-        params_to_mutate = []
-        for i, param_name in enumerate(param_keys):
-            mutation_prob = 70 / (2 ** i) if i < 3 else 10
-            if randint(1, 100) <= mutation_prob:
-                params_to_mutate.append(param_name)
+        params_to_mutate = [
+            param_name for param_name in param_keys if randint(1, 100) <= 20
+        ]
         
         # Ensure at least one parameter is mutated
         if not params_to_mutate:
