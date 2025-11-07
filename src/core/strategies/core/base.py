@@ -10,6 +10,14 @@ from .utils import cache
 if TYPE_CHECKING:
     from src.core.providers.common.models import MarketData
     from src.infrastructure.exchanges import BaseExchangeClient
+    from .models import (
+        ParamDict,
+        OptParamDict,
+        ParamLabelDict,
+        IndicatorOptionsDict,
+        IndicatorDict,
+        FeedsConfig
+    )
 
 
 class BaseStrategy(ABC):
@@ -73,7 +81,7 @@ class BaseStrategy(ABC):
     """
 
     # Common trading default parameter values for all strategies
-    base_params = {
+    base_params: ParamDict = {
         # Core trading settings
         'direction': 0,              # 0 - all, 1 - longs, 2 - shorts
         'margin_type': 0,            # 0 - ISOLATED, 1 - CROSSED
@@ -87,16 +95,16 @@ class BaseStrategy(ABC):
     }
 
     # Default parameter values for backtesting and live trading
-    params = {}
+    params: ParamDict = {}
 
     # Market data sources required for strategy calculations
-    feeds = {}
+    feeds: FeedsConfig = {}
 
     # Parameter ranges for hyperparameter optimization
-    opt_params = {}
+    opt_params: OptParamDict = {}
 
     # Human-readable labels for frontend parameter display
-    base_param_labels = {
+    base_param_labels: ParamLabelDict = {
         'direction': 'Trade Direction',
         'margin_type': 'Margin Type',
         'leverage': 'Leverage',
@@ -105,13 +113,13 @@ class BaseStrategy(ABC):
         'position_size': 'Position Size',
         'commission': 'Commission (%)',
     }
-    param_labels = {}
+    param_labels: ParamLabelDict = {}
 
     # Visualization Settings
-    indicator_options = {}
+    indicator_options: IndicatorOptionsDict = {}
 
     # Visualization Data
-    indicators = {}
+    indicators: IndicatorDict = {}
 
     def __init__(self, params: dict | None = None) -> None:
         """

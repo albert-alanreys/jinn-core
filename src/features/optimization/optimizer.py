@@ -1,7 +1,7 @@
 from __future__ import annotations
 from os import getenv
 from random import choice, randint, sample
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from .config import OptimizationConfig
 from .utils import (
@@ -13,6 +13,7 @@ from .utils import (
 if TYPE_CHECKING:
     from multiprocessing import Queue
     from src.core.providers import MarketData
+    from src.core.strategies.core.models import ParamDict
     from .models import StrategyContext
 
 
@@ -56,7 +57,7 @@ class StrategyOptimizer:
             if value := getenv(env_var):
                 setattr(self.config, attr_name, converter(value))
 
-    def optimize(self, context: StrategyContext) -> list[dict[str, Any]]:
+    def optimize(self, context: StrategyContext) -> list[ParamDict]:
         """
         Optimize parameters for a single strategy using genetic algorithm.
 
@@ -94,7 +95,7 @@ class StrategyOptimizer:
         Initialize optimization variables for a strategy context.
 
         Sets up strategy class, training/test data windows,
-        population dictionary, best parameters list, and parameter keys.
+        and population dictionary.
 
         Args:
             context: Strategy context package
@@ -118,10 +119,8 @@ class StrategyOptimizer:
             data_type='test'
         )
 
-        self.population = {}
-        self.best_params = []
-        
-        self.param_keys = list(self.strategy_class.opt_params.keys())
+        self.population: dict[float, ParamDict] = {}
+        self.best_params: list[ParamDict] = []
 
     def _create_population(self) -> None:
         """
@@ -134,7 +133,7 @@ class StrategyOptimizer:
         - Extreme values (20%): Boundary parameter values
         """
 
-        population = []
+        population: list[ParamDict] = []
         opt_params = self.strategy_class.opt_params
 
         # Latin Hypercube Sampling (50%)
@@ -163,36 +162,11 @@ class StrategyOptimizer:
         # Evaluate and add to population
         for individual in population:
             fitness = self._evaluate(individual, self.train_data)
-            sample_key = self._dict_to_key(individual)
-            self.population[fitness] = sample_key
-
-    def _dict_to_key(self, param_dict: dict[str, Any]) -> tuple[Any, ...]:
-        """
-        Convert parameter dictionary to hashable tuple for population storage.
-
-        Args:
-            param_dict: Parameter dictionary with parameter names as keys
-
-        Returns:
-            tuple: Hashable representation of parameter values
-        """
-        return tuple(param_dict[key] for key in self.param_keys)
-
-    def _key_to_dict(self, param_key: tuple[Any, ...]) -> dict[str, Any]:
-        """
-        Convert parameter tuple back to dictionary.
-
-        Args:
-            param_key: Hashable parameter representation as tuple
-
-        Returns:
-            dict: Parameter dictionary
-        """
-        return dict(zip(self.param_keys, param_key))
+            self.population[fitness] = individual
 
     def _evaluate(
         self,
-        sample_dict: dict[str, Any],
+        sample_dict: ParamDict,
         market_data: MarketData
     ) -> float:
         """
@@ -223,7 +197,9 @@ class StrategyOptimizer:
         
         # Calculate adaptive tournament parameters
         population_size = len(self.population)
-        unique_samples = len(set(self.population.values()))
+        unique_samples = len(set(
+            tuple(params.items()) for params in self.population.values()
+        ))
         diversity_ratio = unique_samples / population_size
         
         # Adaptive tournament size (2-4 based on diversity)
@@ -234,7 +210,7 @@ class StrategyOptimizer:
         else:
             tournament_size = 4
         
-        self.parents = []
+        self.parents: list[ParamDict] = []
         available_individuals = list(self.population.items())
         
         for _ in range(2):
@@ -247,16 +223,15 @@ class StrategyOptimizer:
             
             # Winner selection with elite bias
             if randint(1, 100) <= 80:
-                winner_fitness, winner_key = max(
+                winner_fitness, winner_params = max(
                     tournament_pool, key=lambda x: x[0]
                 )
             else:
-                winner_fitness, winner_key = choice(tournament_pool)
+                winner_fitness, winner_params = choice(tournament_pool)
             
-            parent = self._key_to_dict(winner_key)
-            self.parents.append(parent)
+            self.parents.append(winner_params)
             
-            available_individuals.remove((winner_fitness, winner_key))
+            available_individuals.remove((winner_fitness, winner_params))
 
     def _recombine(self) -> None:
         """
@@ -268,14 +243,15 @@ class StrategyOptimizer:
         - Arithmetic crossover (20%): Blend for numerical parameters
         """
         
-        param_count = len(self.param_keys)
+        param_keys = list(self.strategy_class.opt_params.keys())
+        param_count = len(param_keys)
         crossover_type = randint(1, 100)
         
-        self.child = {}
+        self.child: ParamDict = {}
         
         if crossover_type <= 50:
             # Uniform crossover - each parameter from random parent
-            for param_name in self.param_keys:
+            for param_name in param_keys:
                 parent_idx = randint(0, 1)
                 self.child[param_name] = self.parents[parent_idx][param_name]
                 
@@ -283,14 +259,14 @@ class StrategyOptimizer:
             # Single-point crossover
             delimiter = randint(1, param_count - 1)
             
-            for i, param_name in enumerate(self.param_keys):
+            for i, param_name in enumerate(param_keys):
                 if i < delimiter:
                     self.child[param_name] = self.parents[0][param_name]
                 else:
                     self.child[param_name] = self.parents[1][param_name]
         else:
             # Arithmetic crossover for numerical, random for boolean
-            for param_name in self.param_keys:
+            for param_name in param_keys:
                 parent_1_val = self.parents[0][param_name]
                 parent_2_val = self.parents[1][param_name]
                 
@@ -323,25 +299,29 @@ class StrategyOptimizer:
         """
         
         # Calculate adaptive mutation rate based on population diversity
-        population_diversity = len(set(self.population.values())) / len(
-            self.population
-        )
+        unique_samples = len(set(
+            tuple(params.items()) for params in self.population.values()
+        ))
+        population_diversity = unique_samples / len(self.population)
+        
         base_rate = 0.5
         adaptive_rate = base_rate * (2.0 - population_diversity)
         
         if randint(1, 100) > int(adaptive_rate * 100):
             return
         
+        param_keys = list(self.strategy_class.opt_params.keys())
+        
         # Select parameters to mutate with decreasing probability
         params_to_mutate = []
-        for i, param_name in enumerate(self.param_keys):
+        for i, param_name in enumerate(param_keys):
             mutation_prob = 70 / (2 ** i) if i < 3 else 10
             if randint(1, 100) <= mutation_prob:
                 params_to_mutate.append(param_name)
         
         # Ensure at least one parameter is mutated
         if not params_to_mutate:
-            params_to_mutate = [choice(self.param_keys)]
+            params_to_mutate = [choice(param_keys)]
         
         for param_name in params_to_mutate:
             param_values = self.strategy_class.opt_params[param_name]
@@ -386,8 +366,7 @@ class StrategyOptimizer:
         """
 
         fitness = self._evaluate(self.child, self.train_data)
-        child_key = self._dict_to_key(self.child)
-        self.population[fitness] = child_key
+        self.population[fitness] = self.child
 
     def _kill(self) -> None:
         """
@@ -412,7 +391,9 @@ class StrategyOptimizer:
         """
         
         # Calculate population diversity and fitness variance
-        unique_samples = len(set(self.population.values()))
+        unique_samples = len(set(
+            tuple(params.items()) for params in self.population.values()
+        ))
         diversity_ratio = unique_samples / len(self.population)
         
         fitness_values = list(self.population.keys())
@@ -450,7 +431,7 @@ class StrategyOptimizer:
         for i in range(individuals_to_remove):
             self.population.pop(sorted_population[i][0])
 
-    def _get_best_sample(self) -> dict[str, Any]:
+    def _get_best_sample(self) -> ParamDict:
         """
         Select best parameter set based on combined train/test performance.
 
@@ -458,21 +439,20 @@ class StrategyOptimizer:
         the one with highest combined fitness (50% train + 50% test).
 
         Returns:
-            dict[str, Any]: Best parameter dictionary considering
-                            both training and test results
+            dict: Best parameter dictionary considering
+                  both training and test results
         """
 
         best_score = float('-inf')
         best_sample = None
 
-        for train_fitness, sample_key in self.population.items():
-            sample_dict = self._key_to_dict(sample_key)
-            test_fitness = self._evaluate(sample_dict, self.test_data)
+        for train_fitness, sample_params in self.population.items():
+            test_fitness = self._evaluate(sample_params, self.test_data)
             combined_fitness = 0.5 * train_fitness + 0.5 * test_fitness
 
             if combined_fitness > best_score:
                 best_score = combined_fitness
-                best_sample = sample_dict
+                best_sample = sample_params
 
         return best_sample
 
@@ -480,7 +460,7 @@ class StrategyOptimizer:
 def optimize_worker(
     context_id: str,
     context: StrategyContext,
-    results_queue: Queue[tuple[str, list[dict[str, Any]] | None, str | None]]
+    results_queue: Queue[tuple[str, list[ParamDict] | None, str | None]]
 ) -> None:
     """
     Optimize trading strategy in separate worker process.
