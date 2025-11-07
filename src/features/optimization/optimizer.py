@@ -381,52 +381,20 @@ class StrategyOptimizer:
 
     def _destroy(self) -> None:
         """
-        Catastrophic population reduction with adaptive triggers.
-
-        Implements diversification strategy to prevent premature convergence:
-        - Base 1% chance for catastrophic event
-        - Higher probability when population diversity is low
-        - Removes bottom 40-60% based on population fitness variance
-        - Preserves elite individuals to maintain optimization progress
+        Catastrophic population reduction to prevent premature convergence.
+        
+        Randomly triggers with 1% probability and removes 40-60% 
+        of worst individuals while preserving elite samples.
         """
         
-        # Calculate population diversity and fitness variance
-        unique_samples = len(set(
-            tuple(params.items()) for params in self.population.values()
-        ))
-        diversity_ratio = unique_samples / len(self.population)
-        
-        fitness_values = list(self.population.keys())
-        fitness_variance = (
-            (max(fitness_values) - min(fitness_values)) / 
-            (abs(max(fitness_values)) + 1e-10)
-        )
-        
-        # Adaptive trigger probability
-        base_probability = 1
-        diversity_factor = max(1, int(5 * (1 - diversity_ratio)))
-        variance_factor = max(1, int(3 * (1 - fitness_variance)))
-        
-        trigger_probability = min(
-            15, base_probability * diversity_factor * variance_factor
-        )
-        
-        if randint(1, 100) > trigger_probability:
+        if randint(1, 100) > 1:
             return
         
-        # Determine destruction intensity based on population state
-        if diversity_ratio < 0.3:
-            destruction_ratio = randint(50, 70) / 100.0
-        elif fitness_variance < 0.1:
-            destruction_ratio = randint(40, 55) / 100.0
-        else:
-            destruction_ratio = randint(35, 45) / 100.0
-        
-        sorted_population = sorted(
-            self.population.items(), key=lambda x: x[0]
-        )
-        
+        # Remove 40-60% of worst individuals
+        destruction_ratio = randint(40, 60) / 100.0
         individuals_to_remove = int(len(self.population) * destruction_ratio)
+        
+        sorted_population = sorted(self.population.items(), key=lambda x: x[0])
         
         for i in range(individuals_to_remove):
             self.population.pop(sorted_population[i][0])
