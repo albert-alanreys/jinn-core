@@ -137,17 +137,17 @@ class StrategyOptimizer:
 
         # Latin Hypercube Sampling (50%)
         lhs_count = int(self.config.population_size * 0.5)
-        population.extend(
-            latin_hypercube_sampling(opt_params, lhs_count)
-        )
+        individuals = latin_hypercube_sampling(opt_params, lhs_count)
+        population.extend(individuals)
 
         # Random sampling (30%)
         random_count = int(self.config.population_size * 0.3)
         for _ in range(random_count):
-            population.append({
+            individual = {
                 param_name: choice(param_values)
                 for param_name, param_values in opt_params.items()
-            })
+            }
+            population.append(individual)
 
         # Extreme values (20%)
         extreme_count = int(self.config.population_size * 0.2)
@@ -284,7 +284,7 @@ class StrategyOptimizer:
                         param_values, key=lambda x: abs(x - blended)
                     )
                     self.child[param_name] = closest_value
-    
+
     def _mutate(self) -> None:
         """
         Apply mutation to the offspring.

@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 if TYPE_CHECKING:
     from src.core.providers import MarketData
+    from src.core.strategies.core.models import ParamDict, OptParamDict
     from .config import OptimizationConfig
 
 
@@ -44,7 +45,7 @@ def create_window_data(
     market_data: MarketData,
     window: dict[str, int],
     data_type: str
-) -> dict[str, Any]:
+) -> MarketData:
     """
     Extract market data for a given window.
 
@@ -54,7 +55,7 @@ def create_window_data(
         data_type: 'train' or 'test' subset
 
     Returns:
-        dict[str, Any]: Window-specific dataset
+        Window-specific dataset
     """
 
     if data_type == 'train':
@@ -80,9 +81,9 @@ def create_window_data(
 
 
 def latin_hypercube_sampling(
-    param_space: dict[str, list[Any]],
+    param_space: OptParamDict,
     n_samples: int
-) -> list[dict[str, Any]]:
+) -> list[ParamDict]:
     """
     Generate parameter samples using Latin Hypercube Sampling.
 
@@ -91,10 +92,10 @@ def latin_hypercube_sampling(
         n_samples: Number of individuals to generate
 
     Returns:
-        list[dict[str, Any]]: List of parameter dictionaries
+        List of parameter dictionaries
     """
 
-    samples = []
+    samples: list[ParamDict] = []
     param_keys = list(param_space.keys())
     n_params = len(param_keys)
 
@@ -106,7 +107,7 @@ def latin_hypercube_sampling(
         lhs_matrix[:, i] = np.random.permutation(n_samples)
 
     for i in range(n_samples):
-        individual = {}
+        individual: ParamDict = {}
         for j, param in enumerate(param_keys):
             values = param_space[param]
             normalized_value = lhs_matrix[i, j] / n_samples
