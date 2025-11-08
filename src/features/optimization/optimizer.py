@@ -83,7 +83,6 @@ class StrategyOptimizer:
                 self._mutate()
                 self._expand()
                 self._kill()
-                self._destroy()
 
             self.best_params.append(self._get_best_sample())
             self.population.clear()
@@ -285,7 +284,7 @@ class StrategyOptimizer:
                         param_values, key=lambda x: abs(x - blended)
                     )
                     self.child[param_name] = closest_value
-
+    
     def _mutate(self) -> None:
         """
         Apply mutation to the offspring.
@@ -370,33 +369,22 @@ class StrategyOptimizer:
     def _kill(self) -> None:
         """
         Remove worst individuals to maintain population size.
-
-        Removes individuals with lowest fitness scores until
-        population size is within max_population_size limit.
+        
+        With 1% probability performs catastrophic reduction (40-60%)
+        to prevent premature convergence.
         """
 
-        while len(self.population) > self.config.max_population_size:
+        # Catastrophic reduction (0.5% probability)
+        if randint(1, 1000) <= 5:
+            destruction_ratio = randint(40, 60) / 100.0
+            target_size = int(len(self.population) * (1 - destruction_ratio))
+        else:
+            # Standard population size control
+            target_size = self.config.max_population_size
+        
+        # Remove worst individuals
+        while len(self.population) > target_size:
             self.population.pop(min(self.population))
-
-    def _destroy(self) -> None:
-        """
-        Catastrophic population reduction to prevent premature convergence.
-        
-        Randomly triggers with 1% probability and removes 40-60% 
-        of worst individuals while preserving elite samples.
-        """
-        
-        if randint(1, 100) > 1:
-            return
-        
-        # Remove 40-60% of worst individuals
-        destruction_ratio = randint(40, 60) / 100.0
-        individuals_to_remove = int(len(self.population) * destruction_ratio)
-        
-        sorted_population = sorted(self.population.items(), key=lambda x: x[0])
-        
-        for i in range(individuals_to_remove):
-            self.population.pop(sorted_population[i][0])
 
     def _get_best_sample(self) -> ParamDict:
         """
