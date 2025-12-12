@@ -71,7 +71,7 @@ class MarketClient(BaseBybitClient):
             ]
             return self._fetch_concurrently(symbol, interval, time_ranges)
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to request data | Bybit | {symbol} | '
                 f'{interval.value} | {type(e).__name__} - {e}'
             )
@@ -104,7 +104,7 @@ class MarketClient(BaseBybitClient):
             klines = self._fetch_concurrently(symbol, interval, time_ranges)
             return klines[-limit:]
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to request data | Bybit | {symbol} | '
                 f'{interval.value} | {type(e).__name__} - {e}'
             )
@@ -116,7 +116,7 @@ class MarketClient(BaseBybitClient):
             symbol_info = self._get_symbol_info(symbol)
             return float(symbol_info['priceFilter']['tickSize'])
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to get price precision for {symbol} | '
                 f'{type(e).__name__} - {e}'
             )
@@ -129,7 +129,7 @@ class MarketClient(BaseBybitClient):
             lot_size_filter = symbol_info['lotSizeFilter']
             return float(lot_size_filter['qtyStep'])
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f'Failed to get qty precision for {symbol} | '
                 f'{type(e).__name__} - {e}'
             )
