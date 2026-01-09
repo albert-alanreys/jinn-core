@@ -1,4 +1,5 @@
 from __future__ import annotations
+from math import exp
 from os import getenv
 from random import choice, randint, sample
 from typing import TYPE_CHECKING
@@ -388,29 +389,35 @@ class StrategyOptimizer:
 
     def _get_best_sample(self) -> ParamDict:
         """
-        Select best parameter set based on combined train/test performance.
-
-        Evaluates all population samples on test data and selects
-        the one with highest combined fitness (50% train + 50% test).
-
-        Returns:
-            dict: Best parameter dictionary considering
-                  both training and test results
+        Select best parameter set using validation-dominant score
+        with exponential overfitting penalty.
         """
 
         best_score = float('-inf')
         best_sample = None
 
+        # Scoring hyperparameters
+        alpha = 1.3   # validation dominance (exponent)
+        beta = 0.5    # weak train contribution
+        gamma = 1.5   # gap penalty severity
+        eps = 1e-8    # division-by-zero protection
+
         for train_fitness, sample_params in self.population.items():
             test_fitness = self._evaluate(sample_params, self.test_data)
-            combined_fitness = 0.5 * train_fitness + 0.5 * test_fitness
 
-            if combined_fitness > best_score:
-                best_score = combined_fitness
+            gap = abs(train_fitness - test_fitness)
+
+            score = (
+                (test_fitness ** alpha)
+                * (train_fitness ** beta)
+                * exp(-gamma * gap / max(test_fitness, eps))
+            )
+
+            if score > best_score:
+                best_score = score
                 best_sample = sample_params
 
         return best_sample
-
 
 def optimize_worker(
     context_id: str,
