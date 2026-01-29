@@ -513,7 +513,7 @@ var Rg=Object.defineProperty;var Ia=r=>{throw TypeError(r)};var Lg=(r,t,e)=>t in
 	</svg>\r
 </button>\r
 `;var De;class Ed extends O{constructor(){super(...arguments);f(this,De,null)}get isActive(){return o(this,De).is("data-active")}render(){return this.element=P.htmlToElement(V0,[],F0),g(this,De,C(this.element)),this.element}setOnClick(e){o(this,De).click(e)}activate(){o(this,De).data("active","true")}deactivate(){o(this,De).data("active","false")}}De=new WeakMap,N(Ed,"COMPONENT_NAME","BacktestingTabButton");const Y0={"docs-button":"_docs-button_1a3p5_1"},H0=`<button class="docs-button">\r
-	<a href="https://github.com/albert-alanreys/jinn-docs" target="_blank">\r
+	<a href="https://github.com/alexey-alanreys/jinn-docs" target="_blank">\r
 		<svg\r
 			xmlns="http://www.w3.org/2000/svg"\r
 			viewBox="0 0 28 28"\r
